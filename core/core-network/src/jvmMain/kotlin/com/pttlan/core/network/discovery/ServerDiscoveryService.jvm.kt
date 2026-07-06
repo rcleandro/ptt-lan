@@ -14,7 +14,9 @@ actual class ServerDiscoveryService actual constructor() {
     actual fun discover(): Flow<DiscoveredServer> = callbackFlow {
         val serviceType = "_pttlan._tcp.local."
         try {
-            jmdns = JmDNS.create(InetAddress.getLocalHost())
+            jmdns = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                JmDNS.create(InetAddress.getLocalHost())
+            }
             
             val listener = object : ServiceListener {
                 override fun serviceAdded(event: ServiceEvent) {
