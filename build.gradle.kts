@@ -3,7 +3,7 @@ plugins {
 }
 subprojects {
     if (name != "androidApp") {
-        apply(plugin = "org.jlleitschuh.gradle.ktlint")
-        apply(plugin = "io.gitlab.arturbosch.detekt")
+        pluginManager.apply("org.jlleitschuh.gradle.ktlint")
+        pluginManager.apply("io.gitlab.arturbosch.detekt")
     }
 }
