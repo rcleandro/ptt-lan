@@ -20,4 +20,5 @@ dependencies {
 
     implementation(libs.koin.core)
     implementation("io.insert-koin:koin-ktor:${libs.versions.koin.get()}")
+    implementation("io.ktor:ktor-network-tls-certificates:${libs.versions.ktor.get()}")
 }

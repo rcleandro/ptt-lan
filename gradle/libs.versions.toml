@@ -21,6 +21,7 @@ jmdns = "3.6.3"
 androidx-core-ktx = "1.19.0"
 okio = "3.17.0"
 androidx-activity-compose = "1.13.0"
+kopus = "1.6.1.2"
 
 [libraries]
 foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose" }
@@ -64,6 +65,7 @@ jmdns = { module = "org.jmdns:jmdns", version.ref = "jmdns" }
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core-ktx" }
 ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose" }
+kopus = { module = "eu.buney.kopus:kopus", version.ref = "kopus" }
 
 [plugins]
 androidApplication = { id = "com.android.application" }

@@ -22,18 +22,19 @@ fun SettingsScreen(component: SettingsComponent) {
     val state by component.state.collectAsState()
 
     Scaffold(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
                 text = "Configurações",
-                style = MaterialTheme.typography.displayLarge
+                style = MaterialTheme.typography.displayLarge,
             )
 
             OutlinedTextField(
@@ -41,16 +42,35 @@ fun SettingsScreen(component: SettingsComponent) {
                 onValueChange = { component.onIntent(SettingsIntent.UpdateNickname(it)) },
                 label = { Text("Seu Nickname") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
             )
-            
+
             Text(
                 text = "Este nome será exibido para os outros participantes da rede.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             Spacer(modifier = Modifier.height(32.dp))
+
+            androidx.compose.foundation.layout.Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                    Text("Usar codec Opus", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Compressão avançada de áudio. Reduz consumo de rede significativamente.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                androidx.compose.material3.Switch(
+                    checked = state.useOpus,
+                    onCheckedChange = { component.onIntent(SettingsIntent.ToggleOpus(it)) },
+                )
+            }
         }
     }
 }

@@ -2,14 +2,17 @@ package com.pttlan.data.ptt.repository
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
+import com.pttlan.core.audio.AudioCodec
 import com.pttlan.core.audio.AudioPlayer
 import com.pttlan.core.audio.AudioRecorder
 import com.pttlan.core.database.PttDatabase
 import com.pttlan.core.network.PttWebSocketClient
+import com.pttlan.core.network.protocol.AudioCodecType
 import com.pttlan.core.network.protocol.ControlMessage
 import com.pttlan.data.ptt.util.LocalFileCache
 import com.pttlan.domain.ptt.model.VoiceMessage
 import com.pttlan.domain.ptt.repository.VoiceRepository
+import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -31,6 +34,9 @@ class VoiceRepositoryImpl(
     private val webSocketClient: PttWebSocketClient,
     private val database: PttDatabase,
     private val localFileCache: LocalFileCache,
+    private val pcmCodec: AudioCodec,
+    private val opusCodec: AudioCodec,
+    private val settings: Settings,
 ) : VoiceRepository {
     private val scope = CoroutineScope(Dispatchers.Default)
     private var transmissionJob: Job? = null
@@ -72,11 +78,9 @@ class VoiceRepositoryImpl(
                                 durationMs = duration,
                                 recordedAt = currentMessageStartMs,
                             )
-                            // Enforce FIFO limit of 50
                             val count = database.voiceMessageQueries.countByChannel(msg.channelId).executeAsOne()
                             if (count > 50) {
                                 val toDelete = count - 50
-                                // Note: We need to make sure deleteOldestByChannel limits properly
                                 database.voiceMessageQueries.deleteOldestByChannel(msg.channelId, toDelete)
                             }
                         }
@@ -90,9 +94,19 @@ class VoiceRepositoryImpl(
         receptionJob =
             webSocketClient.audioChunks
                 .onEach { (envelope, chunk) ->
-                    audioPlayer.play(chunk)
+                    val decoded =
+                        try {
+                            if (envelope?.codec == AudioCodecType.OPUS) {
+                                opusCodec.decode(chunk)
+                            } else {
+                                pcmCodec.decode(chunk)
+                            }
+                        } catch (_: Exception) {
+                            chunk
+                        }
+                    audioPlayer.play(decoded)
                     try {
-                        currentFileSink?.write(chunk)
+                        currentFileSink?.write(decoded)
                         currentFileSink?.flush()
                     } catch (e: Exception) {
                         e.printStackTrace()
@@ -120,11 +134,35 @@ class VoiceRepositoryImpl(
     ) {
         transmissionJob?.cancel()
 
+        val useOpus = settings.getBoolean("use_opus", false)
+        val codecType =
+            if (useOpus) {
+                AudioCodecType.OPUS
+            } else {
+                AudioCodecType.PCM16
+            }
+        val codec = if (useOpus) opusCodec else pcmCodec
+        var sequenceNumber = 0
+
         transmissionJob =
             scope.launch {
                 val audioStream = audioRecorder.startCapture()
                 audioStream.collect { chunk ->
-                    webSocketClient.sendAudioChunk(chunk)
+                    val encoded =
+                        try {
+                            codec.encode(chunk)
+                        } catch (_: Exception) {
+                            chunk
+                        }
+                    val envelope =
+                        com.pttlan.core.network.protocol.AudioEnvelope(
+                            channelId = channelId,
+                            senderId = userId,
+                            sequenceNumber = sequenceNumber++,
+                            codec = codecType,
+                            timestampMs = Clock.System.now().toEpochMilliseconds(),
+                        )
+                    webSocketClient.sendAudioChunk(envelope, encoded)
                 }
             }
     }
@@ -159,7 +197,6 @@ class VoiceRepositoryImpl(
             val source = FileSystem.SYSTEM.source(path).buffer()
             val data = source.readByteArray()
             source.close()
-            // Using existing player
             audioPlayer.play(data)
         } catch (e: Exception) {
             e.printStackTrace()

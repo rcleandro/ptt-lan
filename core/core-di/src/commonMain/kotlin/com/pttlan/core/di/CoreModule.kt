@@ -34,6 +34,21 @@ val coreModule =
                 .createAudioPlayer()
         }
 
+        single<com.pttlan.core.audio.AudioCodec>(
+            org.koin.core.qualifier
+                .named("pcm"),
+        ) {
+            com.pttlan.core.audio
+                .PcmPassthroughCodec()
+        }
+        single<com.pttlan.core.audio.AudioCodec>(
+            org.koin.core.qualifier
+                .named("opus"),
+        ) {
+            com.pttlan.core.audio
+                .OpusAudioCodec()
+        }
+
         // Datastore
         single { get<SettingsFactory>().createSettings() }
         single<Logger> { Logger(loggerConfigInit()) }

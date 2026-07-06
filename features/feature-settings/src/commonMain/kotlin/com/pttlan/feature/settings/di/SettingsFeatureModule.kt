@@ -4,8 +4,9 @@ import com.arkivanov.decompose.ComponentContext
 import com.pttlan.feature.settings.SettingsComponent
 import org.koin.dsl.module
 
-val settingsFeatureModule = module {
-    factory { (componentContext: ComponentContext) -> 
-        SettingsComponent(componentContext, get()) 
+val settingsFeatureModule =
+    module {
+        factory { (componentContext: ComponentContext) ->
+            SettingsComponent(componentContext, get())
+        }
     }
-}

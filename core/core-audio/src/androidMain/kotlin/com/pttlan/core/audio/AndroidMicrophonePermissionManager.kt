@@ -14,7 +14,5 @@ class AndroidMicrophonePermissionManager(
             Manifest.permission.RECORD_AUDIO,
         ) == PackageManager.PERMISSION_GRANTED
 
-    override suspend fun request(): Boolean {
-        return isGranted()
-    }
+    override suspend fun request(): Boolean = isGranted()
 }

@@ -11,7 +11,7 @@ kotlin {
     android {
         namespace = "com.pttlan" + project.path.replace(":", ".")
         compileSdk = 37
-        minSdk = 24
+        minSdk = 26
     }
     iosArm64()
     iosSimulatorArm64()

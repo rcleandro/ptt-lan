@@ -15,6 +15,7 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.serialization.protobuf)
             implementation(libs.koin.core)
+            implementation(libs.okio)
         }
         androidMain.dependencies {
             implementation(libs.ktor.client.cio)

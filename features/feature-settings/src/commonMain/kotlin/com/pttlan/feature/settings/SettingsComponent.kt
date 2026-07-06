@@ -8,19 +8,31 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 data class SettingsState(
-    val nickname: String = ""
+    val nickname: String = "",
+    val useOpus: Boolean = false,
 )
 
 sealed interface SettingsIntent {
-    data class UpdateNickname(val nickname: String) : SettingsIntent
+    data class UpdateNickname(
+        val nickname: String,
+    ) : SettingsIntent
+
+    data class ToggleOpus(
+        val enabled: Boolean,
+    ) : SettingsIntent
 }
 
 class SettingsComponent(
     componentContext: ComponentContext,
-    private val settings: Settings
+    private val settings: Settings,
 ) : ComponentContext by componentContext {
-
-    private val _state = MutableStateFlow(SettingsState(nickname = settings.getString("nickname", "")))
+    private val _state =
+        MutableStateFlow(
+            SettingsState(
+                nickname = settings.getString("nickname", ""),
+                useOpus = settings.getBoolean("use_opus", false),
+            ),
+        )
     val state: StateFlow<SettingsState> = _state.asStateFlow()
 
     fun onIntent(intent: SettingsIntent) {
@@ -28,6 +40,10 @@ class SettingsComponent(
             is SettingsIntent.UpdateNickname -> {
                 settings.putString("nickname", intent.nickname)
                 _state.update { it.copy(nickname = intent.nickname) }
+            }
+            is SettingsIntent.ToggleOpus -> {
+                settings.putBoolean("use_opus", intent.enabled)
+                _state.update { it.copy(useOpus = intent.enabled) }
             }
         }
     }

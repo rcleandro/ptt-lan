@@ -1002,12 +1002,12 @@ Checklist:
 **Objetivo:** substituir o tema visual provisório da Fase 2 por um design system definitivo — paleta sóbria (base grafite/escura + acentos de baixa saturação para estados de transmissão/recepção/conexão), tipografia e componentes reutilizáveis — aplicado retroativamente a todas as telas já existentes (Fases 3 a 7), sem alterar comportamento ou regras de domínio (Use ptt-lan-design-system.html como referência de design).
 
 Checklist:
-- [ ] ADR documentando a paleta final (cores, papéis semânticos: background/surface/primary/accent-tx/status) e a dupla tipográfica escolhida (UI + monoespaçada para dados técnicos).
-- [ ] `core-designsystem` reescrito: `Color.kt`, `Typography.kt`, `Shape.kt` e tokens expostos via `MaterialTheme` (Material 3), substituindo o tema provisório da Fase 2.
-- [ ] Componentes compartilhados criados/atualizados em `core-designsystem`: `PttButton` (estados idle/transmitindo/recebendo), `ConnectionStatusBadge`, `ChannelCard`, `ParticipantAvatar`.
-- [ ] Suporte a tema claro e escuro (dark mode como padrão, alinhado ao uso em campo/baixa luminosidade).
-- [ ] Migração das telas existentes (`feature-connection`, `feature-channel-list`, `feature-ptt`, `feature-history`, `feature-settings`) para os novos tokens, removendo qualquer cor/tipografia hard-coded fora de `core-designsystem`.
-- [ ] Testes de snapshot/screenshot (Paparazzi ou equivalente Compose Multiplatform) para os componentes e telas migradas, evitando regressão visual em fases futuras.
+- [x] ADR documentando a paleta final (cores, papéis semânticos: background/surface/primary/accent-tx/status) e a dupla tipográfica escolhida (UI + monoespaçada para dados técnicos).
+- [x] `core-designsystem` reescrito: `Color.kt`, `Typography.kt`, `Shape.kt` e tokens expostos via `MaterialTheme` (Material 3), substituindo o tema provisório da Fase 2.
+- [x] Componentes compartilhados criados/atualizados em `core-designsystem`: `PttButton` (estados idle/transmitindo/recebendo), `ConnectionStatusBadge`, `ChannelCard`, `ParticipantAvatar`.
+- [x] Suporte a tema claro e escuro (dark mode como padrão, alinhado ao uso em campo/baixa luminosidade).
+- [x] Migração das telas existentes (`feature-connection`, `feature-channel-list`, `feature-ptt`, `feature-history`, `feature-settings`) para os novos tokens, removendo qualquer cor/tipografia hard-coded fora de `core-designsystem`.
+- [x] Testes de snapshot/screenshot (Paparazzi ou equivalente Compose Multiplatform) para os componentes e telas migradas, evitando regressão visual em fases futuras.
 
 **Critério de conclusão:** todas as telas das Fases 3-7 usam exclusivamente os tokens de `core-designsystem`; nenhuma cor ou estilo de texto hard-coded em módulos `feature-*` (validado por regra de lint/detekt customizada); testes de snapshot criados e passando no CI; ADR de paleta e tipografia publicado em `docs/adr/`.
 
@@ -1135,7 +1135,7 @@ Antes de marcar qualquer fase como concluída, o agente deve confirmar:
 - [x] Fase 5 — PTT Básico (MVP) concluída
 - [x] Fase 6 — Floor Control e Reconexão concluída
 - [x] Fase 7 — Histórico e Replay concluída
-- [ ] Fase 8 — Novo Design System (UI/UX Sóbria e Moderna) concluída
+- [x] Fase 8 — Novo Design System (UI/UX Sóbria e Moderna) concluída
 - [ ] Fase 9 — Opus e Criptografia TLS concluída
 - [ ] Fase 10 — Background e Modo "Sempre Ouvindo" concluída
 - [ ] Fase 11 — Painel Admin Web concluída

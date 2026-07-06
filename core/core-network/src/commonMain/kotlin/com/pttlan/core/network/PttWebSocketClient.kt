@@ -8,13 +8,18 @@ import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
 
 class PttWebSocketClient(
     private val httpClient: HttpClient,
@@ -29,8 +34,8 @@ class PttWebSocketClient(
     val audioChunks: Flow<Pair<AudioEnvelope?, ByteArray>> = _audioChunks.asSharedFlow()
 
     private var shouldReconnect = false
-    private var connectionJob: kotlinx.coroutines.Job? = null
-    private val scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default)
+    private var connectionJob: Job? = null
+    private val scope = CoroutineScope(Dispatchers.Default)
 
     suspend fun connect(
         host: String,
@@ -64,7 +69,17 @@ class PttWebSocketClient(
                             }
                         }
                         is Frame.Binary -> {
-                            _audioChunks.emit(Pair(null, frame.data))
+                            try {
+                                val buffer = okio.Buffer().write(frame.data)
+                                val envLen = buffer.readInt()
+                                val envJson = buffer.readByteArray(envLen.toLong()).decodeToString()
+                                val envelope = Json.decodeFromString<AudioEnvelope>(envJson)
+                                val chunk = buffer.readByteArray()
+                                _audioChunks.emit(Pair(envelope, chunk))
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                                _audioChunks.emit(Pair(null, frame.data))
+                            }
                         }
                         else -> {}
                     }
@@ -79,9 +94,8 @@ class PttWebSocketClient(
             }
 
             if (shouldReconnect) {
-                // Apply jitter +/- 20%
-                val jitter = (kotlin.random.Random.nextDouble(0.8, 1.2) * backoffMs).toLong()
-                kotlinx.coroutines.delay(jitter)
+                val jitter = (Random.nextDouble(0.8, 1.2) * backoffMs).toLong()
+                delay(jitter.milliseconds)
                 backoffMs = minOf(backoffMs * 2, maxBackoffMs)
             }
         }
@@ -100,8 +114,18 @@ class PttWebSocketClient(
         session?.send(Frame.Text(json))
     }
 
-    suspend fun sendAudioChunk(chunk: ByteArray) {
-        // In full implementation, we prefix this with serialized AudioEnvelope
-        session?.send(Frame.Binary(true, chunk))
+    suspend fun sendAudioChunk(
+        envelope: AudioEnvelope,
+        chunk: ByteArray,
+    ) {
+        val envJson = Json.encodeToString(envelope).encodeToByteArray()
+        val envLen = envJson.size
+
+        val buffer = okio.Buffer()
+        buffer.writeInt(envLen)
+        buffer.write(envJson)
+        buffer.write(chunk)
+
+        session?.send(Frame.Binary(true, buffer.readByteArray()))
     }
 }
