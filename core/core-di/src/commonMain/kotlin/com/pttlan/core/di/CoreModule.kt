@@ -11,16 +11,18 @@ import co.touchlab.kermit.loggerConfigInit
 
 val coreModule = module {
     single { createHttpClient() }
+    single { com.pttlan.core.network.PttWebSocketClient(get()) }
     single { com.pttlan.core.network.discovery.ServerDiscoveryService() }
     
-    // Database
     single { get<DatabaseDriverFactory>().createDriver() }
     single { PttDatabase(get()) }
     
+    // Audio
+    single { com.pttlan.core.audio.createAudioRecorder() }
+    single { com.pttlan.core.audio.createAudioPlayer() }
+    
     // Datastore
     single { get<SettingsFactory>().createSettings() }
-    
-    // Telemetry
     single<Logger> { Logger(loggerConfigInit()) }
 }
 
@@ -33,5 +35,6 @@ fun appModules() = listOf(
     com.pttlan.data.ptt.di.dataModule,
     com.pttlan.feature.connection.di.connectionFeatureModule,
     com.pttlan.feature.channellist.di.channelListFeatureModule,
+    com.pttlan.feature.ptt.di.pttFeatureModule,
     com.pttlan.feature.settings.di.settingsFeatureModule
 )

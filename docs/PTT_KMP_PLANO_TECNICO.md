@@ -959,10 +959,10 @@ Checklist:
 **Objetivo:** `feature-channel-list`, múltiplos canais isolados, lista de participantes, nickname.
 
 Checklist:
-- [ ] `ChannelRegistry` no `serverApp` suportando N canais isolados.
-- [ ] `ControlMessage.JoinChannel`/`LeaveChannel`/`ParticipantList` implementados ponta a ponta.
-- [ ] `feature-settings`: tela de nickname (persistido via `core-datastore`).
-- [ ] `feature-channel-list`: criar/entrar em canal, lista de canais recentes (SQLDelight).
+- [x] `ChannelRegistry` no `serverApp` suportando N canais isolados.
+- [x] `ControlMessage.JoinChannel`/`LeaveChannel`/`ParticipantList` implementados ponta a ponta.
+- [x] `feature-settings`: tela de nickname (persistido via `core-datastore`).
+- [x] `feature-channel-list`: criar/entrar em canal, lista de canais recentes (SQLDelight).
 
 **Critério de conclusão:** 3+ clients conseguem entrar em canais diferentes no mesmo servidor sem vazamento de mensagens entre canais (validado por integration test).
 
@@ -1116,7 +1116,7 @@ Antes de marcar qualquer fase como concluída, o agente deve confirmar:
 - [ ] Fase 1 — Infraestrutura concluída
 - [ ] Fase 2 — Core concluída
 - [ ] Fase 3 — Conexão e Descoberta concluída
-- [ ] Fase 4 — Canais e Participantes concluída
+- [x] Fase 4 — Canais e Participantes concluída
 - [ ] Fase 5 — PTT Básico (MVP) concluída
 - [ ] Fase 6 — Floor Control e Reconexão concluída
 - [ ] Fase 7 — Histórico e Replay concluída
