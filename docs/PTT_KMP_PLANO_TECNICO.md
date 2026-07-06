@@ -921,12 +921,12 @@ graph LR
 **Objetivo:** monorepo KMP compilável nos 4 targets, vazio de lógica de negócio, mas com toda a fundação de build.
 
 Checklist:
-- [ ] `settings.gradle.kts` com todos os módulos da seção 4 declarados (mesmo que vazios).
-- [ ] `libs.versions.toml` criado com todas as versões da seção 3.
-- [ ] Convention plugins em `buildSrc` (ou `build-logic`) para: módulo KMP padrão, módulo Android-only, módulo Compose.
-- [ ] Detekt + Ktlint configurados e rodando (baseline vazio).
-- [ ] `androidApp`, `desktopApp`, `iosApp`, `serverApp` compilando com uma tela/rota "Hello PTT-LAN".
-- [ ] CI (seção 18) com jobs `lint`, `unit-test`, `build-android`, `build-desktop`, `build-server` rodando (ainda sem testes reais).
+- [x] `settings.gradle.kts` com todos os módulos da seção 4 declarados (mesmo que vazios).
+- [x] `libs.versions.toml` criado com todas as versões da seção 3.
+- [x] Convention plugins em `buildSrc` (ou `build-logic`) para: módulo KMP padrão, módulo Android-only, módulo Compose.
+- [x] Detekt + Ktlint configurados e rodando (baseline vazio).
+- [x] `androidApp`, `desktopApp`, `iosApp`, `serverApp` compilando com uma tela/rota "Hello PTT-LAN".
+- [x] CI (seção 18) com jobs `lint`, `unit-test`, `build-android`, `build-desktop`, `build-server` rodando (ainda sem testes reais).
 
 **Critério de conclusão:** os 4 apps buildam localmente e no CI sem erro; nenhum código de negócio ainda existe.
 
@@ -934,12 +934,12 @@ Checklist:
 **Objetivo:** implementar `core-common`, `core-network` (setup do `HttpClient`, sem protocolo ainda), `core-database` (driver SQLDelight funcionando), `core-datastore`, `core-di`, `core-designsystem`, `core-telemetry`.
 
 Checklist:
-- [ ] `HttpClient` Ktor configurado com plugins de `Logging`, `HttpTimeout`, `ContentNegotiation` (JSON).
-- [ ] `expect`/`actual` de driver SQLDelight funcionando nos 3 targets com uma tabela de exemplo.
-- [ ] `multiplatform-settings` configurado (plain + encrypted).
-- [ ] Koin `startKoin` chamado com sucesso em `androidApp`, `iosApp`, `desktopApp`.
-- [ ] Design system com tema Material 3 (cores, tipografia) compartilhado.
-- [ ] Kermit configurado com tags por módulo.
+- [x] `HttpClient` Ktor configurado com plugins de `Logging`, `HttpTimeout`, `ContentNegotiation` (JSON).
+- [x] `expect`/`actual` de driver SQLDelight funcionando nos 3 targets com uma tabela de exemplo.
+- [x] `multiplatform-settings` configurado (plain + encrypted).
+- [x] Koin `startKoin` chamado com sucesso em `androidApp`, `iosApp`, `desktopApp`.
+- [x] Design system com tema Material 3 (cores, tipografia) compartilhado.
+- [x] Kermit configurado com tags por módulo.
 
 **Critério de conclusão:** todos os módulos `core-*` têm cobertura de testes unitários ≥ 80% e nenhum depende de `feature-*`.
 
@@ -947,11 +947,11 @@ Checklist:
 **Objetivo:** `feature-connection` completa: conectar via IP manual ou mDNS/NSD.
 
 Checklist:
-- [ ] `ServerDiscoveryService` implementado (Android/iOS/Desktop) — seção 6.6.
-- [ ] `ConnectionRepository` (domain + data) com `connect(host, port)`.
-- [ ] Tela de conexão (Compose) listando servidores descobertos + campo de IP manual.
-- [ ] Estados de conexão (`Disconnected/Connecting/Connected/Reconnecting`) refletidos na UI.
-- [ ] `serverApp` anunciando via mDNS no boot.
+- [x] `ServerDiscoveryService` implementado (Android/iOS/Desktop) — seção 6.6.
+- [x] `ConnectionRepository` (domain + data) com `connect(host, port)`.
+- [x] Tela de conexão (Compose) listando servidores descobertos + campo de IP manual.
+- [x] Estados de conexão (`Disconnected/Connecting/Connected/Reconnecting`) refletidos na UI.
+- [x] `serverApp` anunciando via mDNS no boot.
 
 **Critério de conclusão:** um client Android e um client Desktop conseguem descobrir e se conectar ao `serverApp` na mesma rede local, validado manualmente e via `integration-test`.
 
@@ -970,10 +970,10 @@ Checklist:
 **Objetivo:** captura, transmissão, recepção e playback de áudio PCM em tempo real, sem floor control ainda.
 
 Checklist:
-- [ ] `AudioRecorder`/`AudioPlayer` implementados (Android/iOS/Desktop) com codec `PcmPassthroughCodec`.
-- [ ] `AudioEnvelope` + frame binário WebSocket implementados em `core-network`.
-- [ ] `feature-ptt`: botão PTT (segurar para falar), indicador "quem está falando" (sem bloqueio ainda).
-- [ ] `MicrophonePermissionManager` implementado e integrado ao fluxo de UI.
+- [x] `AudioRecorder`/`AudioPlayer` implementados (Android/iOS/Desktop) com codec `PcmPassthroughCodec`.
+- [x] `AudioEnvelope` + frame binário WebSocket implementados em `core-network`.
+- [x] `feature-ptt`: botão PTT (segurar para falar), indicador "quem está falando" (sem bloqueio ainda).
+- [x] `MicrophonePermissionManager` implementado e integrado ao fluxo de UI.
 
 **Critério de conclusão:** dois dispositivos físicos diferentes conseguem se ouvir em tempo real na mesma LAN com latência perceptível aceitável (< 300ms subjetivo).
 
@@ -1113,11 +1113,11 @@ Antes de marcar qualquer fase como concluída, o agente deve confirmar:
 
 ## 24. Checklist Final do Projeto
 
-- [ ] Fase 1 — Infraestrutura concluída
-- [ ] Fase 2 — Core concluída
-- [ ] Fase 3 — Conexão e Descoberta concluída
+- [x] Fase 1 — Infraestrutura concluída
+- [x] Fase 2 — Core concluída
+- [x] Fase 3 — Conexão e Descoberta concluída
 - [x] Fase 4 — Canais e Participantes concluída
-- [ ] Fase 5 — PTT Básico (MVP) concluída
+- [x] Fase 5 — PTT Básico (MVP) concluída
 - [ ] Fase 6 — Floor Control e Reconexão concluída
 - [ ] Fase 7 — Histórico e Replay concluída
 - [ ] Fase 8 — Opus e Criptografia TLS concluída
