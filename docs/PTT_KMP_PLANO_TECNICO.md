@@ -774,6 +774,7 @@ feature-ptt/
 - Usar `listOfNotNull` e filtros de blank apenas quando semanticamente corretos, nunca para mascarar dados inválidos silenciosamente — validar a origem do dado nulo/vazio antes.
 - Toda função pública em `domain-ptt` deve ter KDoc explicando a regra de negócio, não apenas o "o quê", mas o "por quê" (ex.: por que o floor control usa timeout de heartbeat).
 - Nenhuma constante mágica solta em código; todas nomeadas em `companion object` ou arquivo de constantes do módulo.
+- **Sempre pesquisar e utilizar a versão mais recente e estável das dependências ao adicioná-las ao projeto (e mantê-las atualizadas no `libs.versions.toml`).**
 
 ### 15.4 Commits e Git
 
