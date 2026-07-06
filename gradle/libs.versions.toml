@@ -2,7 +2,9 @@
 agp = "9.2.1"
 kotlin = "2.4.0"
 compose = "1.11.1"
+kotlinxDatetime = "0.8.0"
 ktor = "3.5.1"
+materialIconsExtended = "1.7.3"
 sqldelight = "2.3.2"
 koin = "4.2.2"
 decompose = "3.5.0"
@@ -16,9 +18,12 @@ kover = "0.10.0"
 benManesVersions = "0.54.0"
 jmdns = "3.6.3"
 androidx-core-ktx = "1.19.0"
+okio = "3.17.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
+material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 plugin-agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 plugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 plugin-compose-compiler = { module = "org.jetbrains.kotlin:compose-compiler-gradle-plugin", version.ref = "kotlin" }
@@ -57,6 +62,7 @@ kotlinx-serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-seria
 decompose = { module = "com.arkivanov.decompose:decompose", version.ref = "decompose" }
 decompose-extensions-compose = { module = "com.arkivanov.decompose:extensions-compose", version.ref = "decompose" }
 jmdns = { module = "org.jmdns:jmdns", version.ref = "jmdns" }
+okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core-ktx" }
 [plugins]
 androidApplication = { id = "com.android.application" }

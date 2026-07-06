@@ -13,7 +13,8 @@ kotlin {
             implementation(project(":core:core-datastore"))
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.koin.core)
-            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
+            implementation(libs.kotlinx.datetime)
+            implementation(libs.okio)
         }
     }
 }

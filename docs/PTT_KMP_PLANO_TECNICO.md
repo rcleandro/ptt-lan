@@ -981,9 +981,9 @@ Checklist:
 **Objetivo:** regra de "um fala por vez" e reconexão automática robusta.
 
 Checklist:
-- [ ] Lógica de floor control implementada em `domain-ptt` e replicada no `serverApp` (seção 6.4).
-- [ ] `FloorDenied` tratado na UI (feedback visual/haptic de bloqueio).
-- [ ] Reconexão automática com backoff exponencial (seção 6.5) implementada e testada (queda de rede simulada).
+- [x] Lógica de floor control implementada em `domain-ptt` e replicada no `serverApp` (seção 6.4).
+- [x] `FloorDenied` tratado na UI (feedback visual/haptic de bloqueio).
+- [x] Reconexão automática com backoff exponencial (seção 6.5) implementada e testada (queda de rede simulada).
 
 **Critério de conclusão:** testes de integração cobrindo disputa de floor entre 2+ clients simultâneos, e reconexão automática validada com desligamento/religamento de Wi-Fi.
 
@@ -991,9 +991,9 @@ Checklist:
 **Objetivo:** `feature-history`, últimos N áudios por canal disponíveis para replay.
 
 Checklist:
-- [ ] Persistência de áudio recebido em arquivo local + metadados SQLDelight.
-- [ ] `feature-history`: lista de mensagens recentes com player de replay.
-- [ ] Purge FIFO ao exceder N=50 mensagens por canal.
+- [x] Persistência de áudio recebido em arquivo local + metadados SQLDelight.
+- [x] `feature-history`: lista de mensagens recentes com player de replay.
+- [x] Purge FIFO ao exceder N=50 mensagens por canal.
 
 **Critério de conclusão:** replay funcional offline mesmo sem conexão ativa ao servidor (Offline-first parcial, seção 2).
 
@@ -1118,8 +1118,8 @@ Antes de marcar qualquer fase como concluída, o agente deve confirmar:
 - [x] Fase 3 — Conexão e Descoberta concluída
 - [x] Fase 4 — Canais e Participantes concluída
 - [x] Fase 5 — PTT Básico (MVP) concluída
-- [ ] Fase 6 — Floor Control e Reconexão concluída
-- [ ] Fase 7 — Histórico e Replay concluída
+- [x] Fase 6 — Floor Control e Reconexão concluída
+- [x] Fase 7 — Histórico e Replay concluída
 - [ ] Fase 8 — Opus e Criptografia TLS concluída
 - [ ] Fase 9 — Background e Modo "Sempre Ouvindo" concluída
 - [ ] Fase 10 — Painel Admin Web concluída

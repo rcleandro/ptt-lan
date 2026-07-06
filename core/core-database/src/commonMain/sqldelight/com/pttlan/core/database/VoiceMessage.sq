@@ -1,0 +1,40 @@
+CREATE TABLE VoiceMessage (
+    id TEXT NOT NULL PRIMARY KEY,
+    channelId TEXT NOT NULL,
+    senderNickname TEXT NOT NULL,
+    filePath TEXT NOT NULL,
+    durationMs INTEGER NOT NULL,
+    recordedAt INTEGER NOT NULL
+);
+
+insert:
+INSERT OR REPLACE INTO VoiceMessage(id, channelId, senderNickname, filePath, durationMs, recordedAt)
+VALUES (?, ?, ?, ?, ?, ?);
+
+getRecentMessagesByChannel:
+SELECT * FROM VoiceMessage
+WHERE channelId = :channelId
+ORDER BY recordedAt ASC;
+
+countByChannel:
+SELECT count(*) FROM VoiceMessage
+WHERE channelId = :channelId;
+
+getOldestMessagesByChannel:
+SELECT * FROM VoiceMessage
+WHERE channelId = :channelId
+ORDER BY recordedAt ASC
+LIMIT :limit;
+
+deleteOldestByChannel:
+DELETE FROM VoiceMessage
+WHERE id IN (
+    SELECT id FROM VoiceMessage
+    WHERE channelId = :channelId
+    ORDER BY recordedAt ASC
+    LIMIT :limit
+);
+
+deleteAllByChannel:
+DELETE FROM VoiceMessage
+WHERE channelId = :channelId;
