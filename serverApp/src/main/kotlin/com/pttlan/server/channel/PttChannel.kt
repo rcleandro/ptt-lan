@@ -34,6 +34,7 @@ class PttChannel(val id: String) {
     }
 
     suspend fun removeParticipant(userId: String) {
+        releaseFloorIfHeldBy(userId)
         mutex.withLock {
             participants.remove(userId)
         }
@@ -55,7 +56,10 @@ class PttChannel(val id: String) {
     }
 
     suspend fun broadcastBinary(frame: Frame.Binary, senderUserId: String) {
-        val snapshot = mutex.withLock { participants.values.toList() }
+        val snapshot = mutex.withLock { 
+            if (currentSpeakerId != senderUserId) return
+            participants.values.toList() 
+        }
         
         snapshot.filter { it.userId != senderUserId }.forEach {
             try {
@@ -75,12 +79,40 @@ class PttChannel(val id: String) {
         broadcast(msg)
     }
     
-    suspend fun updateSpeakingStatus(userId: String, isSpeaking: Boolean) {
-        val p = mutex.withLock { participants[userId] }
-        if (p != null) {
-            p.isSpeaking = isSpeaking
-            broadcast(ControlMessage.SpeakerChanged(id, userId, isSpeaking))
+    var currentSpeakerId: String? = null
+        private set
+
+    suspend fun requestFloor(userId: String): Boolean {
+        return mutex.withLock {
+            if (currentSpeakerId == null || currentSpeakerId == userId) {
+                currentSpeakerId = userId
+                participants[userId]?.isSpeaking = true
+                true
+            } else {
+                false
+            }
+        }.also { granted ->
+            if (granted) {
+                broadcast(ControlMessage.SpeakerChanged(id, userId, true))
+            }
         }
+    }
+
+    suspend fun releaseFloor(userId: String) {
+        mutex.withLock {
+            if (currentSpeakerId == userId) {
+                currentSpeakerId = null
+                participants[userId]?.isSpeaking = false
+            } else {
+                return // Not the current speaker, ignore
+            }
+        }
+        broadcast(ControlMessage.SpeakerChanged(id, userId, false))
+    }
+    
+    suspend fun releaseFloorIfHeldBy(userId: String) {
+        val held = mutex.withLock { currentSpeakerId == userId }
+        if (held) releaseFloor(userId)
     }
     
     suspend fun getParticipant(userId: String): Participant? {

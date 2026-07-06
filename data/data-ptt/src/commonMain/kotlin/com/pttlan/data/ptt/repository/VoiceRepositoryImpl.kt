@@ -31,6 +31,14 @@ class VoiceRepositoryImpl(
             .launchIn(scope)
     }
 
+    override suspend fun requestFloor(channelId: String, userId: String) {
+        webSocketClient.sendControlMessage(com.pttlan.core.network.protocol.ControlMessage.StartSpeaking(channelId, userId))
+    }
+
+    override suspend fun releaseFloor(channelId: String, userId: String) {
+        webSocketClient.sendControlMessage(com.pttlan.core.network.protocol.ControlMessage.StopSpeaking(channelId, userId))
+    }
+
     override suspend fun startTransmitting(channelId: String, userId: String) {
         transmissionJob?.cancel()
         

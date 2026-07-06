@@ -7,7 +7,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":core:core-common"))
-            implementation(libs.sqldelight.coroutines)
+            api(libs.sqldelight.coroutines)
         }
         androidMain.dependencies {
             implementation(libs.sqldelight.android)

@@ -3,9 +3,9 @@ package com.pttlan.core.network.discovery
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import org.jmdns.JmDNS
-import org.jmdns.ServiceEvent
-import org.jmdns.ServiceListener
+import javax.jmdns.JmDNS
+import javax.jmdns.ServiceEvent
+import javax.jmdns.ServiceListener
 import java.net.InetAddress
 
 actual class ServerDiscoveryService actual constructor() {

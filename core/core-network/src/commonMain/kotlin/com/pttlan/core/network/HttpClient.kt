@@ -34,7 +34,11 @@ fun createHttpClient(): HttpClient {
         }
 
         install(Logging) {
-            logger = Logger.SIMPLE
+            logger = object : Logger {
+                override fun log(message: String) {
+                    println(message)
+                }
+            }
             level = LogLevel.INFO
         }
     }

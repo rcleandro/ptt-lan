@@ -8,6 +8,7 @@ import io.ktor.server.routing.routing
 import io.ktor.server.websocket.webSocket
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.koin.ktor.ext.inject
 
@@ -40,11 +41,19 @@ fun Routing.pttRoutes() {
                                 }
                                 is ControlMessage.StartSpeaking -> {
                                     val channel = channelRegistry.getChannel(message.channelId)
-                                    channel?.updateSpeakingStatus(message.userId, true)
+                                    if (channel != null) {
+                                        val granted = channel.requestFloor(message.userId)
+                                        if (!granted) {
+                                            val json = Json.encodeToString(
+                                                ControlMessage.FloorDenied(message.channelId, "Alguém já está falando")
+                                            )
+                                            send(Frame.Text(json))
+                                        }
+                                    }
                                 }
                                 is ControlMessage.StopSpeaking -> {
                                     val channel = channelRegistry.getChannel(message.channelId)
-                                    channel?.updateSpeakingStatus(message.userId, false)
+                                    channel?.releaseFloor(message.userId)
                                 }
                                 is ControlMessage.Heartbeat -> {
                                     // Could track last heartbeat for automatic cleanup

@@ -15,6 +15,7 @@ ktlint = "14.2.0"
 kover = "0.10.0"
 benManesVersions = "0.54.0"
 jmdns = "3.6.3"
+androidx-core-ktx = "1.19.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -56,6 +57,7 @@ kotlinx-serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-seria
 decompose = { module = "com.arkivanov.decompose:decompose", version.ref = "decompose" }
 decompose-extensions-compose = { module = "com.arkivanov.decompose:extensions-compose", version.ref = "decompose" }
 jmdns = { module = "org.jmdns:jmdns", version.ref = "jmdns" }
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core-ktx" }
 [plugins]
 androidApplication = { id = "com.android.application" }
 androidLibrary = { id = "com.android.library" }

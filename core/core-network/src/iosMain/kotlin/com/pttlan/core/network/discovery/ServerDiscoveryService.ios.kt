@@ -1,5 +1,6 @@
 package com.pttlan.core.network.discovery
 
+import kotlinx.cinterop.ObjCSignatureOverride
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -19,6 +20,7 @@ actual class ServerDiscoveryService actual constructor() {
         val services = mutableMapOf<String, NSNetService>()
         
         val browserDelegate = object : NSObject(), NSNetServiceBrowserDelegateProtocol {
+            @ObjCSignatureOverride
             override fun netServiceBrowser(
                 browser: NSNetServiceBrowser,
                 didFindService: NSNetService,
@@ -37,7 +39,8 @@ actual class ServerDiscoveryService actual constructor() {
                         trySend(server)
                     }
                     
-                    override fun netService(sender: NSNetService, didNotResolve: platform.Foundation.NSDictionary) {
+                    @ObjCSignatureOverride
+                    override fun netService(sender: NSNetService, didNotResolve: Map<Any?, *>) {
                         // Handle resolve failure
                     }
                 }
@@ -46,6 +49,7 @@ actual class ServerDiscoveryService actual constructor() {
                 didFindService.resolveWithTimeout(5.0)
             }
 
+            @ObjCSignatureOverride
             override fun netServiceBrowser(
                 browser: NSNetServiceBrowser,
                 didRemoveService: NSNetService,
@@ -70,3 +74,4 @@ actual class ServerDiscoveryService actual constructor() {
         browser = null
     }
 }
+

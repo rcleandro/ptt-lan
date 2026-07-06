@@ -8,8 +8,9 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":core:core-common"))
             implementation(project(":core:core-designsystem"))
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
             implementation(project(":core:core-navigation"))
-            implementation(project(":core:core-di"))
             implementation(project(":core:core-datastore"))
             implementation(project(":domain:domain-ptt"))
             

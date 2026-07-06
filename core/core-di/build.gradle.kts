@@ -10,6 +10,7 @@ kotlin {
             api(project(":core:core-database"))
             api(project(":core:core-datastore"))
             api(project(":core:core-telemetry"))
+            api(project(":core:core-audio"))
             api(project(":domain:domain-ptt"))
             api(project(":data:data-ptt"))
             api(project(":features:feature-connection"))

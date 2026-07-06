@@ -25,9 +25,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+
 @Composable
 fun PttScreen(component: PttComponent) {
     val state by component.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         component.effects.collect { effect ->
@@ -35,12 +43,18 @@ fun PttScreen(component: PttComponent) {
                 is PttEffect.NavigateBack -> {
                     // Handled by Decompose router
                 }
+                is PttEffect.ShowFloorDenied -> {
+                    scope.launch {
+                        snackbarHostState.showSnackbar(effect.reason)
+                    }
+                }
             }
         }
     }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -57,14 +71,16 @@ fun PttScreen(component: PttComponent) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            val buttonColor = if (state.isTransmitting) Color.Red else MaterialTheme.colorScheme.primary
+            val buttonColor = if (state.isTransmitting) Color.Red 
+                else if (state.floorBlocked) Color.Gray 
+                else MaterialTheme.colorScheme.primary
 
             Surface(
                 shape = CircleShape,
                 color = buttonColor,
                 modifier = Modifier
                     .size(200.dp)
-                    .pointerInput(Unit) {
+                    .pointerInput(state.floorBlocked) {
                         detectTapGestures(
                             onPress = {
                                 component.onIntent(PttIntent.PressPtt)
@@ -76,7 +92,7 @@ fun PttScreen(component: PttComponent) {
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
-                        text = if (state.isTransmitting) "FALANDO" else "PTT",
+                        text = if (state.isTransmitting) "FALANDO" else if (state.floorBlocked) "OCUPADO" else "PTT",
                         style = MaterialTheme.typography.headlineLarge,
                         color = Color.White
                     )
