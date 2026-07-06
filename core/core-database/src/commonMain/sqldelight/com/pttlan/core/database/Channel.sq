@@ -1,0 +1,6 @@
+CREATE TABLE Channel (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    lastJoinedAt INTEGER NOT NULL,
+    isFavorite INTEGER AS Boolean NOT NULL DEFAULT 0
+);

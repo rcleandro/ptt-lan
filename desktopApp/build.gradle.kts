@@ -6,10 +6,12 @@ plugins {
 kotlin {
     jvm()
     sourceSets {
-        jvmMain {
-            dependencies {
-                implementation(compose.desktop.currentOs)
-            }
+        jvmMain.dependencies {
+            implementation(compose.desktop.currentOs)
+            implementation(project(":core:core-di"))
+            implementation(project(":core:core-designsystem"))
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
         }
     }
 }
