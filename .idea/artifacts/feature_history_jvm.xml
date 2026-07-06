@@ -1,0 +1,6 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="feature-history-jvm">
+    <output-path>$PROJECT_DIR$/features/feature-history/build/libs</output-path>
+    <root id="archive" name="feature-history-jvm.jar" />
+  </artifact>
+</component>

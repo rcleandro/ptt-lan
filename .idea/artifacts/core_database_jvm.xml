@@ -1,0 +1,6 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="core-database-jvm">
+    <output-path>$PROJECT_DIR$/core/core-database/build/libs</output-path>
+    <root id="archive" name="core-database-jvm.jar" />
+  </artifact>
+</component>
