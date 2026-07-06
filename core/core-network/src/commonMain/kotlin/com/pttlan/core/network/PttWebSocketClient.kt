@@ -49,7 +49,7 @@ class PttWebSocketClient(
             try {
                 sessionMutex.withLock {
                     if (session != null) return@withLock
-                    session = httpClient.webSocketSession(host = host, port = port, path = "/ws")
+                    session = httpClient.webSocketSession("wss://$host:$port/ws")
                 }
 
                 // Reset backoff on successful connection

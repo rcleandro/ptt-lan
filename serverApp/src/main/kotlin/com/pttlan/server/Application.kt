@@ -54,7 +54,7 @@ fun Application.module() {
                 ServiceInfo.create(
                     "_pttlan._tcp.local.",
                     "PTT-LAN-Server-${System.currentTimeMillis()}",
-                    9393,
+                    9443,
                     0,
                     0,
                     "SSL:9443",
