@@ -9,10 +9,10 @@ repositories {
 }
 
 dependencies {
-    implementation("com.android.tools.build:gradle:9.2.1")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.0")
-    implementation("org.jetbrains.kotlin:compose-compiler-gradle-plugin:2.4.0")
-    implementation("org.jetbrains.compose:compose-gradle-plugin:1.11.1")
-    implementation("org.jlleitschuh.gradle:ktlint-gradle:14.2.0")
-    implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.23.8")
+    implementation(libs.plugin.agp)
+    implementation(libs.plugin.kotlin)
+    implementation(libs.plugin.compose.compiler)
+    implementation(libs.plugin.compose)
+    implementation(libs.plugin.ktlint)
+    implementation(libs.plugin.detekt)
 }

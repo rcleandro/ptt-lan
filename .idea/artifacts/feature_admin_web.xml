@@ -1,0 +1,6 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="feature-admin-web">
+    <output-path>$PROJECT_DIR$/features/feature-admin-web/build/libs</output-path>
+    <root id="archive" name="feature-admin-web.jar" />
+  </artifact>
+</component>

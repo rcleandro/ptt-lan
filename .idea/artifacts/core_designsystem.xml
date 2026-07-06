@@ -1,0 +1,6 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="core-designsystem">
+    <output-path>$PROJECT_DIR$/core/core-designsystem/build/libs</output-path>
+    <root id="archive" name="core-designsystem.jar" />
+  </artifact>
+</component>

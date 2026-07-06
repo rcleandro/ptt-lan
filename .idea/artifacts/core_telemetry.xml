@@ -1,0 +1,6 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="core-telemetry">
+    <output-path>$PROJECT_DIR$/core/core-telemetry/build/libs</output-path>
+    <root id="archive" name="core-telemetry.jar" />
+  </artifact>
+</component>
