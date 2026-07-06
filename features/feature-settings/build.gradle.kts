@@ -14,7 +14,7 @@ kotlin {
             implementation(project(":core:core-datastore"))
             implementation(project(":domain:domain-ptt"))
 
-            implementation(libs.decompose)
+            api(libs.decompose)
             implementation(libs.decompose.extensions.compose)
         }
     }

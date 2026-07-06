@@ -7,10 +7,10 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":core:core-common"))
-            api(compose.ui)
-            api(compose.foundation)
-            api(compose.material3)
-            api(compose.runtime)
+            api(libs.ui)
+            api(libs.foundation)
+            api(libs.material3)
+            api(libs.runtime)
             implementation(libs.material.icons.extended)
         }
     }

@@ -22,7 +22,6 @@ class AndroidAudioRecorder : AudioRecorder {
             val audioFormat = AudioFormat.ENCODING_PCM_16BIT
             val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
 
-            // Use a 32ms chunk size approximately
             val chunkSizeBytes = sampleRate * 2 * 32 / 1000
             val finalBufferSize = maxOf(bufferSize, chunkSizeBytes * 4)
 

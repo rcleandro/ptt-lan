@@ -15,8 +15,6 @@ class AndroidMicrophonePermissionManager(
         ) == PackageManager.PERMISSION_GRANTED
 
     override suspend fun request(): Boolean {
-        // Real request should be handled by Compose UI with Accompanist,
-        // this is just a fallback check for the architecture.
         return isGranted()
     }
 }
