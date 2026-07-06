@@ -13,6 +13,7 @@ serialization = "1.8.0"
 detekt = "1.24.0"
 ktlint = "14.2.0"
 kover = "0.10.0"
+benManesVersions = "0.54.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -28,3 +29,4 @@ sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+benManesVersions = { id = "com.github.ben-manes.versions", version.ref = "benManesVersions" }
