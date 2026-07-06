@@ -31,5 +31,7 @@ fun appModules() = listOf(
     platformModule,
     com.pttlan.domain.ptt.di.domainModule,
     com.pttlan.data.ptt.di.dataModule,
-    com.pttlan.feature.connection.di.connectionFeatureModule
+    com.pttlan.feature.connection.di.connectionFeatureModule,
+    com.pttlan.feature.channellist.di.channelListFeatureModule,
+    com.pttlan.feature.settings.di.settingsFeatureModule
 )

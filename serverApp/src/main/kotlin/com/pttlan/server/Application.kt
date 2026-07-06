@@ -54,7 +54,15 @@ fun Application.module() {
         }
     }.start()
 
+    install(org.koin.ktor.plugin.Koin) {
+        modules(
+            org.koin.dsl.module {
+                single { com.pttlan.server.channel.ChannelRegistry() }
+            }
+        )
+    }
+
     routing {
-        // We will add the websocket routes here in Phase 4/5
+        com.pttlan.server.routing.pttRoutes()
     }
 }

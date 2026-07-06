@@ -19,4 +19,5 @@ dependencies {
     implementation(libs.ktor.serialization.kotlinx.json)
     
     implementation(libs.koin.core)
+    implementation("io.insert-koin:koin-ktor:${libs.versions.koin.get()}")
 }

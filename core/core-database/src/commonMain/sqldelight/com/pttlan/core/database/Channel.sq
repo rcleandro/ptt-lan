@@ -6,3 +6,10 @@ CREATE TABLE Channel (
     lastJoinedAt INTEGER NOT NULL,
     isFavorite INTEGER AS Boolean NOT NULL DEFAULT 0
 );
+
+selectAllChannels:
+SELECT * FROM Channel ORDER BY lastJoinedAt DESC;
+
+insertOrReplaceChannel:
+INSERT OR REPLACE INTO Channel(id, name, lastJoinedAt, isFavorite)
+VALUES (?, ?, ?, ?);
