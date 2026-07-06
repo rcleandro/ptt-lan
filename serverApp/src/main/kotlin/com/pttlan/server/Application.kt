@@ -31,7 +31,7 @@ fun main(args: Array<String>) {
     EngineMain.main(args)
 }
 
-@Suppress("TooGenericExceptionCaught", "MagicNumber", "unused")
+@Suppress("TooGenericExceptionCaught", "MagicNumber")
 fun Application.module() {
     install(WebSockets) {
         pingPeriod = 20.seconds
