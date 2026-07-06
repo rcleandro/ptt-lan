@@ -63,13 +63,14 @@ Este projeto é, antes de tudo, um veículo de estudo prático e aprofundado de 
 | Intermediário | Reconexão automática | Fase 6 |
 | Intermediário | Histórico de últimos N áudios (replay) | Fase 7 |
 | Intermediário | Nickname do usuário | Fase 4 |
-| Avançado | Compressão Opus | Fase 8 |
-| Avançado | Criptografia do stream | Fase 8 |
-| Avançado | PTT em background | Fase 9 |
-| Avançado | Modo "sempre ouvindo" vs "app aberto" | Fase 9 |
-| Avançado | Painel admin web | Fase 10 |
-| Avançado | Replay com waveform | Fase 10 |
-| Avançado | Suporte Android Automotive | Fase 11 |
+| Avançado | Novo Design System (UI/UX sóbrio e moderno) | Fase 8 |
+| Avançado | Compressão Opus | Fase 9 |
+| Avançado | Criptografia do stream | Fase 9 |
+| Avançado | PTT em background | Fase 10 |
+| Avançado | Modo "sempre ouvindo" vs "app aberto" | Fase 10 |
+| Avançado | Painel admin web | Fase 11 |
+| Avançado | Replay com waveform | Fase 11 |
+| Avançado | Suporte Android Automotive | Fase 12 |
 
 ### 1.4 Público-alvo
 
@@ -87,11 +88,11 @@ Princípios aplicados de forma não negociável em todo o código:
 | SOLID | UseCases com responsabilidade única; interfaces de `Repository` no domain, implementação no data (DIP); extensão de features via novos módulos, não edição dos existentes (OCP). |
 | KISS | Não introduzir abstrações especulativas; um único padrão de estado (MVI) para todas as telas. |
 | DRY | Lógica de protocolo PTT, serialização de mensagens e regras de floor control vivem 100% em `shared`/`core`, nunca duplicadas por plataforma. |
-| YAGNI | Funcionalidades avançadas (Opus, criptografia, painel admin) só entram a partir da Fase 8, não antes; não implementar "para o futuro" fora do roadmap. |
+| YAGNI | Funcionalidades avançadas (Opus, criptografia, painel admin) só entram a partir da Fase 9, não antes; não implementar "para o futuro" fora do roadmap. |
 | Modularização | Um módulo Gradle por feature + módulos `core:*` reutilizáveis. Ver árvore completa na seção 4. |
 | Baixo acoplamento / Alta coesão | Comunicação entre features apenas via contratos em `core:*`, nunca módulo de feature dependendo de outro módulo de feature. |
 | Offline-first (parcial) | Não se aplica a áudio em tempo real (é um stream ao vivo), mas se aplica a: lista de canais recentes, nickname salvo, histórico de mensagens (replay) — que ficam em SQLDelight local e funcionam mesmo sem conexão ativa ao servidor. |
-| Observabilidade | Logging estruturado (Kermit) + métricas de rede (latência, pacotes perdidos) expostas via `core:telemetry`, consumidas pelo painel admin (Fase 10) e por logs locais. |
+| Observabilidade | Logging estruturado (Kermit) + métricas de rede (latência, pacotes perdidos) expostas via `core:telemetry`, consumidas pelo painel admin (Fase 11) e por logs locais. |
 | Segurança | TLS opcional sobre WebSocket (self-signed, ver seção 12), tokens de sessão por canal, sem credenciais hard-coded. |
 
 ### 2.1 Por que Clean Architecture aqui (e não algo mais simples)
@@ -110,7 +111,7 @@ Todas as escolhas abaixo são finais. Nenhuma alternativa deve ser reavaliada du
 |---|---|---|
 | Kotlin | 2.4.x (K2 compiler) | K2 é o compilador padrão desde o Kotlin 2.0, com melhor desempenho de compilação e melhor suporte a multiplataforma; necessário para recursos modernos de KMP. |
 | Build system | Gradle com Kotlin DSL + Version Catalog (`libs.versions.toml`) | Padrão de mercado para KMP; version catalog centraliza versões e evita divergência entre módulos (dor recorrente já observada em projetos reais do autor). |
-| Gerenciador de targets | `org.jetbrains.kotlin.multiplatform` plugin | Targets: `androidTarget`, `iosArm64`/`iosSimulatorArm64`/`iosX64`, `jvm` (desktop e servidor), `wasmJs` opcional apenas se o painel admin (Fase 10) for feito em Compose Web — caso contrário painel admin é HTML/JS simples servido pelo próprio Ktor. |
+| Gerenciador de targets | `org.jetbrains.kotlin.multiplatform` plugin | Targets: `androidTarget`, `iosArm64`/`iosSimulatorArm64`/`iosX64`, `jvm` (desktop e servidor), `wasmJs` opcional apenas se o painel admin (Fase 11) for feito em Compose Web — caso contrário painel admin é HTML/JS simples servido pelo próprio Ktor. |
 
 ### 3.2 UI — Compose Multiplatform + Decompose
 
@@ -181,7 +182,7 @@ Uso do SQLDelight neste projeto: canais recentes/favoritos, nickname, últimos N
 
 ### 3.9 Áudio nativo (captura/playback) — visão da stack
 
-| Plataforma | Captura | Playback | Codec MVP | Codec avançado (Fase 8) |
+| Plataforma | Captura | Playback | Codec MVP | Codec avançado (Fase 9) |
 |---|---|---|---|---|
 | Android | `AudioRecord` (API nativa) | `AudioTrack` | PCM 16-bit/16kHz mono | Opus via `libopus` (JNI, wrapper próprio) |
 | iOS | `AVAudioEngine` / `AVAudioInputNode` | `AVAudioEngine` / `AVAudioPlayerNode` | PCM 16-bit/16kHz mono | Opus via `libopus` (cinterop) |
@@ -196,7 +197,7 @@ Justificativa: cada plataforma tem sua própria API de baixo nível de áudio; n
 | Detekt | Análise estática Kotlin (complexidade, code smells), rodando em `commonMain`, `androidMain`, `iosMain`, `jvmMain`. |
 | Ktlint | Formatação de código consistente (regra oficial Kotlin), integrado via plugin Gradle, rodando em pre-commit e CI. |
 | Kover | Cobertura de código (substitui JaCoCo em projetos Kotlin/KMP modernos, com suporte nativo a multiplataforma). |
-| Dokka | Geração de documentação técnica a partir de KDoc, publicada como artefato de CI a partir da Fase 12. |
+| Dokka | Geração de documentação técnica a partir de KDoc, publicada como artefato de CI a partir da Fase 13. |
 
 ---
 
@@ -257,7 +258,7 @@ ptt-lan/
 │   ├── feature-ptt/                      # Tela principal do walkie-talkie (botão PTT, quem fala, participantes)
 │   ├── feature-history/                  # Histórico/replay de mensagens (Fase 7+)
 │   ├── feature-settings/                 # Nickname, tema, modo "sempre ouvindo"
-│   └── feature-admin-web/                # Painel admin (HTML/JS servido pelo serverApp) — Fase 10
+│   └── feature-admin-web/                # Painel admin (HTML/JS servido pelo serverApp) — Fase 11
 │
 └── docs/
     ├── adr/                              # Architecture Decision Records
@@ -282,7 +283,7 @@ ptt-lan/
 | `data-ptt` | Implementações de `*Repository`, mapeamento DTO ↔ Domain | `domain-ptt`, `core-network`, `core-database`, `core-audio` |
 | `feature-*` | UI (Compose) + ViewModel/Component (Decompose) + testes de UI | `domain-ptt`, `core-designsystem`, `core-navigation`, `core-di` |
 | `shared` | Módulo "guarda-chuva" que reexporta os módulos acima para os apps de plataforma quando necessário (framework KMP/CocoaPods para iOS) | todos os `core-*`, `domain-*`, `data-*` |
-| `serverApp` | Servidor Ktor: rotas WebSocket, `ChannelRegistry`, floor control, painel admin (Fase 10) | `core-network` (DTOs compartilhados), `core-common` |
+| `serverApp` | Servidor Ktor: rotas WebSocket, `ChannelRegistry`, floor control, painel admin (Fase 11) | `core-network` (DTOs compartilhados), `core-common` |
 
 **Regra de dependência não negociável:** módulos `feature-*` nunca dependem uns dos outros. Comunicação entre features (ex.: `feature-channel-list` navegar para `feature-ptt`) acontece apenas através de contratos definidos em `core-navigation`.
 
@@ -518,13 +519,13 @@ expect fun createAudioPlayer(): AudioPlayer
 
 Na Fase 5 (MVP), `AudioCodec` tem uma implementação `PcmPassthroughCodec` (no-op) comum a todas as plataformas — evita lidar com bindings nativos de Opus antes de o pipeline de rede/áudio básico estar validado ponta a ponta. Isso é uma aplicação direta de YAGNI: não introduzir Opus antes de precisar.
 
-### 7.3 Fase 8: codec Opus
+### 7.3 Fase 9: codec Opus
 
 - Android: wrapper JNI sobre `libopus` (via `cinterop`/NDK, biblioteca `opus-android` ou build própria do libopus).
 - iOS: `libopus` via CocoaPods + `cinterop` Kotlin/Native.
 - Desktop: binding JNI equivalente ao do Android (mesma lib nativa, target `jvm`).
 
-Justificativa de adiar para Fase 8: complexidade de build nativo (NDK/cinterop) é alta; validar o pipeline PCM primeiro reduz risco e permite testar toda a lógica de rede/floor-control sem essa complexidade adicional.
+Justificativa de adiar para Fase 9: complexidade de build nativo (NDK/cinterop) é alta; validar o pipeline PCM primeiro reduz risco e permite testar toda a lógica de rede/floor-control sem essa complexidade adicional.
 
 ### 7.4 Permissões
 
@@ -695,7 +696,7 @@ Cada `feature-*` declara seu próprio módulo Koin com os `Component`/ViewModel;
 | Autenticação | Não há login de usuário (é um app de LAN doméstica); a "identidade" é o nickname + um `deviceId` gerado localmente (UUID persistido). |
 | Autorização de canal | Canais podem ter senha opcional; servidor emite um token de sessão (JWT simples assinado com chave simétrica gerada no boot do servidor) ao entrar, exigido nas mensagens subsequentes daquele canal. |
 | Armazenamento seguro | Token de sessão salvo via `EncryptedSettings` (Android Keystore / iOS Keychain), nunca em texto plano nem em log. |
-| Criptografia do stream | A partir da Fase 8: WebSocket sobre TLS com certificado self-signed gerado pelo próprio servidor no primeiro boot; client aceita o certificado via *trust-on-first-use* (TOFU) com fingerprint exibido ao usuário — abordagem adequada para LAN doméstica, sem depender de CA pública. |
+| Criptografia do stream | A partir da Fase 9: WebSocket sobre TLS com certificado self-signed gerado pelo próprio servidor no primeiro boot; client aceita o certificado via *trust-on-first-use* (TOFU) com fingerprint exibido ao usuário — abordagem adequada para LAN doméstica, sem depender de CA pública. |
 | Proteção contra abuso local | Rate limiting simples por `deviceId` no servidor (máx. de mensagens de controle por segundo) para evitar flood acidental. |
 | Gerenciamento de tokens | Token de canal expira em 24h ou ao `LeaveChannel`; nunca reutilizado entre canais diferentes. |
 
@@ -708,7 +709,7 @@ Cada `feature-*` declara seu próprio módulo Koin com os `Component`/ViewModel;
 | Logging | Kermit (multiplataforma) | Log estruturado com tags por módulo (`network`, `audio`, `floorcontrol`); nível `Debug` em dev, `Warn` em release. |
 | Analytics | Interface própria `AnalyticsTracker` em `core-telemetry`, implementação `NoOpAnalyticsTracker` por padrão (app não envia dados para fora da LAN); pode ser trocada por implementação local que grava em SQLDelight para o painel admin. | Evita qualquer dependência de serviço de analytics externo, coerente com a proposta "sem depender de internet". |
 | Crash reporting | Handler próprio (`UncaughtExceptionHandler`/`NSSetUncaughtExceptionHandler`) que grava stacktrace localmente em arquivo de log rotacionado; sem envio para serviço externo (diferente da abordagem com New Relic usada pelo autor no `com.imusica`, que é intencionalmente evitada aqui por não haver backend externo no escopo do produto). | |
-| Métricas de rede | `core-telemetry` coleta latência de round-trip do heartbeat e contagem de pacotes de áudio perdidos (`sequenceNumber` com gap); exposto ao painel admin (Fase 10). | |
+| Métricas de rede | `core-telemetry` coleta latência de round-trip do heartbeat e contagem de pacotes de áudio perdidos (`sequenceNumber` com gap); exposto ao painel admin (Fase 11). | |
 
 ---
 
@@ -835,7 +836,7 @@ fun `quando PressPtt e floor esta livre, isTransmitting fica true`() = runTest {
 | Detekt | `detekt.yml` na raiz, baseline gerado apenas na Fase 1 (não permitido crescer depois); falha o build em qualquer novo issue. |
 | Ktlint | Regras oficiais Kotlin, aplicado via `ktlintFormat` em pre-commit hook (Git hook local) e `ktlintCheck` no CI. |
 | Kover | Relatório HTML publicado como artefato de CI; falha o pipeline se módulo ficar abaixo da meta da seção 16.2. |
-| Dokka | Gerado a partir da Fase 12, publicado como site estático (artefato de CI, sem hospedagem externa obrigatória). |
+| Dokka | Gerado a partir da Fase 13, publicado como site estático (artefato de CI, sem hospedagem externa obrigatória). |
 
 ### 17.2 Code Review — checklist obrigatório por MR
 
@@ -997,7 +998,20 @@ Checklist:
 
 **Critério de conclusão:** replay funcional offline mesmo sem conexão ativa ao servidor (Offline-first parcial, seção 2).
 
-### Fase 8 — Compressão Opus e Criptografia TLS
+### Fase 8 — Novo Design System (UI/UX Sóbria e Moderna)
+**Objetivo:** substituir o tema visual provisório da Fase 2 por um design system definitivo — paleta sóbria (base grafite/escura + acentos de baixa saturação para estados de transmissão/recepção/conexão), tipografia e componentes reutilizáveis — aplicado retroativamente a todas as telas já existentes (Fases 3 a 7), sem alterar comportamento ou regras de domínio (Use ptt-lan-design-system.html como referência de design).
+
+Checklist:
+- [ ] ADR documentando a paleta final (cores, papéis semânticos: background/surface/primary/accent-tx/status) e a dupla tipográfica escolhida (UI + monoespaçada para dados técnicos).
+- [ ] `core-designsystem` reescrito: `Color.kt`, `Typography.kt`, `Shape.kt` e tokens expostos via `MaterialTheme` (Material 3), substituindo o tema provisório da Fase 2.
+- [ ] Componentes compartilhados criados/atualizados em `core-designsystem`: `PttButton` (estados idle/transmitindo/recebendo), `ConnectionStatusBadge`, `ChannelCard`, `ParticipantAvatar`.
+- [ ] Suporte a tema claro e escuro (dark mode como padrão, alinhado ao uso em campo/baixa luminosidade).
+- [ ] Migração das telas existentes (`feature-connection`, `feature-channel-list`, `feature-ptt`, `feature-history`, `feature-settings`) para os novos tokens, removendo qualquer cor/tipografia hard-coded fora de `core-designsystem`.
+- [ ] Testes de snapshot/screenshot (Paparazzi ou equivalente Compose Multiplatform) para os componentes e telas migradas, evitando regressão visual em fases futuras.
+
+**Critério de conclusão:** todas as telas das Fases 3-7 usam exclusivamente os tokens de `core-designsystem`; nenhuma cor ou estilo de texto hard-coded em módulos `feature-*` (validado por regra de lint/detekt customizada); testes de snapshot criados e passando no CI; ADR de paleta e tipografia publicado em `docs/adr/`.
+
+### Fase 9 — Compressão Opus e Criptografia TLS
 **Objetivo:** reduzir tráfego de rede e adicionar criptografia ao stream.
 
 Checklist:
@@ -1007,7 +1021,7 @@ Checklist:
 
 **Critério de conclusão:** comparação documentada (em `docs/adr/`) de banda consumida PCM vs Opus; conexão TLS validada com fingerprint exibido ao usuário.
 
-### Fase 9 — Background e Modo "Sempre Ouvindo"
+### Fase 10 — Background e Modo "Sempre Ouvindo"
 **Objetivo:** app tocando áudio recebido mesmo minimizado; toggle de modo de escuta.
 
 Checklist:
@@ -1017,7 +1031,7 @@ Checklist:
 
 **Critério de conclusão:** Android recebe áudio em background de forma confiável; limitações de iOS documentadas com decisão explícita de escopo (ADR).
 
-### Fase 10 — Painel Admin Web
+### Fase 11 — Painel Admin Web
 **Objetivo:** `feature-admin-web`, dashboard simples servido pelo `serverApp`.
 
 Checklist:
@@ -1027,7 +1041,7 @@ Checklist:
 
 **Critério de conclusão:** painel acessível via navegador na mesma LAN, atualizado em tempo real (polling ou WebSocket próprio do painel).
 
-### Fase 11 — Android Automotive
+### Fase 12 — Android Automotive
 **Objetivo:** botão PTT acessível via volante ou tela do carro.
 
 Checklist:
@@ -1037,7 +1051,7 @@ Checklist:
 
 **Critério de conclusão:** fluxo completo de entrar em canal e transmitir validado no emulador Android Automotive.
 
-### Fase 12 — Documentação Final e Polimento
+### Fase 13 — Documentação Final e Polimento
 **Objetivo:** Dokka publicado, ADRs completos, checklist final (seção 24) 100% concluído.
 
 Checklist:
@@ -1081,11 +1095,12 @@ graph TD
     F4 --> F5[Fase 5: PTT Básico]
     F5 --> F6[Fase 6: Floor Control/Reconexão]
     F6 --> F7[Fase 7: Histórico/Replay]
-    F7 --> F8[Fase 8: Opus/TLS]
-    F8 --> F9[Fase 9: Background]
-    F9 --> F10[Fase 10: Painel Admin]
-    F10 --> F11[Fase 11: Automotive]
-    F11 --> F12[Fase 12: Documentação Final]
+    F7 --> F8[Fase 8: Design System]
+    F8 --> F9[Fase 9: Opus/TLS]
+    F9 --> F10[Fase 10: Background]
+    F10 --> F11[Fase 11: Painel Admin]
+    F11 --> F12[Fase 12: Automotive]
+    F12 --> F13[Fase 13: Documentação Final]
 ```
 
 ### 22.4 Regra de não regressão
@@ -1106,8 +1121,8 @@ Antes de marcar qualquer fase como concluída, o agente deve confirmar:
 | Testes | 100% dos testes automatizados passando em todo merge para `develop`/`main`. |
 | Cobertura | Mínimos por módulo respeitados (seção 16.2), validado via Kover no CI. |
 | Qualidade | Zero issues novos de Detekt; zero violações de Ktlint. |
-| Performance | Latência ponta a ponta de áudio < 300ms subjetivo em LAN doméstica (medido manualmente na Fase 5 e revalidado na Fase 8 com Opus). |
-| Documentação | Todo UseCase público em `domain-ptt` com KDoc; Dokka gerado sem warnings a partir da Fase 12. |
+| Performance | Latência ponta a ponta de áudio < 300ms subjetivo em LAN doméstica (medido manualmente na Fase 5 e revalidado na Fase 9 com Opus). |
+| Documentação | Todo UseCase público em `domain-ptt` com KDoc; Dokka gerado sem warnings a partir da Fase 13. |
 
 ---
 
@@ -1120,11 +1135,12 @@ Antes de marcar qualquer fase como concluída, o agente deve confirmar:
 - [x] Fase 5 — PTT Básico (MVP) concluída
 - [x] Fase 6 — Floor Control e Reconexão concluída
 - [x] Fase 7 — Histórico e Replay concluída
-- [ ] Fase 8 — Opus e Criptografia TLS concluída
-- [ ] Fase 9 — Background e Modo "Sempre Ouvindo" concluída
-- [ ] Fase 10 — Painel Admin Web concluída
-- [ ] Fase 11 — Android Automotive concluída
-- [ ] Fase 12 — Documentação Final concluída
+- [ ] Fase 8 — Novo Design System (UI/UX Sóbria e Moderna) concluída
+- [ ] Fase 9 — Opus e Criptografia TLS concluída
+- [ ] Fase 10 — Background e Modo "Sempre Ouvindo" concluída
+- [ ] Fase 11 — Painel Admin Web concluída
+- [ ] Fase 12 — Android Automotive concluída
+- [ ] Fase 13 — Documentação Final concluída
 - [ ] Todos os critérios de aceite globais (seção 23) satisfeitos
 - [ ] Nenhuma decisão arquitetural em aberto restante neste documento
 - [ ] Repositório com README de onboarding para novos desenvolvedores apontando para este documento como SSOT

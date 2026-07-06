@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>PTT-LAN — Design System</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root{
+    --bg: #14171A;
+    --surface: #1D2124;
+    --surface-2: #262B2F;
+    --surface-3: #2F353A;
+    --border: #33393E;
+    --text-primary: #E8EAED;
+    --text-secondary: #9AA1A8;
+    --text-tertiary: #6B7278;
+
+    --primary: #4C7A94;
+    --primary-dim: #375A6C;
+    --primary-glow: rgba(76,122,148,0.35);
+
+    --accent-tx: #C77D4C;      /* transmitindo (PTT pressionado) */
+    --accent-tx-glow: rgba(199,125,76,0.35);
+
+    --status-online: #5E9080;  /* conectado */
+    --status-offline: #B5533F; /* erro / desconectado */
+    --status-idle: #6B7278;
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+
+    --font-ui: 'IBM Plex Sans', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:var(--bg); color:var(--text-primary); font-family:var(--font-ui); }
+
+  .page{ max-width:1180px; margin:0 auto; padding:56px 32px 120px; }
+
+  .eyebrow{ font-family:var(--font-mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--primary); margin-bottom:10px; }
+  h1{ font-size:40px; font-weight:700; margin:0 0 8px; letter-spacing:-0.01em; }
+  .subtitle{ color:var(--text-secondary); font-size:16px; max-width:640px; line-height:1.55; margin-bottom:48px; }
+
+  section{ margin-bottom:72px; }
+  h2{ font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.1em; color:var(--text-secondary); margin:0 0 24px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+
+  /* ---------- Palette ---------- */
+  .swatch-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
+  .swatch{ border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; background:var(--surface); }
+  .swatch-color{ height:88px; }
+  .swatch-meta{ padding:12px 14px; }
+  .swatch-name{ font-size:13px; font-weight:600; }
+  .swatch-role{ font-size:12px; color:var(--text-secondary); margin-top:2px; }
+  .swatch-hex{ font-family:var(--font-mono); font-size:11px; color:var(--text-tertiary); margin-top:8px; }
+
+  /* ---------- Typography ---------- */
+  .type-row{ display:flex; align-items:baseline; gap:24px; padding:18px 0; border-bottom:1px solid var(--border); }
+  .type-row:last-child{ border-bottom:none; }
+  .type-label{ width:160px; flex-shrink:0; font-family:var(--font-mono); font-size:12px; color:var(--text-secondary); }
+  .type-sample-h1{ font-size:34px; font-weight:700; letter-spacing:-0.01em; }
+  .type-sample-h2{ font-size:24px; font-weight:600; }
+  .type-sample-body{ font-size:16px; font-weight:400; color:var(--text-primary); }
+  .type-sample-caption{ font-size:13px; color:var(--text-secondary); }
+  .type-sample-mono{ font-family:var(--font-mono); font-size:14px; color:var(--text-primary); }
+
+  /* ---------- Components showcase ---------- */
+  .comp-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:20px; }
+  .comp-card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:24px; display:flex; flex-direction:column; align-items:center; gap:18px; }
+  .comp-title{ align-self:flex-start; font-size:12px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.06em; }
+
+  /* PTT button states */
+  .ptt-btn{ width:120px; height:120px; border-radius:50%; display:flex; align-items:center; justify-content:center; position:relative; }
+  .ptt-idle{ background:var(--surface-3); border:1px solid var(--border); }
+  .ptt-idle svg{ stroke:var(--text-secondary); }
+  .ptt-active{ background:var(--accent-tx); box-shadow:0 0 0 8px var(--accent-tx-glow); }
+  .ptt-active svg{ stroke:#1a1310; }
+  .ptt-receiving{ background:var(--primary); box-shadow:0 0 0 8px var(--primary-glow); }
+  .ptt-receiving svg{ stroke:#0e181d; }
+  .ptt-caption{ font-family:var(--font-mono); font-size:12px; color:var(--text-secondary); }
+
+  /* status badge */
+  .badge{ display:inline-flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border); font-family:var(--font-mono); font-size:12px; }
+  .dot{ width:8px; height:8px; border-radius:50%; }
+  .dot-online{ background:var(--status-online); box-shadow:0 0 0 3px rgba(94,144,128,0.25); }
+  .dot-offline{ background:var(--status-offline); }
+  .dot-idle{ background:var(--status-idle); }
+
+  /* channel card */
+  .channel-card{ width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px 16px; display:flex; justify-content:space-between; align-items:center; }
+  .channel-name{ font-weight:600; font-size:14px; }
+  .channel-meta{ font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); margin-top:2px; }
+  .channel-count{ font-family:var(--font-mono); font-size:12px; color:var(--primary); }
+
+  /* participant row */
+  .participant{ width:100%; display:flex; align-items:center; gap:12px; }
+  .avatar{ width:36px; height:36px; border-radius:50%; background:var(--surface-3); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; color:var(--text-secondary); }
+  .participant-name{ font-size:14px; }
+  .participant-status{ font-size:11px; color:var(--text-tertiary); }
+  .speaking{ box-shadow:0 0 0 2px var(--accent-tx); }
+
+  /* ---------- Screen mockup ---------- */
+  .screen{ display:grid; grid-template-columns:260px 1fr; border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; height:480px; }
+  .screen-sidebar{ background:var(--surface); border-right:1px solid var(--border); padding:20px; display:flex; flex-direction:column; gap:10px; }
+  .screen-sidebar-title{ font-family:var(--font-mono); font-size:11px; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:.08em; margin-bottom:8px; }
+  .screen-main{ background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:28px; position:relative; }
+  .screen-main-top{ position:absolute; top:20px; left:24px; right:24px; display:flex; justify-content:space-between; align-items:center; }
+  .channel-active{ font-weight:600; font-size:16px; }
+  .now-speaking{ font-family:var(--font-mono); font-size:13px; color:var(--accent-tx); }
+  .hint{ font-size:12px; color:var(--text-tertiary); }
+  .participants-strip{ position:absolute; bottom:24px; left:24px; right:24px; display:flex; gap:16px; justify-content:center; }
+
+  .footer-note{ margin-top:64px; padding-top:24px; border-top:1px solid var(--border); font-size:13px; color:var(--text-tertiary); line-height:1.6; }
+  .footer-note b{ color:var(--text-secondary); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="eyebrow">core-designsystem · ptt-lan</div>
+  <h1>Design System — PTT-LAN</h1>
+  <p class="subtitle">Paleta sóbria e superfícies escuras de baixo contraste, pensadas para uso rápido de walkie-talkie: o olho deve achar o botão de PTT e o status de quem está falando sem esforço. Cor é usada como sinal de estado (transmitindo, recebendo, conectado), nunca como decoração.</p>
+
+  <section>
+    <h2>Paleta de Cores</h2>
+    <div class="swatch-grid">
+      <div class="swatch"><div class="swatch-color" style="background:var(--bg)"></div><div class="swatch-meta"><div class="swatch-name">Background</div><div class="swatch-role">Fundo base do app</div><div class="swatch-hex">#14171A</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--surface)"></div><div class="swatch-meta"><div class="swatch-name">Surface</div><div class="swatch-role">Cards, sidebar</div><div class="swatch-hex">#1D2124</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--surface-3)"></div><div class="swatch-meta"><div class="swatch-name">Surface Elevada</div><div class="swatch-role">Avatares, botão idle</div><div class="swatch-hex">#2F353A</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--border)"></div><div class="swatch-meta"><div class="swatch-name">Border</div><div class="swatch-role">Divisórias, contornos</div><div class="swatch-hex">#33393E</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--primary)"></div><div class="swatch-meta"><div class="swatch-name">Primary</div><div class="swatch-role">Ações, recebendo áudio</div><div class="swatch-hex">#4C7A94</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--accent-tx)"></div><div class="swatch-meta"><div class="swatch-name">Accent (TX)</div><div class="swatch-role">PTT pressionado / transmitindo</div><div class="swatch-hex">#C77D4C</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--status-online)"></div><div class="swatch-meta"><div class="swatch-name">Status Online</div><div class="swatch-role">Conectado ao servidor</div><div class="swatch-hex">#5E9080</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--status-offline)"></div><div class="swatch-meta"><div class="swatch-name">Status Offline</div><div class="swatch-role">Erro / desconectado</div><div class="swatch-hex">#B5533F</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--text-primary)"></div><div class="swatch-meta"><div class="swatch-name">Text Primary</div><div class="swatch-role">Texto de alta ênfase</div><div class="swatch-hex">#E8EAED</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--text-secondary)"></div><div class="swatch-meta"><div class="swatch-name">Text Secondary</div><div class="swatch-role">Legendas, metadados</div><div class="swatch-hex">#9AA1A8</div></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Tipografia</h2>
+    <div class="type-row"><div class="type-label">Display / H1<br>IBM Plex Sans 700</div><div class="type-sample-h1">Canal Obra Alameda</div></div>
+    <div class="type-row"><div class="type-label">Heading / H2<br>IBM Plex Sans 600</div><div class="type-sample-h2">Participantes conectados</div></div>
+    <div class="type-row"><div class="type-label">Body<br>IBM Plex Sans 400</div><div class="type-sample-body">Segure o botão para transmitir no canal atual.</div></div>
+    <div class="type-row"><div class="type-label">Caption<br>IBM Plex Sans 400</div><div class="type-sample-caption">4 participantes · latência 42ms</div></div>
+    <div class="type-row"><div class="type-label">Mono / Técnico<br>IBM Plex Mono 500</div><div class="type-sample-mono">192.168.1.42:7070 · canal_id: obra-alameda</div></div>
+  </section>
+
+  <section>
+    <h2>Componentes</h2>
+    <div class="comp-grid">
+
+      <div class="comp-card">
+        <div class="comp-title">Botão PTT — idle</div>
+        <div class="ptt-btn ptt-idle">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 15a3 3 0 003-3V6a3 3 0 10-6 0v6a3 3 0 003 3z"/><path d="M19 11a7 7 0 01-14 0M12 18v3"/></svg>
+        </div>
+        <div class="ptt-caption">toque e segure</div>
+      </div>
+
+      <div class="comp-card">
+        <div class="comp-title">Botão PTT — transmitindo</div>
+        <div class="ptt-btn ptt-active">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 15a3 3 0 003-3V6a3 3 0 10-6 0v6a3 3 0 003 3z"/><path d="M19 11a7 7 0 01-14 0M12 18v3"/></svg>
+        </div>
+        <div class="ptt-caption">falando agora</div>
+      </div>
+
+      <div class="comp-card">
+        <div class="comp-title">Botão PTT — recebendo</div>
+        <div class="ptt-btn ptt-receiving">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M4 9v6M8 6v12M12 3v18M16 6v12M20 9v6"/></svg>
+        </div>
+        <div class="ptt-caption">Marcos falando</div>
+      </div>
+
+      <div class="comp-card">
+        <div class="comp-title">Status de conexão</div>
+        <span class="badge"><span class="dot dot-online"></span>conectado</span>
+        <span class="badge"><span class="dot dot-idle"></span>reconectando</span>
+        <span class="badge"><span class="dot dot-offline"></span>offline</span>
+      </div>
+
+      <div class="comp-card">
+        <div class="comp-title">Card de canal</div>
+        <div class="channel-card">
+          <div><div class="channel-name">Obra Alameda</div><div class="channel-meta">canal_id: obra-alameda</div></div>
+          <div class="channel-count">4 ●</div>
+        </div>
+        <div class="channel-card">
+          <div><div class="channel-name">Equipe Evento</div><div class="channel-meta">canal_id: evento-sul</div></div>
+          <div class="channel-count">2 ●</div>
+        </div>
+      </div>
+
+      <div class="comp-card">
+        <div class="comp-title">Participante</div>
+        <div class="participant"><div class="avatar speaking">M</div><div><div class="participant-name">Marcos</div><div class="participant-status">falando</div></div></div>
+        <div class="participant"><div class="avatar">L</div><div><div class="participant-name">Leandro</div><div class="participant-status">ouvindo</div></div></div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>Tela de referência — PTT (feature-ptt)</h2>
+    <div class="screen">
+      <div class="screen-sidebar">
+        <div class="screen-sidebar-title">Canais</div>
+        <div class="channel-card"><div><div class="channel-name">Obra Alameda</div><div class="channel-meta">obra-alameda</div></div><div class="channel-count">4 ●</div></div>
+        <div class="channel-card" style="opacity:.55"><div><div class="channel-name">Equipe Evento</div><div class="channel-meta">evento-sul</div></div><div class="channel-count">2 ●</div></div>
+        <div class="channel-card" style="opacity:.55"><div><div class="channel-name">Loja Centro</div><div class="channel-meta">loja-centro</div></div><div class="channel-count">1 ●</div></div>
+      </div>
+      <div class="screen-main">
+        <div class="screen-main-top">
+          <span class="badge"><span class="dot dot-online"></span>conectado</span>
+          <span class="type-sample-mono" style="font-size:12px">42ms</span>
+        </div>
+        <div style="text-align:center">
+          <div class="channel-active">Obra Alameda</div>
+          <div class="now-speaking">Marcos está falando</div>
+        </div>
+        <div class="ptt-btn ptt-idle" style="width:140px;height:140px;">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 15a3 3 0 003-3V6a3 3 0 10-6 0v6a3 3 0 003 3z"/><path d="M19 11a7 7 0 01-14 0M12 18v3"/></svg>
+        </div>
+        <div class="hint">toque e segure para transmitir</div>
+        <div class="participants-strip">
+          <div class="participant" style="width:auto"><div class="avatar speaking">M</div></div>
+          <div class="participant" style="width:auto"><div class="avatar">L</div></div>
+          <div class="participant" style="width:auto"><div class="avatar">J</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer-note">
+    <b>Aplicação em código (core-designsystem):</b> estes tokens devem ser expressos como <code>Color</code>, <code>Typography</code> e <code>Shape</code> do tema Material 3 em Compose Multiplatform, nunca como valores de cor hard-coded dentro de módulos <code>feature-*</code>. Estados de cor (idle / transmitindo / recebendo / online / offline) devem ser modelados como um enum de domínio mapeado para cor apenas na camada de apresentação.
+  </div>
+
+</div>
+</body>
+</html>
