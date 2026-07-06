@@ -7,8 +7,6 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.application.port
-import io.ktor.server.engine.applicationEngineEnvironment
-import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.engine.sslConnector
 import io.ktor.server.netty.Netty
@@ -19,45 +17,23 @@ import io.ktor.server.websocket.pingPeriod
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.FileInputStream
-import java.net.InetAddress
-import java.security.KeyStore
-import javax.jmdns.JmDNS
-import javax.jmdns.ServiceInfo
 import kotlin.time.Duration.Companion.seconds
 
+import javax.jmdns.JmDNS
+import javax.jmdns.ServiceInfo
+
+import java.net.InetAddress
+import io.ktor.server.netty.EngineMain
+
 @Suppress("TooGenericExceptionCaught", "MagicNumber")
-fun main() {
+fun main(args: Array<String>) {
     val keyStoreFile = File("build/keystore.jks")
     if (!keyStoreFile.exists()) {
         keyStoreFile.parentFile?.mkdirs()
         generateCertificate(keyStoreFile, keyAlias = "pttlan", keyPassword = "password", jksPassword = "password")
     }
 
-    embeddedServer(
-        Netty,
-        environment =
-            applicationEngineEnvironment {
-                log = org.slf4j.LoggerFactory.getLogger("ktor.application")
-
-                connector {
-                    port = 9393
-                    host = "0.0.0.0"
-                }
-                sslConnector(
-                    keyStore =
-                        KeyStore.getInstance(KeyStore.getDefaultType()).apply {
-                            FileInputStream(keyStoreFile).use { load(it, "password".toCharArray()) }
-                        },
-                    keyAlias = "pttlan",
-                    keyStorePassword = { "password".toCharArray() },
-                    privateKeyPassword = { "password".toCharArray() },
-                ) {
-                    port = 9443
-                    host = "0.0.0.0"
-                }
-                module(Application::module)
-            },
-    ).start(wait = true)
+    EngineMain.main(args)
 }
 
 @Suppress("TooGenericExceptionCaught", "MagicNumber")
@@ -84,8 +60,8 @@ fun Application.module() {
                     "_pttlan._tcp.local.",
                     "PTT-LAN-Server-${System.currentTimeMillis()}",
                     9393,
-                    "0",
-                    "0",
+                    0,
+                    0,
                     "SSL:9443",
                 )
             jmdns.registerService(serviceInfo)

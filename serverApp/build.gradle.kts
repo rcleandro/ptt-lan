@@ -13,6 +13,7 @@ dependencies {
 
     // Server dependencies
     implementation("io.ktor:ktor-server-core:${libs.versions.ktor.get()}")
+    implementation("io.ktor:ktor-server-host-common:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-netty:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-websockets:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-content-negotiation:${libs.versions.ktor.get()}")
