@@ -108,7 +108,7 @@ Todas as escolhas abaixo são finais. Nenhuma alternativa deve ser reavaliada du
 
 | Item | Escolha | Justificativa |
 |---|---|---|
-| Kotlin | 2.1.x (K2 compiler) | K2 é o compilador padrão desde o Kotlin 2.0, com melhor desempenho de compilação e melhor suporte a multiplataforma; necessário para recursos modernos de KMP. |
+| Kotlin | 2.4.x (K2 compiler) | K2 é o compilador padrão desde o Kotlin 2.0, com melhor desempenho de compilação e melhor suporte a multiplataforma; necessário para recursos modernos de KMP. |
 | Build system | Gradle com Kotlin DSL + Version Catalog (`libs.versions.toml`) | Padrão de mercado para KMP; version catalog centraliza versões e evita divergência entre módulos (dor recorrente já observada em projetos reais do autor). |
 | Gerenciador de targets | `org.jetbrains.kotlin.multiplatform` plugin | Targets: `androidTarget`, `iosArm64`/`iosSimulatorArm64`/`iosX64`, `jvm` (desktop e servidor), `wasmJs` opcional apenas se o painel admin (Fase 10) for feito em Compose Web — caso contrário painel admin é HTML/JS simples servido pelo próprio Ktor. |
 
