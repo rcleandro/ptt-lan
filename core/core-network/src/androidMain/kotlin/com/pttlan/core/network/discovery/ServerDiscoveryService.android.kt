@@ -32,6 +32,7 @@ actual class ServerDiscoveryService actual constructor() : KoinComponent {
             override fun onDiscoveryStarted(serviceType: String) {}
             override fun onDiscoveryStopped(serviceType: String) {}
 
+            @Suppress("DEPRECATION")
             override fun onServiceFound(serviceInfo: NsdServiceInfo) {
                 nsdManager.resolveService(serviceInfo, object : NsdManager.ResolveListener {
                     override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {}
@@ -64,7 +65,7 @@ actual class ServerDiscoveryService actual constructor() : KoinComponent {
         discoveryListener?.let {
             try {
                 nsdManager.stopServiceDiscovery(it)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Ignore if already stopped
             }
         }
