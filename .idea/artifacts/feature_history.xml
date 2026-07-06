@@ -1,6 +1,8 @@
 <component name="ArtifactManager">
   <artifact type="jar" name="feature-history">
     <output-path>$PROJECT_DIR$/features/feature-history/build/libs</output-path>
-    <root id="archive" name="feature-history.jar" />
+    <root id="archive" name="feature-history.jar">
+      <element id="module-output" name="ptt-lan.features.feature-history.androidMain" />
+    </root>
   </artifact>
 </component>

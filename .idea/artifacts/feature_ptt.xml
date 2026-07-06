@@ -1,6 +1,8 @@
 <component name="ArtifactManager">
   <artifact type="jar" name="feature-ptt">
     <output-path>$PROJECT_DIR$/features/feature-ptt/build/libs</output-path>
-    <root id="archive" name="feature-ptt.jar" />
+    <root id="archive" name="feature-ptt.jar">
+      <element id="module-output" name="ptt-lan.features.feature-ptt.androidMain" />
+    </root>
   </artifact>
 </component>

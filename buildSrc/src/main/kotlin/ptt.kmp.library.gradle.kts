@@ -7,9 +7,9 @@ plugins {
 }
 
 kotlin {
-    androidLibrary {
+    android {
         namespace = "com.pttlan" + project.path.replace(":", ".")
-        compileSdk = 34
+        compileSdk = 37
         minSdk = 24
     }
     
