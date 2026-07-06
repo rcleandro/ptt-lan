@@ -11,6 +11,7 @@ import co.touchlab.kermit.loggerConfigInit
 
 val coreModule = module {
     single { createHttpClient() }
+    single { com.pttlan.core.network.discovery.ServerDiscoveryService() }
     
     // Database
     single { get<DatabaseDriverFactory>().createDriver() }
@@ -25,4 +26,10 @@ val coreModule = module {
 
 expect val platformModule: Module
 
-fun appModules() = listOf(coreModule, platformModule)
+fun appModules() = listOf(
+    coreModule, 
+    platformModule,
+    com.pttlan.domain.ptt.di.domainModule,
+    com.pttlan.data.ptt.di.dataModule,
+    com.pttlan.feature.connection.di.connectionFeatureModule
+)

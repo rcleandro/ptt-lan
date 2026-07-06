@@ -20,6 +20,7 @@ kotlin {
         }
         jvmMain.dependencies {
             implementation(libs.ktor.client.cio)
+            implementation(libs.jmdns)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)

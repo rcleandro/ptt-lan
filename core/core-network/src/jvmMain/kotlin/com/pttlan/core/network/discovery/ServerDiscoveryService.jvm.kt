@@ -1,0 +1,54 @@
+package com.pttlan.core.network.discovery
+
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import org.jmdns.JmDNS
+import org.jmdns.ServiceEvent
+import org.jmdns.ServiceListener
+import java.net.InetAddress
+
+actual class ServerDiscoveryService actual constructor() {
+    private var jmdns: JmDNS? = null
+
+    actual fun discover(): Flow<DiscoveredServer> = callbackFlow {
+        val serviceType = "_pttlan._tcp.local."
+        try {
+            jmdns = JmDNS.create(InetAddress.getLocalHost())
+            
+            val listener = object : ServiceListener {
+                override fun serviceAdded(event: ServiceEvent) {
+                    jmdns?.requestServiceInfo(event.type, event.name)
+                }
+
+                override fun serviceRemoved(event: ServiceEvent) {
+                    // Could handle removal if needed
+                }
+
+                override fun serviceResolved(event: ServiceEvent) {
+                    val info = event.info
+                    val host = info.hostAddresses.firstOrNull() ?: return
+                    val server = DiscoveredServer(
+                        name = info.name,
+                        host = host,
+                        port = info.port
+                    )
+                    trySend(server)
+                }
+            }
+            
+            jmdns?.addServiceListener(serviceType, listener)
+            
+            awaitClose {
+                jmdns?.removeServiceListener(serviceType, listener)
+            }
+        } catch (e: Exception) {
+            close(e)
+        }
+    }
+
+    actual fun stopDiscovery() {
+        jmdns?.close()
+        jmdns = null
+    }
+}
