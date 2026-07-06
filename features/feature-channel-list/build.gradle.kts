@@ -12,7 +12,7 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(project(":core:core-navigation"))
             implementation(project(":domain:domain-ptt"))
-            
+
             implementation(libs.decompose)
             implementation(libs.decompose.extensions.compose)
         }

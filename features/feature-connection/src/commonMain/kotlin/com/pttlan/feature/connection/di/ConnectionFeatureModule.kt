@@ -4,8 +4,9 @@ import com.arkivanov.decompose.ComponentContext
 import com.pttlan.feature.connection.ConnectionComponent
 import org.koin.dsl.module
 
-val connectionFeatureModule = module {
-    factory { (componentContext: ComponentContext) -> 
-        ConnectionComponent(componentContext, get()) 
+val connectionFeatureModule =
+    module {
+        factory { (componentContext: ComponentContext) ->
+            ConnectionComponent(componentContext, get())
+        }
     }
-}

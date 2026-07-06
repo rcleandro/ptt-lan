@@ -6,7 +6,5 @@ class JvmMicrophonePermissionManager : MicrophonePermissionManager {
         return true
     }
 
-    override suspend fun request(): Boolean {
-        return true
-    }
+    override suspend fun request(): Boolean = true
 }

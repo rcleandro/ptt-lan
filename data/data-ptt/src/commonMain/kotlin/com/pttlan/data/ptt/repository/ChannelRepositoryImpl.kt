@@ -11,13 +11,13 @@ import kotlinx.coroutines.flow.map
 import kotlin.time.Clock
 
 class ChannelRepositoryImpl(
-    private val database: PttDatabase
+    private val database: PttDatabase,
 ) : ChannelRepository {
-    
     private val queries = database.channelQueries
 
-    override fun getRecentChannels(): Flow<List<ChannelDomain>> {
-        return queries.selectAllChannels()
+    override fun getRecentChannels(): Flow<List<ChannelDomain>> =
+        queries
+            .selectAllChannels()
             .asFlow()
             .mapToList(Dispatchers.Default) // Needs kotlinx-coroutines-core for Default, we'll provide if needed
             .map { list ->
@@ -25,11 +25,10 @@ class ChannelRepositoryImpl(
                     ChannelDomain(
                         id = it.id,
                         name = it.name,
-                        isFavorite = it.isFavorite
+                        isFavorite = it.isFavorite,
                     )
                 }
             }
-    }
 
     override suspend fun saveChannel(channel: ChannelDomain) {
         val now = Clock.System.now().toEpochMilliseconds()
@@ -37,7 +36,7 @@ class ChannelRepositoryImpl(
             id = channel.id,
             name = channel.name,
             lastJoinedAt = now,
-            isFavorite = channel.isFavorite
+            isFavorite = channel.isFavorite,
         )
     }
 }

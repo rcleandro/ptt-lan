@@ -14,33 +14,34 @@ class JvmAudioRecorder : AudioRecorder {
     private var line: TargetDataLine? = null
     private var isRecording = false
 
-    override fun startCapture(sampleRate: Int): Flow<ByteArray> = flow {
-        val format = AudioFormat(sampleRate.toFloat(), 16, 1, true, false)
-        val info = DataLine.Info(TargetDataLine::class.java, format)
+    override fun startCapture(sampleRate: Int): Flow<ByteArray> =
+        flow {
+            val format = AudioFormat(sampleRate.toFloat(), 16, 1, true, false)
+            val info = DataLine.Info(TargetDataLine::class.java, format)
 
-        if (!AudioSystem.isLineSupported(info)) {
-            throw Exception("Line not supported")
-        }
-
-        line = AudioSystem.getLine(info) as TargetDataLine
-        line?.open(format)
-        line?.start()
-
-        isRecording = true
-        val buffer = ByteArray(1024) // 32ms chunk at 16kHz
-        
-        try {
-            while (isRecording) {
-                val bytesRead = line?.read(buffer, 0, buffer.size) ?: 0
-                if (bytesRead > 0) {
-                    emit(buffer.copyOf(bytesRead))
-                }
+            if (!AudioSystem.isLineSupported(info)) {
+                throw Exception("Line not supported")
             }
-        } finally {
-            line?.stop()
-            line?.close()
-        }
-    }.flowOn(Dispatchers.IO)
+
+            line = AudioSystem.getLine(info) as TargetDataLine
+            line?.open(format)
+            line?.start()
+
+            isRecording = true
+            val buffer = ByteArray(1024) // 32ms chunk at 16kHz
+
+            try {
+                while (isRecording) {
+                    val bytesRead = line?.read(buffer, 0, buffer.size) ?: 0
+                    if (bytesRead > 0) {
+                        emit(buffer.copyOf(bytesRead))
+                    }
+                }
+            } finally {
+                line?.stop()
+                line?.close()
+            }
+        }.flowOn(Dispatchers.IO)
 
     override fun stopCapture() {
         isRecording = false
@@ -50,7 +51,10 @@ class JvmAudioRecorder : AudioRecorder {
 class JvmAudioPlayer : AudioPlayer {
     private var line: SourceDataLine? = null
 
-    override fun play(chunk: ByteArray, sampleRate: Int) {
+    override fun play(
+        chunk: ByteArray,
+        sampleRate: Int,
+    ) {
         if (line == null) {
             val format = AudioFormat(sampleRate.toFloat(), 16, 1, true, false)
             val info = DataLine.Info(SourceDataLine::class.java, format)
@@ -58,7 +62,7 @@ class JvmAudioPlayer : AudioPlayer {
             line?.open(format)
             line?.start()
         }
-        
+
         line?.write(chunk, 0, chunk.size)
     }
 
@@ -71,4 +75,5 @@ class JvmAudioPlayer : AudioPlayer {
 }
 
 actual fun createAudioRecorder(): AudioRecorder = JvmAudioRecorder()
+
 actual fun createAudioPlayer(): AudioPlayer = JvmAudioPlayer()

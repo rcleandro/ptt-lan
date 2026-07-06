@@ -6,19 +6,18 @@ import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.websocket.Frame
+import io.ktor.websocket.close
 import io.ktor.websocket.readText
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
-import io.ktor.websocket.close
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class PttWebSocketClient(
-    private val httpClient: HttpClient
+    private val httpClient: HttpClient,
 ) {
     private var session: DefaultClientWebSocketSession? = null
     private val sessionMutex = Mutex()
@@ -33,7 +32,10 @@ class PttWebSocketClient(
     private var connectionJob: kotlinx.coroutines.Job? = null
     private val scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default)
 
-    suspend fun connect(host: String, port: Int) {
+    suspend fun connect(
+        host: String,
+        port: Int,
+    ) {
         shouldReconnect = true
         var backoffMs = 1000L
         val maxBackoffMs = 30000L
@@ -44,7 +46,7 @@ class PttWebSocketClient(
                     if (session != null) return@withLock
                     session = httpClient.webSocketSession(host = host, port = port, path = "/ws")
                 }
-                
+
                 // Reset backoff on successful connection
                 backoffMs = 1000L
 

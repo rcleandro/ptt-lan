@@ -16,24 +16,32 @@ import kotlinx.coroutines.launch
 
 data class ChannelListState(
     val recentChannels: List<ChannelDomain> = emptyList(),
-    val newChannelName: String = ""
+    val newChannelName: String = "",
 )
 
 sealed interface ChannelListIntent {
-    data class UpdateNewChannelName(val name: String) : ChannelListIntent
-    data class JoinChannel(val channelId: String, val name: String) : ChannelListIntent
+    data class UpdateNewChannelName(
+        val name: String,
+    ) : ChannelListIntent
+
+    data class JoinChannel(
+        val channelId: String,
+        val name: String,
+    ) : ChannelListIntent
+
     data object CreateChannel : ChannelListIntent
 }
 
 sealed interface ChannelListEffect {
-    data class NavigateToChannel(val channelId: String) : ChannelListEffect
+    data class NavigateToChannel(
+        val channelId: String,
+    ) : ChannelListEffect
 }
 
 class ChannelListComponent(
     componentContext: ComponentContext,
-    private val channelRepository: ChannelRepository
+    private val channelRepository: ChannelRepository,
 ) : ComponentContext by componentContext {
-
     private val _state = MutableStateFlow(ChannelListState())
     val state: StateFlow<ChannelListState> = _state.asStateFlow()
 

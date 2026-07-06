@@ -16,41 +16,43 @@ class AndroidAudioRecorder : AudioRecorder {
     private var isRecording = false
 
     @SuppressLint("MissingPermission")
-    override fun startCapture(sampleRate: Int): Flow<ByteArray> = flow {
-        val channelConfig = AudioFormat.CHANNEL_IN_MONO
-        val audioFormat = AudioFormat.ENCODING_PCM_16BIT
-        val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
-        
-        // Use a 32ms chunk size approximately
-        val chunkSizeBytes = sampleRate * 2 * 32 / 1000 
-        val finalBufferSize = maxOf(bufferSize, chunkSizeBytes * 4)
+    override fun startCapture(sampleRate: Int): Flow<ByteArray> =
+        flow {
+            val channelConfig = AudioFormat.CHANNEL_IN_MONO
+            val audioFormat = AudioFormat.ENCODING_PCM_16BIT
+            val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
 
-        audioRecord = AudioRecord(
-            MediaRecorder.AudioSource.MIC,
-            sampleRate,
-            channelConfig,
-            audioFormat,
-            finalBufferSize
-        )
+            // Use a 32ms chunk size approximately
+            val chunkSizeBytes = sampleRate * 2 * 32 / 1000
+            val finalBufferSize = maxOf(bufferSize, chunkSizeBytes * 4)
 
-        audioRecord?.startRecording()
-        isRecording = true
+            audioRecord =
+                AudioRecord(
+                    MediaRecorder.AudioSource.MIC,
+                    sampleRate,
+                    channelConfig,
+                    audioFormat,
+                    finalBufferSize,
+                )
 
-        val buffer = ByteArray(chunkSizeBytes)
-        
-        try {
-            while (isRecording) {
-                val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
-                if (read > 0) {
-                    emit(buffer.copyOf(read))
+            audioRecord?.startRecording()
+            isRecording = true
+
+            val buffer = ByteArray(chunkSizeBytes)
+
+            try {
+                while (isRecording) {
+                    val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
+                    if (read > 0) {
+                        emit(buffer.copyOf(read))
+                    }
                 }
+            } finally {
+                audioRecord?.stop()
+                audioRecord?.release()
+                audioRecord = null
             }
-        } finally {
-            audioRecord?.stop()
-            audioRecord?.release()
-            audioRecord = null
-        }
-    }.flowOn(Dispatchers.IO)
+        }.flowOn(Dispatchers.IO)
 
     override fun stopCapture() {
         isRecording = false
@@ -60,20 +62,24 @@ class AndroidAudioRecorder : AudioRecorder {
 class AndroidAudioPlayer : AudioPlayer {
     private var audioTrack: AudioTrack? = null
 
-    override fun play(chunk: ByteArray, sampleRate: Int) {
+    override fun play(
+        chunk: ByteArray,
+        sampleRate: Int,
+    ) {
         if (audioTrack == null) {
             val channelConfig = AudioFormat.CHANNEL_OUT_MONO
             val audioFormat = AudioFormat.ENCODING_PCM_16BIT
             val bufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat)
-            
-            audioTrack = AudioTrack(
-                AudioManager.STREAM_MUSIC,
-                sampleRate,
-                channelConfig,
-                audioFormat,
-                maxOf(bufferSize, chunk.size * 4),
-                AudioTrack.MODE_STREAM
-            )
+
+            audioTrack =
+                AudioTrack(
+                    AudioManager.STREAM_MUSIC,
+                    sampleRate,
+                    channelConfig,
+                    audioFormat,
+                    maxOf(bufferSize, chunk.size * 4),
+                    AudioTrack.MODE_STREAM,
+                )
             audioTrack?.play()
         }
 
@@ -88,4 +94,5 @@ class AndroidAudioPlayer : AudioPlayer {
 }
 
 actual fun createAudioRecorder(): AudioRecorder = AndroidAudioRecorder()
+
 actual fun createAudioPlayer(): AudioPlayer = AndroidAudioPlayer()

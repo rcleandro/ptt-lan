@@ -1,34 +1,26 @@
 package com.pttlan.feature.ptt
 
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.unit.dp
-
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
 @Composable
@@ -54,68 +46,58 @@ fun PttScreen(component: PttComponent) {
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp),
             verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
                 text = "Canal: #${state.channelId}",
-                style = MaterialTheme.typography.headlineMedium
+                style = MaterialTheme.typography.displayLarge,
             )
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            val buttonColor = if (state.isTransmitting) Color.Red 
-                else if (state.floorBlocked) Color.Gray 
-                else MaterialTheme.colorScheme.primary
-
-            Surface(
-                shape = CircleShape,
-                color = buttonColor,
-                modifier = Modifier
-                    .size(200.dp)
-                    .pointerInput(state.floorBlocked) {
-                        detectTapGestures(
-                            onPress = {
-                                component.onIntent(PttIntent.PressPtt)
-                                tryAwaitRelease()
-                                component.onIntent(PttIntent.ReleasePtt)
-                            }
-                        )
-                    }
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = if (state.isTransmitting) "FALANDO" else if (state.floorBlocked) "OCUPADO" else "PTT",
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = Color.White
-                    )
+            val pttState =
+                if (state.isTransmitting) {
+                    com.pttlan.core.designsystem.components.PttButtonState.Transmitting
+                } else if (state.currentSpeakerId != null) {
+                    com.pttlan.core.designsystem.components.PttButtonState.Receiving
+                } else {
+                    com.pttlan.core.designsystem.components.PttButtonState.Idle
                 }
-            }
+
+            com.pttlan.core.designsystem.components.PttButton(
+                state = pttState,
+                onPressStart = { component.onIntent(PttIntent.PressPtt) },
+                onPressEnd = { component.onIntent(PttIntent.ReleasePtt) },
+                buttonSize = 140.dp,
+            )
 
             Spacer(modifier = Modifier.height(32.dp))
 
             if (state.currentSpeakerId != null) {
-                Text(
-                    text = "${state.currentSpeakerId} está falando...",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.secondary
+                com.pttlan.core.designsystem.components.ParticipantAvatar(
+                    name = state.currentSpeakerId ?: "",
+                    isSpeaking = true,
+                    modifier = Modifier.padding(bottom = 16.dp),
                 )
             } else {
                 Text(
-                    text = "Canal livre",
-                    style = MaterialTheme.typography.bodyLarge
+                    text = "toque e segure para transmitir",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = com.pttlan.core.designsystem.theme.PttTheme.customColors.textTertiary,
                 )
             }
 
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             Button(onClick = { component.onIntent(PttIntent.LeaveChannel) }) {
                 Text("Sair do Canal")
             }

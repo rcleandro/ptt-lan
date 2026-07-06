@@ -12,6 +12,14 @@ kotlin {
             implementation(project(":core:core-designsystem"))
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
+            implementation(libs.kotlinx.coroutines.swing)
+            implementation(project(":features:feature-connection"))
+            implementation(project(":features:feature-channel-list"))
+            implementation(project(":features:feature-ptt"))
+            implementation(project(":features:feature-history"))
+            implementation(project(":features:feature-settings"))
+            implementation(libs.decompose)
+            implementation(libs.decompose.extensions.compose)
         }
     }
 }
@@ -23,7 +31,7 @@ compose.desktop {
             targetFormats(
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg,
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi,
-                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb
+                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb,
             )
             packageName = "PTT"
             packageVersion = "1.0.0"

@@ -33,7 +33,7 @@ fun SettingsScreen(component: SettingsComponent) {
         ) {
             Text(
                 text = "Configurações",
-                style = MaterialTheme.typography.headlineLarge
+                style = MaterialTheme.typography.displayLarge
             )
 
             OutlinedTextField(

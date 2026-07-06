@@ -7,17 +7,26 @@ enum class ConnectionStatus {
     Disconnected,
     Connecting,
     Connected,
-    Reconnecting
+    Reconnecting,
 }
 
-data class ServerNode(val name: String, val host: String, val port: Int)
+data class ServerNode(
+    val name: String,
+    val host: String,
+    val port: Int,
+)
 
 interface ConnectionRepository {
     val connectionStatus: StateFlow<ConnectionStatus>
-    
+
     fun discoverServers(): Flow<ServerNode>
+
     fun stopDiscovery()
-    
-    suspend fun connect(host: String, port: Int = 9393): Result<Unit>
+
+    suspend fun connect(
+        host: String,
+        port: Int = 9393,
+    ): Result<Unit>
+
     fun disconnect()
 }

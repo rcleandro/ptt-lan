@@ -13,65 +13,72 @@ import platform.darwin.NSObject
 actual class ServerDiscoveryService actual constructor() {
     private var browser: NSNetServiceBrowser? = null
 
-    actual fun discover(): Flow<DiscoveredServer> = callbackFlow {
-        val serviceType = "_pttlan._tcp."
-        val domain = "local."
-        
-        val services = mutableMapOf<String, NSNetService>()
-        
-        val browserDelegate = object : NSObject(), NSNetServiceBrowserDelegateProtocol {
-            @ObjCSignatureOverride
-            override fun netServiceBrowser(
-                browser: NSNetServiceBrowser,
-                didFindService: NSNetService,
-                moreComing: Boolean
-            ) {
-                services[didFindService.name] = didFindService
-                
-                val serviceDelegate = object : NSObject(), NSNetServiceDelegateProtocol {
-                    override fun netServiceDidResolveAddress(sender: NSNetService) {
-                        val host = sender.hostName ?: return
-                        val server = DiscoveredServer(
-                            name = sender.name,
-                            host = host,
-                            port = sender.port.toInt()
-                        )
-                        trySend(server)
-                    }
-                    
+    actual fun discover(): Flow<DiscoveredServer> =
+        callbackFlow {
+            val serviceType = "_pttlan._tcp."
+            val domain = "local."
+
+            val services = mutableMapOf<String, NSNetService>()
+
+            val browserDelegate =
+                object : NSObject(), NSNetServiceBrowserDelegateProtocol {
                     @ObjCSignatureOverride
-                    override fun netService(sender: NSNetService, didNotResolve: Map<Any?, *>) {
-                        // Handle resolve failure
+                    override fun netServiceBrowser(
+                        browser: NSNetServiceBrowser,
+                        didFindService: NSNetService,
+                        moreComing: Boolean,
+                    ) {
+                        services[didFindService.name] = didFindService
+
+                        val serviceDelegate =
+                            object : NSObject(), NSNetServiceDelegateProtocol {
+                                override fun netServiceDidResolveAddress(sender: NSNetService) {
+                                    val host = sender.hostName ?: return
+                                    val server =
+                                        DiscoveredServer(
+                                            name = sender.name,
+                                            host = host,
+                                            port = sender.port.toInt(),
+                                        )
+                                    trySend(server)
+                                }
+
+                                @ObjCSignatureOverride
+                                override fun netService(
+                                    sender: NSNetService,
+                                    didNotResolve: Map<Any?, *>,
+                                ) {
+                                    // Handle resolve failure
+                                }
+                            }
+
+                        didFindService.delegate = serviceDelegate
+                        didFindService.resolveWithTimeout(5.0)
+                    }
+
+                    @ObjCSignatureOverride
+                    override fun netServiceBrowser(
+                        browser: NSNetServiceBrowser,
+                        didRemoveService: NSNetService,
+                        moreComing: Boolean,
+                    ) {
+                        services.remove(didRemoveService.name)
                     }
                 }
-                
-                didFindService.delegate = serviceDelegate
-                didFindService.resolveWithTimeout(5.0)
-            }
 
-            @ObjCSignatureOverride
-            override fun netServiceBrowser(
-                browser: NSNetServiceBrowser,
-                didRemoveService: NSNetService,
-                moreComing: Boolean
-            ) {
-                services.remove(didRemoveService.name)
+            browser =
+                NSNetServiceBrowser().apply {
+                    delegate = browserDelegate
+                    searchForServicesOfType(serviceType, domain)
+                }
+
+            awaitClose {
+                stopDiscovery()
             }
         }
-
-        browser = NSNetServiceBrowser().apply {
-            delegate = browserDelegate
-            searchForServicesOfType(serviceType, domain)
-        }
-
-        awaitClose {
-            stopDiscovery()
-        }
-    }
 
     actual fun stopDiscovery() {
         browser?.stop()
         browser = null
     }
 }
-

@@ -16,9 +16,8 @@ class HistoryComponent(
     componentContext: ComponentContext,
     private val channelId: String,
     private val voiceRepository: VoiceRepository,
-    private val onBackClicked: () -> Unit
+    private val onBackClicked: () -> Unit,
 ) : ComponentContext by componentContext {
-
     private val scope = CoroutineScope(Dispatchers.Main)
 
     private val _messages = MutableStateFlow<List<VoiceMessage>>(emptyList())
@@ -28,7 +27,8 @@ class HistoryComponent(
     val playingMessageId: StateFlow<String?> = _playingMessageId.asStateFlow()
 
     init {
-        voiceRepository.getRecentMessages(channelId)
+        voiceRepository
+            .getRecentMessages(channelId)
             .onEach { _messages.value = it }
             .launchIn(scope)
     }

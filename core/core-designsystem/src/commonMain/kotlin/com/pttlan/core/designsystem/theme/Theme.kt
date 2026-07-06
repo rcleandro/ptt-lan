@@ -1,50 +1,88 @@
 package com.pttlan.core.designsystem.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
-val md_theme_light_primary = Color(0xFF006495)
-val md_theme_light_onPrimary = Color(0xFFFFFFFF)
-val md_theme_light_primaryContainer = Color(0xFFCBE6FF)
-val md_theme_light_onPrimaryContainer = Color(0xFF001E30)
-// Simplified colors for MVP
-
-val md_theme_dark_primary = Color(0xFF8FCDFF)
-val md_theme_dark_onPrimary = Color(0xFF003450)
-val md_theme_dark_primaryContainer = Color(0xFF004B71)
-val md_theme_dark_onPrimaryContainer = Color(0xFFCBE6FF)
-
-private val LightColors = lightColorScheme(
-    primary = md_theme_light_primary,
-    onPrimary = md_theme_light_onPrimary,
-    primaryContainer = md_theme_light_primaryContainer,
-    onPrimaryContainer = md_theme_light_onPrimaryContainer,
+@Immutable
+data class PttCustomColors(
+    val statusOnline: Color,
+    val statusOffline: Color,
+    val statusIdle: Color,
+    val accentTx: Color,
+    val accentTxGlow: Color,
+    val primaryGlow: Color,
+    val surface2: Color,
+    val surface3: Color,
+    val textTertiary: Color,
 )
 
-private val DarkColors = darkColorScheme(
-    primary = md_theme_dark_primary,
-    onPrimary = md_theme_dark_onPrimary,
-    primaryContainer = md_theme_dark_primaryContainer,
-    onPrimaryContainer = md_theme_dark_onPrimaryContainer,
-)
+val LocalPttCustomColors =
+    staticCompositionLocalOf {
+        PttCustomColors(
+            statusOnline = Color.Unspecified,
+            statusOffline = Color.Unspecified,
+            statusIdle = Color.Unspecified,
+            accentTx = Color.Unspecified,
+            accentTxGlow = Color.Unspecified,
+            primaryGlow = Color.Unspecified,
+            surface2 = Color.Unspecified,
+            surface3 = Color.Unspecified,
+            textTertiary = Color.Unspecified,
+        )
+    }
+
+private val DefaultPttCustomColors =
+    PttCustomColors(
+        statusOnline = StatusOnline,
+        statusOffline = StatusOffline,
+        statusIdle = StatusIdle,
+        accentTx = AccentTx,
+        accentTxGlow = AccentTxGlow,
+        primaryGlow = PrimaryGlow,
+        surface2 = Surface2,
+        surface3 = Surface3,
+        textTertiary = TextTertiary,
+    )
+
+private val DarkColorScheme =
+    darkColorScheme(
+        primary = Primary,
+        onPrimary = Color.White,
+        primaryContainer = PrimaryDim,
+        onPrimaryContainer = Color.White,
+        background = Bg,
+        onBackground = TextPrimary,
+        surface = Surface,
+        onSurface = TextPrimary,
+        surfaceVariant = Surface2,
+        onSurfaceVariant = TextSecondary,
+        outline = Border,
+    )
+
+object PttTheme {
+    val customColors: PttCustomColors
+        @Composable
+        get() = LocalPttCustomColors.current
+}
 
 @Composable
 fun PttTheme(
-    useDarkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit
+    useDarkTheme: Boolean = true,
+    content: @Composable () -> Unit,
 ) {
-    val colors = if (!useDarkTheme) {
-        LightColors
-    } else {
-        DarkColors
+    CompositionLocalProvider(
+        LocalPttCustomColors provides DefaultPttCustomColors,
+    ) {
+        MaterialTheme(
+            colorScheme = DarkColorScheme,
+            typography = PttTypography,
+            shapes = PttShapes,
+            content = content,
+        )
     }
-
-    MaterialTheme(
-        colorScheme = colors,
-        content = content
-    )
 }

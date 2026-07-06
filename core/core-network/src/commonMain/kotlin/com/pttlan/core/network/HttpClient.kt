@@ -10,21 +10,22 @@ import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-
 expect fun createPlatformHttpClient(): HttpClient
 
-fun createHttpClient(): HttpClient {
-    return createPlatformHttpClient().config {
+fun createHttpClient(): HttpClient =
+    createPlatformHttpClient().config {
         install(WebSockets) {
             pingIntervalMillis = 20_000
         }
-        
+
         install(ContentNegotiation) {
-            json(Json {
-                prettyPrint = true
-                isLenient = true
-                ignoreUnknownKeys = true
-            })
+            json(
+                Json {
+                    prettyPrint = true
+                    isLenient = true
+                    ignoreUnknownKeys = true
+                },
+            )
         }
 
         install(HttpTimeout) {
@@ -34,12 +35,12 @@ fun createHttpClient(): HttpClient {
         }
 
         install(Logging) {
-            logger = object : Logger {
-                override fun log(message: String) {
-                    println(message)
+            logger =
+                object : Logger {
+                    override fun log(message: String) {
+                        println(message)
+                    }
                 }
-            }
             level = LogLevel.INFO
         }
     }
-}

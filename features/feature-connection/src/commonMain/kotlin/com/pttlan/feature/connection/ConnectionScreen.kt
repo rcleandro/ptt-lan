@@ -1,5 +1,7 @@
 package com.pttlan.feature.connection
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -27,7 +28,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.domain.ptt.repository.ServerNode
 
@@ -52,24 +55,25 @@ fun ConnectionScreen(component: ConnectionComponent) {
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
                 text = "PTT LAN",
-                style = MaterialTheme.typography.headlineLarge
+                style = MaterialTheme.typography.displayLarge,
             )
 
             if (state.status == ConnectionStatus.Connecting || state.status == ConnectionStatus.Reconnecting) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     CircularProgressIndicator()
                     Text("Conectando...")
@@ -77,19 +81,19 @@ fun ConnectionScreen(component: ConnectionComponent) {
             } else {
                 Text(
                     text = "Servidores Descobertos na Rede",
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.headlineMedium,
                 )
-                
+
                 if (state.discoveredServers.isEmpty()) {
                     Text(
                         text = "Procurando servidores...",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 } else {
                     LazyColumn(
                         modifier = Modifier.weight(1f, fill = false),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         items(state.discoveredServers) { server ->
                             ServerCard(server = server) {
@@ -103,24 +107,24 @@ fun ConnectionScreen(component: ConnectionComponent) {
 
                 Text(
                     text = "Conectar Manualmente",
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.headlineMedium,
                 )
-                
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     OutlinedTextField(
                         value = state.manualIp,
                         onValueChange = { component.onIntent(ConnectionIntent.UpdateManualIp(it)) },
                         label = { Text("IP do Servidor") },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
-                    
+
                     Button(
                         onClick = { component.onIntent(ConnectionIntent.ConnectToManualIp(state.manualIp)) },
-                        enabled = state.manualIp.isNotBlank()
+                        enabled = state.manualIp.isNotBlank(),
                     ) {
                         Text("Conectar")
                     }
@@ -131,24 +135,44 @@ fun ConnectionScreen(component: ConnectionComponent) {
 }
 
 @Composable
-fun ServerCard(server: ServerNode, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
+fun ServerCard(
+    server: ServerNode,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.medium)
+                .background(com.pttlan.core.designsystem.theme.PttTheme.customColors.surface2)
+                .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.medium)
+                .clickable(onClick = onClick)
+                .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
+        Column {
             Text(
                 text = server.name,
-                style = MaterialTheme.typography.titleMedium
+                style =
+                    MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                        fontSize = 14.sp,
+                    ),
+                color = MaterialTheme.colorScheme.onBackground,
             )
             Text(
                 text = "${server.host}:${server.port}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style =
+                    MaterialTheme.typography.labelMedium.copy(
+                        fontSize = 11.sp,
+                    ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+
+        com.pttlan.core.designsystem.components.ConnectionStatusBadge(
+            status = com.pttlan.core.designsystem.components.ConnectionStatus.Online,
+        )
     }
 }

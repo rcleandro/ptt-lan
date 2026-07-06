@@ -1,3 +1,5 @@
+@file:Suppress("TooGenericExceptionCaught", "SwallowedException")
+
 package com.pttlan.server.channel
 
 import com.pttlan.core.network.protocol.ControlMessage
@@ -13,16 +15,19 @@ data class Participant(
     val userId: String,
     val nickname: String,
     val session: DefaultWebSocketServerSession,
-    var isSpeaking: Boolean = false
+    var isSpeaking: Boolean = false,
 ) {
-    fun toDto() = ParticipantDto(
-        userId = userId,
-        nickname = nickname,
-        isSpeaking = isSpeaking
-    )
+    fun toDto() =
+        ParticipantDto(
+            userId = userId,
+            nickname = nickname,
+            isSpeaking = isSpeaking,
+        )
 }
 
-class PttChannel(val id: String) {
+class PttChannel(
+    val id: String,
+) {
     private val participants = mutableMapOf<String, Participant>()
     private val mutex = Mutex()
 
@@ -45,7 +50,7 @@ class PttChannel(val id: String) {
         val json = Json.encodeToString(message)
         val frame = Frame.Text(json)
         val snapshot = mutex.withLock { participants.values.toList() }
-        
+
         snapshot.forEach {
             try {
                 it.session.send(frame)
@@ -55,12 +60,16 @@ class PttChannel(val id: String) {
         }
     }
 
-    suspend fun broadcastBinary(frame: Frame.Binary, senderUserId: String) {
-        val snapshot = mutex.withLock { 
-            if (currentSpeakerId != senderUserId) return
-            participants.values.toList() 
-        }
-        
+    suspend fun broadcastBinary(
+        frame: Frame.Binary,
+        senderUserId: String,
+    ) {
+        val snapshot =
+            mutex.withLock {
+                if (currentSpeakerId != senderUserId) return
+                participants.values.toList()
+            }
+
         snapshot.filter { it.userId != senderUserId }.forEach {
             try {
                 it.session.send(Frame.Binary(true, frame.data))
@@ -72,31 +81,32 @@ class PttChannel(val id: String) {
 
     suspend fun broadcastParticipantList() {
         val snapshot = mutex.withLock { participants.values.toList() }
-        val msg = ControlMessage.ParticipantList(
-            channelId = id,
-            participants = snapshot.map { it.toDto() }
-        )
+        val msg =
+            ControlMessage.ParticipantList(
+                channelId = id,
+                participants = snapshot.map { it.toDto() },
+            )
         broadcast(msg)
     }
-    
+
     var currentSpeakerId: String? = null
         private set
 
-    suspend fun requestFloor(userId: String): Boolean {
-        return mutex.withLock {
-            if (currentSpeakerId == null || currentSpeakerId == userId) {
-                currentSpeakerId = userId
-                participants[userId]?.isSpeaking = true
-                true
-            } else {
-                false
+    suspend fun requestFloor(userId: String): Boolean =
+        mutex
+            .withLock {
+                if (currentSpeakerId == null || currentSpeakerId == userId) {
+                    currentSpeakerId = userId
+                    participants[userId]?.isSpeaking = true
+                    true
+                } else {
+                    false
+                }
+            }.also { granted ->
+                if (granted) {
+                    broadcast(ControlMessage.SpeakerChanged(id, userId, true))
+                }
             }
-        }.also { granted ->
-            if (granted) {
-                broadcast(ControlMessage.SpeakerChanged(id, userId, true))
-            }
-        }
-    }
 
     suspend fun releaseFloor(userId: String) {
         mutex.withLock {
@@ -109,13 +119,11 @@ class PttChannel(val id: String) {
         }
         broadcast(ControlMessage.SpeakerChanged(id, userId, false))
     }
-    
+
     suspend fun releaseFloorIfHeldBy(userId: String) {
         val held = mutex.withLock { currentSpeakerId == userId }
         if (held) releaseFloor(userId)
     }
-    
-    suspend fun getParticipant(userId: String): Participant? {
-        return mutex.withLock { participants[userId] }
-    }
+
+    suspend fun getParticipant(userId: String): Participant? = mutex.withLock { participants[userId] }
 }

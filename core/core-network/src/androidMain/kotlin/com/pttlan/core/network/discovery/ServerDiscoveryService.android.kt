@@ -14,52 +14,68 @@ actual class ServerDiscoveryService actual constructor() : KoinComponent {
     private val nsdManager: NsdManager by lazy {
         context.getSystemService(Context.NSD_SERVICE) as NsdManager
     }
-    
+
     private var discoveryListener: NsdManager.DiscoveryListener? = null
 
-    actual fun discover(): Flow<DiscoveredServer> = callbackFlow {
-        val serviceType = "_pttlan._tcp."
-        
-        discoveryListener = object : NsdManager.DiscoveryListener {
-            override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {
-                close(Exception("Discovery failed with error code $errorCode"))
-            }
+    actual fun discover(): Flow<DiscoveredServer> =
+        callbackFlow {
+            val serviceType = "_pttlan._tcp."
 
-            override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) {
-                // Ignore
-            }
-
-            override fun onDiscoveryStarted(serviceType: String) {}
-            override fun onDiscoveryStopped(serviceType: String) {}
-
-            @Suppress("DEPRECATION")
-            override fun onServiceFound(serviceInfo: NsdServiceInfo) {
-                nsdManager.resolveService(serviceInfo, object : NsdManager.ResolveListener {
-                    override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {}
-                    
-                    override fun onServiceResolved(serviceInfo: NsdServiceInfo) {
-                        val host = serviceInfo.host?.hostAddress ?: return
-                        val server = DiscoveredServer(
-                            name = serviceInfo.serviceName,
-                            host = host,
-                            port = serviceInfo.port
-                        )
-                        trySend(server)
+            discoveryListener =
+                object : NsdManager.DiscoveryListener {
+                    override fun onStartDiscoveryFailed(
+                        serviceType: String,
+                        errorCode: Int,
+                    ) {
+                        close(Exception("Discovery failed with error code $errorCode"))
                     }
-                })
-            }
 
-            override fun onServiceLost(serviceInfo: NsdServiceInfo) {
-                // Handle if needed
+                    override fun onStopDiscoveryFailed(
+                        serviceType: String,
+                        errorCode: Int,
+                    ) {
+                        // Ignore
+                    }
+
+                    override fun onDiscoveryStarted(serviceType: String) {}
+
+                    override fun onDiscoveryStopped(serviceType: String) {}
+
+                    @Suppress("DEPRECATION")
+                    override fun onServiceFound(serviceInfo: NsdServiceInfo) {
+                        nsdManager.resolveService(
+                            serviceInfo,
+                            object : NsdManager.ResolveListener {
+                                override fun onResolveFailed(
+                                    serviceInfo: NsdServiceInfo,
+                                    errorCode: Int,
+                                ) {}
+
+                                override fun onServiceResolved(serviceInfo: NsdServiceInfo) {
+                                    val host = serviceInfo.host?.hostAddress ?: return
+                                    val server =
+                                        DiscoveredServer(
+                                            name = serviceInfo.serviceName,
+                                            host = host,
+                                            port = serviceInfo.port,
+                                        )
+                                    trySend(server)
+                                }
+                            },
+                        )
+                    }
+
+                    override fun onServiceLost(serviceInfo: NsdServiceInfo) {
+                        // Handle if needed
+                    }
+                }
+
+            nsdManager.discoverServices(serviceType, NsdManager.PROTOCOL_DNS_SD, discoveryListener)
+
+            awaitClose {
+                stopDiscovery()
             }
         }
-        
-        nsdManager.discoverServices(serviceType, NsdManager.PROTOCOL_DNS_SD, discoveryListener)
-        
-        awaitClose {
-            stopDiscovery()
-        }
-    }
 
     actual fun stopDiscovery() {
         discoveryListener?.let {

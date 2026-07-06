@@ -18,25 +18,35 @@ import kotlinx.coroutines.launch
 data class ConnectionState(
     val status: ConnectionStatus = ConnectionStatus.Disconnected,
     val discoveredServers: List<ServerNode> = emptyList(),
-    val manualIp: String = ""
+    val manualIp: String = "",
 )
 
 sealed interface ConnectionIntent {
-    data class ConnectToDiscovered(val server: ServerNode) : ConnectionIntent
-    data class ConnectToManualIp(val ip: String) : ConnectionIntent
-    data class UpdateManualIp(val ip: String) : ConnectionIntent
+    data class ConnectToDiscovered(
+        val server: ServerNode,
+    ) : ConnectionIntent
+
+    data class ConnectToManualIp(
+        val ip: String,
+    ) : ConnectionIntent
+
+    data class UpdateManualIp(
+        val ip: String,
+    ) : ConnectionIntent
 }
 
 sealed interface ConnectionEffect {
-    data class ShowError(val message: String) : ConnectionEffect
+    data class ShowError(
+        val message: String,
+    ) : ConnectionEffect
+
     data object NavigateToChannelList : ConnectionEffect
 }
 
 class ConnectionComponent(
     componentContext: ComponentContext,
-    private val connectionRepository: ConnectionRepository
+    private val connectionRepository: ConnectionRepository,
 ) : ComponentContext by componentContext {
-
     private val _state = MutableStateFlow(ConnectionState())
     val state: StateFlow<ConnectionState> = _state.asStateFlow()
 
@@ -54,7 +64,7 @@ class ConnectionComponent(
                 }
             }
         }
-        
+
         scope.launch {
             connectionRepository.discoverServers().collect { newServer ->
                 _state.update { currentState ->

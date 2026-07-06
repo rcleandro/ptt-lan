@@ -17,18 +17,23 @@ data class PttState(
     val channelId: String = "",
     val isTransmitting: Boolean = false,
     val currentSpeakerId: String? = null,
-    val floorBlocked: Boolean = false
+    val floorBlocked: Boolean = false,
 )
 
 sealed interface PttIntent {
     data object PressPtt : PttIntent
+
     data object ReleasePtt : PttIntent
+
     data object LeaveChannel : PttIntent
 }
 
 sealed interface PttEffect {
     data object NavigateBack : PttEffect
-    data class ShowFloorDenied(val reason: String) : PttEffect
+
+    data class ShowFloorDenied(
+        val reason: String,
+    ) : PttEffect
 }
 
 class PttComponent(
@@ -36,9 +41,8 @@ class PttComponent(
     private val channelId: String,
     private val userId: String,
     private val voiceRepository: VoiceRepository,
-    private val webSocketClient: com.pttlan.core.network.PttWebSocketClient
+    private val webSocketClient: com.pttlan.core.network.PttWebSocketClient,
 ) : ComponentContext by componentContext {
-
     private val _state = MutableStateFlow(PttState(channelId = channelId))
     val state: StateFlow<PttState> = _state.asStateFlow()
 
@@ -46,18 +50,20 @@ class PttComponent(
     val effects: SharedFlow<PttEffect> = _effects.asSharedFlow()
 
     private val scope = CoroutineScope(Dispatchers.Main)
-    
+
     init {
         scope.launch {
             webSocketClient.controlMessages.collect { message ->
                 when (message) {
                     is com.pttlan.core.network.protocol.ControlMessage.SpeakerChanged -> {
                         if (message.channelId == channelId) {
-                            _state.update { it.copy(
-                                currentSpeakerId = if (message.isSpeaking) message.userId else null,
-                                floorBlocked = message.isSpeaking && message.userId != userId
-                            ) }
-                            
+                            _state.update {
+                                it.copy(
+                                    currentSpeakerId = if (message.isSpeaking) message.userId else null,
+                                    floorBlocked = message.isSpeaking && message.userId != userId,
+                                )
+                            }
+
                             // If we were granted the floor
                             if (message.isSpeaking && message.userId == userId) {
                                 voiceRepository.startTransmitting(channelId, userId)

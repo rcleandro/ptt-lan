@@ -6,5 +6,5 @@ data class VoiceMessage(
     val senderNickname: String,
     val filePath: String,
     val durationMs: Long,
-    val recordedAt: Long
+    val recordedAt: Long,
 )

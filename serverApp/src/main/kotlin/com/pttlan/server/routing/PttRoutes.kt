@@ -1,3 +1,5 @@
+@file:Suppress("LongMethod", "CyclomaticComplexMethod", "TooGenericExceptionCaught", "MaxLineLength")
+
 package com.pttlan.server.routing
 
 import com.pttlan.core.network.protocol.ControlMessage
@@ -30,7 +32,7 @@ fun Routing.pttRoutes() {
                                 is ControlMessage.JoinChannel -> {
                                     currentUserId = message.userId
                                     currentChannelId = message.channelId
-                                    
+
                                     val channel = channelRegistry.getOrCreateChannel(message.channelId)
                                     val participant = Participant(message.userId, message.nickname, this)
                                     channel.addParticipant(participant)
@@ -44,9 +46,10 @@ fun Routing.pttRoutes() {
                                     if (channel != null) {
                                         val granted = channel.requestFloor(message.userId)
                                         if (!granted) {
-                                            val json = Json.encodeToString(
-                                                ControlMessage.FloorDenied(message.channelId, "Alguém já está falando")
-                                            )
+                                            val json =
+                                                Json.encodeToString(
+                                                    ControlMessage.FloorDenied(message.channelId, "Alguém já está falando"),
+                                                )
                                             send(Frame.Text(json))
                                         }
                                     }

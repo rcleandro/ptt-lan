@@ -1,6 +1,5 @@
 package com.pttlan.feature.channellist
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -40,36 +38,37 @@ fun ChannelListScreen(component: ChannelListComponent) {
     }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
                 text = "Canais",
-                style = MaterialTheme.typography.headlineLarge
+                style = MaterialTheme.typography.displayLarge,
             )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 OutlinedTextField(
                     value = state.newChannelName,
                     onValueChange = { component.onIntent(ChannelListIntent.UpdateNewChannelName(it)) },
                     label = { Text("Nome do Canal") },
                     modifier = Modifier.weight(1f),
-                    singleLine = true
+                    singleLine = true,
                 )
-                
+
                 Button(
                     onClick = { component.onIntent(ChannelListIntent.CreateChannel) },
-                    enabled = state.newChannelName.isNotBlank()
+                    enabled = state.newChannelName.isNotBlank(),
                 ) {
                     Text("Criar/Entrar")
                 }
@@ -79,40 +78,30 @@ fun ChannelListScreen(component: ChannelListComponent) {
 
             Text(
                 text = "Recentes",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.headlineMedium,
             )
 
             if (state.recentChannels.isEmpty()) {
                 Text(
                     text = "Nenhum canal recente.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     items(state.recentChannels) { channel ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    component.onIntent(ChannelListIntent.JoinChannel(channel.id, channel.name))
-                                }
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(
-                                    text = channel.name,
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                                Text(
-                                    text = "#${channel.id}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
+                        com.pttlan.core.designsystem.components.ChannelCard(
+                            name = channel.name,
+                            id = channel.id,
+                            participantCount = 0,
+                            isActive = true,
+                            onClick = {
+                                component.onIntent(ChannelListIntent.JoinChannel(channel.id, channel.name))
+                            },
+                        )
                     }
                 }
             }

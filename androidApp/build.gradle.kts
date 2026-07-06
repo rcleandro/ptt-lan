@@ -26,4 +26,12 @@ dependencies {
     implementation(project(":core:core-designsystem"))
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
+    implementation(libs.androidx.activity.compose)
+    implementation(project(":features:feature-connection"))
+    implementation(project(":features:feature-channel-list"))
+    implementation(project(":features:feature-ptt"))
+    implementation(project(":features:feature-history"))
+    implementation(project(":features:feature-settings"))
+    implementation(libs.decompose)
+    implementation(libs.decompose.extensions.compose)
 }

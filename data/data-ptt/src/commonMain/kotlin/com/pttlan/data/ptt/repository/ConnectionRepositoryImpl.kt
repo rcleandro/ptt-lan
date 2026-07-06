@@ -13,23 +13,24 @@ import kotlinx.coroutines.flow.map
 
 class ConnectionRepositoryImpl(
     private val httpClient: HttpClient,
-    private val discoveryService: ServerDiscoveryService
+    private val discoveryService: ServerDiscoveryService,
 ) : ConnectionRepository {
-
     private val _connectionStatus = MutableStateFlow(ConnectionStatus.Disconnected)
     override val connectionStatus: StateFlow<ConnectionStatus> = _connectionStatus.asStateFlow()
 
-    override fun discoverServers(): Flow<ServerNode> {
-        return discoveryService.discover().map { 
+    override fun discoverServers(): Flow<ServerNode> =
+        discoveryService.discover().map {
             ServerNode(name = it.name, host = it.host, port = it.port)
         }
-    }
 
     override fun stopDiscovery() {
         discoveryService.stopDiscovery()
     }
 
-    override suspend fun connect(host: String, port: Int): Result<Unit> {
+    override suspend fun connect(
+        host: String,
+        port: Int,
+    ): Result<Unit> {
         _connectionStatus.value = ConnectionStatus.Connecting
         // MVP: Fake connection for now until we fully implement the WebSocket handshake
         // We will just assume it succeeds for now
