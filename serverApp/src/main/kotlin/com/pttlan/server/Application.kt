@@ -1,6 +1,7 @@
 package com.pttlan.server
 
 import com.pttlan.server.channel.ChannelRegistry
+import com.pttlan.server.routing.dashboardRoutes
 import com.pttlan.server.routing.pttRoutes
 import io.ktor.network.tls.certificates.generateCertificate
 import io.ktor.serialization.kotlinx.json.json
@@ -85,6 +86,7 @@ fun Application.module() {
 
     routing {
         pttRoutes()
+        dashboardRoutes()
     }
 }
 

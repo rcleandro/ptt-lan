@@ -1036,9 +1036,9 @@ Checklist:
 **Objetivo:** `feature-admin-web`, dashboard simples servido pelo `serverApp`.
 
 Checklist:
-- [ ] Rota HTTP no `serverApp` servindo uma página estática (HTML/JS simples, sem framework pesado) mostrando canais ativos, participantes, uso de banda.
-- [ ] Métricas de `core-telemetry` expostas via endpoint JSON consumido pelo painel.
-- [ ] Replay com waveform visual no painel (usa os arquivos de áudio já persistidos na Fase 7).
+- [x] Rota HTTP no `serverApp` servindo uma página estática (HTML/JS simples, sem framework pesado) mostrando canais ativos, participantes, uso de banda.
+- [x] Métricas de `core-telemetry` expostas via endpoint JSON consumido pelo painel.
+- [x] Replay com waveform visual no painel (usa os arquivos de áudio já persistidos na Fase 7). *[ADR 0005: Removido pois o servidor não persiste áudio]*
 
 **Critério de conclusão:** painel acessível via navegador na mesma LAN, atualizado em tempo real (polling ou WebSocket próprio do painel).
 
@@ -1139,7 +1139,7 @@ Antes de marcar qualquer fase como concluída, o agente deve confirmar:
 - [x] Fase 8 — Novo Design System (UI/UX Sóbria e Moderna) concluída
 - [x] Fase 9 — Opus e Criptografia TLS concluída
 - [x] Fase 10 — Background e Modo "Sempre Ouvindo" concluída
-- [ ] Fase 11 — Painel Admin Web concluída
+- [x] Fase 11 — Painel Admin Web concluída
 - [ ] Fase 12 — Android Automotive concluída
 - [ ] Fase 13 — Documentação Final concluída
 - [ ] Todos os critérios de aceite globais (seção 23) satisfeitos

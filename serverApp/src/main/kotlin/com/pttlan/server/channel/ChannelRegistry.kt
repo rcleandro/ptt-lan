@@ -62,6 +62,25 @@ class ChannelRegistry {
         broadcastActiveChannels()
     }
 
+    fun getGlobalConnectionsCount(): Int = globalConnections.size
+
+    suspend fun getActiveChannelsInfo(): List<Map<String, Any?>> =
+        channels.values.map { channel ->
+            mapOf(
+                "id" to channel.id,
+                "participantCount" to channel.participantCount,
+                "currentSpeakerId" to channel.currentSpeakerId,
+                "participants" to
+                    channel.getParticipantsSnapshot().map { p ->
+                        mapOf(
+                            "userId" to p.userId,
+                            "nickname" to p.nickname,
+                            "isSpeaking" to p.isSpeaking,
+                        )
+                    },
+            )
+        }
+
     fun broadcastActiveChannels() {
         val activeChannels =
             channels.values

@@ -131,4 +131,6 @@ class PttChannel(
     }
 
     suspend fun getParticipant(userId: String): Participant? = mutex.withLock { participants[userId] }
+
+    suspend fun getParticipantsSnapshot(): List<Participant> = mutex.withLock { participants.values.toList() }
 }
