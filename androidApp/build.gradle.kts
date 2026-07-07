@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
+@Suppress("DEPRECATION")
 android {
     namespace = "com.pttlan.android"
     compileSdk = 37

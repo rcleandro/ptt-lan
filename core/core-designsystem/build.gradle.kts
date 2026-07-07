@@ -5,7 +5,7 @@ plugins {
 }
 
 kotlin {
-    androidLibrary {
+    android {
         namespace = "com.pttlan.core.designsystem"
         compileSdk = 37
         minSdk = 26
