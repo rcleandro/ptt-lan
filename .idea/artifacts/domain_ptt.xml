@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="domain-ptt">
-    <output-path>$PROJECT_DIR$/domain/domain-ptt/build/libs</output-path>
-    <root id="archive" name="domain-ptt.jar">
-      <element id="module-output" name="ptt-lan.domain.domain-ptt.androidMain" />
-    </root>
-  </artifact>
-</component>

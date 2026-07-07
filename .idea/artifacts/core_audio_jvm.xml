@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="core-audio-jvm">
-    <output-path>$PROJECT_DIR$/core/core-audio/build/libs</output-path>
-    <root id="archive" name="core-audio-jvm.jar">
-      <element id="module-output" name="ptt-lan.core.core-audio.jvmMain" />
-    </root>
-  </artifact>
-</component>

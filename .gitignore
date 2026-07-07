@@ -1,8 +1,63 @@
-# Ignore Gradle project-specific cache directory
-.gradle
+# Gradle
+.gradle/
+/build/
+*/build/
+*/*/build/
+!gradle/wrapper/gradle-wrapper.jar
+gradle-app.setting
+.cache
 
-# Ignore Gradle build output directory
-build
+# Local configuration file (sdk path, etc)
+local.properties
 
-# Ignore Kotlin plugin data
-.kotlin
+# IDEs
+.idea/
+.run/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+out/
+
+# Kotlin
+.kotlin/
+
+# Java/Android
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+bin/
+gen/
+
+# Heap dumps / profiling
+*.hprof
+*.heaps
+*.alloc
+*.trace
+
+# OS Specific
+.DS_Store
+*.DS_Store
+Thumbs.db
+
+# iOS / Xcode
+iosApp/build/
+iosApp/Pods/
+iosApp/DerivedData/
+iosApp/xcuserdata/
+iosApp/project.xcworkspace/xcuserdata/
+iosApp/*.xcworkspace/xcuserdata/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xcuserstate
+
+# Temporary files
+*.swp
+*.bak
+*~

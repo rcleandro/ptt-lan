@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="feature-history-jvm">
-    <output-path>$PROJECT_DIR$/features/feature-history/build/libs</output-path>
-    <root id="archive" name="feature-history-jvm.jar">
-      <element id="module-output" name="ptt-lan.features.feature-history.jvmMain" />
-    </root>
-  </artifact>
-</component>

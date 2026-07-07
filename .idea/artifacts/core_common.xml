@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="core-common">
-    <output-path>$PROJECT_DIR$/core/core-common/build/libs</output-path>
-    <root id="archive" name="core-common.jar">
-      <element id="module-output" name="ptt-lan.core.core-common.androidMain" />
-    </root>
-  </artifact>
-</component>

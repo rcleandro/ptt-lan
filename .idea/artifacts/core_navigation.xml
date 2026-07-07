@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="core-navigation">
-    <output-path>$PROJECT_DIR$/core/core-navigation/build/libs</output-path>
-    <root id="archive" name="core-navigation.jar">
-      <element id="module-output" name="ptt-lan.core.core-navigation.androidMain" />
-    </root>
-  </artifact>
-</component>
