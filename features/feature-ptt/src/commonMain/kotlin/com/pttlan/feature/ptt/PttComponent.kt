@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancel
 
 data class PttState(
     val channelId: String = "",
@@ -53,6 +54,15 @@ class PttComponent(
 
     init {
         scope.launch {
+            val nickname = "User-${userId.take(4)}"
+            webSocketClient.sendControlMessage(
+                com.pttlan.core.network.protocol.ControlMessage.JoinChannel(
+                    channelId = channelId,
+                    nickname = nickname,
+                    userId = userId,
+                )
+            )
+
             webSocketClient.controlMessages.collect { message ->
                 when (message) {
                     is com.pttlan.core.network.protocol.ControlMessage.SpeakerChanged -> {
@@ -80,6 +90,26 @@ class PttComponent(
                 }
             }
         }
+
+        lifecycle.subscribe(
+            object : com.arkivanov.essenty.lifecycle.Lifecycle.Callbacks {
+                override fun onDestroy() {
+                    kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            webSocketClient.sendControlMessage(
+                                com.pttlan.core.network.protocol.ControlMessage.LeaveChannel(
+                                    channelId = channelId,
+                                    userId = userId,
+                                )
+                            )
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                    scope.cancel()
+                }
+            }
+        )
     }
 
     fun onIntent(intent: PttIntent) {
@@ -103,6 +133,12 @@ class PttComponent(
             }
             is PttIntent.LeaveChannel -> {
                 scope.launch {
+                    webSocketClient.sendControlMessage(
+                        com.pttlan.core.network.protocol.ControlMessage.LeaveChannel(
+                            channelId = channelId,
+                            userId = userId,
+                        )
+                    )
                     _effects.emit(PttEffect.NavigateBack)
                 }
             }

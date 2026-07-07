@@ -77,13 +77,13 @@ fun ChannelListScreen(component: ChannelListComponent) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Recentes",
+                text = "Salas Ativas",
                 style = MaterialTheme.typography.headlineMedium,
             )
 
-            if (state.recentChannels.isEmpty()) {
+            if (state.activeChannels.isEmpty()) {
                 Text(
-                    text = "Nenhum canal recente.",
+                    text = "Nenhuma sala ativa no momento.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -92,14 +92,14 @@ fun ChannelListScreen(component: ChannelListComponent) {
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    items(state.recentChannels) { channel ->
+                    items(state.activeChannels) { channel ->
                         com.pttlan.core.designsystem.components.ChannelCard(
-                            name = channel.name,
+                            name = channel.id, // Displaying ID as name for now, could be formatted
                             id = channel.id,
-                            participantCount = 0,
+                            participantCount = channel.participantCount,
                             isActive = true,
                             onClick = {
-                                component.onIntent(ChannelListIntent.JoinChannel(channel.id, channel.name))
+                                component.onIntent(ChannelListIntent.JoinChannel(channel.id, channel.id))
                             },
                         )
                     }

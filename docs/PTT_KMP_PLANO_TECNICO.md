@@ -963,7 +963,8 @@ Checklist:
 - [x] `ChannelRegistry` no `serverApp` suportando N canais isolados.
 - [x] `ControlMessage.JoinChannel`/`LeaveChannel`/`ParticipantList` implementados ponta a ponta.
 - [x] `feature-settings`: tela de nickname (persistido via `core-datastore`).
-- [x] `feature-channel-list`: criar/entrar em canal, lista de canais recentes (SQLDelight).
+- [x] `feature-channel-list`: listar salas ativas em tempo real (estado global do servidor) em vez de apenas recentes.
+- [x] Servidor deve remover salas que ficarem vazias por mais de 5 minutos, emitindo atualização para todos os clientes conectados.
 
 **Critério de conclusão:** 3+ clients conseguem entrar em canais diferentes no mesmo servidor sem vazamento de mensagens entre canais (validado por integration test).
 

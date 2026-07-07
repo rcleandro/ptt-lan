@@ -8,7 +8,6 @@ import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.Frame
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 data class Participant(
@@ -30,6 +29,9 @@ class PttChannel(
 ) {
     private val participants = mutableMapOf<String, Participant>()
     private val mutex = Mutex()
+
+    val participantCount: Int
+        get() = participants.size
 
     suspend fun addParticipant(participant: Participant) {
         mutex.withLock {
@@ -54,7 +56,7 @@ class PttChannel(
         snapshot.forEach {
             try {
                 it.session.send(frame)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Ignore, will be cleaned up on disconnect
             }
         }
@@ -73,7 +75,7 @@ class PttChannel(
         snapshot.filter { it.userId != senderUserId }.forEach {
             try {
                 it.session.send(Frame.Binary(true, frame.data))
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Ignore
             }
         }

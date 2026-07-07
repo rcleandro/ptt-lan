@@ -6,19 +6,19 @@ import io.ktor.network.tls.certificates.generateCertificate
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
+import io.ktor.server.netty.EngineMain
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
 import kotlinx.serialization.json.Json
-import java.io.File
-import kotlin.time.Duration.Companion.seconds
-import javax.jmdns.JmDNS
-import javax.jmdns.ServiceInfo
-import java.net.InetAddress
-import io.ktor.server.netty.EngineMain
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
+import java.io.File
+import java.net.InetAddress
+import javax.jmdns.JmDNS
+import javax.jmdns.ServiceInfo
+import kotlin.time.Duration.Companion.seconds
 
 @Suppress("TooGenericExceptionCaught", "MagicNumber")
 fun main(args: Array<String>) {

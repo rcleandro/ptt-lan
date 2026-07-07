@@ -11,6 +11,12 @@ data class ParticipantDto(
 )
 
 @Serializable
+data class ActiveChannelDto(
+    val channelId: String,
+    val participantCount: Int,
+)
+
+@Serializable
 sealed interface ControlMessage {
     @Serializable
     @SerialName("join_channel")
@@ -67,5 +73,11 @@ sealed interface ControlMessage {
     @SerialName("heartbeat")
     data class Heartbeat(
         val userId: String,
+    ) : ControlMessage
+
+    @Serializable
+    @SerialName("active_channels_list")
+    data class ActiveChannelsList(
+        val activeChannels: List<ActiveChannelDto>,
     ) : ControlMessage
 }

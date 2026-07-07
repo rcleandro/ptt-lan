@@ -3,7 +3,10 @@ package com.pttlan.core.navigation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -31,12 +34,15 @@ fun RootScreen(component: RootComponent) {
                     title = { Text(getScreenTitle(childStack.active.instance)) },
                     navigationIcon = {
                         IconButton(onClick = component::goBack) {
-                            Text("<")
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Voltar"
+                            )
                         }
-                    }
+                    },
                 )
             }
-        }
+        },
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             Children(
@@ -53,10 +59,9 @@ fun RootScreen(component: RootComponent) {
     }
 }
 
-private fun getScreenTitle(child: RootComponent.Child): String {
-    return when (child) {
+private fun getScreenTitle(child: RootComponent.Child): String =
+    when (child) {
         is RootComponent.Child.ConnectionChild -> "Conectar"
         is RootComponent.Child.ChannelListChild -> "Canais"
         is RootComponent.Child.PttChild -> "Rádio (PTT)"
     }
-}

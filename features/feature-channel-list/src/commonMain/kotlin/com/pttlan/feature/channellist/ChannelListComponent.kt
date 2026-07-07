@@ -1,6 +1,7 @@
 package com.pttlan.feature.channellist
 
 import com.arkivanov.decompose.ComponentContext
+import com.pttlan.domain.ptt.repository.ActiveChannelDomain
 import com.pttlan.domain.ptt.repository.ChannelDomain
 import com.pttlan.domain.ptt.repository.ChannelRepository
 import kotlinx.coroutines.CoroutineScope
@@ -16,6 +17,7 @@ import kotlinx.coroutines.launch
 
 data class ChannelListState(
     val recentChannels: List<ChannelDomain> = emptyList(),
+    val activeChannels: List<ActiveChannelDomain> = emptyList(),
     val newChannelName: String = "",
 )
 
@@ -54,6 +56,11 @@ class ChannelListComponent(
         scope.launch {
             channelRepository.getRecentChannels().collect { channels ->
                 _state.update { it.copy(recentChannels = channels) }
+            }
+        }
+        scope.launch {
+            channelRepository.observeActiveChannels().collect { active ->
+                _state.update { it.copy(activeChannels = active) }
             }
         }
     }

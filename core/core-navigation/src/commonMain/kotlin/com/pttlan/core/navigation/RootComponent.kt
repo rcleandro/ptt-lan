@@ -4,9 +4,11 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
+import com.arkivanov.decompose.router.stack.navigate
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.push
 import com.arkivanov.decompose.value.Value
+import com.pttlan.core.network.PttWebSocketClient
 import com.pttlan.domain.ptt.repository.ChannelRepository
 import com.pttlan.domain.ptt.repository.ConnectionRepository
 import com.pttlan.domain.ptt.repository.VoiceRepository
@@ -19,9 +21,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import java.util.UUID
-
-import com.pttlan.core.network.PttWebSocketClient
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class RootComponent(
     componentContext: ComponentContext,
@@ -30,10 +31,10 @@ class RootComponent(
     private val voiceRepository: VoiceRepository,
     private val webSocketClient: PttWebSocketClient,
 ) : ComponentContext by componentContext {
-
     private val navigation = StackNavigation<Config>()
 
-    private val userId = UUID.randomUUID().toString()
+    @OptIn(ExperimentalUuidApi::class)
+    private val userId = Uuid.random().toString()
     private val scope = CoroutineScope(Dispatchers.Main)
 
     val childStack: Value<ChildStack<*, Child>> =
@@ -45,14 +46,19 @@ class RootComponent(
             childFactory = ::createChild,
         )
 
-    private fun createChild(config: Config, context: ComponentContext): Child {
-        return when (config) {
+    private fun createChild(
+        config: Config,
+        context: ComponentContext,
+    ): Child =
+        when (config) {
             is Config.Connection -> {
                 val component = ConnectionComponent(context, connectionRepository)
                 scope.launch {
                     component.effects.collect { effect ->
                         if (effect is ConnectionEffect.NavigateToChannelList) {
-                            navigation.push(Config.ChannelList)
+                            navigation.navigate { stack ->
+                                if (stack.lastOrNull() == Config.ChannelList) stack else stack + Config.ChannelList
+                            }
                         }
                     }
                 }
@@ -63,7 +69,10 @@ class RootComponent(
                 scope.launch {
                     component.effects.collect { effect ->
                         if (effect is ChannelListEffect.NavigateToChannel) {
-                            navigation.push(Config.PttScreen(effect.channelId))
+                            val nextConfig = Config.PttScreen(effect.channelId)
+                            navigation.navigate { stack ->
+                                if (stack.lastOrNull() == nextConfig) stack else stack + nextConfig
+                            }
                         }
                     }
                 }
@@ -77,20 +86,27 @@ class RootComponent(
                         userId = userId,
                         voiceRepository = voiceRepository,
                         webSocketClient = webSocketClient,
-                    )
+                    ),
                 )
             }
         }
-    }
 
     fun goBack() {
         navigation.pop()
     }
 
     sealed interface Child {
-        class ConnectionChild(val component: ConnectionComponent) : Child
-        class ChannelListChild(val component: ChannelListComponent) : Child
-        class PttChild(val component: PttComponent) : Child
+        class ConnectionChild(
+            val component: ConnectionComponent,
+        ) : Child
+
+        class ChannelListChild(
+            val component: ChannelListComponent,
+        ) : Child
+
+        class PttChild(
+            val component: PttComponent,
+        ) : Child
     }
 
     @Serializable
@@ -102,6 +118,8 @@ class RootComponent(
         data object ChannelList : Config
 
         @Serializable
-        data class PttScreen(val channelId: String) : Config
+        data class PttScreen(
+            val channelId: String,
+        ) : Config
     }
 }

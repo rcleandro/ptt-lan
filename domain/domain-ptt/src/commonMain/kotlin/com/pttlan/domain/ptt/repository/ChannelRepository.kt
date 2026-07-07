@@ -8,8 +8,15 @@ data class ChannelDomain(
     val isFavorite: Boolean,
 )
 
+data class ActiveChannelDomain(
+    val id: String,
+    val participantCount: Int,
+)
+
 interface ChannelRepository {
     fun getRecentChannels(): Flow<List<ChannelDomain>>
+
+    fun observeActiveChannels(): Flow<List<ActiveChannelDomain>>
 
     suspend fun saveChannel(channel: ChannelDomain)
 }

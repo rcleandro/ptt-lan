@@ -11,9 +11,9 @@ import org.koin.dsl.module
 
 val dataModule =
     module {
-        single<ConnectionRepository> { ConnectionRepositoryImpl(get(), get(), get()) }
-        single<ChannelRepository> {
-            ChannelRepositoryImpl(get())
+        single<ConnectionRepository> { ConnectionRepositoryImpl(get(), get()) }
+        single<ChannelRepository>(createdAtStart = true) {
+            ChannelRepositoryImpl(get(), get())
         }
         single<VoiceRepository> {
             VoiceRepositoryImpl(

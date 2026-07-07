@@ -20,6 +20,7 @@ fun Routing.pttRoutes() {
         var currentChannelId: String? = null
 
         try {
+            channelRegistry.addGlobalConnection(this)
             println("Novo client conectado via WebSocket!")
             for (frame in incoming) {
                 when (frame) {
@@ -30,16 +31,19 @@ fun Routing.pttRoutes() {
                                 is ControlMessage.JoinChannel -> {
                                     currentUserId = message.userId
                                     currentChannelId = message.channelId
-                                    println($$"Usuário ${message.nickname} (${message.userId}) entrou no canal ${message.channelId}")
+                                    println("Usuário ${message.nickname} (${message.userId}) entrou no canal ${message.channelId}")
 
                                     val channel = channelRegistry.getOrCreateChannel(message.channelId)
                                     val participant = Participant(message.userId, message.nickname, this)
                                     channel.addParticipant(participant)
+                                    channelRegistry.broadcastActiveChannels()
                                 }
                                 is ControlMessage.LeaveChannel -> {
-                                    println($$"Usuário ${message.userId} saiu do canal ${message.channelId}")
+                                    println("Usuário ${message.userId} saiu do canal ${message.channelId}")
                                     val channel = channelRegistry.getChannel(message.channelId)
                                     channel?.removeParticipant(message.userId)
+                                    channelRegistry.scheduleCleanupIfEmpty(message.channelId)
+                                    channelRegistry.broadcastActiveChannels()
                                 }
                                 is ControlMessage.StartSpeaking -> {
                                     val channel = channelRegistry.getChannel(message.channelId)
@@ -47,7 +51,7 @@ fun Routing.pttRoutes() {
                                         val granted = channel.requestFloor(message.userId)
                                         if (!granted) {
                                             val json =
-                                                Json.encodeToString(
+                                                Json.encodeToString<ControlMessage>(
                                                     ControlMessage.FloorDenied(message.channelId, "Alguém já está falando"),
                                                 )
                                             send(Frame.Text(json))
@@ -78,11 +82,13 @@ fun Routing.pttRoutes() {
                 }
             }
         } finally {
-            println($$"Client desconectado via WebSocket! (User: $currentUserId)")
+            println("Client desconectado via WebSocket! (User: $currentUserId)")
             if (currentUserId != null && currentChannelId != null) {
                 val channel = channelRegistry.getChannel(currentChannelId)
                 channel?.removeParticipant(currentUserId)
+                channelRegistry.scheduleCleanupIfEmpty(currentChannelId)
             }
+            channelRegistry.removeGlobalConnection(this)
         }
     }
 }
