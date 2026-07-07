@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.pttlan.core.designsystem.components
 
 import androidx.compose.foundation.layout.Arrangement

@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -111,7 +111,7 @@ fun PttButton(
                     ).clip(CircleShape),
         ) {
             Icon(
-                imageVector = if (state == PttButtonState.Receiving) Icons.Default.VolumeUp else Icons.Default.Mic,
+                imageVector = if (state == PttButtonState.Receiving) Icons.AutoMirrored.Filled.VolumeUp else Icons.Default.Mic,
                 contentDescription = null,
                 tint = iconColor,
                 modifier = Modifier.size(buttonSize * 0.35f),
