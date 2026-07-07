@@ -64,12 +64,11 @@ class ChannelRegistry {
 
         val message: ControlMessage = ControlMessage.ActiveChannelsList(activeChannels)
         val json = Json.encodeToString<ControlMessage>(message)
-        val frame = Frame.Text(json)
 
         scope.launch {
             globalConnections.forEach { session ->
                 try {
-                    session.send(frame)
+                    session.send(Frame.Text(json))
                 } catch (_: Exception) {
                     // Ignore closed sessions
                 }

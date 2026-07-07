@@ -50,12 +50,11 @@ class PttChannel(
 
     suspend fun broadcast(message: ControlMessage) {
         val json = Json.encodeToString(message)
-        val frame = Frame.Text(json)
         val snapshot = mutex.withLock { participants.values.toList() }
 
         snapshot.forEach {
             try {
-                it.session.send(frame)
+                it.session.send(Frame.Text(json))
             } catch (_: Exception) {
                 // Ignore, will be cleaned up on disconnect
             }
@@ -74,7 +73,7 @@ class PttChannel(
 
         snapshot.filter { it.userId != senderUserId }.forEach {
             try {
-                it.session.send(Frame.Binary(true, frame.data))
+                it.session.send(Frame.Binary(true, frame.data.copyOf()))
             } catch (_: Exception) {
                 // Ignore
             }

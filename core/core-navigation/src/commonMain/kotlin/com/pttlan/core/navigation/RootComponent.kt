@@ -6,8 +6,8 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.navigate
 import com.arkivanov.decompose.router.stack.pop
-import com.arkivanov.decompose.router.stack.push
 import com.arkivanov.decompose.value.Value
+import com.pttlan.feature.ptt.PttEffect
 import com.pttlan.core.network.PttWebSocketClient
 import com.pttlan.domain.ptt.repository.ChannelRepository
 import com.pttlan.domain.ptt.repository.ConnectionRepository
@@ -23,6 +23,18 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+import kotlinx.coroutines.cancel
+import com.arkivanov.essenty.lifecycle.Lifecycle
+
+private fun Lifecycle.coroutineScope(): CoroutineScope {
+    val scope = CoroutineScope(Dispatchers.Main)
+    subscribe(object : Lifecycle.Callbacks {
+        override fun onDestroy() {
+            scope.cancel()
+        }
+    })
+    return scope
+}
 
 class RootComponent(
     componentContext: ComponentContext,
@@ -35,7 +47,6 @@ class RootComponent(
 
     @OptIn(ExperimentalUuidApi::class)
     private val userId = Uuid.random().toString()
-    private val scope = CoroutineScope(Dispatchers.Main)
 
     val childStack: Value<ChildStack<*, Child>> =
         childStack(
@@ -53,11 +64,11 @@ class RootComponent(
         when (config) {
             is Config.Connection -> {
                 val component = ConnectionComponent(context, connectionRepository)
-                scope.launch {
+                context.lifecycle.coroutineScope().launch {
                     component.effects.collect { effect ->
                         if (effect is ConnectionEffect.NavigateToChannelList) {
                             navigation.navigate { stack ->
-                                if (stack.lastOrNull() == Config.ChannelList) stack else stack + Config.ChannelList
+                                if (stack.contains(Config.ChannelList)) stack else stack + Config.ChannelList
                             }
                         }
                     }
@@ -66,7 +77,7 @@ class RootComponent(
             }
             is Config.ChannelList -> {
                 val component = ChannelListComponent(context, channelRepository)
-                scope.launch {
+                context.lifecycle.coroutineScope().launch {
                     component.effects.collect { effect ->
                         if (effect is ChannelListEffect.NavigateToChannel) {
                             val nextConfig = Config.PttScreen(effect.channelId)
@@ -86,9 +97,9 @@ class RootComponent(
                     voiceRepository = voiceRepository,
                     webSocketClient = webSocketClient,
                 )
-                scope.launch {
+                context.lifecycle.coroutineScope().launch {
                     component.effects.collect { effect ->
-                        if (effect is com.pttlan.feature.ptt.PttEffect.NavigateBack) {
+                        if (effect is PttEffect.NavigateBack) {
                             navigation.pop()
                         }
                     }
