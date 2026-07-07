@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "com.pttlan" + project.path.replace(":", ".")
+    namespace = "com.pttlan" + project.path.replace(":", ".").replace("-", "")
     compileSdk = 37
     defaultConfig {
         minSdk = 26

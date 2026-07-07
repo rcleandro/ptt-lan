@@ -15,5 +15,9 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.material.icons.extended)
         }
+        jvmTest.dependencies {
+            implementation(project(":core:core-testing"))
+            implementation(kotlin("test"))
+        }
     }
 }

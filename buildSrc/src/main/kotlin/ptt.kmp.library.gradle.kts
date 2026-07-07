@@ -9,7 +9,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "com.pttlan" + project.path.replace(":", ".")
+        namespace = "com.pttlan" + project.path.replace(":", ".").replace("-", "")
         compileSdk = 37
         minSdk = 26
     }
