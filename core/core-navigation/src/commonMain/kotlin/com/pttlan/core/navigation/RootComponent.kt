@@ -10,7 +10,6 @@ import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.lifecycle.Lifecycle
 import com.pttlan.domain.ptt.repository.ChannelRepository
 import com.pttlan.domain.ptt.repository.ConnectionRepository
-import com.pttlan.domain.ptt.repository.VoiceRepository
 import com.pttlan.feature.channellist.ChannelListComponent
 import com.pttlan.feature.channellist.ChannelListEffect
 import com.pttlan.feature.connection.ConnectionComponent
@@ -43,7 +42,6 @@ class RootComponent(
     componentContext: ComponentContext,
     private val connectionRepository: ConnectionRepository,
     private val channelRepository: ChannelRepository,
-    private val voiceRepository: VoiceRepository,
 ) : ComponentContext by componentContext,
     org.koin.core.component.KoinComponent {
     private val navigation = StackNavigation<Config>()
