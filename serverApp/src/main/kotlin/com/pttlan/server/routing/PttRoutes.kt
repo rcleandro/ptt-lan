@@ -10,6 +10,7 @@ import io.ktor.server.websocket.webSocket
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.koin.ktor.ext.inject
 
@@ -78,10 +79,17 @@ fun Routing.pttRoutes() {
                         }
                     }
                     is Frame.Binary -> {
-                        // Audio chunks broadcast (MVP: blindly broadcast to everyone else in the channel)
                         if (currentChannelId != null && currentUserId != null) {
                             val channel = channelRegistry.getChannel(currentChannelId)
-                            channel?.broadcastBinary(frame, currentUserId)
+                            if (channel != null) {
+                                launch {
+                                    try {
+                                        channel.broadcastBinary(frame, currentUserId)
+                                    } catch (e: Exception) {
+                                        println("PttRoutes: Erro ao despachar broadcast de áudio: ${e.message}")
+                                    }
+                                }
+                            }
                         }
                     }
                     else -> {}

@@ -6,9 +6,13 @@ import com.pttlan.core.network.protocol.ControlMessage
 import com.pttlan.core.network.protocol.ParticipantDto
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.Frame
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
+
+private const val SLOW_CONNECTION_THRESHOLD_MS = 100L
 
 data class Participant(
     val userId: String,
@@ -65,17 +69,49 @@ class PttChannel(
         frame: Frame.Binary,
         senderUserId: String,
     ) {
+        val size = frame.data.size
         val snapshot =
             mutex.withLock {
-                if (currentSpeakerId != senderUserId) return
+                if (currentSpeakerId != senderUserId) {
+                    println(
+                        "PttChannel[$id]: Descartando áudio de $senderUserId. " +
+                            "O speaker atual é $currentSpeakerId",
+                    )
+                    return
+                }
                 participants.values.toList()
             }
 
-        snapshot.filter { it.userId != senderUserId }.forEach {
-            try {
-                it.session.send(Frame.Binary(true, frame.data.copyOf()))
-            } catch (_: Exception) {
-                // Ignore
+        val targets = snapshot.filter { it.userId != senderUserId }
+        if (targets.isEmpty()) {
+            return
+        }
+
+        println(
+            "PttChannel[$id]: Fazendo broadcast de áudio ($size bytes) " +
+                "de $senderUserId para ${targets.size} participantes.",
+        )
+
+        coroutineScope {
+            targets.forEach { participant ->
+                launch {
+                    val startMs = System.currentTimeMillis()
+                    try {
+                        participant.session.send(Frame.Binary(true, frame.data.copyOf()))
+                        val elapsed = System.currentTimeMillis() - startMs
+                        if (elapsed > SLOW_CONNECTION_THRESHOLD_MS) {
+                            println(
+                                "PttChannel[$id]: AVISO - Envio de áudio para " +
+                                    "${participant.nickname} demorou ${elapsed}ms (conexão lenta?)",
+                            )
+                        }
+                    } catch (e: Exception) {
+                        println(
+                            "PttChannel[$id]: Falha ao enviar áudio para " +
+                                "${participant.nickname} (${participant.userId}): ${e.message}",
+                        )
+                    }
+                }
             }
         }
     }
