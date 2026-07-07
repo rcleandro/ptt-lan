@@ -79,15 +79,21 @@ class RootComponent(
                 Child.ChannelListChild(component)
             }
             is Config.PttScreen -> {
-                Child.PttChild(
-                    PttComponent(
-                        componentContext = context,
-                        channelId = config.channelId,
-                        userId = userId,
-                        voiceRepository = voiceRepository,
-                        webSocketClient = webSocketClient,
-                    ),
+                val component = PttComponent(
+                    componentContext = context,
+                    channelId = config.channelId,
+                    userId = userId,
+                    voiceRepository = voiceRepository,
+                    webSocketClient = webSocketClient,
                 )
+                scope.launch {
+                    component.effects.collect { effect ->
+                        if (effect is com.pttlan.feature.ptt.PttEffect.NavigateBack) {
+                            navigation.pop()
+                        }
+                    }
+                }
+                Child.PttChild(component)
             }
         }
 
