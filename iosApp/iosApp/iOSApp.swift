@@ -5,8 +5,7 @@ import shared
 struct iOSApp: App {
     
     init() {
-        // Here you can initialize any Koin modules or dependencies from Kotlin
-        // Example: DependencyInjectionKt.doInitKoin()
+        IosDependenciesKt.initKoinIos()
     }
 
     var body: some Scene {
