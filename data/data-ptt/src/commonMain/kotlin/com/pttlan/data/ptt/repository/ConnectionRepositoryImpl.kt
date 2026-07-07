@@ -2,6 +2,7 @@ package com.pttlan.data.ptt.repository
 
 import com.pttlan.core.network.PttWebSocketClient
 import com.pttlan.core.network.discovery.ServerDiscoveryService
+import com.pttlan.core.network.normalizeHost
 import com.pttlan.domain.ptt.repository.ConnectionRepository
 import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.domain.ptt.repository.ServerNode
@@ -27,7 +28,7 @@ class ConnectionRepositoryImpl(
 
     override fun discoverServers(): Flow<ServerNode> =
         discoveryService.discover().map {
-            ServerNode(name = it.name, host = it.host, port = it.port)
+            ServerNode(name = it.name, host = normalizeHost(it.host), port = it.port)
         }
 
     override fun stopDiscovery() {

@@ -16,7 +16,11 @@ fun MainViewController(): UIViewController {
             componentContext = DefaultComponentContext(lifecycle = lifecycle),
         )
 
-    return ComposeUIViewController {
+    return ComposeUIViewController(
+        configure = {
+            enforceStrictPlistSanityCheck = false
+        }
+    ) {
         PttTheme {
             RootScreen(component = rootComponent)
         }

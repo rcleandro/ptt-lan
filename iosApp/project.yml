@@ -1,0 +1,51 @@
+name: iosApp
+options:
+  bundleIdPrefix: com.pttlan
+  deploymentTarget:
+    iOS: 16.0
+targets:
+  iosApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: iosApp
+    info:
+      path: iosApp/Info.plist
+      properties:
+        CADisableMinimumFrameDurationOnPhone: true
+        NSMicrophoneUsageDescription: "Este aplicativo precisa de acesso ao microfone para transmitir seu áudio PTT."
+        UILaunchScreen: {}
+        CFBundleDisplayName: PTT-LAN
+        CFBundleName: PTT-LAN
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: NO
+        PRODUCT_NAME: PTT-LAN
+        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "1.0"
+        SDKROOT: iphoneos
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+        FRAMEWORK_SEARCH_PATHS: 
+          - $(inherited)
+          - "${SRCROOT}/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
+        OTHER_LDFLAGS:
+          - $(inherited)
+          - "-framework"
+          - "shared"
+    preBuildScripts:
+      - name: Compile Kotlin Framework
+        script: |
+          cd "$SRCROOT/.."
+          ./gradlew :shared:embedAndSignAppleFrameworkForXcode
+        alwaysOutOfDate: true
+    dependencies:
+      - framework: ${SRCROOT}/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)/shared.framework
+        implicit: true
+        embed: false
+      - sdk: libsqlite3.tbd
+    scheme:
+      shared: true
+
+

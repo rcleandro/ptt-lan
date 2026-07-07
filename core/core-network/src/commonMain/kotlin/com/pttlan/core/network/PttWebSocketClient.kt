@@ -48,7 +48,7 @@ class PttWebSocketClient(
 
         while (shouldReconnect) {
             try {
-                val cleanHost = host.trim()
+                val cleanHost = normalizeHost(host)
                 sessionMutex.withLock {
                     if (session != null) return@withLock
                     println("PttWebSocketClient: Tentando conectar a wss://$cleanHost:$port/ws?nickname=$nickname")
