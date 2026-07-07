@@ -108,6 +108,16 @@ class RootComponent(
         navigation.pop()
     }
 
+    fun handlePttKey(isPressed: Boolean): Boolean {
+        val activeChild = childStack.value.active.instance
+        if (activeChild is Child.PttChild) {
+            val intent = if (isPressed) com.pttlan.feature.ptt.PttIntent.PressPtt else com.pttlan.feature.ptt.PttIntent.ReleasePtt
+            activeChild.component.onIntent(intent)
+            return true
+        }
+        return false
+    }
+
     sealed interface Child {
         class ConnectionChild(
             val component: ConnectionComponent,

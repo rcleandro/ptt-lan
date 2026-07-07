@@ -1046,9 +1046,9 @@ Checklist:
 **Objetivo:** botão PTT acessível via volante ou tela do carro.
 
 Checklist:
-- [ ] `androidApp` com módulo/flavor Android Automotive OS (`car-app-library` ou Compose para Automotive, conforme disponibilidade).
-- [ ] Mapeamento de botão físico do volante para `PressPtt`/`ReleasePtt`.
-- [ ] Testes manuais em emulador Automotive OS.
+- [x] `androidApp` com módulo/flavor Android Automotive OS (`car-app-library` ou Compose para Automotive, conforme disponibilidade).
+- [x] Mapeamento de botão físico do volante para `PressPtt`/`ReleasePtt`.
+- [x] Testes manuais em emulador Automotive OS.
 
 **Critério de conclusão:** fluxo completo de entrar em canal e transmitir validado no emulador Android Automotive.
 
@@ -1140,7 +1140,7 @@ Antes de marcar qualquer fase como concluída, o agente deve confirmar:
 - [x] Fase 9 — Opus e Criptografia TLS concluída
 - [x] Fase 10 — Background e Modo "Sempre Ouvindo" concluída
 - [x] Fase 11 — Painel Admin Web concluída
-- [ ] Fase 12 — Android Automotive concluída
+- [x] Fase 12 — Android Automotive concluída
 - [ ] Fase 13 — Documentação Final concluída
 - [ ] Todos os critérios de aceite globais (seção 23) satisfeitos
 - [ ] Nenhuma decisão arquitetural em aberto restante neste documento

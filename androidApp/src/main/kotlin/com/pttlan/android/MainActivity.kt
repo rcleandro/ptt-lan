@@ -27,6 +27,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private lateinit var rootComponent: RootComponent
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
@@ -35,7 +37,7 @@ class MainActivity : ComponentActivity() {
         }
 
         val componentContext = defaultComponentContext()
-        val rootComponent = RootComponent(
+        rootComponent = RootComponent(
             componentContext = componentContext,
         )
         
@@ -52,5 +54,22 @@ class MainActivity : ComponentActivity() {
                 RootScreen(component = rootComponent)
             }
         }
+    }
+
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        val keyCode = event.keyCode
+        // Automotive standard media keys or custom steering wheel buttons
+        if (keyCode == android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE ||
+            keyCode == android.view.KeyEvent.KEYCODE_MEDIA_NEXT ||
+            keyCode == android.view.KeyEvent.KEYCODE_HEADSETHOOK ||
+            keyCode == android.view.KeyEvent.KEYCODE_SPACE // For testing on emulator
+        ) {
+            val isPressed = event.action == android.view.KeyEvent.ACTION_DOWN
+            // Only consume if we are in a PttScreen (returns true)
+            if (::rootComponent.isInitialized && rootComponent.handlePttKey(isPressed)) {
+                return true
+            }
+        }
+        return super.dispatchKeyEvent(event)
     }
 }
