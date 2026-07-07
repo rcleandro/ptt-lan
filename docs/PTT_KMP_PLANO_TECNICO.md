@@ -1064,9 +1064,9 @@ Checklist:
 **Objetivo:** Elevar a cobertura de código dos módulos para o padrão estipulado (≥ 80%), garantindo estabilidade via CI.
 
 Checklist:
-- [ ] Testes Unitários: Components/ViewModels cobertos com MockK e coroutines-test.
-- [ ] Testes de Integração: Fluxos de `Floor Control` e concorrência testados no backend Ktor (`testApplication`).
-- [ ] Testes Visuais: Snapshot tests configurados (Paparazzi/Roborazzi) para o `core-designsystem`.
+- [x] Testes Unitários: Components/ViewModels cobertos com MockK e coroutines-test.
+- [x] Testes de Integração: Fluxos de `Floor Control` e concorrência testados no backend Ktor (`testApplication`).
+- [x] Testes Visuais: Snapshot tests configurados (Paparazzi/Roborazzi) para o `core-designsystem`.
 
 **Critério de conclusão:** Todos os requisitos da Seção 16 satisfeitos; pipeline de CI roda todos os 3 níveis de teste com sucesso.
 
@@ -1153,7 +1153,7 @@ Antes de marcar qualquer fase como concluída, o agente deve confirmar:
 - [x] Fase 11 — Painel Admin Web concluída
 - [x] Fase 12 — Android Automotive concluída
 - [x] Fase 13 — Documentação Final concluída
-- [ ] Fase 14 — Cobertura Total de Testes (TDD/BDD) pendente
+- [x] Fase 14 — Cobertura Total de Testes (TDD/BDD) concluída
 - [x] Todos os critérios de aceite globais (seção 23) satisfeitos
 - [x] Nenhuma decisão arquitetural em aberto restante neste documento
 - [x] Repositório com README de onboarding para novos desenvolvedores apontando para este documento como SSOT
