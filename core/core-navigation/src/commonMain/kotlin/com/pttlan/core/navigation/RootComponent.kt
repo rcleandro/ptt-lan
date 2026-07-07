@@ -8,8 +8,6 @@ import com.arkivanov.decompose.router.stack.navigate
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.lifecycle.Lifecycle
-import com.pttlan.domain.ptt.repository.ChannelRepository
-import com.pttlan.domain.ptt.repository.ConnectionRepository
 import com.pttlan.feature.channellist.ChannelListComponent
 import com.pttlan.feature.channellist.ChannelListEffect
 import com.pttlan.feature.connection.ConnectionComponent
@@ -40,8 +38,6 @@ private fun Lifecycle.coroutineScope(): CoroutineScope {
 
 class RootComponent(
     componentContext: ComponentContext,
-    private val connectionRepository: ConnectionRepository,
-    private val channelRepository: ChannelRepository,
 ) : ComponentContext by componentContext,
     org.koin.core.component.KoinComponent {
     private val navigation = StackNavigation<Config>()
@@ -64,7 +60,7 @@ class RootComponent(
     ): Child =
         when (config) {
             is Config.Connection -> {
-                val component = ConnectionComponent(context, connectionRepository)
+                val component: ConnectionComponent = get(parameters = { parametersOf(context) })
                 context.lifecycle.coroutineScope().launch {
                     component.effects.collect { effect ->
                         if (effect is ConnectionEffect.NavigateToChannelList) {
@@ -77,7 +73,7 @@ class RootComponent(
                 Child.ConnectionChild(component)
             }
             is Config.ChannelList -> {
-                val component = ChannelListComponent(context, channelRepository)
+                val component: ChannelListComponent = get(parameters = { parametersOf(context) })
                 context.lifecycle.coroutineScope().launch {
                     component.effects.collect { effect ->
                         if (effect is ChannelListEffect.NavigateToChannel) {

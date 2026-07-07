@@ -3,7 +3,6 @@ package com.pttlan.feature.channellist
 import com.arkivanov.decompose.ComponentContext
 import com.pttlan.domain.ptt.repository.ActiveChannelDomain
 import com.pttlan.domain.ptt.repository.ChannelDomain
-import com.pttlan.domain.ptt.repository.ChannelRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -42,7 +41,10 @@ sealed interface ChannelListEffect {
 
 class ChannelListComponent(
     componentContext: ComponentContext,
-    private val channelRepository: ChannelRepository,
+    private val getRecentChannelsUseCase: com.pttlan.domain.ptt.usecase.GetRecentChannelsUseCase,
+    private val observeActiveChannelsUseCase: com.pttlan.domain.ptt.usecase.ObserveActiveChannelsUseCase,
+    private val joinChannelUseCase: com.pttlan.domain.ptt.usecase.JoinChannelUseCaseImpl,
+    private val createChannelUseCase: com.pttlan.domain.ptt.usecase.CreateChannelUseCase,
 ) : ComponentContext by componentContext {
     private val _state = MutableStateFlow(ChannelListState())
     val state: StateFlow<ChannelListState> = _state.asStateFlow()
@@ -54,12 +56,12 @@ class ChannelListComponent(
 
     init {
         scope.launch {
-            channelRepository.getRecentChannels().collect { channels ->
+            getRecentChannelsUseCase().collect { channels ->
                 _state.update { it.copy(recentChannels = channels) }
             }
         }
         scope.launch {
-            channelRepository.observeActiveChannels().collect { active ->
+            observeActiveChannelsUseCase().collect { active ->
                 _state.update { it.copy(activeChannels = active) }
             }
         }
@@ -72,16 +74,15 @@ class ChannelListComponent(
             }
             is ChannelListIntent.JoinChannel -> {
                 scope.launch {
-                    channelRepository.saveChannel(ChannelDomain(intent.channelId, intent.name, false))
+                    joinChannelUseCase(intent.channelId, intent.name)
                     _effects.emit(ChannelListEffect.NavigateToChannel(intent.channelId))
                 }
             }
             is ChannelListIntent.CreateChannel -> {
                 val name = _state.value.newChannelName
                 if (name.isNotBlank()) {
-                    val id = name.lowercase().replace(" ", "-")
                     scope.launch {
-                        channelRepository.saveChannel(ChannelDomain(id, name, false))
+                        val id = createChannelUseCase(name)
                         _effects.emit(ChannelListEffect.NavigateToChannel(id))
                     }
                 }

@@ -17,9 +17,6 @@ import com.pttlan.core.navigation.RootComponent
 import com.pttlan.core.navigation.RootScreen
 
 class MainActivity : ComponentActivity() {
-    private val connectionRepository: ConnectionRepository by inject()
-    private val channelRepository: ChannelRepository by inject()
-    private val voiceRepository: VoiceRepository by inject()
 
 
     private val requestPermissionLauncher = registerForActivityResult(
@@ -40,9 +37,6 @@ class MainActivity : ComponentActivity() {
         val componentContext = defaultComponentContext()
         val rootComponent = RootComponent(
             componentContext = componentContext,
-            connectionRepository = connectionRepository,
-            channelRepository = channelRepository,
-            voiceRepository = voiceRepository,
         )
 
         setContent {

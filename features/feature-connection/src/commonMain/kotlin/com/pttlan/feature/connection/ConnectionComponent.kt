@@ -1,7 +1,6 @@
 package com.pttlan.feature.connection
 
 import com.arkivanov.decompose.ComponentContext
-import com.pttlan.domain.ptt.repository.ConnectionRepository
 import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.domain.ptt.repository.ServerNode
 import com.russhwolf.settings.Settings
@@ -53,7 +52,9 @@ sealed interface ConnectionEffect {
 
 class ConnectionComponent(
     componentContext: ComponentContext,
-    private val connectionRepository: ConnectionRepository,
+    private val observeConnectionStatusUseCase: com.pttlan.domain.ptt.usecase.ObserveConnectionStatusUseCase,
+    private val discoverServersUseCase: com.pttlan.domain.ptt.usecase.DiscoverServersUseCase,
+    private val connectToServerUseCase: com.pttlan.domain.ptt.usecase.ConnectToServerUseCase,
 ) : ComponentContext by componentContext,
     KoinComponent {
     private val settings: Settings by inject()
@@ -74,7 +75,7 @@ class ConnectionComponent(
 
     init {
         scope.launch {
-            connectionRepository.connectionStatus.collect { status ->
+            observeConnectionStatusUseCase().collect { status ->
                 _state.update { it.copy(status = status) }
                 if (status == ConnectionStatus.Connected) {
                     _effects.emit(ConnectionEffect.NavigateToChannelList)
@@ -83,7 +84,7 @@ class ConnectionComponent(
         }
 
         scope.launch {
-            connectionRepository.discoverServers().collect { newServer ->
+            discoverServersUseCase().collect { newServer ->
                 _state.update { currentState ->
                     val existing = currentState.discoveredServers
                     if (existing.any { it.name == newServer.name }) {
@@ -106,7 +107,7 @@ class ConnectionComponent(
                 settings.putString("nickname", _state.value.nickname)
 
                 scope.launch {
-                    val result = connectionRepository.connect(intent.server.host, intent.server.port, _state.value.nickname)
+                    val result = connectToServerUseCase(intent.server.host, intent.server.port, _state.value.nickname)
                     if (result.isFailure) {
                         _effects.emit(ConnectionEffect.ShowError("Falha ao conectar: ${result.exceptionOrNull()?.message}"))
                     }
@@ -120,7 +121,7 @@ class ConnectionComponent(
                 settings.putString("nickname", _state.value.nickname)
                 settings.putString("manualIp", _state.value.manualIp)
                 scope.launch {
-                    val result = connectionRepository.connect(intent.ip, 9443, _state.value.nickname)
+                    val result = connectToServerUseCase(intent.ip, 9443, _state.value.nickname)
                     if (result.isFailure) {
                         _effects.emit(ConnectionEffect.ShowError("Falha ao conectar: ${result.exceptionOrNull()?.message}"))
                     }

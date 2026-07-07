@@ -7,6 +7,11 @@ import org.koin.dsl.module
 val connectionFeatureModule =
     module {
         factory { (componentContext: ComponentContext) ->
-            ConnectionComponent(componentContext, get())
+            ConnectionComponent(
+                componentContext = componentContext,
+                observeConnectionStatusUseCase = get(),
+                discoverServersUseCase = get(),
+                connectToServerUseCase = get(),
+            )
         }
     }

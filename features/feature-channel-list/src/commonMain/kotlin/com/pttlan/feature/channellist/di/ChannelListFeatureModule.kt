@@ -7,6 +7,12 @@ import org.koin.dsl.module
 val channelListFeatureModule =
     module {
         factory { (componentContext: ComponentContext) ->
-            ChannelListComponent(componentContext, get())
+            ChannelListComponent(
+                componentContext = componentContext,
+                getRecentChannelsUseCase = get(),
+                observeActiveChannelsUseCase = get(),
+                joinChannelUseCase = get(),
+                createChannelUseCase = get(),
+            )
         }
     }
