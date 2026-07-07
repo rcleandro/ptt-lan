@@ -7,9 +7,9 @@ plugins {
 
 android {
     namespace = "com.pttlan.core.designsystem"
-    compileSdk = 37
+    compileSdkVersion(37)
     defaultConfig {
-        minSdk = 26
+        minSdkVersion(26)
     }
 }
 
