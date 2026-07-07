@@ -12,8 +12,8 @@ kotlin {
             api(libs.material3)
             api(libs.runtime)
             implementation(libs.material.icons.extended)
-            api(compose.components.resources)
-            api(compose.components.uiToolingPreview)
+            api(libs.compose.components.resources)
+            api(libs.compose.components.uiToolingPreview)
         }
     }
 }
