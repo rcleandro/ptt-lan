@@ -6,8 +6,13 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":core:core-common"))
-            implementation(kotlin("test"))
-            implementation(libs.kotlinx.coroutines.core)
+            api(kotlin("test"))
+            api(libs.kotlinx.coroutines.core)
+            api(libs.kotlinx.coroutines.test)
+            api(libs.turbine)
+        }
+        jvmMain.dependencies {
+            api(libs.mockk)
         }
     }
 }
