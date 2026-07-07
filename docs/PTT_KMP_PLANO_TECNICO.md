@@ -1060,6 +1060,16 @@ Checklist:
 - [x] Todos os ADRs relevantes documentados em `docs/adr/`.
 - [x] Checklist final da seção 24 revisado item a item.
 
+### Fase 14 — Cobertura Total de Testes (TDD/BDD)
+**Objetivo:** Elevar a cobertura de código dos módulos para o padrão estipulado (≥ 80%), garantindo estabilidade via CI.
+
+Checklist:
+- [ ] Testes Unitários: Components/ViewModels cobertos com MockK e coroutines-test.
+- [ ] Testes de Integração: Fluxos de `Floor Control` e concorrência testados no backend Ktor (`testApplication`).
+- [ ] Testes Visuais: Snapshot tests configurados (Paparazzi/Roborazzi) para o `core-designsystem`.
+
+**Critério de conclusão:** Todos os requisitos da Seção 16 satisfeitos; pipeline de CI roda todos os 3 níveis de teste com sucesso.
+
 ---
 
 ## 22. Plano de Execução para Agente CLI
@@ -1102,6 +1112,7 @@ graph TD
     F10 --> F11[Fase 11: Painel Admin]
     F11 --> F12[Fase 12: Automotive]
     F12 --> F13[Fase 13: Documentação Final]
+    F13 --> F14[Fase 14: Testes/TDD]
 ```
 
 ### 22.4 Regra de não regressão
@@ -1142,6 +1153,7 @@ Antes de marcar qualquer fase como concluída, o agente deve confirmar:
 - [x] Fase 11 — Painel Admin Web concluída
 - [x] Fase 12 — Android Automotive concluída
 - [x] Fase 13 — Documentação Final concluída
+- [ ] Fase 14 — Cobertura Total de Testes (TDD/BDD) pendente
 - [x] Todos os critérios de aceite globais (seção 23) satisfeitos
 - [x] Nenhuma decisão arquitetural em aberto restante neste documento
 - [x] Repositório com README de onboarding para novos desenvolvedores apontando para este documento como SSOT
