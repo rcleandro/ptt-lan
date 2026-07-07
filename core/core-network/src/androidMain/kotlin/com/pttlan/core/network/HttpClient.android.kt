@@ -7,6 +7,7 @@ import java.security.cert.X509Certificate
 import javax.net.ssl.SSLContext
 import javax.net.ssl.X509TrustManager
 
+@android.annotation.SuppressLint("CustomX509TrustManager", "TrustAllX509TrustManager")
 actual fun createPlatformHttpClient(): HttpClient =
     HttpClient(OkHttp) {
         engine {
