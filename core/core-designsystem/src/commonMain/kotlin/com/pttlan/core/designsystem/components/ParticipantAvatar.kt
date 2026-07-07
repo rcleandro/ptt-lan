@@ -19,9 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.pttlan.core.designsystem.theme.PttTheme
 
 @Composable
@@ -55,11 +53,7 @@ fun ParticipantAvatar(
         ) {
             Text(
                 text = initial,
-                style =
-                    MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 13.sp,
-                    ),
+                style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -69,12 +63,12 @@ fun ParticipantAvatar(
             Column {
                 Text(
                     text = name,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onBackground,
                 )
                 Text(
                     text = if (isSpeaking) "falando" else "ouvindo",
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                    style = MaterialTheme.typography.bodySmall,
                     color = PttTheme.customColors.textTertiary,
                 )
             }

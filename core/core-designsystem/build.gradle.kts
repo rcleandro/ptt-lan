@@ -12,6 +12,13 @@ kotlin {
             api(libs.material3)
             api(libs.runtime)
             implementation(libs.material.icons.extended)
+            api(compose.components.resources)
+            api(compose.components.uiToolingPreview)
         }
     }
+}
+
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "com.pttlan.core.designsystem.generated.resources"
 }
