@@ -25,10 +25,9 @@ import kotlin.test.assertEquals
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HistoryComponentTest {
-
     private val lifecycle = LifecycleRegistry()
     private val componentContext: ComponentContext = DefaultComponentContext(lifecycle)
-    
+
     private val voiceRepository: VoiceRepository = mockk(relaxed = true)
     private val onBackClicked: () -> Unit = mockk(relaxed = true)
 
@@ -37,7 +36,7 @@ class HistoryComponentTest {
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        
+
         coEvery { voiceRepository.getRecentMessages(any()) } returns emptyFlow()
     }
 
@@ -46,63 +45,68 @@ class HistoryComponentTest {
         Dispatchers.resetMain()
     }
 
-    private fun createComponent(channelId: String = "ch-1") = HistoryComponent(
-        componentContext = componentContext,
-        channelId = channelId,
-        voiceRepository = voiceRepository,
-        onBackClicked = onBackClicked
-    )
+    private fun createComponent(channelId: String = "ch-1") =
+        HistoryComponent(
+            componentContext = componentContext,
+            channelId = channelId,
+            voiceRepository = voiceRepository,
+            onBackClicked = onBackClicked,
+        )
 
     @Test
-    fun `initialization loads recent messages`() = runTest(testDispatcher) {
-        val mockMessage = mockk<VoiceMessage>(relaxed = true)
-        coEvery { mockMessage.id } returns "msg-1"
-        coEvery { voiceRepository.getRecentMessages("ch-1") } returns flowOf(listOf(mockMessage))
-        
-        val component = createComponent("ch-1")
-        advanceUntilIdle()
-        
-        assertEquals(listOf(mockMessage), component.messages.value)
-    }
+    fun `initialization loads recent messages`() =
+        runTest(testDispatcher) {
+            val mockMessage = mockk<VoiceMessage>(relaxed = true)
+            coEvery { mockMessage.id } returns "msg-1"
+            coEvery { voiceRepository.getRecentMessages("ch-1") } returns flowOf(listOf(mockMessage))
+
+            val component = createComponent("ch-1")
+            advanceUntilIdle()
+
+            assertEquals(listOf(mockMessage), component.messages.value)
+        }
 
     @Test
-    fun `onBack invokes onBackClicked callback`() = runTest(testDispatcher) {
-        val component = createComponent()
-        
-        component.onBack()
-        
-        verify(exactly = 1) { onBackClicked() }
-    }
+    fun `onBack invokes onBackClicked callback`() =
+        runTest(testDispatcher) {
+            val component = createComponent()
+
+            component.onBack()
+
+            verify(exactly = 1) { onBackClicked() }
+        }
 
     @Test
-    fun `playMessage plays message and updates state`() = runTest(testDispatcher) {
-        val component = createComponent()
-        val mockMessage = mockk<VoiceMessage>(relaxed = true)
-        coEvery { mockMessage.id } returns "msg-1"
-        
-        // We use an unconfined-like approach or advance time to check state during play
-        // With standard dispatcher, we can capture the state before it finishes if we mock delay,
-        // but since playMessage is a suspend function that might just return immediately in mocks,
-        // we'll just check that it calls the repository and then clears state.
-        
-        component.playMessage(mockMessage)
-        
-        // Since playMessage launches a coroutine, we can assert state if we step through,
-        // but for now, we just advance to the end.
-        advanceUntilIdle()
-        
-        coVerify(exactly = 1) { voiceRepository.playMessage(mockMessage) }
-        assertEquals(null, component.playingMessageId.value)
-    }
+    fun `playMessage plays message and updates state`() =
+        runTest(testDispatcher) {
+            val component = createComponent()
+            val mockMessage = mockk<VoiceMessage>(relaxed = true)
+            coEvery { mockMessage.id } returns "msg-1"
+
+            // We use an unconfined-like approach or advance time to check state during play
+            // With standard dispatcher, we can capture the state before it finishes if we mock delay,
+            // but since playMessage is a suspend function that might just return immediately in mocks,
+            // we'll just check that it calls the repository and then clears state.
+
+            component.playMessage(mockMessage)
+
+            // Since playMessage launches a coroutine, we can assert state if we step through,
+            // but for now, we just advance to the end.
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { voiceRepository.playMessage(mockMessage) }
+            assertEquals(null, component.playingMessageId.value)
+        }
 
     @Test
-    fun `stopPlaying stops playback and clears playing state`() = runTest(testDispatcher) {
-        val component = createComponent()
-        
-        component.stopPlaying()
-        advanceUntilIdle()
-        
-        coVerify(exactly = 1) { voiceRepository.stopPlayingMessage() }
-        assertEquals(null, component.playingMessageId.value)
-    }
+    fun `stopPlaying stops playback and clears playing state`() =
+        runTest(testDispatcher) {
+            val component = createComponent()
+
+            component.stopPlaying()
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { voiceRepository.stopPlayingMessage() }
+            assertEquals(null, component.playingMessageId.value)
+        }
 }

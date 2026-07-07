@@ -132,7 +132,8 @@ fun VoiceMessageItem(
             )
             Spacer(modifier = Modifier.height(4.dp))
             val time =
-                kotlin.time.Instant.fromEpochMilliseconds(message.recordedAt)
+                kotlin.time.Instant
+                    .fromEpochMilliseconds(message.recordedAt)
                     .toLocalDateTime(TimeZone.currentSystemDefault())
             val durationSec = (message.durationMs / 1000).coerceAtLeast(1)
 

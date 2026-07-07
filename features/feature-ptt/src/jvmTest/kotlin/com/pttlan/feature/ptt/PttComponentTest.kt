@@ -36,10 +36,9 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PttComponentTest {
-
     private val lifecycle = LifecycleRegistry()
     private val componentContext: ComponentContext = DefaultComponentContext(lifecycle)
-    
+
     private val voiceRepository: VoiceRepository = mockk(relaxed = true)
     private val joinChannelUseCase: JoinChannelUseCase = mockk(relaxed = true)
     private val leaveChannelUseCase: LeaveChannelUseCase = mockk(relaxed = true)
@@ -55,17 +54,17 @@ class PttComponentTest {
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        
+
         every { settings.getString(any(), any()) } returns "TestUser"
-        
+
         startKoin {
             modules(
                 module {
                     single<Settings> { settings }
-                }
+                },
             )
         }
-        
+
         coEvery { observeParticipantsUseCase(any()) } returns emptyFlow()
         coEvery { observeSpeakerUseCase(any()) } returns emptyFlow()
         coEvery { observeFloorDeniedUseCase(any()) } returns emptyFlow()
@@ -77,81 +76,87 @@ class PttComponentTest {
         Dispatchers.resetMain()
     }
 
-    private fun createComponent() = PttComponent(
-        componentContext = componentContext,
-        channelId = "ch-1",
-        userId = "user-1",
-        voiceRepository = voiceRepository,
-        joinChannelUseCase = joinChannelUseCase,
-        leaveChannelUseCase = leaveChannelUseCase,
-        observeParticipantsUseCase = observeParticipantsUseCase,
-        observeSpeakerUseCase = observeSpeakerUseCase,
-        observeFloorDeniedUseCase = observeFloorDeniedUseCase,
-        startTransmittingUseCase = startTransmittingUseCase,
-        stopTransmittingUseCase = stopTransmittingUseCase
-    )
+    private fun createComponent() =
+        PttComponent(
+            componentContext = componentContext,
+            channelId = "ch-1",
+            userId = "user-1",
+            voiceRepository = voiceRepository,
+            joinChannelUseCase = joinChannelUseCase,
+            leaveChannelUseCase = leaveChannelUseCase,
+            observeParticipantsUseCase = observeParticipantsUseCase,
+            observeSpeakerUseCase = observeSpeakerUseCase,
+            observeFloorDeniedUseCase = observeFloorDeniedUseCase,
+            startTransmittingUseCase = startTransmittingUseCase,
+            stopTransmittingUseCase = stopTransmittingUseCase,
+        )
 
     @Test
-    fun `initialization joins channel`() = runTest(testDispatcher) {
-        val component = createComponent()
-        testScheduler.advanceUntilIdle()
-        
-        coVerify(exactly = 1) { joinChannelUseCase("ch-1", "user-1", "TestUser") }
-        assertEquals("ch-1", component.state.value.channelId)
-    }
-
-    @Test
-    fun `PressPtt starts transmitting if floor is not blocked`() = runTest(testDispatcher) {
-        val component = createComponent()
-        testScheduler.advanceUntilIdle()
-        
-        component.onIntent(PttIntent.PressPtt)
-        testScheduler.advanceUntilIdle()
-        
-        assertTrue(component.state.value.isTransmitting)
-        coVerify(exactly = 1) { startTransmittingUseCase("ch-1", "user-1") }
-    }
-
-    @Test
-    fun `ReleasePtt stops transmitting`() = runTest(testDispatcher) {
-        val component = createComponent()
-        testScheduler.advanceUntilIdle()
-        
-        component.onIntent(PttIntent.ReleasePtt)
-        testScheduler.advanceUntilIdle()
-        
-        assertEquals(false, component.state.value.isTransmitting)
-        coVerify(exactly = 1) { stopTransmittingUseCase("ch-1", "user-1") }
-    }
-
-    @Test
-    fun `LeaveChannel intent leaves channel and navigates back`() = runTest(testDispatcher) {
-        val component = createComponent()
-        testScheduler.advanceUntilIdle()
-
-        component.effects.test {
-            component.onIntent(PttIntent.LeaveChannel)
+    fun `initialization joins channel`() =
+        runTest(testDispatcher) {
+            val component = createComponent()
             testScheduler.advanceUntilIdle()
-            
-            assertEquals(PttEffect.NavigateBack, awaitItem())
-            coVerify(exactly = 1) { leaveChannelUseCase("ch-1", "user-1") }
+
+            coVerify(exactly = 1) { joinChannelUseCase("ch-1", "user-1", "TestUser") }
+            assertEquals("ch-1", component.state.value.channelId)
         }
-    }
-    
+
     @Test
-    fun `observeFloorDeniedUseCase emits ShowFloorDenied effect`() = runTest(testDispatcher) {
-        val floorDeniedFlow = MutableSharedFlow<String>()
-        coEvery { observeFloorDeniedUseCase("ch-1") } returns floorDeniedFlow
-        
-        val component = createComponent()
-        testScheduler.advanceUntilIdle()
-        
-        component.effects.test {
-            floorDeniedFlow.emit("Server Error")
+    fun `PressPtt starts transmitting if floor is not blocked`() =
+        runTest(testDispatcher) {
+            val component = createComponent()
             testScheduler.advanceUntilIdle()
-            
-            assertEquals(PttEffect.ShowFloorDenied("Server Error"), awaitItem())
+
+            component.onIntent(PttIntent.PressPtt)
+            testScheduler.advanceUntilIdle()
+
+            assertTrue(component.state.value.isTransmitting)
+            coVerify(exactly = 1) { startTransmittingUseCase("ch-1", "user-1") }
+        }
+
+    @Test
+    fun `ReleasePtt stops transmitting`() =
+        runTest(testDispatcher) {
+            val component = createComponent()
+            testScheduler.advanceUntilIdle()
+
+            component.onIntent(PttIntent.ReleasePtt)
+            testScheduler.advanceUntilIdle()
+
             assertEquals(false, component.state.value.isTransmitting)
+            coVerify(exactly = 1) { stopTransmittingUseCase("ch-1", "user-1") }
         }
-    }
+
+    @Test
+    fun `LeaveChannel intent leaves channel and navigates back`() =
+        runTest(testDispatcher) {
+            val component = createComponent()
+            testScheduler.advanceUntilIdle()
+
+            component.effects.test {
+                component.onIntent(PttIntent.LeaveChannel)
+                testScheduler.advanceUntilIdle()
+
+                assertEquals(PttEffect.NavigateBack, awaitItem())
+                coVerify(exactly = 1) { leaveChannelUseCase("ch-1", "user-1") }
+            }
+        }
+
+    @Test
+    fun `observeFloorDeniedUseCase emits ShowFloorDenied effect`() =
+        runTest(testDispatcher) {
+            val floorDeniedFlow = MutableSharedFlow<String>()
+            coEvery { observeFloorDeniedUseCase("ch-1") } returns floorDeniedFlow
+
+            val component = createComponent()
+            testScheduler.advanceUntilIdle()
+
+            component.effects.test {
+                floorDeniedFlow.emit("Server Error")
+                testScheduler.advanceUntilIdle()
+
+                assertEquals(PttEffect.ShowFloorDenied("Server Error"), awaitItem())
+                assertEquals(false, component.state.value.isTransmitting)
+            }
+        }
 }
