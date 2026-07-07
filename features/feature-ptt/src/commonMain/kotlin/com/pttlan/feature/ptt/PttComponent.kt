@@ -1,9 +1,13 @@
 package com.pttlan.feature.ptt
 
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.Lifecycle
+import org.koin.core.component.inject
 import com.pttlan.domain.ptt.repository.VoiceRepository
+import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -18,7 +22,9 @@ data class PttState(
     val channelId: String = "",
     val isTransmitting: Boolean = false,
     val currentSpeakerId: String? = null,
+    val currentSpeakerName: String? = null,
     val floorBlocked: Boolean = false,
+    val participants: List<com.pttlan.core.network.protocol.ParticipantDto> = emptyList(),
 )
 
 sealed interface PttIntent {
@@ -43,7 +49,9 @@ class PttComponent(
     private val userId: String,
     private val voiceRepository: VoiceRepository,
     private val webSocketClient: com.pttlan.core.network.PttWebSocketClient,
-) : ComponentContext by componentContext {
+) : ComponentContext by componentContext, org.koin.core.component.KoinComponent {
+    private val settings: Settings by inject()
+
     private val _state = MutableStateFlow(PttState(channelId = channelId))
     val state: StateFlow<PttState> = _state.asStateFlow()
 
@@ -54,7 +62,7 @@ class PttComponent(
 
     init {
         scope.launch {
-            val nickname = "User-${userId.take(4)}"
+            val nickname = settings.getString("nickname", "User-${userId.take(4)}")
             webSocketClient.sendControlMessage(
                 com.pttlan.core.network.protocol.ControlMessage.JoinChannel(
                     channelId = channelId,
@@ -70,6 +78,7 @@ class PttComponent(
                             _state.update {
                                 it.copy(
                                     currentSpeakerId = if (message.isSpeaking) message.userId else null,
+                                    currentSpeakerName = if (message.isSpeaking) message.nickname else null,
                                     floorBlocked = message.isSpeaking && message.userId != userId,
                                 )
                             }
@@ -86,15 +95,20 @@ class PttComponent(
                             _effects.emit(PttEffect.ShowFloorDenied(message.reason))
                         }
                     }
+                    is com.pttlan.core.network.protocol.ControlMessage.ParticipantList -> {
+                        if (message.channelId == channelId) {
+                            _state.update { it.copy(participants = message.participants) }
+                        }
+                    }
                     else -> {}
                 }
             }
         }
 
         lifecycle.subscribe(
-            object : com.arkivanov.essenty.lifecycle.Lifecycle.Callbacks {
+            object : Lifecycle.Callbacks {
                 override fun onDestroy() {
-                    kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
+                    CoroutineScope(Dispatchers.IO).launch {
                         try {
                             webSocketClient.sendControlMessage(
                                 com.pttlan.core.network.protocol.ControlMessage.LeaveChannel(

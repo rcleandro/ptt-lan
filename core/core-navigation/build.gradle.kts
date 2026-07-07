@@ -18,6 +18,7 @@ kotlin {
             implementation(libs.decompose.extensions.compose)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.material.icons.extended)
+            implementation(libs.koin.core)
         }
     }
 

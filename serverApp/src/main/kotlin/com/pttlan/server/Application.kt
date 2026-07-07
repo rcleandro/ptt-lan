@@ -49,7 +49,8 @@ fun Application.module() {
     // Broadcast mDNS
     Thread {
         try {
-            val jmdns = JmDNS.create(InetAddress.getLocalHost())
+            val localIp = getLocalIpAddress()
+            val jmdns = if (localIp != null) JmDNS.create(localIp) else JmDNS.create()
             val serviceInfo =
                 ServiceInfo.create(
                     "_pttlan._tcp.local.",
@@ -85,4 +86,17 @@ fun Application.module() {
     routing {
         pttRoutes()
     }
+}
+
+private fun getLocalIpAddress(): InetAddress? {
+    val interfaces = java.net.NetworkInterface.getNetworkInterfaces()
+    for (networkInterface in interfaces) {
+        if (networkInterface.isLoopback || !networkInterface.isUp) continue
+        for (address in networkInterface.inetAddresses) {
+            if (address is java.net.Inet4Address) {
+                return address
+            }
+        }
+    }
+    return null
 }

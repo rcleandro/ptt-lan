@@ -59,6 +59,7 @@ sealed interface ControlMessage {
     data class SpeakerChanged(
         val channelId: String,
         val userId: String,
+        val nickname: String,
         val isSpeaking: Boolean,
     ) : ControlMessage
 

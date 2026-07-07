@@ -4,8 +4,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -82,21 +85,18 @@ fun PttScreen(component: PttComponent) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            if (state.currentSpeakerId != null) {
-                com.pttlan.core.designsystem.components.ParticipantAvatar(
-                    name = state.currentSpeakerId ?: "",
-                    isSpeaking = true,
-                    modifier = Modifier.padding(bottom = 16.dp),
-                )
-            } else {
-                Text(
-                    text = "toque e segure para transmitir",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = com.pttlan.core.designsystem.theme.PttTheme.customColors.textTertiary,
-                )
+            LazyColumn(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(state.participants, key = { it.userId }) { participant ->
+                    val isSpeaking = participant.userId == state.currentSpeakerId
+                    com.pttlan.core.designsystem.components.ParticipantAvatar(
+                        name = participant.nickname,
+                        isSpeaking = isSpeaking,
+                    )
+                }
             }
-
-            Spacer(modifier = Modifier.height(32.dp))
 
             Button(onClick = { component.onIntent(PttIntent.LeaveChannel) }) {
                 Text("Sair do Canal")

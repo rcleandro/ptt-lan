@@ -37,33 +37,45 @@ class ConnectionRepositoryImpl(
     override suspend fun connect(
         host: String,
         port: Int,
+        nickname: String,
     ): Result<Unit> {
         _connectionStatus.value = ConnectionStatus.Connecting
 
         connectionJob?.cancel()
+        val deferred = kotlinx.coroutines.CompletableDeferred<Unit>()
+
         connectionJob =
             scope.launch {
                 try {
                     // We launch the infinite reconnect loop in the background
-                    webSocketClient.connect(host, port)
+                    webSocketClient.connect(host, port, nickname)
                 } catch (e: Exception) {
+                    deferred.completeExceptionally(e)
                     e.printStackTrace()
                 } finally {
                     _connectionStatus.value = ConnectionStatus.Disconnected
                 }
             }
 
-        scope.launch {
+        val monitorJob = scope.launch {
             webSocketClient.isConnected.collect { isConnected ->
                 if (isConnected) {
                     _connectionStatus.value = ConnectionStatus.Connected
+                    deferred.complete(Unit)
                 } else if (_connectionStatus.value == ConnectionStatus.Connected) {
                     _connectionStatus.value = ConnectionStatus.Reconnecting
                 }
             }
         }
 
-        return Result.success(Unit)
+        return try {
+            deferred.await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        } finally {
+            monitorJob.cancel()
+        }
     }
 
     override fun disconnect() {

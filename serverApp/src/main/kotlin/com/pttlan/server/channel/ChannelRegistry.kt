@@ -13,18 +13,24 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration.Companion.milliseconds
 
 class ChannelRegistry {
     private val channels = ConcurrentHashMap<String, PttChannel>()
-    private val globalConnections = CopyOnWriteArrayList<DefaultWebSocketServerSession>()
+    private val globalConnections = ConcurrentHashMap<DefaultWebSocketServerSession, String>()
     private val cleanupJobs = ConcurrentHashMap<String, Job>()
     private val scope = CoroutineScope(Dispatchers.Default)
 
-    fun addGlobalConnection(session: DefaultWebSocketServerSession) {
-        globalConnections.add(session)
+    fun addGlobalConnection(
+        session: DefaultWebSocketServerSession,
+        nickname: String,
+    ): Boolean {
+        if (globalConnections.values.any { it.equals(nickname, ignoreCase = true) }) {
+            return false
+        }
+        globalConnections[session] = nickname
         broadcastActiveChannels()
+        return true
     }
 
     fun removeGlobalConnection(session: DefaultWebSocketServerSession) {
@@ -66,7 +72,7 @@ class ChannelRegistry {
         val json = Json.encodeToString<ControlMessage>(message)
 
         scope.launch {
-            globalConnections.forEach { session ->
+            globalConnections.keys.forEach { session ->
                 try {
                     session.send(Frame.Text(json))
                 } catch (_: Exception) {

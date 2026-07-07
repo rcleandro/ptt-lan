@@ -97,28 +97,32 @@ class PttChannel(
         mutex
             .withLock {
                 if (currentSpeakerId == null || currentSpeakerId == userId) {
+                    val participant = participants[userId] ?: return@withLock Pair(false, "")
                     currentSpeakerId = userId
-                    participants[userId]?.isSpeaking = true
-                    true
+                    participant.isSpeaking = true
+                    Pair(true, participant.nickname)
                 } else {
-                    false
+                    Pair(false, "")
                 }
-            }.also { granted ->
+            }.also { (granted, nickname) ->
                 if (granted) {
-                    broadcast(ControlMessage.SpeakerChanged(id, userId, true))
+                    broadcast(ControlMessage.SpeakerChanged(id, userId, nickname, true))
                 }
-            }
+            }.first
 
     suspend fun releaseFloor(userId: String) {
-        mutex.withLock {
-            if (currentSpeakerId == userId) {
-                currentSpeakerId = null
-                participants[userId]?.isSpeaking = false
-            } else {
-                return // Not the current speaker, ignore
+        val nickname =
+            mutex.withLock {
+                if (currentSpeakerId == userId) {
+                    currentSpeakerId = null
+                    val p = participants[userId]
+                    p?.isSpeaking = false
+                    p?.nickname ?: "Desconhecido"
+                } else {
+                    return // Not the current speaker, ignore
+                }
             }
-        }
-        broadcast(ControlMessage.SpeakerChanged(id, userId, false))
+        broadcast(ControlMessage.SpeakerChanged(id, userId, nickname, false))
     }
 
     suspend fun releaseFloorIfHeldBy(userId: String) {

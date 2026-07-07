@@ -40,6 +40,7 @@ class PttWebSocketClient(
     suspend fun connect(
         host: String,
         port: Int,
+        nickname: String,
     ) {
         shouldReconnect = true
         var backoffMs = 1000L
@@ -50,8 +51,8 @@ class PttWebSocketClient(
                 val cleanHost = host.trim()
                 sessionMutex.withLock {
                     if (session != null) return@withLock
-                    println("PttWebSocketClient: Tentando conectar a wss://$cleanHost:$port/ws")
-                    session = httpClient.webSocketSession("wss://$cleanHost:$port/ws")
+                    println("PttWebSocketClient: Tentando conectar a wss://$cleanHost:$port/ws?nickname=$nickname")
+                    session = httpClient.webSocketSession("wss://$cleanHost:$port/ws?nickname=$nickname")
                 }
 
                 println("PttWebSocketClient: Conectado com sucesso!")
@@ -87,6 +88,12 @@ class PttWebSocketClient(
                         }
                         else -> {}
                     }
+                }
+                
+                val closeReason = ws.closeReason.await()
+                if (closeReason?.message == "Nome já em uso") {
+                    shouldReconnect = false
+                    throw IllegalStateException("Nome já em uso. Por favor, escolha outro.")
                 }
             } catch (e: Exception) {
                 println("PttWebSocketClient: Falha ao conectar: ${e.message}")

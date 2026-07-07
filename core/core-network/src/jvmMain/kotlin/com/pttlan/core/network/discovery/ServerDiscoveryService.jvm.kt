@@ -17,7 +17,8 @@ actual class ServerDiscoveryService actual constructor() {
             try {
                 jmdns =
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                        JmDNS.create(InetAddress.getLocalHost())
+                        val localIp = getLocalIpAddress()
+                        if (localIp != null) JmDNS.create(localIp) else JmDNS.create()
                     }
 
                 val listener =
@@ -56,5 +57,18 @@ actual class ServerDiscoveryService actual constructor() {
     actual fun stopDiscovery() {
         jmdns?.close()
         jmdns = null
+    }
+
+    private fun getLocalIpAddress(): InetAddress? {
+        val interfaces = java.net.NetworkInterface.getNetworkInterfaces()
+        for (networkInterface in interfaces) {
+            if (networkInterface.isLoopback || !networkInterface.isUp) continue
+            for (address in networkInterface.inetAddresses) {
+                if (address is java.net.Inet4Address) {
+                    return address
+                }
+            }
+        }
+        return null
     }
 }

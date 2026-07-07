@@ -10,7 +10,9 @@ kotlin {
             implementation(project(":core:core-designsystem"))
             api(libs.decompose)
             implementation(libs.decompose.extensions.compose)
+            implementation(libs.koin.core)
             implementation(libs.koin.compose)
+            implementation(project(":core:core-datastore"))
         }
     }
 }

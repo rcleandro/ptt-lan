@@ -8,6 +8,7 @@ import com.pttlan.server.channel.Participant
 import io.ktor.server.routing.Routing
 import io.ktor.server.websocket.webSocket
 import io.ktor.websocket.Frame
+import io.ktor.websocket.close
 import io.ktor.websocket.readText
 import kotlinx.serialization.json.Json
 import org.koin.ktor.ext.inject
@@ -20,8 +21,12 @@ fun Routing.pttRoutes() {
         var currentChannelId: String? = null
 
         try {
-            channelRegistry.addGlobalConnection(this)
-            println("Novo client conectado via WebSocket!")
+            val nickname = call.request.queryParameters["nickname"] ?: "Desconhecido"
+            if (!channelRegistry.addGlobalConnection(this, nickname)) {
+                close(io.ktor.websocket.CloseReason(io.ktor.websocket.CloseReason.Codes.VIOLATED_POLICY, "Nome já em uso"))
+                return@webSocket
+            }
+            println("Novo client conectado via WebSocket! ($nickname)")
             for (frame in incoming) {
                 when (frame) {
                     is Frame.Text -> {
@@ -39,8 +44,9 @@ fun Routing.pttRoutes() {
                                     channelRegistry.broadcastActiveChannels()
                                 }
                                 is ControlMessage.LeaveChannel -> {
-                                    println("Usuário ${message.userId} saiu do canal ${message.channelId}")
                                     val channel = channelRegistry.getChannel(message.channelId)
+                                    val participantNickname = channel?.getParticipant(message.userId)?.nickname ?: "Desconhecido"
+                                    println("Usuário $participantNickname (${message.userId}) saiu do canal ${message.channelId}")
                                     channel?.removeParticipant(message.userId)
                                     channelRegistry.scheduleCleanupIfEmpty(message.channelId)
                                     channelRegistry.broadcastActiveChannels()
@@ -82,9 +88,10 @@ fun Routing.pttRoutes() {
                 }
             }
         } finally {
-            println("Client desconectado via WebSocket! (User: $currentUserId)")
+            val channel = currentChannelId?.let { channelRegistry.getChannel(it) }
+            val nickname = currentUserId?.let { channel?.getParticipant(it)?.nickname } ?: "Desconhecido"
+            println("Client desconectado via WebSocket! (User: $nickname [$currentUserId])")
             if (currentUserId != null && currentChannelId != null) {
-                val channel = channelRegistry.getChannel(currentChannelId)
                 channel?.removeParticipant(currentUserId)
                 channelRegistry.scheduleCleanupIfEmpty(currentChannelId)
             }

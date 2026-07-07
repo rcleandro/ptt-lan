@@ -79,6 +79,13 @@ fun ConnectionScreen(component: ConnectionComponent) {
                     Text("Conectando...")
                 }
             } else {
+                OutlinedTextField(
+                    value = state.nickname,
+                    onValueChange = { component.onIntent(ConnectionIntent.UpdateNickname(it)) },
+                    label = { Text("Seu Nome") },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
                 Text(
                     text = "Servidores Descobertos na Rede",
                     style = MaterialTheme.typography.headlineMedium,

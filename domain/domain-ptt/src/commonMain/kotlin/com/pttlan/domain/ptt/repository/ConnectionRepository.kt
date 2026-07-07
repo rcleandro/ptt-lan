@@ -26,6 +26,7 @@ interface ConnectionRepository {
     suspend fun connect(
         host: String,
         port: Int = 9393,
+        nickname: String,
     ): Result<Unit>
 
     fun disconnect()
