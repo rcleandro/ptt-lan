@@ -28,7 +28,6 @@ dokka = "2.2.0"
 
 [libraries]
 foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose" }
-kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3" }
@@ -39,7 +38,6 @@ plugin-compose = { module = "org.jetbrains.compose:compose-gradle-plugin", versi
 plugin-ktlint = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlint" }
 plugin-detekt = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
-ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
 ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
@@ -59,7 +57,6 @@ koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
-kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "coroutines" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
@@ -80,15 +77,11 @@ ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", v
 
 [plugins]
 androidApplication = { id = "com.android.application" }
-androidLibrary = { id = "com.android.library" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform" }
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm" }
 composeMultiplatform = { id = "org.jetbrains.compose" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
-detekt = { id = "io.gitlab.arturbosch.detekt" }
-ktlint = { id = "org.jlleitschuh.gradle.ktlint" }
-kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 benManesVersions = { id = "com.github.ben-manes.versions", version.ref = "benManesVersions" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
