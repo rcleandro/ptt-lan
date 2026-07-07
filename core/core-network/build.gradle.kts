@@ -18,10 +18,10 @@ kotlin {
             implementation(libs.okio)
         }
         androidMain.dependencies {
-            implementation(libs.ktor.client.cio)
+            implementation(libs.ktor.client.okhttp)
         }
         jvmMain.dependencies {
-            implementation(libs.ktor.client.cio)
+            implementation(libs.ktor.client.okhttp)
             implementation(libs.jmdns)
         }
         iosMain.dependencies {

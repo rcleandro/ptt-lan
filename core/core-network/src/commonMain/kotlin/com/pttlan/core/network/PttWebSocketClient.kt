@@ -14,12 +14,14 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.flow.asStateFlow
 
 class PttWebSocketClient(
     private val httpClient: HttpClient,
@@ -37,6 +39,9 @@ class PttWebSocketClient(
     private var connectionJob: Job? = null
     private val scope = CoroutineScope(Dispatchers.Default)
 
+    private val _isConnected = MutableStateFlow(false)
+    val isConnected = _isConnected.asStateFlow()
+
     suspend fun connect(
         host: String,
         port: Int,
@@ -47,13 +52,17 @@ class PttWebSocketClient(
 
         while (shouldReconnect) {
             try {
+                val cleanHost = host.trim()
                 sessionMutex.withLock {
                     if (session != null) return@withLock
-                    session = httpClient.webSocketSession("wss://$host:$port/ws")
+                    println("PttWebSocketClient: Tentando conectar a wss://$cleanHost:$port/ws")
+                    session = httpClient.webSocketSession("wss://$cleanHost:$port/ws")
                 }
 
+                println("PttWebSocketClient: Conectado com sucesso!")
                 // Reset backoff on successful connection
                 backoffMs = 1000L
+                _isConnected.value = true
 
                 // Handle incoming frames
                 val ws = sessionMutex.withLock { session } ?: break
@@ -85,8 +94,10 @@ class PttWebSocketClient(
                     }
                 }
             } catch (e: Exception) {
+                println("PttWebSocketClient: Falha ao conectar: \${e.message}")
                 e.printStackTrace()
             } finally {
+                _isConnected.value = false
                 sessionMutex.withLock {
                     session?.close()
                     session = null

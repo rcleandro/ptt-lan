@@ -54,9 +54,16 @@ class ConnectionRepositoryImpl(
             }
         }
         
-        // Wait a tiny bit just to let it start, then assume it connects or tries to connect
-        // Ideally we would listen to connection state from WebSocketClient, but for MVP:
-        _connectionStatus.value = ConnectionStatus.Connected
+        scope.launch {
+            webSocketClient.isConnected.collect { isConnected ->
+                if (isConnected) {
+                    _connectionStatus.value = ConnectionStatus.Connected
+                } else if (_connectionStatus.value == ConnectionStatus.Connected) {
+                    _connectionStatus.value = ConnectionStatus.Reconnecting
+                }
+            }
+        }
+        
         return Result.success(Unit)
     }
 

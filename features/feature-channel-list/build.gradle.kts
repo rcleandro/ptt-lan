@@ -10,7 +10,6 @@ kotlin {
             implementation(project(":core:core-designsystem"))
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
-            implementation(project(":core:core-navigation"))
             implementation(project(":domain:domain-ptt"))
 
             api(libs.decompose)

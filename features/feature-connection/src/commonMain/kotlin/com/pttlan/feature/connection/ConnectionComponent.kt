@@ -91,14 +91,14 @@ class ConnectionComponent(
             }
             is ConnectionIntent.ConnectToManualIp -> {
                 scope.launch {
-                    val result = connectionRepository.connect(intent.ip, 9393)
+                    val result = connectionRepository.connect(intent.ip, 9443)
                     if (result.isFailure) {
                         _effects.emit(ConnectionEffect.ShowError("Falha ao conectar: ${result.exceptionOrNull()?.message}"))
                     }
                 }
             }
             is ConnectionIntent.UpdateManualIp -> {
-                _state.update { it.copy(manualIp = intent.ip) }
+                _state.update { it.copy(manualIp = intent.ip.trim()) }
             }
         }
     }

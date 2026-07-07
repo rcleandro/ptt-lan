@@ -8,7 +8,6 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":core:core-common"))
             implementation(project(":core:core-designsystem"))
-            implementation(project(":core:core-navigation"))
             implementation(project(":core:core-audio"))
             implementation(project(":domain:domain-ptt"))
             implementation(project(":core:core-network"))

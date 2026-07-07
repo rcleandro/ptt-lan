@@ -9,6 +9,7 @@ kotlin {
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(project(":core:core-di"))
+            implementation(project(":core:core-navigation"))
             implementation(project(":core:core-designsystem"))
             implementation(project(":features:feature-connection"))
             implementation(project(":features:feature-channel-list"))
