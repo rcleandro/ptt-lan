@@ -7,12 +7,9 @@ import io.ktor.server.testing.testApplication
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -69,7 +66,7 @@ class ServerIntegrationTest {
                     val msg = Json.decodeFromString<ControlMessage>(frame.readText()) as ControlMessage.FloorDenied
                     assertEquals("channel-1", msg.channelId)
                     receivedFloorDenied = true
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     // Closed or timeout
                 }
 

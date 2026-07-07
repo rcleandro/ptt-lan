@@ -36,8 +36,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.domain.ptt.model.VoiceMessage
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
@@ -100,9 +100,9 @@ fun VoiceMessageItem(
                 .clip(MaterialTheme.shapes.medium)
                 .background(
                     if (isPlaying) {
-                        com.pttlan.core.designsystem.theme.PttTheme.customColors.primaryGlow
+                        PttTheme.customColors.primaryGlow
                     } else {
-                        com.pttlan.core.designsystem.theme.PttTheme.customColors.surface2
+                        PttTheme.customColors.surface2
                     },
                 ).border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.medium)
                 .clickable(onClick = onPlayClick)
@@ -132,8 +132,7 @@ fun VoiceMessageItem(
             )
             Spacer(modifier = Modifier.height(4.dp))
             val time =
-                Instant
-                    .fromEpochMilliseconds(message.recordedAt)
+                kotlin.time.Instant.fromEpochMilliseconds(message.recordedAt)
                     .toLocalDateTime(TimeZone.currentSystemDefault())
             val durationSec = (message.durationMs / 1000).coerceAtLeast(1)
 
