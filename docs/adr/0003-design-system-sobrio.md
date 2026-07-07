@@ -26,3 +26,9 @@ Decidimos implementar um tema (Dark-first) sob a especificação detalhada da Fa
 **Negativas:**
 - Maior rigidez ao desenvolver features novas (é necessário usar o `PttTheme.customColors` em vez das cores padrão do Material).
 - Adoção e migração das telas existentes exigirá refatoração.
+
+### Convenção de Lint (Design System)
+Para garantir a consistência contínua, estabelecemos a seguinte convenção documentada:
+- **É estritamente proibido** o uso de `Color(...)` ou `.sp`/`.dp` em arquivos de UI fora do pacote `com.pttlan.core.designsystem`.
+- **Exceção:** Valores de `.dp` são permitidos apenas para padding/espaçamentos de layout (`Modifier.padding`, `Modifier.size`, etc). Cores, tipografia, elevação e tamanhos de fonte devem vir exclusivamente de `MaterialTheme` e `PttTheme`.
+- Revisores de Pull Request deverão reprovar manualmente qualquer código que utilize `.copy(fontSize = ...)` ou chame `Color(...)` em views de features.

@@ -34,10 +34,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.pttlan.domain.ptt.model.VoiceMessage
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -127,11 +125,7 @@ fun VoiceMessageItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = message.senderNickname,
-                style =
-                    MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
-                        fontSize = 14.sp,
-                    ),
+                style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onBackground,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -145,7 +139,7 @@ fun VoiceMessageItem(
 
             Text(
                 text = "${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')} • $durationSec sec",
-                style = MaterialTheme.typography.labelMedium.copy(fontSize = 11.sp),
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }

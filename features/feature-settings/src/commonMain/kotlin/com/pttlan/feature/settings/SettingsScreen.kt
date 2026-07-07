@@ -71,6 +71,27 @@ fun SettingsScreen(component: SettingsComponent) {
                     onCheckedChange = { component.onIntent(SettingsIntent.ToggleOpus(it)) },
                 )
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            androidx.compose.foundation.layout.Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                    Text("Tema Escuro", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Usa o esquema de cores sóbrio de baixo contraste.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                androidx.compose.material3.Switch(
+                    checked = state.useDarkTheme,
+                    onCheckedChange = { component.onIntent(SettingsIntent.ToggleTheme(it)) },
+                )
+            }
         }
     }
 }

@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.update
 data class SettingsState(
     val nickname: String = "",
     val useOpus: Boolean = false,
+    val useDarkTheme: Boolean = true,
 )
 
 sealed interface SettingsIntent {
@@ -19,6 +20,10 @@ sealed interface SettingsIntent {
 
     data class ToggleOpus(
         val enabled: Boolean,
+    ) : SettingsIntent
+
+    data class ToggleTheme(
+        val useDark: Boolean,
     ) : SettingsIntent
 }
 
@@ -31,6 +36,7 @@ class SettingsComponent(
             SettingsState(
                 nickname = settings.getString("nickname", ""),
                 useOpus = settings.getBoolean("use_opus", false),
+                useDarkTheme = settings.getBoolean("use_dark_theme", true),
             ),
         )
     val state: StateFlow<SettingsState> = _state.asStateFlow()
@@ -44,6 +50,10 @@ class SettingsComponent(
             is SettingsIntent.ToggleOpus -> {
                 settings.putBoolean("use_opus", intent.enabled)
                 _state.update { it.copy(useOpus = intent.enabled) }
+            }
+            is SettingsIntent.ToggleTheme -> {
+                settings.putBoolean("use_dark_theme", intent.useDark)
+                _state.update { it.copy(useDarkTheme = intent.useDark) }
             }
         }
     }

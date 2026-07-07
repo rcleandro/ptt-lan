@@ -30,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.domain.ptt.repository.ServerNode
 
@@ -161,19 +160,12 @@ fun ServerCard(
         Column {
             Text(
                 text = server.name,
-                style =
-                    MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
-                        fontSize = 14.sp,
-                    ),
+                style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Text(
                 text = "${server.host}:${server.port}",
-                style =
-                    MaterialTheme.typography.labelMedium.copy(
-                        fontSize = 11.sp,
-                    ),
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
