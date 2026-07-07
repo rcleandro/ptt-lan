@@ -18,5 +18,12 @@ kotlin {
             api(libs.decompose)
             implementation(libs.decompose.extensions.compose)
         }
+        commonTest.dependencies {
+            implementation(project(":core:core-testing"))
+            implementation(kotlin("test"))
+        }
+        jvmTest.dependencies {
+            implementation(libs.mockk)
+        }
     }
 }
