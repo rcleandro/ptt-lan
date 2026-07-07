@@ -2,7 +2,6 @@ package com.pttlan.core.network
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.darwin.Darwin
-
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSURLCredential
 import platform.Foundation.NSURLSessionAuthChallengePerformDefaultHandling

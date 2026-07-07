@@ -19,7 +19,7 @@ fun MainViewController(): UIViewController {
     return ComposeUIViewController(
         configure = {
             enforceStrictPlistSanityCheck = false
-        }
+        },
     ) {
         PttTheme {
             RootScreen(component = rootComponent)
