@@ -1016,9 +1016,9 @@ Checklist:
 **Objetivo:** reduzir tráfego de rede e adicionar criptografia ao stream.
 
 Checklist:
-- [ ] `OpusAudioCodec` implementado nos 3 targets (seção 7.3).
-- [ ] Toggle de codec configurável (PCM vs Opus) para comparação/estudo.
-- [ ] TLS self-signed no `serverApp` + fluxo TOFU no client (seção 12).
+- [x] `OpusAudioCodec` implementado nos 3 targets (seção 7.3).
+- [x] Toggle de codec configurável (PCM vs Opus) para comparação/estudo.
+- [x] TLS self-signed no `serverApp` + fluxo TOFU no client (seção 12).
 
 **Critério de conclusão:** comparação documentada (em `docs/adr/`) de banda consumida PCM vs Opus; conexão TLS validada com fingerprint exibido ao usuário.
 
@@ -1137,7 +1137,7 @@ Antes de marcar qualquer fase como concluída, o agente deve confirmar:
 - [x] Fase 6 — Floor Control e Reconexão concluída
 - [x] Fase 7 — Histórico e Replay concluída
 - [x] Fase 8 — Novo Design System (UI/UX Sóbria e Moderna) concluída
-- [ ] Fase 9 — Opus e Criptografia TLS concluída
+- [x] Fase 9 — Opus e Criptografia TLS concluída
 - [ ] Fase 10 — Background e Modo "Sempre Ouvindo" concluída
 - [ ] Fase 11 — Painel Admin Web concluída
 - [ ] Fase 12 — Android Automotive concluída
