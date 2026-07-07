@@ -38,6 +38,18 @@ class MainActivity : ComponentActivity() {
         val rootComponent = RootComponent(
             componentContext = componentContext,
         )
+        
+        val settings: com.russhwolf.settings.Settings by inject()
+        val alwaysListening = settings.getBoolean("always_listening", true)
+        
+        if (alwaysListening) {
+            val intent = android.content.Intent(this, PttForegroundService::class.java)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                startForegroundService(intent)
+            } else {
+                startService(intent)
+            }
+        }
 
         setContent {
             PttTheme {

@@ -92,6 +92,27 @@ fun SettingsScreen(component: SettingsComponent) {
                     onCheckedChange = { component.onIntent(SettingsIntent.ToggleTheme(it)) },
                 )
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            androidx.compose.foundation.layout.Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                    Text("Sempre Ouvindo", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Receber áudio mesmo quando o app estiver em segundo plano (requer permissão especial).",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                androidx.compose.material3.Switch(
+                    checked = state.alwaysListening,
+                    onCheckedChange = { component.onIntent(SettingsIntent.ToggleAlwaysListening(it)) },
+                )
+            }
         }
     }
 }

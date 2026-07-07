@@ -11,6 +11,7 @@ data class SettingsState(
     val nickname: String = "",
     val useOpus: Boolean = false,
     val useDarkTheme: Boolean = true,
+    val alwaysListening: Boolean = true,
 )
 
 sealed interface SettingsIntent {
@@ -25,6 +26,10 @@ sealed interface SettingsIntent {
     data class ToggleTheme(
         val useDark: Boolean,
     ) : SettingsIntent
+
+    data class ToggleAlwaysListening(
+        val enabled: Boolean,
+    ) : SettingsIntent
 }
 
 class SettingsComponent(
@@ -37,6 +42,7 @@ class SettingsComponent(
                 nickname = settings.getString("nickname", ""),
                 useOpus = settings.getBoolean("use_opus", false),
                 useDarkTheme = settings.getBoolean("use_dark_theme", true),
+                alwaysListening = settings.getBoolean("always_listening", true),
             ),
         )
     val state: StateFlow<SettingsState> = _state.asStateFlow()
@@ -54,6 +60,10 @@ class SettingsComponent(
             is SettingsIntent.ToggleTheme -> {
                 settings.putBoolean("use_dark_theme", intent.useDark)
                 _state.update { it.copy(useDarkTheme = intent.useDark) }
+            }
+            is SettingsIntent.ToggleAlwaysListening -> {
+                settings.putBoolean("always_listening", intent.enabled)
+                _state.update { it.copy(alwaysListening = intent.enabled) }
             }
         }
     }

@@ -1026,9 +1026,9 @@ Checklist:
 **Objetivo:** app tocando áudio recebido mesmo minimizado; toggle de modo de escuta.
 
 Checklist:
-- [ ] Android: `Foreground Service` para manter WebSocket vivo em background.
-- [ ] iOS: exploração de `Background Modes` (Audio) — documentar limitações reais encontradas (restrição conhecida da plataforma).
-- [ ] `feature-settings`: toggle "sempre ouvindo" vs "só com app aberto".
+- [x] Android: `Foreground Service` para manter WebSocket vivo em background.
+- [x] iOS: exploração de `Background Modes` (Audio) — documentar limitações reais encontradas (restrição conhecida da plataforma).
+- [x] `feature-settings`: toggle "sempre ouvindo" vs "só com app aberto".
 
 **Critério de conclusão:** Android recebe áudio em background de forma confiável; limitações de iOS documentadas com decisão explícita de escopo (ADR).
 
@@ -1138,7 +1138,7 @@ Antes de marcar qualquer fase como concluída, o agente deve confirmar:
 - [x] Fase 7 — Histórico e Replay concluída
 - [x] Fase 8 — Novo Design System (UI/UX Sóbria e Moderna) concluída
 - [x] Fase 9 — Opus e Criptografia TLS concluída
-- [ ] Fase 10 — Background e Modo "Sempre Ouvindo" concluída
+- [x] Fase 10 — Background e Modo "Sempre Ouvindo" concluída
 - [ ] Fase 11 — Painel Admin Web concluída
 - [ ] Fase 12 — Android Automotive concluída
 - [ ] Fase 13 — Documentação Final concluída
