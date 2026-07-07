@@ -53,9 +53,11 @@ fun Routing.pttRoutes() {
                                     channelRegistry.broadcastActiveChannels()
                                 }
                                 is ControlMessage.StartSpeaking -> {
+                                    println("PttRoutes: Usuário ${message.userId} solicitou falar no canal ${message.channelId}")
                                     val channel = channelRegistry.getChannel(message.channelId)
                                     if (channel != null) {
                                         val granted = channel.requestFloor(message.userId)
+                                        println("PttRoutes: Concessão da palavra para ${message.userId}: $granted")
                                         if (!granted) {
                                             val json =
                                                 Json.encodeToString<ControlMessage>(
@@ -63,9 +65,12 @@ fun Routing.pttRoutes() {
                                                 )
                                             send(Frame.Text(json))
                                         }
+                                    } else {
+                                        println("PttRoutes: AVISO - Canal ${message.channelId} não encontrado ao solicitar fala")
                                     }
                                 }
                                 is ControlMessage.StopSpeaking -> {
+                                    println("PttRoutes: Usuário ${message.userId} liberou a fala no canal ${message.channelId}")
                                     val channel = channelRegistry.getChannel(message.channelId)
                                     channel?.releaseFloor(message.userId)
                                 }
