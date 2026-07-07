@@ -66,3 +66,23 @@ jobs:
           distribution: 'temurin'
       - name: Build Server
         run: ./gradlew :serverApp:classes
+
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode Project
+        run: cd iosApp && xcodegen
+      - name: Run iOS Simulator Unit Tests
+        run: ./gradlew iosSimulatorArm64Test
+      - name: Build iOS App
+        run: |
+          cd iosApp
+          xcodebuild -project iosApp.xcodeproj -scheme iosApp -configuration Debug -sdk iphonesimulator -arch arm64 build
