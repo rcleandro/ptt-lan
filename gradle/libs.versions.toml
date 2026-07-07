@@ -76,6 +76,7 @@ ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose" }
 kopus = { module = "eu.buney.kopus:kopus", version.ref = "kopus" }
 compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose" }
 compose-components-uiToolingPreview = { module = "org.jetbrains.compose.components:components-ui-tooling-preview", version.ref = "compose" }
+ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "compose" }
 
 [plugins]
 androidApplication = { id = "com.android.application" }

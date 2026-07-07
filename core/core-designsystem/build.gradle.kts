@@ -1,19 +1,15 @@
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
-    id("com.android.library")
+    id("com.android.kotlin.multiplatform.library")
     id("ptt.compose.library")
 }
 
-android {
-    namespace = "com.pttlan.core.designsystem"
-    compileSdkVersion(37)
-    defaultConfig {
-        minSdkVersion(26)
-    }
-}
-
 kotlin {
-    androidTarget()
+    androidLibrary {
+        namespace = "com.pttlan.core.designsystem"
+        compileSdk = 37
+        minSdk = 26
+    }
     iosArm64()
     iosSimulatorArm64()
     jvm()

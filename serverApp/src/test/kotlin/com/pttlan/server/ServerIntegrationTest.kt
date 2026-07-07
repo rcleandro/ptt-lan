@@ -48,7 +48,8 @@ class ServerIntegrationTest {
                 val startSpeaking1 = ControlMessage.StartSpeaking("channel-1", "u1")
                 session1.send(Frame.Text(Json.encodeToString<ControlMessage>(startSpeaking1)))
 
-                // Read from session2 to get SpeakerChanged event confirming Client1 is speaking, so we know they have the floor
+                // Read from session2 to get SpeakerChanged event confirming Client1 is speaking
+                // so we know they have the floor
                 // Actually wait, let's just make Client2 try to speak
                 val startSpeaking2 = ControlMessage.StartSpeaking("channel-1", "u2")
                 session2.send(Frame.Text(Json.encodeToString<ControlMessage>(startSpeaking2)))
@@ -71,7 +72,8 @@ class ServerIntegrationTest {
                 }
 
                 // Stop speaking for client 1 to clean up
-                session1.send(Frame.Text(Json.encodeToString<ControlMessage>(ControlMessage.StopSpeaking("channel-1", "u1"))))
+                val stop1 = ControlMessage.StopSpeaking("channel-1", "u1")
+                session1.send(Frame.Text(Json.encodeToString<ControlMessage>(stop1)))
                 
                 // Close sessions
                 session2.close()
