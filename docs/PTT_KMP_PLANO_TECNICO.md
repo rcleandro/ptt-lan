@@ -735,7 +735,7 @@ feature-ptt/
 | Telas (Compose) | `presentation` | Sem lógica de negócio; apenas renderiza `State` e envia `Intent`. |
 | Component (MVI) | `presentation` | Consome UseCases de `domain-ptt`. |
 | UseCases | `domain-ptt` (compartilhado entre features) | `JoinChannelUseCase`, `LeaveChannelUseCase`, `StartTransmittingUseCase`, `StopTransmittingUseCase`, `ObserveParticipantsUseCase`, `ObserveSpeakerUseCase`. |
-| Repositories (interface) | `domain-ptt` | `ChannelRepository`, `VoiceRepository`, `ConnectionRepository`. |
+| Repositories (interface) | `domain-ptt` | `ChannelRepository`, `VoiceRepository`, `ConnectionRepository`, `ChannelSessionRepository`. |
 | Repositories (impl) | `data-ptt` | Implementam as interfaces acima. |
 | DataSources | `data-ptt` | `RemoteChannelDataSource` (usa `core-network`), `LocalChannelDataSource` (usa `core-database`). |
 | DTOs | `core-network` | `ControlMessage`, `AudioEnvelope`, `ParticipantDto`. |

@@ -87,7 +87,7 @@ fun PttScreen(component: PttComponent) {
 
             LazyColumn(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 items(state.participants, key = { it.userId }) { participant ->
                     val isSpeaking = participant.userId == state.currentSpeakerId

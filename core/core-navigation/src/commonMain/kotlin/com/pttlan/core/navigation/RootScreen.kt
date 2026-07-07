@@ -36,7 +36,7 @@ fun RootScreen(component: RootComponent) {
                         IconButton(onClick = component::goBack) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Voltar"
+                                contentDescription = "Voltar",
                             )
                         }
                     },

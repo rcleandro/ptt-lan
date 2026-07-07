@@ -1,8 +1,6 @@
 package com.pttlan.feature.connection
 
 import com.arkivanov.decompose.ComponentContext
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import com.pttlan.domain.ptt.repository.ConnectionRepository
 import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.domain.ptt.repository.ServerNode
@@ -17,6 +15,8 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 data class ConnectionState(
     val status: ConnectionStatus = ConnectionStatus.Disconnected,
@@ -54,15 +54,17 @@ sealed interface ConnectionEffect {
 class ConnectionComponent(
     componentContext: ComponentContext,
     private val connectionRepository: ConnectionRepository,
-) : ComponentContext by componentContext, KoinComponent {
+) : ComponentContext by componentContext,
+    KoinComponent {
     private val settings: Settings by inject()
 
-    private val _state = MutableStateFlow(
-        ConnectionState(
-            nickname = settings.getString("nickname", ""),
-            manualIp = settings.getString("manualIp", "")
+    private val _state =
+        MutableStateFlow(
+            ConnectionState(
+                nickname = settings.getString("nickname", ""),
+                manualIp = settings.getString("manualIp", ""),
+            ),
         )
-    )
     val state: StateFlow<ConnectionState> = _state.asStateFlow()
 
     private val _effects = MutableSharedFlow<ConnectionEffect>()
@@ -102,7 +104,7 @@ class ConnectionComponent(
                     return
                 }
                 settings.putString("nickname", _state.value.nickname)
-                
+
                 scope.launch {
                     val result = connectionRepository.connect(intent.server.host, intent.server.port, _state.value.nickname)
                     if (result.isFailure) {

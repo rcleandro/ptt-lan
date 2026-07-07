@@ -89,7 +89,7 @@ class PttWebSocketClient(
                         else -> {}
                     }
                 }
-                
+
                 val closeReason = ws.closeReason.await()
                 if (closeReason?.message == "Nome já em uso") {
                     shouldReconnect = false

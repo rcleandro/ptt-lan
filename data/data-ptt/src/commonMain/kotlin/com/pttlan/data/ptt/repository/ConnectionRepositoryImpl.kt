@@ -57,16 +57,17 @@ class ConnectionRepositoryImpl(
                 }
             }
 
-        val monitorJob = scope.launch {
-            webSocketClient.isConnected.collect { isConnected ->
-                if (isConnected) {
-                    _connectionStatus.value = ConnectionStatus.Connected
-                    deferred.complete(Unit)
-                } else if (_connectionStatus.value == ConnectionStatus.Connected) {
-                    _connectionStatus.value = ConnectionStatus.Reconnecting
+        val monitorJob =
+            scope.launch {
+                webSocketClient.isConnected.collect { isConnected ->
+                    if (isConnected) {
+                        _connectionStatus.value = ConnectionStatus.Connected
+                        deferred.complete(Unit)
+                    } else if (_connectionStatus.value == ConnectionStatus.Connected) {
+                        _connectionStatus.value = ConnectionStatus.Reconnecting
+                    }
                 }
             }
-        }
 
         return try {
             deferred.await()

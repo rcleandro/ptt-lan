@@ -36,24 +36,25 @@ class ChannelRepositoryImpl(
                 }
             }
 
-    private val _activeChannels = kotlinx.coroutines.flow.MutableStateFlow<List<ActiveChannelDomain>>(emptyList())
+    private val activeChannelsFlow = kotlinx.coroutines.flow.MutableStateFlow<List<ActiveChannelDomain>>(emptyList())
 
     init {
         kotlinx.coroutines.CoroutineScope(Dispatchers.Default).launch {
             webSocketClient.controlMessages
                 .filterIsInstance<ControlMessage.ActiveChannelsList>()
                 .collect { message ->
-                    _activeChannels.value = message.activeChannels.map {
-                        ActiveChannelDomain(
-                            id = it.channelId,
-                            participantCount = it.participantCount,
-                        )
-                    }
+                    activeChannelsFlow.value =
+                        message.activeChannels.map {
+                            ActiveChannelDomain(
+                                id = it.channelId,
+                                participantCount = it.participantCount,
+                            )
+                        }
                 }
         }
     }
 
-    override fun observeActiveChannels(): Flow<List<ActiveChannelDomain>> = _activeChannels
+    override fun observeActiveChannels(): Flow<List<ActiveChannelDomain>> = activeChannelsFlow
 
     override suspend fun saveChannel(channel: ChannelDomain) {
         val now = Clock.System.now().toEpochMilliseconds()

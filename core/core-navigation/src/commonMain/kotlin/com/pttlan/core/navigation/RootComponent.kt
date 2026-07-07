@@ -7,8 +7,7 @@ import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.navigate
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.value.Value
-import com.pttlan.feature.ptt.PttEffect
-import com.pttlan.core.network.PttWebSocketClient
+import com.arkivanov.essenty.lifecycle.Lifecycle
 import com.pttlan.domain.ptt.repository.ChannelRepository
 import com.pttlan.domain.ptt.repository.ConnectionRepository
 import com.pttlan.domain.ptt.repository.VoiceRepository
@@ -17,22 +16,26 @@ import com.pttlan.feature.channellist.ChannelListEffect
 import com.pttlan.feature.connection.ConnectionComponent
 import com.pttlan.feature.connection.ConnectionEffect
 import com.pttlan.feature.ptt.PttComponent
+import com.pttlan.feature.ptt.PttEffect
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import org.koin.core.component.get
+import org.koin.core.parameter.parametersOf
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-import kotlinx.coroutines.cancel
-import com.arkivanov.essenty.lifecycle.Lifecycle
 
 private fun Lifecycle.coroutineScope(): CoroutineScope {
     val scope = CoroutineScope(Dispatchers.Main)
-    subscribe(object : Lifecycle.Callbacks {
-        override fun onDestroy() {
-            scope.cancel()
-        }
-    })
+    subscribe(
+        object : Lifecycle.Callbacks {
+            override fun onDestroy() {
+                scope.cancel()
+            }
+        },
+    )
     return scope
 }
 
@@ -41,8 +44,8 @@ class RootComponent(
     private val connectionRepository: ConnectionRepository,
     private val channelRepository: ChannelRepository,
     private val voiceRepository: VoiceRepository,
-    private val webSocketClient: PttWebSocketClient,
-) : ComponentContext by componentContext {
+) : ComponentContext by componentContext,
+    org.koin.core.component.KoinComponent {
     private val navigation = StackNavigation<Config>()
 
     @OptIn(ExperimentalUuidApi::class)
@@ -90,13 +93,12 @@ class RootComponent(
                 Child.ChannelListChild(component)
             }
             is Config.PttScreen -> {
-                val component = PttComponent(
-                    componentContext = context,
-                    channelId = config.channelId,
-                    userId = userId,
-                    voiceRepository = voiceRepository,
-                    webSocketClient = webSocketClient,
-                )
+                val component: PttComponent =
+                    get(
+                        parameters = {
+                            parametersOf(context, config.channelId, userId)
+                        },
+                    )
                 context.lifecycle.coroutineScope().launch {
                     component.effects.collect { effect ->
                         if (effect is PttEffect.NavigateBack) {

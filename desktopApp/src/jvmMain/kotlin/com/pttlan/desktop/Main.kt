@@ -8,7 +8,6 @@ import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.core.di.appModules
 import com.pttlan.core.navigation.RootComponent
 import com.pttlan.core.navigation.RootScreen
-import com.pttlan.core.network.PttWebSocketClient
 import com.pttlan.domain.ptt.repository.ChannelRepository
 import com.pttlan.domain.ptt.repository.ConnectionRepository
 import com.pttlan.domain.ptt.repository.VoiceRepository
@@ -21,7 +20,6 @@ class AppDeps : KoinComponent {
     val connectionRepository: ConnectionRepository by inject()
     val channelRepository: ChannelRepository by inject()
     val voiceRepository: VoiceRepository by inject()
-    val webSocketClient: PttWebSocketClient by inject()
 }
 
 fun main() {
@@ -41,7 +39,6 @@ fun main() {
                 connectionRepository = deps.connectionRepository,
                 channelRepository = deps.channelRepository,
                 voiceRepository = deps.voiceRepository,
-                webSocketClient = deps.webSocketClient,
             )
     }
 

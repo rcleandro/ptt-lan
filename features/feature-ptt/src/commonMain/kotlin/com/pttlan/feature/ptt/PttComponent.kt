@@ -2,12 +2,12 @@ package com.pttlan.feature.ptt
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.Lifecycle
-import org.koin.core.component.inject
 import com.pttlan.domain.ptt.repository.VoiceRepository
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.cancel
+import org.koin.core.component.inject
 
 data class PttState(
     val channelId: String = "",
@@ -48,8 +48,15 @@ class PttComponent(
     private val channelId: String,
     private val userId: String,
     private val voiceRepository: VoiceRepository,
-    private val webSocketClient: com.pttlan.core.network.PttWebSocketClient,
-) : ComponentContext by componentContext, org.koin.core.component.KoinComponent {
+    private val joinChannelUseCase: com.pttlan.domain.ptt.usecase.JoinChannelUseCase,
+    private val leaveChannelUseCase: com.pttlan.domain.ptt.usecase.LeaveChannelUseCase,
+    private val observeParticipantsUseCase: com.pttlan.domain.ptt.usecase.ObserveParticipantsUseCase,
+    private val observeSpeakerUseCase: com.pttlan.domain.ptt.usecase.ObserveSpeakerUseCase,
+    private val observeFloorDeniedUseCase: com.pttlan.domain.ptt.usecase.ObserveFloorDeniedUseCase,
+    private val startTransmittingUseCase: com.pttlan.domain.ptt.usecase.StartTransmittingUseCase,
+    private val stopTransmittingUseCase: com.pttlan.domain.ptt.usecase.StopTransmittingUseCase,
+) : ComponentContext by componentContext,
+    org.koin.core.component.KoinComponent {
     private val settings: Settings by inject()
 
     private val _state = MutableStateFlow(PttState(channelId = channelId))
@@ -63,45 +70,41 @@ class PttComponent(
     init {
         scope.launch {
             val nickname = settings.getString("nickname", "User-${userId.take(4)}")
-            webSocketClient.sendControlMessage(
-                com.pttlan.core.network.protocol.ControlMessage.JoinChannel(
-                    channelId = channelId,
-                    nickname = nickname,
-                    userId = userId,
-                )
-            )
+            joinChannelUseCase(channelId = channelId, userId = userId, nickname = nickname)
+        }
 
-            webSocketClient.controlMessages.collect { message ->
-                when (message) {
-                    is com.pttlan.core.network.protocol.ControlMessage.SpeakerChanged -> {
-                        if (message.channelId == channelId) {
-                            _state.update {
-                                it.copy(
-                                    currentSpeakerId = if (message.isSpeaking) message.userId else null,
-                                    currentSpeakerName = if (message.isSpeaking) message.nickname else null,
-                                    floorBlocked = message.isSpeaking && message.userId != userId,
-                                )
-                            }
-
-                            // If we were granted the floor
-                            if (message.isSpeaking && message.userId == userId) {
-                                voiceRepository.startTransmitting(channelId, userId)
-                            }
-                        }
-                    }
-                    is com.pttlan.core.network.protocol.ControlMessage.FloorDenied -> {
-                        if (message.channelId == channelId) {
-                            _state.update { it.copy(isTransmitting = false) }
-                            _effects.emit(PttEffect.ShowFloorDenied(message.reason))
-                        }
-                    }
-                    is com.pttlan.core.network.protocol.ControlMessage.ParticipantList -> {
-                        if (message.channelId == channelId) {
-                            _state.update { it.copy(participants = message.participants) }
-                        }
-                    }
-                    else -> {}
+        scope.launch {
+            observeSpeakerUseCase(channelId).collect { speakerState ->
+                _state.update {
+                    it.copy(
+                        currentSpeakerId = if (speakerState.isSpeaking) speakerState.userId else null,
+                        currentSpeakerName = if (speakerState.isSpeaking) speakerState.nickname else null,
+                        floorBlocked = speakerState.isSpeaking && speakerState.userId != userId,
+                    )
                 }
+
+                // If we were granted the floor
+                if (speakerState.isSpeaking && speakerState.userId == userId) {
+                    voiceRepository.startTransmitting(channelId, userId)
+                }
+            }
+        }
+
+        scope.launch {
+            observeFloorDeniedUseCase(channelId).collect { reason ->
+                _state.update { it.copy(isTransmitting = false) }
+                _effects.emit(PttEffect.ShowFloorDenied(reason))
+            }
+        }
+
+        scope.launch {
+            observeParticipantsUseCase(channelId).collect { participants ->
+                val dtos =
+                    participants.map {
+                        com.pttlan.core.network.protocol
+                            .ParticipantDto(it.userId, it.nickname, it.isSpeaking)
+                    }
+                _state.update { it.copy(participants = dtos) }
             }
         }
 
@@ -110,19 +113,14 @@ class PttComponent(
                 override fun onDestroy() {
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
-                            webSocketClient.sendControlMessage(
-                                com.pttlan.core.network.protocol.ControlMessage.LeaveChannel(
-                                    channelId = channelId,
-                                    userId = userId,
-                                )
-                            )
+                            leaveChannelUseCase(channelId = channelId, userId = userId)
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }
                     }
                     scope.cancel()
                 }
-            }
+            },
         )
     }
 
@@ -135,24 +133,18 @@ class PttComponent(
                 }
                 scope.launch {
                     _state.update { it.copy(isTransmitting = true) }
-                    voiceRepository.requestFloor(channelId, userId)
+                    startTransmittingUseCase(channelId, userId)
                 }
             }
             is PttIntent.ReleasePtt -> {
                 scope.launch {
                     _state.update { it.copy(isTransmitting = false) }
-                    voiceRepository.stopTransmitting()
-                    voiceRepository.releaseFloor(channelId, userId)
+                    stopTransmittingUseCase(channelId, userId)
                 }
             }
             is PttIntent.LeaveChannel -> {
                 scope.launch {
-                    webSocketClient.sendControlMessage(
-                        com.pttlan.core.network.protocol.ControlMessage.LeaveChannel(
-                            channelId = channelId,
-                            userId = userId,
-                        )
-                    )
+                    leaveChannelUseCase(channelId, userId)
                     _effects.emit(PttEffect.NavigateBack)
                 }
             }

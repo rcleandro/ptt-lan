@@ -16,13 +16,10 @@ import com.pttlan.domain.ptt.repository.VoiceRepository
 import com.pttlan.core.navigation.RootComponent
 import com.pttlan.core.navigation.RootScreen
 
-import com.pttlan.core.network.PttWebSocketClient
-
 class MainActivity : ComponentActivity() {
     private val connectionRepository: ConnectionRepository by inject()
     private val channelRepository: ChannelRepository by inject()
     private val voiceRepository: VoiceRepository by inject()
-    private val webSocketClient: PttWebSocketClient by inject()
 
 
     private val requestPermissionLauncher = registerForActivityResult(
@@ -46,7 +43,6 @@ class MainActivity : ComponentActivity() {
             connectionRepository = connectionRepository,
             channelRepository = channelRepository,
             voiceRepository = voiceRepository,
-            webSocketClient = webSocketClient
         )
 
         setContent {
