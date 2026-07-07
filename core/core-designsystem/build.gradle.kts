@@ -1,7 +1,8 @@
 plugins {
-    id("org.jetbrains.kotlin.multiplatform")
-    id("com.android.kotlin.multiplatform.library")
     id("ptt.compose.library")
+    alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.multiplatformLibrary)
+    alias(libs.plugins.roborazzi)
 }
 
 kotlin {
@@ -9,6 +10,9 @@ kotlin {
         namespace = "com.pttlan.core.designsystem"
         compileSdk = 37
         minSdk = 26
+        withHostTest {
+            isIncludeAndroidResources = true
+        }
     }
     iosArm64()
     iosSimulatorArm64()
@@ -24,6 +28,18 @@ kotlin {
             implementation(libs.material.icons.extended)
             api(libs.compose.components.resources)
             api(libs.compose.components.uiToolingPreview)
+        }
+        val androidHostTest = sourceSets.getByName("androidHostTest")
+        androidHostTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.robolectric)
+            implementation(libs.roborazzi)
+            implementation(libs.roborazzi.compose)
+            implementation(libs.roborazzi.junit)
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.junit)
+            implementation(libs.androidx.ui.test.junit4)
+            implementation(libs.androidx.ui.test.manifest)
         }
     }
 }

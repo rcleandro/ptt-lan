@@ -1,86 +1,129 @@
 [versions]
+# Build plugins / tooling
 agp = "9.2.1"
 kotlin = "2.4.0"
-compose = "1.11.1"
-kotlinxDatetime = "0.8.0"
-ktor = "3.5.1"
-material3 = "1.9.0"
-materialIconsExtended = "1.7.3"
-sqldelight = "2.3.2"
-koin = "4.2.2"
-decompose = "3.5.0"
-multiplatformSettings = "1.3.0"
-kermit = "2.1.0"
-coroutines = "1.11.0"
-serialization = "1.11.0"
 detekt = "1.23.8"
-mockk = "1.14.11"
-turbine = "1.2.1"
 ktlint = "14.2.0"
 benManesVersions = "0.54.0"
-jmdns = "3.6.3"
-androidx-core-ktx = "1.19.0"
-okio = "3.17.0"
-androidx-activity-compose = "1.13.0"
-kopus = "1.6.1.2"
 dokka = "2.2.0"
 
+# Compose / UI
+compose = "1.11.1"
+material3 = "1.9.0"
+materialIconsExtended = "1.7.3"
+androidx-activity-compose = "1.13.0"
+androidx-core-ktx = "1.19.0"
+
+# Kotlin ecosystem
+coroutines = "1.11.0"
+serialization = "1.11.0"
+kotlinxDatetime = "0.8.0"
+
+# Networking
+ktor = "3.5.1"
+
+# Persistence / storage
+sqldelight = "2.3.2"
+multiplatformSettings = "1.3.0"
+okio = "3.17.0"
+
+# DI / architecture
+koin = "4.2.2"
+decompose = "3.5.0"
+
+# Logging / discovery / audio
+kermit = "2.1.0"
+jmdns = "3.6.3"
+kopus = "1.6.1.2"
+
+# Testing
+mockk = "1.14.11"
+turbine = "1.2.1"
+junit = "1.3.0"
+uiTestJunit4 = "1.11.4"
+robolectric = "4.16.1"
+roborazzi = "1.67.0"
+
 [libraries]
-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose" }
-kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
-material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3" }
+# Gradle plugins (referenced as libraries for version-catalog plugin declarations)
 plugin-agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 plugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
-plugin-compose-compiler = { module = "org.jetbrains.kotlin:compose-compiler-gradle-plugin", version.ref = "kotlin" }
 plugin-compose = { module = "org.jetbrains.compose:compose-gradle-plugin", version.ref = "compose" }
-plugin-ktlint = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlint" }
+plugin-compose-compiler = { module = "org.jetbrains.kotlin:compose-compiler-gradle-plugin", version.ref = "kotlin" }
 plugin-detekt = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
+plugin-ktlint = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlint" }
+
+# Compose / UI
+foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose" }
+runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose" }
+ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose" }
+ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "compose" }
+material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3" }
+material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
+compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose" }
+compose-components-uiToolingPreview = { module = "org.jetbrains.compose.components:components-ui-tooling-preview", version.ref = "compose" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity-compose" }
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core-ktx" }
+
+# Kotlin ecosystem (coroutines / serialization / datetime)
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
+kotlinx-serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-serialization-protobuf", version.ref = "serialization" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
+
+# Networking (Ktor)
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
-ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-websockets = { module = "io.ktor:ktor-client-websockets", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose" }
-sqldelight-coroutines = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqldelight" }
+
+# Persistence / storage
 sqldelight-android = { module = "app.cash.sqldelight:android-driver", version.ref = "sqldelight" }
 sqldelight-native = { module = "app.cash.sqldelight:native-driver", version.ref = "sqldelight" }
 sqldelight-sqlite = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" }
+sqldelight-coroutines = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqldelight" }
 multiplatform-settings = { module = "com.russhwolf:multiplatform-settings", version.ref = "multiplatformSettings" }
 multiplatform-settings-coroutines = { module = "com.russhwolf:multiplatform-settings-coroutines", version.ref = "multiplatformSettings" }
+okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
+
+# DI / architecture
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
-kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
-kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
-kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
-kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "coroutines" }
-mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
-turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
-androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity-compose" }
-kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
-kotlinx-serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-serialization-protobuf", version.ref = "serialization" }
 decompose = { module = "com.arkivanov.decompose:decompose", version.ref = "decompose" }
 decompose-extensions-compose = { module = "com.arkivanov.decompose:extensions-compose", version.ref = "decompose" }
+
+# Logging / discovery / audio
+kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 jmdns = { module = "org.jmdns:jmdns", version.ref = "jmdns" }
-okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
-androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core-ktx" }
-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose" }
 kopus = { module = "eu.buney.kopus:kopus", version.ref = "kopus" }
-compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose" }
-compose-components-uiToolingPreview = { module = "org.jetbrains.compose.components:components-ui-tooling-preview", version.ref = "compose" }
-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "compose" }
+
+# Testing
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
+androidx-junit = { module = "androidx.test.ext:junit", version.ref = "junit" }
+androidx-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4", version.ref = "uiTestJunit4" }
+androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "uiTestJunit4" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+roborazzi = { module = "io.github.takahirom.roborazzi:roborazzi", version.ref = "roborazzi" }
+roborazzi-compose = { module = "io.github.takahirom.roborazzi:roborazzi-compose", version.ref = "roborazzi" }
+roborazzi-junit = { module = "io.github.takahirom.roborazzi:roborazzi-junit-rule", version.ref = "roborazzi" }
 
 [plugins]
 androidApplication = { id = "com.android.application" }
-kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform" }
+multiplatformLibrary = { id = "com.android.kotlin.multiplatform.library" }
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform" }
 composeMultiplatform = { id = "org.jetbrains.compose" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
-benManesVersions = { id = "com.github.ben-manes.versions", version.ref = "benManesVersions" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+benManesVersions = { id = "com.github.ben-manes.versions", version.ref = "benManesVersions" }
+roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }

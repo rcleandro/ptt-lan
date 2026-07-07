@@ -3,6 +3,7 @@ import org.jlleitschuh.gradle.ktlint.KtlintExtension
 plugins {
     alias(libs.plugins.benManesVersions)
     alias(libs.plugins.dokka)
+    alias(libs.plugins.roborazzi) apply false
 }
 subprojects {
     pluginManager.apply("org.jetbrains.dokka")
