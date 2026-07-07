@@ -1056,9 +1056,9 @@ Checklist:
 **Objetivo:** Dokka publicado, ADRs completos, checklist final (seção 24) 100% concluído.
 
 Checklist:
-- [ ] Dokka gerado para todos os módulos públicos.
-- [ ] Todos os ADRs relevantes documentados em `docs/adr/`.
-- [ ] Checklist final da seção 24 revisado item a item.
+- [x] Dokka gerado para todos os módulos públicos.
+- [x] Todos os ADRs relevantes documentados em `docs/adr/`.
+- [x] Checklist final da seção 24 revisado item a item.
 
 ---
 
@@ -1141,10 +1141,10 @@ Antes de marcar qualquer fase como concluída, o agente deve confirmar:
 - [x] Fase 10 — Background e Modo "Sempre Ouvindo" concluída
 - [x] Fase 11 — Painel Admin Web concluída
 - [x] Fase 12 — Android Automotive concluída
-- [ ] Fase 13 — Documentação Final concluída
-- [ ] Todos os critérios de aceite globais (seção 23) satisfeitos
-- [ ] Nenhuma decisão arquitetural em aberto restante neste documento
-- [ ] Repositório com README de onboarding para novos desenvolvedores apontando para este documento como SSOT
+- [x] Fase 13 — Documentação Final concluída
+- [x] Todos os critérios de aceite globais (seção 23) satisfeitos
+- [x] Nenhuma decisão arquitetural em aberto restante neste documento
+- [x] Repositório com README de onboarding para novos desenvolvedores apontando para este documento como SSOT
 
 ---
 
