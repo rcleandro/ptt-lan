@@ -47,7 +47,13 @@ class AndroidAudioRecorder : AudioRecorder {
                     }
                 }
             } finally {
-                audioRecord?.stop()
+                try {
+                    if (audioRecord?.state == AudioRecord.STATE_INITIALIZED) {
+                        audioRecord?.stop()
+                    }
+                } catch (e: IllegalStateException) {
+                    // Ignored - AudioRecord might already be stopped or uninitialized
+                }
                 audioRecord?.release()
                 audioRecord = null
             }
@@ -86,7 +92,13 @@ class AndroidAudioPlayer : AudioPlayer {
     }
 
     override fun stop() {
-        audioTrack?.stop()
+        try {
+            if (audioTrack?.state == AudioTrack.STATE_INITIALIZED) {
+                audioTrack?.stop()
+            }
+        } catch (e: IllegalStateException) {
+            // Ignored - AudioTrack might already be stopped or uninitialized
+        }
         audioTrack?.release()
         audioTrack = null
     }
