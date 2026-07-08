@@ -61,3 +61,5 @@ iosApp/*.xcworkspace/xcuserdata/
 *.swp
 *.bak
 *~
+*.zip
+*.tar.gz
