@@ -45,9 +45,6 @@ class IosAudioRecorder : AudioRecorder {
                         channels = 1.toUInt(),
                     )
 
-                mixerNode.volume = 0.0f
-                engine.connect(mixerNode, engine.mainMixerNode, targetFormat)
-
                 mixerNode.installTapOnBus(
                     bus = 0.toULong(),
                     bufferSize = 2048.toUInt(),
