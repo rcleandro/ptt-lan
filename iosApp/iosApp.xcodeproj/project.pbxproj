@@ -298,6 +298,7 @@
 					"$(inherited)",
 					"-framework",
 					shared,
+					"-Wl,-U,_OBJC_CLASS_$_UIViewLayoutRegion",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.pttlan.iosApp;
 				PRODUCT_NAME = "PTT-LAN";
@@ -329,6 +330,7 @@
 					"$(inherited)",
 					"-framework",
 					shared,
+					"-Wl,-U,_OBJC_CLASS_$_UIViewLayoutRegion",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.pttlan.iosApp;
 				PRODUCT_NAME = "PTT-LAN";

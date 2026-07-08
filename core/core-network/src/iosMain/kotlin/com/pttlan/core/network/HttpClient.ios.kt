@@ -3,6 +3,7 @@ package com.pttlan.core.network
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.darwin.Darwin
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.convert
 import platform.Foundation.NSURLCredential
 import platform.Foundation.NSURLSessionAuthChallengePerformDefaultHandling
 import platform.Foundation.NSURLSessionAuthChallengeUseCredential
@@ -17,9 +18,9 @@ actual fun createPlatformHttpClient(): HttpClient =
                 val serverTrust = challenge.protectionSpace.serverTrust
                 if (serverTrust != null) {
                     val credential = NSURLCredential.create(serverTrust)
-                    completionHandler(NSURLSessionAuthChallengeUseCredential, credential)
+                    completionHandler(NSURLSessionAuthChallengeUseCredential.convert(), credential)
                 } else {
-                    completionHandler(NSURLSessionAuthChallengePerformDefaultHandling, null)
+                    completionHandler(NSURLSessionAuthChallengePerformDefaultHandling.convert(), null)
                 }
             }
         }
