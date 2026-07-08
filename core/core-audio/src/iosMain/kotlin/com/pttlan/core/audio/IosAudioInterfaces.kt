@@ -33,35 +33,35 @@ class IosAudioRecorder : AudioRecorder {
                 audioEngine = engine
 
                 val inputNode = engine.inputNode
-                val mixerNode = AVAudioMixerNode()
-                engine.attachNode(mixerNode)
-
                 val inputFormat = inputNode.inputFormatForBus(0.toULong())
-                engine.connect(inputNode, mixerNode, inputFormat)
 
-                val targetFormat =
-                    AVAudioFormat(
-                        standardFormatWithSampleRate = sampleRate.toDouble(),
-                        channels = 1.toUInt(),
-                    )
-
-                mixerNode.installTapOnBus(
+                inputNode.installTapOnBus(
                     bus = 0.toULong(),
                     bufferSize = 2048.toUInt(),
-                    format = targetFormat,
+                    format = inputFormat,
                 ) { buffer, _ ->
                     if (buffer == null) return@installTapOnBus
                     val floatChannelData = buffer.floatChannelData ?: return@installTapOnBus
                     val floatData = floatChannelData[0] ?: return@installTapOnBus
                     val frameLength = buffer.frameLength.toInt()
 
-                    // Conversão de Float32 para PCM16 bytes (16-bit inteiro)
-                    val byteArray = ByteArray(frameLength * 2)
-                    for (i in 0 until frameLength) {
+                    val hwSampleRate = inputFormat.sampleRate
+                    val ratio = maxOf(1.0, hwSampleRate / sampleRate.toDouble())
+                    val step = ratio.toInt()
+
+                    val targetLength = frameLength / step
+                    val byteArray = ByteArray(targetLength * 2)
+
+                    var outIndex = 0
+                    for (i in 0 until frameLength step step) {
+                        if (outIndex >= targetLength) break
+
                         val sample = floatData[i]
                         val intSample = (sample * 32767.0f).toInt().coerceIn(-32768, 32767)
-                        byteArray[i * 2] = (intSample and 0xFF).toByte()
-                        byteArray[i * 2 + 1] = ((intSample shr 8) and 0xFF).toByte()
+
+                        byteArray[outIndex * 2] = (intSample and 0xFF).toByte()
+                        byteArray[outIndex * 2 + 1] = ((intSample shr 8) and 0xFF).toByte()
+                        outIndex++
                     }
 
                     trySend(byteArray)
