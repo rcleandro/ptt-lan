@@ -10,7 +10,6 @@ class StartTransmittingUseCase(
         userId: String,
     ) {
         repo.requestFloor(channelId, userId)
-        repo.startTransmitting(channelId, userId)
     }
 }
 
