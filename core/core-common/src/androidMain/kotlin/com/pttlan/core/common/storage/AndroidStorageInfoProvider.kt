@@ -1,8 +1,11 @@
 package com.pttlan.core.common.storage
 
 import android.content.Context
+import android.os.Build
 import android.os.Environment
 import android.os.StatFs
+import android.os.storage.StorageManager
+import java.io.File
 
 class AndroidStorageInfoProvider(
     private val context: Context,
@@ -12,8 +15,7 @@ class AndroidStorageInfoProvider(
 
         // Internal Storage
         val internalDir = context.filesDir
-        val internalStat = StatFs(internalDir.path)
-        val internalAvailableBytes = internalStat.availableBlocksLong * internalStat.blockSizeLong
+        val internalAvailableBytes = getAvailableBytes(internalDir)
         options.add(
             StorageOption(
                 id = "Interno",
@@ -27,8 +29,7 @@ class AndroidStorageInfoProvider(
         if (externalDirs != null && externalDirs.size > 1) {
             val sdCardDir = externalDirs[1]
             if (sdCardDir != null && Environment.getExternalStorageState(sdCardDir) == Environment.MEDIA_MOUNTED) {
-                val externalStat = StatFs(sdCardDir.path)
-                val externalAvailableBytes = externalStat.availableBlocksLong * externalStat.blockSizeLong
+                val externalAvailableBytes = getAvailableBytes(sdCardDir)
                 options.add(
                     StorageOption(
                         id = "Externo",
@@ -40,5 +41,19 @@ class AndroidStorageInfoProvider(
         }
 
         return options
+    }
+
+    private fun getAvailableBytes(file: File): Long {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try {
+                val storageManager = context.getSystemService(Context.STORAGE_SERVICE) as StorageManager
+                val uuid = storageManager.getUuidForPath(file)
+                return storageManager.getAllocatableBytes(uuid)
+            } catch (e: Exception) {
+                // Fallback in case of any issues with UUID or StorageManager
+            }
+        }
+        val stat = StatFs(file.path)
+        return stat.availableBlocksLong * stat.blockSizeLong
     }
 }

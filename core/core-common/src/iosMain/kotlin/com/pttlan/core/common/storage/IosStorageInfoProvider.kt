@@ -1,4 +1,4 @@
-@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+@file:OptIn(ExperimentalForeignApi::class)
 
 package com.pttlan.core.common.storage
 
@@ -20,7 +20,7 @@ class IosStorageInfoProvider : StorageInfoProvider {
             val attributes = NSFileManager.defaultManager.attributesOfFileSystemForPath(documentDirectory, null)
             val freeSize = attributes?.get(NSFileSystemFreeSize) as? NSNumber
             availableSpace = freeSize?.longLongValue ?: 0L
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Ignore
         }
 
