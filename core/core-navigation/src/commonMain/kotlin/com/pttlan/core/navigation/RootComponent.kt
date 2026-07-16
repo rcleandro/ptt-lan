@@ -14,14 +14,22 @@ import com.pttlan.feature.channellist.ChannelListComponent
 import com.pttlan.feature.channellist.ChannelListEffect
 import com.pttlan.feature.connection.ConnectionComponent
 import com.pttlan.feature.connection.ConnectionEffect
+import com.pttlan.feature.history.HistoryComponent
 import com.pttlan.feature.ptt.PttComponent
 import com.pttlan.feature.ptt.PttEffect
 import com.pttlan.feature.ptt.PttIntent.PressPtt
 import com.pttlan.feature.ptt.PttIntent.ReleasePtt
 import com.pttlan.feature.settings.SettingsComponent
+import com.russhwolf.settings.ObservableSettings
+import com.russhwolf.settings.Settings
+import com.russhwolf.settings.coroutines.getBooleanFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.koin.core.component.KoinComponent
@@ -52,6 +60,16 @@ class RootComponent(
     private val userId = Uuid.random().toString()
 
     private val connectionRepository: ConnectionRepository = get()
+    private val settings: Settings = get()
+
+    val isCacheEnabled: StateFlow<Boolean> =
+        (settings as? ObservableSettings)
+            ?.getBooleanFlow("allow_cache", false)
+            ?.stateIn(
+                scope = lifecycle.coroutineScope(),
+                started = SharingStarted.WhileSubscribed(),
+                initialValue = settings.getBoolean("allow_cache", false),
+            ) ?: MutableStateFlow(settings.getBoolean("allow_cache", false))
 
     val childStack: Value<ChildStack<*, Child>> =
         childStack(
@@ -125,10 +143,24 @@ class RootComponent(
                     component.effects.collect { effect ->
                         if (effect is PttEffect.NavigateBack) {
                             navigation.pop()
+                        } else if (effect is PttEffect.NavigateToHistory) {
+                            val nextConfig = Config.HistoryScreen(config.channelId)
+                            navigation.navigate { stack ->
+                                if (stack.lastOrNull() == nextConfig) stack else stack + nextConfig
+                            }
                         }
                     }
                 }
                 Child.PttChild(component)
+            }
+            is Config.HistoryScreen -> {
+                val component: HistoryComponent =
+                    get(
+                        parameters = {
+                            parametersOf(context, config.channelId, { navigation.pop() })
+                        },
+                    )
+                Child.HistoryChild(component)
             }
             is Config.Settings -> {
                 val component: SettingsComponent = get(parameters = { parametersOf(context) })
@@ -169,6 +201,10 @@ class RootComponent(
             val component: PttComponent,
         ) : Child
 
+        class HistoryChild(
+            val component: HistoryComponent,
+        ) : Child
+
         class SettingsChild(
             val component: SettingsComponent,
         ) : Child
@@ -184,6 +220,11 @@ class RootComponent(
 
         @Serializable
         data class PttScreen(
+            val channelId: String,
+        ) : Config
+
+        @Serializable
+        data class HistoryScreen(
             val channelId: String,
         ) : Config
 

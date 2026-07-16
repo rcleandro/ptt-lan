@@ -15,6 +15,7 @@ kotlin {
             api(project(":data:data-ptt"))
             api(project(":features:feature-connection"))
             api(project(":features:feature-channel-list"))
+            api(project(":features:feature-history"))
             api(project(":features:feature-ptt"))
             api(project(":features:feature-settings"))
             api(libs.koin.core)

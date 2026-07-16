@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -16,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,6 +39,7 @@ import com.pttlan.feature.settings.SettingsScreen
 @Composable
 fun RootScreen(component: RootComponent) {
     val childStack by component.childStack.subscribeAsState()
+    val isCacheEnabled by component.isCacheEnabled.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var snackbarType by remember { mutableStateOf(PttSnackbarType.Generic) }
 
@@ -72,6 +75,18 @@ fun RootScreen(component: RootComponent) {
                         contentDescription = "Configurações",
                     )
                 }
+            } else if (currentChild is RootComponent.Child.PttChild && isCacheEnabled) {
+                FloatingActionButton(
+                    onClick = {
+                        val pttComponent = currentChild.component
+                        pttComponent.onIntent(com.pttlan.feature.ptt.PttIntent.GoToHistory)
+                    },
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.History,
+                        contentDescription = "Histórico de Áudios",
+                    )
+                }
             }
         },
         snackbarHost = { PttSnackbarHost(snackbarHostState, snackbarType) },
@@ -85,6 +100,9 @@ fun RootScreen(component: RootComponent) {
                     is RootComponent.Child.ConnectionChild -> ConnectionScreen(instance.component)
                     is RootComponent.Child.ChannelListChild -> ChannelListScreen(instance.component)
                     is RootComponent.Child.PttChild -> PttScreen(instance.component)
+                    is RootComponent.Child.HistoryChild ->
+                        com.pttlan.feature.history
+                            .HistoryScreen(instance.component)
                     is RootComponent.Child.SettingsChild -> SettingsScreen(instance.component)
                 }
             }
@@ -97,5 +115,6 @@ private fun getScreenTitle(child: RootComponent.Child): String =
         is RootComponent.Child.ConnectionChild -> "Conectar"
         is RootComponent.Child.ChannelListChild -> "Canais"
         is RootComponent.Child.PttChild -> "Rádio (PTT)"
+        is RootComponent.Child.HistoryChild -> "Histórico"
         is RootComponent.Child.SettingsChild -> "Configurações"
     }

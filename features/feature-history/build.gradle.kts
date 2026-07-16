@@ -9,6 +9,8 @@ kotlin {
             implementation(project(":domain:domain-ptt"))
             implementation(project(":core:core-designsystem"))
             implementation(project(":core:core-common"))
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
             api(libs.decompose)
             implementation(libs.decompose.extensions.compose)
             implementation(libs.kotlinx.coroutines.core)

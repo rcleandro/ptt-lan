@@ -17,6 +17,7 @@ import com.pttlan.data.ptt.di.dataModule
 import com.pttlan.domain.ptt.di.domainModule
 import com.pttlan.feature.channellist.di.channelListFeatureModule
 import com.pttlan.feature.connection.di.connectionFeatureModule
+import com.pttlan.feature.history.di.historyFeatureModule
 import com.pttlan.feature.ptt.di.pttFeatureModule
 import com.pttlan.feature.settings.di.settingsFeatureModule
 import org.koin.core.module.Module
@@ -67,5 +68,6 @@ fun appModules() =
         connectionFeatureModule,
         channelListFeatureModule,
         pttFeatureModule,
+        historyFeatureModule,
         settingsFeatureModule,
     )

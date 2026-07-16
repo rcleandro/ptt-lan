@@ -44,10 +44,14 @@ sealed interface PttIntent {
     data object ReleasePtt : PttIntent
 
     data object LeaveChannel : PttIntent
+
+    data object GoToHistory : PttIntent
 }
 
 sealed interface PttEffect {
     data object NavigateBack : PttEffect
+
+    data object NavigateToHistory : PttEffect
 
     data class ShowFloorDenied(
         val reason: String,
@@ -158,6 +162,11 @@ class PttComponent(
                 scope.launch {
                     leaveChannelUseCase(channelId, userId)
                     _effects.emit(PttEffect.NavigateBack)
+                }
+            }
+            is PttIntent.GoToHistory -> {
+                scope.launch {
+                    _effects.emit(PttEffect.NavigateToHistory)
                 }
             }
         }
