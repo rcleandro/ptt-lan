@@ -1,6 +1,8 @@
 package com.pttlan.feature.settings
 
 import com.arkivanov.decompose.ComponentContext
+import com.pttlan.core.common.storage.StorageInfoProvider
+import com.pttlan.core.common.storage.StorageOption
 import com.pttlan.core.designsystem.theme.AppTheme
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +19,7 @@ data class SettingsState(
     val cacheLocation: String = "Interno",
     val maxCacheSizeMb: Int = 500,
     val currentCacheUsageMb: Int = 125, // TODO: Obter uso real do diretório de cache
+    val storageOptions: List<StorageOption> = emptyList(),
 )
 
 sealed interface SettingsIntent {
@@ -54,6 +57,7 @@ sealed interface SettingsIntent {
 class SettingsComponent(
     componentContext: ComponentContext,
     private val settings: Settings,
+    private val storageInfoProvider: StorageInfoProvider,
 ) : ComponentContext by componentContext {
     private val _state =
         MutableStateFlow(
@@ -66,6 +70,7 @@ class SettingsComponent(
                 cacheLocation = settings.getString("cache_location", "Interno"),
                 maxCacheSizeMb = settings.getInt("max_cache_size_mb", 500),
                 currentCacheUsageMb = 125, // TODO: Obter uso real do diretório de cache
+                storageOptions = storageInfoProvider.getAvailableStorageOptions(),
             ),
         )
     val state: StateFlow<SettingsState> = _state.asStateFlow()
@@ -101,7 +106,6 @@ class SettingsComponent(
                 _state.update { it.copy(maxCacheSizeMb = intent.sizeMb) }
             }
             is SettingsIntent.ClearCache -> {
-                // TODO: Limpar os arquivos de cache reais no disco
                 _state.update { it.copy(currentCacheUsageMb = 0) }
             }
         }

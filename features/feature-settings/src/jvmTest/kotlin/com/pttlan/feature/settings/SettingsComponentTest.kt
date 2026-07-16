@@ -1,8 +1,9 @@
 package com.pttlan.feature.settings
 
-import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
+import com.pttlan.core.common.storage.StorageInfoProvider
+import com.pttlan.core.common.storage.StorageOption
 import com.russhwolf.settings.Settings
 import io.mockk.every
 import io.mockk.mockk
@@ -21,7 +22,6 @@ import kotlin.test.assertEquals
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsComponentTest {
     private val lifecycle = LifecycleRegistry()
-    private val componentContext: ComponentContext = DefaultComponentContext(lifecycle)
 
     private val settings: Settings = mockk(relaxed = true)
 
@@ -45,11 +45,18 @@ class SettingsComponentTest {
         Dispatchers.resetMain()
     }
 
-    private fun createComponent() =
-        SettingsComponent(
-            componentContext = componentContext,
-            settings = settings,
-        )
+    private class MockStorageInfoProvider : StorageInfoProvider {
+        override fun getAvailableStorageOptions(): List<StorageOption> =
+            listOf(
+                StorageOption("Interno", "Armazenamento interno", 10_000_000_000L),
+                StorageOption("Externo", "Armazenamento externo", 20_000_000_000L),
+            )
+    }
+
+    private fun createComponent(): SettingsComponent {
+        val componentContext = DefaultComponentContext(lifecycle)
+        return SettingsComponent(componentContext, settings, MockStorageInfoProvider())
+    }
 
     @Test
     fun `initialization loads settings`() =

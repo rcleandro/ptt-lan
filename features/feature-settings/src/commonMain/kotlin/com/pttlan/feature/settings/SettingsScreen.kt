@@ -38,6 +38,18 @@ import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.core.designsystem.theme.PttTheme
 import kotlin.math.roundToInt
 
+private fun formatBytes(bytes: Long): String {
+    val kb = 1024L
+    val mb = kb * 1024L
+    val gb = mb * 1024L
+    return when {
+        bytes >= gb -> "${(bytes.toDouble() / gb).roundToInt()} GB"
+        bytes >= mb -> "${(bytes.toDouble() / mb).roundToInt()} MB"
+        bytes >= kb -> "${(bytes.toDouble() / kb).roundToInt()} KB"
+        else -> "$bytes B"
+    }
+}
+
 @Composable
 fun SettingsScreen(component: SettingsComponent) {
     val state by component.state.collectAsState()
@@ -145,9 +157,12 @@ fun SettingsScreenContent(
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
-                        Text("Onde armazenar", style = MaterialTheme.typography.titleMedium)
+                        Text("Local de armazenamento", style = MaterialTheme.typography.titleMedium)
+
+                        val selectedOption = state.storageOptions.find { it.id == state.cacheLocation }
+                        val displayLocation = selectedOption?.title ?: state.cacheLocation
                         Text(
-                            state.cacheLocation,
+                            displayLocation,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -305,20 +320,19 @@ fun SettingsScreenContent(
         AlertDialog(
             onDismissRequest = { showCacheLocationDialog = false },
             title = {
-                Text(text = "Onde de armazenamento")
+                Text(text = "Local de armazenamento")
             },
             text = {
                 Column {
-                    val locationOptions = listOf("Interno", "Externo")
-                    locationOptions.forEach { location ->
+                    state.storageOptions.forEach { option ->
                         Row(
                             Modifier
                                 .fillMaxWidth()
                                 .height(56.dp)
                                 .selectable(
-                                    selected = (location == state.cacheLocation),
+                                    selected = (option.id == state.cacheLocation),
                                     onClick = {
-                                        onIntent(SettingsIntent.ChangeCacheLocation(location))
+                                        onIntent(SettingsIntent.ChangeCacheLocation(option.id))
                                         showCacheLocationDialog = false
                                     },
                                     role = Role.RadioButton,
@@ -326,11 +340,11 @@ fun SettingsScreenContent(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             RadioButton(
-                                selected = (location == state.cacheLocation),
+                                selected = (option.id == state.cacheLocation),
                                 onClick = null,
                             )
                             Text(
-                                text = location,
+                                text = "${option.title} (${formatBytes(option.availableSpaceBytes)} Livre)",
                                 style = MaterialTheme.typography.bodyLarge,
                                 modifier = Modifier.padding(start = 16.dp),
                             )
