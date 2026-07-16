@@ -16,9 +16,11 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class PttWebSocketClient(
     private val httpClient: HttpClient,
@@ -54,7 +56,7 @@ class PttWebSocketClient(
                     if (session != null) return@withLock
                     println("PttWebSocketClient: Tentando conectar a wss://$cleanHost:$port/ws?nickname=$nickname")
                     session =
-                        kotlinx.coroutines.withTimeout(5000) {
+                        withTimeout(5.seconds) {
                             httpClient.webSocketSession("wss://$cleanHost:$port/ws?nickname=$nickname")
                         }
                 }
