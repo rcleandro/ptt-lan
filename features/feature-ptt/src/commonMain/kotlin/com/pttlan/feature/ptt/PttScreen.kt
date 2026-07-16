@@ -12,15 +12,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -30,13 +26,15 @@ import com.pttlan.core.designsystem.components.PttButtonState.Idle
 import com.pttlan.core.designsystem.components.PttButtonState.Receiving
 import com.pttlan.core.designsystem.components.PttButtonState.Requesting
 import com.pttlan.core.designsystem.components.PttButtonState.Transmitting
-import kotlinx.coroutines.launch
+import com.pttlan.core.designsystem.components.snackbar.PttSnackbarType
+import com.pttlan.core.designsystem.components.snackbar.SnackbarController
+import com.pttlan.core.designsystem.components.snackbar.SnackbarEvent
+import com.pttlan.feature.ptt.PttEffect
+import com.pttlan.feature.ptt.PttIntent
 
 @Composable
 fun PttScreen(component: PttComponent) {
     val state by component.state.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         component.effects.collect { effect ->
@@ -45,9 +43,12 @@ fun PttScreen(component: PttComponent) {
                     // Handled by Decompose router
                 }
                 is PttEffect.ShowFloorDenied -> {
-                    scope.launch {
-                        snackbarHostState.showSnackbar(effect.reason)
-                    }
+                    SnackbarController.sendEvent(
+                        SnackbarEvent(
+                            message = effect.reason,
+                            type = PttSnackbarType.ErrorOrWarning,
+                        ),
+                    )
                 }
             }
         }
@@ -55,7 +56,6 @@ fun PttScreen(component: PttComponent) {
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { paddingValues ->
         Column(
             modifier =

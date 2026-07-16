@@ -19,44 +19,42 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.pttlan.core.designsystem.components.ConnectionStatus.Online
 import com.pttlan.core.designsystem.components.ConnectionStatusBadge
+import com.pttlan.core.designsystem.components.snackbar.PttSnackbarType
+import com.pttlan.core.designsystem.components.snackbar.SnackbarController
+import com.pttlan.core.designsystem.components.snackbar.SnackbarEvent
 import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.domain.ptt.repository.ServerNode
-import kotlinx.coroutines.launch
 
 @Composable
 fun ConnectionScreen(component: ConnectionComponent) {
     val state by component.state.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         component.effects.collect { effect ->
             if (effect is ConnectionEffect.ShowError) {
-                scope.launch {
-                    snackbarHostState.showSnackbar(effect.message)
-                }
+                SnackbarController.sendEvent(
+                    SnackbarEvent(
+                        message = effect.message,
+                        type = PttSnackbarType.ErrorOrWarning,
+                    ),
+                )
             }
         }
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = Modifier.fillMaxSize(),
     ) { paddingValues ->
         if (state.status == ConnectionStatus.Connecting || state.status == ConnectionStatus.Reconnecting) {
