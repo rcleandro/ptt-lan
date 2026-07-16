@@ -73,11 +73,13 @@ fun ConnectionScreen(component: ConnectionComponent) {
             )
 
             if (state.status == ConnectionStatus.Connecting || state.status == ConnectionStatus.Reconnecting) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                Column(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
                 ) {
                     CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(16.dp))
                     Text("Conectando...")
                 }
             } else {
