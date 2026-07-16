@@ -34,6 +34,15 @@ compose.desktop {
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi,
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb,
             )
+            macOS {
+                iconFile.set(project.file("src/main/resources/icon.icns"))
+            }
+            windows {
+                iconFile.set(project.file("src/main/resources/icon.ico"))
+            }
+            linux {
+                iconFile.set(project.file("src/main/resources/icon.png"))
+            }
             packageName = "PTT"
             packageVersion = "1.0.0"
         }
