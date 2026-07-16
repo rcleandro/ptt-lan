@@ -3,7 +3,7 @@ package com.pttlan.android
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.arkivanov.decompose.defaultComponentContext
+import com.arkivanov.decompose.retainedComponent
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.result.contract.ActivityResultContracts
@@ -36,10 +36,9 @@ class MainActivity : ComponentActivity() {
             requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
 
-        val componentContext = defaultComponentContext()
-        rootComponent = RootComponent(
-            componentContext = componentContext,
-        )
+        rootComponent = retainedComponent { componentContext ->
+            RootComponent(componentContext = componentContext)
+        }
         
         val settings: com.russhwolf.settings.Settings by inject()
         val alwaysListening = settings.getBoolean("always_listening", true)
