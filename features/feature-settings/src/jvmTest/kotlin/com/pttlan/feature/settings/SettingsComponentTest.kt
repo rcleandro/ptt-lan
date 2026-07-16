@@ -57,6 +57,8 @@ class SettingsComponentTest {
         override fun getCacheUsageBytes(cacheLocationId: String): Long = 1024 * 1024 * 125L // 125 MB
 
         override fun clearCache(cacheLocationId: String) {}
+
+        override fun getCacheDirPath(cacheLocationId: String): String? = "/mock/cache"
     }
 
     private fun createComponent(): SettingsComponent {

@@ -14,4 +14,6 @@ interface StorageInfoProvider {
     fun getCacheUsageBytes(cacheLocationId: String): Long
 
     fun clearCache(cacheLocationId: String)
+
+    fun getCacheDirPath(cacheLocationId: String): String?
 }

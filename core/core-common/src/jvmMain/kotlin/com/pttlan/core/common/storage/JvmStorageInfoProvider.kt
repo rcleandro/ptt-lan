@@ -40,4 +40,6 @@ class JvmStorageInfoProvider : StorageInfoProvider {
     override fun clearCache(cacheLocationId: String) {
         getCacheDir().listFiles()?.forEach { it.deleteRecursively() }
     }
+
+    override fun getCacheDirPath(cacheLocationId: String): String? = getCacheDir().absolutePath
 }

@@ -65,4 +65,6 @@ class IosStorageInfoProvider : StorageInfoProvider {
             fileManager.removeItemAtPath("$path/$file", null)
         }
     }
+
+    override fun getCacheDirPath(cacheLocationId: String): String? = getCacheDir()
 }

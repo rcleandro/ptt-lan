@@ -81,4 +81,6 @@ class AndroidStorageInfoProvider(
         val dir = getCacheDirForLocation(cacheLocationId)
         dir?.listFiles()?.forEach { it.deleteRecursively() }
     }
+
+    override fun getCacheDirPath(cacheLocationId: String): String? = getCacheDirForLocation(cacheLocationId)?.absolutePath
 }
