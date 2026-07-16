@@ -49,19 +49,19 @@ fun RootScreen(component: RootComponent) {
 
     Scaffold(
         topBar = {
-            if (childStack.backStack.isNotEmpty()) {
-                TopAppBar(
-                    title = { Text(getScreenTitle(childStack.active.instance)) },
-                    navigationIcon = {
+            TopAppBar(
+                title = { Text(getScreenTitle(childStack.active.instance)) },
+                navigationIcon = {
+                    if (childStack.backStack.isNotEmpty()) {
                         IconButton(onClick = component::goBack) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Voltar",
                             )
                         }
-                    },
-                )
-            }
+                    }
+                },
+            )
         },
         floatingActionButton = {
             val currentChild = childStack.active.instance
