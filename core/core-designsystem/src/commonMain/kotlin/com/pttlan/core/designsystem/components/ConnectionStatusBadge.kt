@@ -44,7 +44,7 @@ fun ConnectionStatusBadge(
     val shadowColor by animateColorAsState(
         targetValue =
             if (status == ConnectionStatus.Online) {
-                Color(0x405E9080)
+                PttTheme.customColors.statusOnlineGlow
             } else {
                 Color.Transparent
             },

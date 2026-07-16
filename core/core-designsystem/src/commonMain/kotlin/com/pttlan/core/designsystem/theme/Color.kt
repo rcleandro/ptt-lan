@@ -20,7 +20,11 @@ val AccentTx = Color(0xFFC77D4C)
 val AccentTxGlow = Color(0x59C77D4C) // ~35% alpha of #C77D4C
 
 val StatusOnline = Color(0xFF5E9080)
+val StatusOnlineGlow = Color(0x405E9080)
 val StatusOffline = Color(0xFFB5533F)
 val StatusIdle = Color(0xFF6B7278)
 val StatusTransmitting = Color(0xFF4CAF50)
 val StatusTransmittingGlow = Color(0x664CAF50)
+
+val IconOnAccentTx = Color(0xFF1A1310)
+val IconOnPrimary = Color(0xFF0E181D)

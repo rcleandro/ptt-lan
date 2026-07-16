@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 @Immutable
 data class PttCustomColors(
     val statusOnline: Color,
+    val statusOnlineGlow: Color,
     val statusOffline: Color,
     val statusIdle: Color,
     val accentTx: Color,
@@ -20,6 +21,8 @@ data class PttCustomColors(
     val surface3: Color,
     val statusTransmitting: Color,
     val statusTransmittingGlow: Color,
+    val iconOnAccentTx: Color,
+    val iconOnPrimary: Color,
     val textTertiary: Color,
 )
 
@@ -27,6 +30,7 @@ val LocalPttCustomColors =
     staticCompositionLocalOf {
         PttCustomColors(
             statusOnline = Color.Unspecified,
+            statusOnlineGlow = Color.Unspecified,
             statusOffline = Color.Unspecified,
             statusIdle = Color.Unspecified,
             accentTx = Color.Unspecified,
@@ -36,6 +40,8 @@ val LocalPttCustomColors =
             surface3 = Color.Unspecified,
             statusTransmitting = Color.Unspecified,
             statusTransmittingGlow = Color.Unspecified,
+            iconOnAccentTx = Color.Unspecified,
+            iconOnPrimary = Color.Unspecified,
             textTertiary = Color.Unspecified,
         )
     }
@@ -43,6 +49,7 @@ val LocalPttCustomColors =
 private val DefaultPttCustomColors =
     PttCustomColors(
         statusOnline = StatusOnline,
+        statusOnlineGlow = StatusOnlineGlow,
         statusOffline = StatusOffline,
         statusIdle = StatusIdle,
         accentTx = AccentTx,
@@ -52,6 +59,8 @@ private val DefaultPttCustomColors =
         surface3 = Surface3,
         statusTransmitting = StatusTransmitting,
         statusTransmittingGlow = StatusTransmittingGlow,
+        iconOnAccentTx = IconOnAccentTx,
+        iconOnPrimary = IconOnPrimary,
         textTertiary = TextTertiary,
     )
 

@@ -68,8 +68,8 @@ fun PttButton(
         targetValue =
             when (state) {
                 PttButtonState.Idle -> MaterialTheme.colorScheme.onSurfaceVariant
-                PttButtonState.Requesting, PttButtonState.Transmitting -> Color(0xFF1A1310)
-                PttButtonState.Receiving -> Color(0xFF0E181D)
+                PttButtonState.Requesting, PttButtonState.Transmitting -> PttTheme.customColors.iconOnAccentTx
+                PttButtonState.Receiving -> PttTheme.customColors.iconOnPrimary
             },
     )
 
