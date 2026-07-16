@@ -1,6 +1,13 @@
 package com.pttlan.core.navigation
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -22,7 +29,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.slide
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
@@ -68,24 +77,49 @@ fun RootScreen(component: RootComponent) {
         },
         floatingActionButton = {
             val currentChild = childStack.active.instance
-            if (currentChild is RootComponent.Child.ConnectionChild || currentChild is RootComponent.Child.ChannelListChild) {
-                FloatingActionButton(onClick = component::navigateToSettings) {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = "Configurações",
-                    )
-                }
-            } else if (currentChild is RootComponent.Child.PttChild && isCacheEnabled) {
-                FloatingActionButton(
-                    onClick = {
-                        val pttComponent = currentChild.component
-                        pttComponent.onIntent(com.pttlan.feature.ptt.PttIntent.GoToHistory)
-                    },
+
+            val showConfigFab =
+                currentChild is RootComponent.Child.ConnectionChild ||
+                    currentChild is RootComponent.Child.ChannelListChild ||
+                    currentChild is RootComponent.Child.PttChild
+
+            val showHistoryFab = currentChild is RootComponent.Child.PttChild && isCacheEnabled
+
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                AnimatedVisibility(
+                    visible = showHistoryFab,
+                    enter = scaleIn() + fadeIn(),
+                    exit = scaleOut() + fadeOut(),
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.History,
-                        contentDescription = "Histórico de Áudios",
-                    )
+                    FloatingActionButton(
+                        onClick = {
+                            val activeChild = component.childStack.value.active.instance
+                            if (activeChild is RootComponent.Child.PttChild) {
+                                activeChild.component.onIntent(com.pttlan.feature.ptt.PttIntent.GoToHistory)
+                            }
+                        },
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.History,
+                            contentDescription = "Histórico de Áudios",
+                        )
+                    }
+                }
+
+                AnimatedVisibility(
+                    visible = showConfigFab,
+                    enter = scaleIn() + fadeIn(),
+                    exit = scaleOut() + fadeOut(),
+                ) {
+                    FloatingActionButton(onClick = component::navigateToSettings) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Configurações",
+                        )
+                    }
                 }
             }
         },
