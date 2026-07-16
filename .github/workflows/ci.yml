@@ -49,7 +49,10 @@ jobs:
           path: androidApp/build/outputs/apk/debug/*.apk
 
   build-desktop:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 17
@@ -57,13 +60,16 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Build Desktop (Ubuntu)
+      - name: Build Desktop (${{ matrix.os }})
         run: ./gradlew :desktopApp:packageDistributionForCurrentOS
       - name: Upload Desktop Installer
         uses: actions/upload-artifact@v4
         with:
-          name: desktop-linux-deb
-          path: desktopApp/build/compose/binaries/main/deb/*.deb
+          name: desktop-${{ matrix.os }}-installer
+          path: |
+            desktopApp/build/compose/binaries/main/deb/*.deb
+            desktopApp/build/compose/binaries/main/msi/*.msi
+            desktopApp/build/compose/binaries/main/dmg/*.dmg
 
   build-server:
     runs-on: ubuntu-latest
