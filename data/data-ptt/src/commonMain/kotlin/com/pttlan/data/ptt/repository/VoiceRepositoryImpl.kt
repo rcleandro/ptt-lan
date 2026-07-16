@@ -5,6 +5,7 @@ import app.cash.sqldelight.coroutines.mapToList
 import com.pttlan.core.audio.AudioCodec
 import com.pttlan.core.audio.AudioPlayer
 import com.pttlan.core.audio.AudioRecorder
+import com.pttlan.core.common.crypto.AudioCrypto
 import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.core.database.PttDatabase
 import com.pttlan.core.network.PttWebSocketClient
@@ -50,6 +51,7 @@ class VoiceRepositoryImpl(
     private var currentMessageStartMs: Long = 0
     private var currentFileSink: BufferedSink? = null
     private var currentFilePath: String? = null
+    private var currentAudioCrypto: AudioCrypto? = null
 
     init {
         webSocketClient.controlMessages
@@ -69,6 +71,7 @@ class VoiceRepositoryImpl(
                                 currentFilePath = path.toString()
                                 try {
                                     currentFileSink = FileSystem.SYSTEM.sink(path).buffer()
+                                    currentAudioCrypto = AudioCrypto()
                                 } catch (e: Exception) {
                                     e.printStackTrace()
                                 }
@@ -77,6 +80,7 @@ class VoiceRepositoryImpl(
                     } else {
                         currentFileSink?.close()
                         currentFileSink = null
+                        currentAudioCrypto = null
                         if (currentSpeakerId == msg.userId && currentChannelId != null) {
                             if (currentFilePath != null) {
                                 val duration = Clock.System.now().toEpochMilliseconds() - currentMessageStartMs
@@ -120,8 +124,11 @@ class VoiceRepositoryImpl(
                         }
                     audioPlayer.play(decoded)
                     try {
-                        currentFileSink?.write(decoded)
-                        currentFileSink?.flush()
+                        if (currentFileSink != null && currentAudioCrypto != null) {
+                            val encrypted = currentAudioCrypto!!.process(decoded)
+                            currentFileSink?.write(encrypted)
+                            currentFileSink?.flush()
+                        }
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
@@ -237,7 +244,8 @@ class VoiceRepositoryImpl(
             val source = FileSystem.SYSTEM.source(path).buffer()
             val data = source.readByteArray()
             source.close()
-            audioPlayer.play(data)
+            val decrypted = AudioCrypto().process(data)
+            audioPlayer.play(decrypted)
         } catch (e: Exception) {
             e.printStackTrace()
         }
