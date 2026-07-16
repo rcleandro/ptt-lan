@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -20,6 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.pttlan.core.designsystem.theme.PttTheme
 
@@ -36,7 +38,7 @@ fun PttButton(
     onPressStart: () -> Unit,
     onPressEnd: () -> Unit,
     modifier: Modifier = Modifier,
-    buttonSize: androidx.compose.ui.unit.Dp = 120.dp,
+    buttonSize: Dp = 120.dp,
 ) {
     val bgColor by animateColorAsState(
         targetValue =
@@ -44,7 +46,7 @@ fun PttButton(
                 PttButtonState.Idle -> PttTheme.customColors.surface3
                 PttButtonState.Requesting -> PttTheme.customColors.accentTx
                 PttButtonState.Transmitting -> PttTheme.customColors.statusTransmitting
-                PttButtonState.Receiving -> androidx.compose.material3.MaterialTheme.colorScheme.primary
+                PttButtonState.Receiving -> MaterialTheme.colorScheme.primary
             },
     )
 
@@ -65,7 +67,7 @@ fun PttButton(
     val iconColor by animateColorAsState(
         targetValue =
             when (state) {
-                PttButtonState.Idle -> androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                PttButtonState.Idle -> MaterialTheme.colorScheme.onSurfaceVariant
                 PttButtonState.Requesting, PttButtonState.Transmitting -> Color(0xFF1A1310)
                 PttButtonState.Receiving -> Color(0xFF0E181D)
             },
@@ -106,7 +108,7 @@ fun PttButton(
                             if (state ==
                                 PttButtonState.Idle
                             ) {
-                                androidx.compose.material3.MaterialTheme.colorScheme.outline
+                                MaterialTheme.colorScheme.outline
                             } else {
                                 Color.Transparent
                             },
