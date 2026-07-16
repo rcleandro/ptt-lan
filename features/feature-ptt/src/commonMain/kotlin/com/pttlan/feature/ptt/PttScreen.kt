@@ -99,9 +99,11 @@ fun PttScreen(component: PttComponent) {
             ) {
                 items(state.participants, key = { it.userId }) { participant ->
                     val isSpeaking = participant.userId == state.currentSpeakerId
+                    val isRequesting = participant.userId == state.localUserId && state.isTransmitting && !state.isFloorGranted
                     ParticipantAvatar(
                         name = participant.nickname,
                         isSpeaking = isSpeaking,
+                        isRequesting = isRequesting,
                     )
                 }
             }

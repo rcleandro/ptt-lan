@@ -29,6 +29,7 @@ import org.koin.core.component.inject
 
 data class PttState(
     val channelId: String = "",
+    val localUserId: String = "",
     val isTransmitting: Boolean = false,
     val currentSpeakerId: String? = null,
     val currentSpeakerName: String? = null,
@@ -69,7 +70,7 @@ class PttComponent(
     KoinComponent {
     private val settings: Settings by inject()
 
-    private val _state = MutableStateFlow(PttState(channelId = channelId))
+    private val _state = MutableStateFlow(PttState(channelId = channelId, localUserId = userId))
     val state: StateFlow<PttState> = _state.asStateFlow()
 
     private val _effects = MutableSharedFlow<PttEffect>()

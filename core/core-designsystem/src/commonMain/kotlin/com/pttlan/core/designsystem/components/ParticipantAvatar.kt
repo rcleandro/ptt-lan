@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.pttlan.core.designsystem.theme.PttTheme
 
@@ -27,15 +28,21 @@ fun ParticipantAvatar(
     name: String,
     isSpeaking: Boolean,
     modifier: Modifier = Modifier,
+    isRequesting: Boolean = false,
     showDetails: Boolean = true,
 ) {
     val initial = name.firstOrNull()?.uppercase() ?: "?"
 
     val borderColor by animateColorAsState(
-        targetValue = if (isSpeaking) PttTheme.customColors.accentTx else MaterialTheme.colorScheme.outline,
+        targetValue =
+            when {
+                isSpeaking -> Color(0xFF4CAF50)
+                isRequesting -> PttTheme.customColors.accentTx
+                else -> MaterialTheme.colorScheme.outline
+            },
     )
     val borderWidth by animateDpAsState(
-        targetValue = if (isSpeaking) 2.dp else 1.dp,
+        targetValue = if (isSpeaking || isRequesting) 2.dp else 1.dp,
     )
 
     Row(
@@ -67,7 +74,12 @@ fun ParticipantAvatar(
                     color = MaterialTheme.colorScheme.onBackground,
                 )
                 Text(
-                    text = if (isSpeaking) "falando" else "ouvindo",
+                    text =
+                        when {
+                            isSpeaking -> "falando"
+                            isRequesting -> "solicitando"
+                            else -> "ouvindo"
+                        },
                     style = MaterialTheme.typography.bodySmall,
                     color = PttTheme.customColors.textTertiary,
                 )
