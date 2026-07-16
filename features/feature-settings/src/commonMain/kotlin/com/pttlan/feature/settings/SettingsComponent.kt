@@ -18,7 +18,7 @@ data class SettingsState(
     val allowCache: Boolean = false,
     val cacheLocation: String = "Interno",
     val maxCacheSizeMb: Int = 500,
-    val currentCacheUsageMb: Int = 125, // TODO: Obter uso real do diretório de cache
+    val currentCacheUsageMb: Int = 0,
     val storageOptions: List<StorageOption> = emptyList(),
     val isExternalStorageSupported: Boolean = false,
 )
@@ -70,7 +70,11 @@ class SettingsComponent(
                 allowCache = settings.getBoolean("allow_cache", false),
                 cacheLocation = settings.getString("cache_location", "Interno"),
                 maxCacheSizeMb = settings.getInt("max_cache_size_mb", 500),
-                currentCacheUsageMb = 125, // TODO: Obter uso real do diretório de cache
+                currentCacheUsageMb =
+                    (
+                        storageInfoProvider.getCacheUsageBytes(settings.getString("cache_location", "Interno")) /
+                            (1024 * 1024)
+                    ).toInt(),
                 storageOptions = storageInfoProvider.getAvailableStorageOptions(),
                 isExternalStorageSupported = storageInfoProvider.isExternalStorageSupported,
             ),
@@ -101,13 +105,19 @@ class SettingsComponent(
             }
             is SettingsIntent.ChangeCacheLocation -> {
                 settings.putString("cache_location", intent.location)
-                _state.update { it.copy(cacheLocation = intent.location) }
+                _state.update {
+                    it.copy(
+                        cacheLocation = intent.location,
+                        currentCacheUsageMb = (storageInfoProvider.getCacheUsageBytes(intent.location) / (1024 * 1024)).toInt(),
+                    )
+                }
             }
             is SettingsIntent.ChangeMaxCacheSize -> {
                 settings.putInt("max_cache_size_mb", intent.sizeMb)
                 _state.update { it.copy(maxCacheSizeMb = intent.sizeMb) }
             }
             is SettingsIntent.ClearCache -> {
+                storageInfoProvider.clearCache(_state.value.cacheLocation)
                 _state.update { it.copy(currentCacheUsageMb = 0) }
             }
         }

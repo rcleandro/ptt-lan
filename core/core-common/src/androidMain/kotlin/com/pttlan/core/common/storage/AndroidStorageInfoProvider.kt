@@ -55,4 +55,30 @@ class AndroidStorageInfoProvider(
         val stat = StatFs(file.path)
         return stat.availableBlocksLong * stat.blockSizeLong
     }
+
+    private fun getCacheDirForLocation(cacheLocationId: String): File? =
+        if (cacheLocationId == "Externo") {
+            context.externalCacheDir
+        } else {
+            context.cacheDir
+        }
+
+    private fun getDirectorySize(dir: File?): Long {
+        if (dir == null || !dir.exists()) return 0
+        var size: Long = 0
+        dir.listFiles()?.forEach { file ->
+            size += if (file.isDirectory) getDirectorySize(file) else file.length()
+        }
+        return size
+    }
+
+    override fun getCacheUsageBytes(cacheLocationId: String): Long {
+        val dir = getCacheDirForLocation(cacheLocationId)
+        return getDirectorySize(dir)
+    }
+
+    override fun clearCache(cacheLocationId: String) {
+        val dir = getCacheDirForLocation(cacheLocationId)
+        dir?.listFiles()?.forEach { it.deleteRecursively() }
+    }
 }

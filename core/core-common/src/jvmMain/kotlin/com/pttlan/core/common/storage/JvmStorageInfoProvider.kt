@@ -18,4 +18,26 @@ class JvmStorageInfoProvider : StorageInfoProvider {
             ),
         )
     }
+
+    private fun getCacheDir(): File {
+        val userHome = System.getProperty("user.home")
+        val cacheDir = File(userHome, ".ptt/cache")
+        if (!cacheDir.exists()) cacheDir.mkdirs()
+        return cacheDir
+    }
+
+    private fun getDirectorySize(dir: File): Long {
+        if (!dir.exists()) return 0
+        var size: Long = 0
+        dir.listFiles()?.forEach { file ->
+            size += if (file.isDirectory) getDirectorySize(file) else file.length()
+        }
+        return size
+    }
+
+    override fun getCacheUsageBytes(cacheLocationId: String): Long = getDirectorySize(getCacheDir())
+
+    override fun clearCache(cacheLocationId: String) {
+        getCacheDir().listFiles()?.forEach { it.deleteRecursively() }
+    }
 }

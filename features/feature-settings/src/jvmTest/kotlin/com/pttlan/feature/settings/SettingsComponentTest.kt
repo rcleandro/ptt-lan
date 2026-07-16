@@ -51,8 +51,12 @@ class SettingsComponentTest {
         override fun getAvailableStorageOptions(): List<StorageOption> =
             listOf(
                 StorageOption("Interno", "Armazenamento interno", 10_000_000_000L),
-                StorageOption("Externo", "Armazenamento externo", 20_000_000_000L),
+                StorageOption("Externo", "Armazenamento externo", 50_000_000_000L),
             )
+
+        override fun getCacheUsageBytes(cacheLocationId: String): Long = 1024 * 1024 * 125L // 125 MB
+
+        override fun clearCache(cacheLocationId: String) {}
     }
 
     private fun createComponent(): SettingsComponent {

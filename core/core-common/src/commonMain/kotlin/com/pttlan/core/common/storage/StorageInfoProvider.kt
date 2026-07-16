@@ -10,4 +10,8 @@ interface StorageInfoProvider {
     val isExternalStorageSupported: Boolean
 
     fun getAvailableStorageOptions(): List<StorageOption>
+
+    fun getCacheUsageBytes(cacheLocationId: String): Long
+
+    fun clearCache(cacheLocationId: String)
 }
