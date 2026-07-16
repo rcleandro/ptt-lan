@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -48,27 +47,6 @@ fun SettingsScreenContent(
                     .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(
-                text = "Configurações",
-                style = MaterialTheme.typography.displayLarge,
-            )
-
-            OutlinedTextField(
-                value = state.nickname,
-                onValueChange = { onIntent(SettingsIntent.UpdateNickname(it)) },
-                label = { Text("Seu Nickname") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-            )
-
-            Text(
-                text = "Este nome será exibido para os outros participantes da rede.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
