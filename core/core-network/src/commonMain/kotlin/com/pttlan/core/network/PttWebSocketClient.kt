@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
@@ -97,7 +98,7 @@ class PttWebSocketClient(
                     }
                 }
 
-                val closeReason = kotlinx.coroutines.withTimeoutOrNull(1000) { ws.closeReason.await() }
+                val closeReason = withTimeoutOrNull(1.seconds) { ws.closeReason.await() }
                 if (closeReason?.message == "Nome já em uso") {
                     shouldReconnect = false
                     throw IllegalStateException("Nome já em uso. Por favor, escolha outro.")
@@ -146,7 +147,7 @@ class PttWebSocketClient(
                     session = null
                     s?.close()
                 }
-            } catch (ignore: Exception) {
+            } catch (_: Exception) {
             }
         }
     }
@@ -174,7 +175,7 @@ class PttWebSocketClient(
                     session = null
                     s?.close()
                 }
-            } catch (ignore: Exception) {
+            } catch (_: Exception) {
             }
         }
     }
