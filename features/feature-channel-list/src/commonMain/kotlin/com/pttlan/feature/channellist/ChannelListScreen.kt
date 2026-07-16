@@ -107,8 +107,28 @@ fun ChannelListScreenContent(
 
 @Preview
 @Composable
-private fun ChannelListScreenPreview() {
-    PttTheme {
+private fun ChannelListScreenPreviewDark() {
+    PttTheme(appTheme = com.pttlan.core.designsystem.theme.AppTheme.DARK) {
+        Surface {
+            ChannelListScreenContent(
+                state =
+                    ChannelListState(
+                        activeChannels =
+                            listOf(
+                                ActiveChannelDomain("Geral", 10),
+                                ActiveChannelDomain("Bate papo", 2),
+                            ),
+                    ),
+                onIntent = {},
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ChannelListScreenPreviewLight() {
+    PttTheme(appTheme = com.pttlan.core.designsystem.theme.AppTheme.LIGHT) {
         Surface {
             ChannelListScreenContent(
                 state =

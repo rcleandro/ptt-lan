@@ -192,8 +192,31 @@ fun ServerCard(
 
 @Preview
 @Composable
-private fun ConnectionScreenPreview() {
-    PttTheme {
+private fun ConnectionScreenPreviewDark() {
+    PttTheme(appTheme = com.pttlan.core.designsystem.theme.AppTheme.DARK) {
+        Surface {
+            ConnectionScreenContent(
+                state =
+                    ConnectionState(
+                        status = ConnectionStatus.Disconnected,
+                        nickname = "Leandro",
+                        manualIp = "192.168.0.1",
+                        discoveredServers =
+                            listOf(
+                                ServerNode("Servidor Local", "192.168.0.10", 9443),
+                                ServerNode("Servidor Remoto", "10.0.0.5", 9443),
+                            ),
+                    ),
+                onIntent = {},
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ConnectionScreenPreviewLight() {
+    PttTheme(appTheme = com.pttlan.core.designsystem.theme.AppTheme.LIGHT) {
         Surface {
             ConnectionScreenContent(
                 state =

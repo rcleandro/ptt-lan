@@ -120,8 +120,37 @@ fun PttScreenContent(
 
 @Preview
 @Composable
-private fun PttScreenPreview() {
-    PttTheme {
+private fun PttScreenPreviewDark() {
+    PttTheme(appTheme = com.pttlan.core.designsystem.theme.AppTheme.DARK) {
+        Surface {
+            PttScreenContent(
+                state =
+                    PttState(
+                        channelId = "Geral",
+                        localUserId = "u1",
+                        isTransmitting = false,
+                        currentSpeakerId = "u2",
+                        currentSpeakerName = "João",
+                        participants =
+                            listOf(
+                                com.pttlan.core.network.protocol
+                                    .ParticipantDto("u1", "Leandro", false),
+                                com.pttlan.core.network.protocol
+                                    .ParticipantDto("u2", "João", true),
+                                com.pttlan.core.network.protocol
+                                    .ParticipantDto("u3", "Maria", false),
+                            ),
+                    ),
+                onIntent = {},
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun PttScreenPreviewLight() {
+    PttTheme(appTheme = com.pttlan.core.designsystem.theme.AppTheme.LIGHT) {
         Surface {
             PttScreenContent(
                 state =

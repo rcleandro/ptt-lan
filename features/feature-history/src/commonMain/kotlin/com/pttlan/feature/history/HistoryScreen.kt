@@ -158,8 +158,26 @@ fun VoiceMessageItem(
 
 @Preview
 @Composable
-private fun HistoryScreenPreview() {
-    PttTheme {
+private fun HistoryScreenPreviewDark() {
+    PttTheme(appTheme = com.pttlan.core.designsystem.theme.AppTheme.DARK) {
+        Surface {
+            HistoryScreenContent(
+                messages =
+                    listOf(
+                        VoiceMessage("1", "channel1", "Leandro", "/path1", 2500, 1721151600000L),
+                        VoiceMessage("2", "channel1", "João", "/path2", 5000, 1721151660000L),
+                    ),
+                playingMessageId = "1",
+                onPlayClick = {},
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun HistoryScreenPreviewLight() {
+    PttTheme(appTheme = com.pttlan.core.designsystem.theme.AppTheme.LIGHT) {
         Surface {
             HistoryScreenContent(
                 messages =
