@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarData
 import androidx.compose.material3.SnackbarHost
@@ -18,7 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.pttlan.core.designsystem.theme.TextPrimary
+import com.pttlan.core.designsystem.theme.PttTheme
 
 private const val SNACKBAR_TEXT_MAX_LINES_COUNT = 3
 
@@ -27,9 +28,18 @@ private fun BaseNewSnackbar(
     text: String,
     type: PttSnackbarType,
 ) {
+    val containerColor =
+        when (type) {
+            PttSnackbarType.Success -> PttTheme.customColors.statusOnline
+            PttSnackbarType.ErrorOrWarning -> PttTheme.customColors.statusOffline
+            PttSnackbarType.Generic -> PttTheme.customColors.surface2
+        }
+
+    val contentColor = MaterialTheme.colorScheme.onBackground
+
     Snackbar(
         modifier = Modifier.padding(16.dp),
-        containerColor = type.backgroundColor,
+        containerColor = containerColor,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -40,7 +50,7 @@ private fun BaseNewSnackbar(
                 Icon(
                     imageVector = icon,
                     contentDescription = "Icon",
-                    tint = TextPrimary,
+                    tint = contentColor,
                     modifier = Modifier.size(24.dp),
                 )
 
@@ -49,7 +59,7 @@ private fun BaseNewSnackbar(
 
             Text(
                 text = text,
-                color = TextPrimary,
+                color = contentColor,
                 maxLines = SNACKBAR_TEXT_MAX_LINES_COUNT,
                 overflow = TextOverflow.Ellipsis,
             )

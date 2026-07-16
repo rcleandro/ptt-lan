@@ -10,12 +10,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.core.designsystem.theme.PttTheme
 
 @Preview
 @Composable
-fun PttButtonIdlePreview() {
-    PttTheme {
+fun PttButtonIdlePreviewDark() {
+    PttTheme(appTheme = AppTheme.DARK) {
         Surface {
             PttButton(state = PttButtonState.Idle, onPressStart = {}, onPressEnd = {})
         }
@@ -24,8 +25,18 @@ fun PttButtonIdlePreview() {
 
 @Preview
 @Composable
-fun PttButtonTransmittingPreview() {
-    PttTheme {
+fun PttButtonIdlePreviewLight() {
+    PttTheme(appTheme = AppTheme.LIGHT) {
+        Surface {
+            PttButton(state = PttButtonState.Idle, onPressStart = {}, onPressEnd = {})
+        }
+    }
+}
+
+@Preview
+@Composable
+fun PttButtonTransmittingPreviewDark() {
+    PttTheme(appTheme = AppTheme.DARK) {
         Surface {
             PttButton(state = PttButtonState.Transmitting, onPressStart = {}, onPressEnd = {})
         }
@@ -34,8 +45,18 @@ fun PttButtonTransmittingPreview() {
 
 @Preview
 @Composable
-fun PttButtonReceivingPreview() {
-    PttTheme {
+fun PttButtonTransmittingPreviewLight() {
+    PttTheme(appTheme = AppTheme.LIGHT) {
+        Surface {
+            PttButton(state = PttButtonState.Transmitting, onPressStart = {}, onPressEnd = {})
+        }
+    }
+}
+
+@Preview
+@Composable
+fun PttButtonReceivingPreviewDark() {
+    PttTheme(appTheme = AppTheme.DARK) {
         Surface {
             PttButton(state = PttButtonState.Receiving, onPressStart = {}, onPressEnd = {})
         }
@@ -44,8 +65,18 @@ fun PttButtonReceivingPreview() {
 
 @Preview
 @Composable
-fun ConnectionStatusBadgeOnlinePreview() {
-    PttTheme {
+fun PttButtonReceivingPreviewLight() {
+    PttTheme(appTheme = AppTheme.LIGHT) {
+        Surface {
+            PttButton(state = PttButtonState.Receiving, onPressStart = {}, onPressEnd = {})
+        }
+    }
+}
+
+@Preview
+@Composable
+fun ConnectionStatusBadgeOnlinePreviewDark() {
+    PttTheme(appTheme = AppTheme.DARK) {
         Surface {
             Column(modifier = Modifier.padding(16.dp)) {
                 ConnectionStatusBadge(status = ConnectionStatus.Online)
@@ -56,8 +87,20 @@ fun ConnectionStatusBadgeOnlinePreview() {
 
 @Preview
 @Composable
-fun ConnectionStatusBadgeReconnectingPreview() {
-    PttTheme {
+fun ConnectionStatusBadgeOnlinePreviewLight() {
+    PttTheme(appTheme = AppTheme.LIGHT) {
+        Surface {
+            Column(modifier = Modifier.padding(16.dp)) {
+                ConnectionStatusBadge(status = ConnectionStatus.Online)
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun ConnectionStatusBadgeReconnectingPreviewDark() {
+    PttTheme(appTheme = AppTheme.DARK) {
         Surface {
             Column(modifier = Modifier.padding(16.dp)) {
                 ConnectionStatusBadge(status = ConnectionStatus.Reconnecting)
@@ -68,8 +111,20 @@ fun ConnectionStatusBadgeReconnectingPreview() {
 
 @Preview
 @Composable
-fun ConnectionStatusBadgeOfflinePreview() {
-    PttTheme {
+fun ConnectionStatusBadgeReconnectingPreviewLight() {
+    PttTheme(appTheme = AppTheme.LIGHT) {
+        Surface {
+            Column(modifier = Modifier.padding(16.dp)) {
+                ConnectionStatusBadge(status = ConnectionStatus.Reconnecting)
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun ConnectionStatusBadgeOfflinePreviewDark() {
+    PttTheme(appTheme = AppTheme.DARK) {
         Surface {
             Column(modifier = Modifier.padding(16.dp)) {
                 ConnectionStatusBadge(status = ConnectionStatus.Offline)
@@ -80,8 +135,20 @@ fun ConnectionStatusBadgeOfflinePreview() {
 
 @Preview
 @Composable
-fun ChannelCardPreview() {
-    PttTheme {
+fun ConnectionStatusBadgeOfflinePreviewLight() {
+    PttTheme(appTheme = AppTheme.LIGHT) {
+        Surface {
+            Column(modifier = Modifier.padding(16.dp)) {
+                ConnectionStatusBadge(status = ConnectionStatus.Offline)
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun ChannelCardPreviewDark() {
+    PttTheme(appTheme = AppTheme.DARK) {
         Surface {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ChannelCard(
@@ -105,8 +172,47 @@ fun ChannelCardPreview() {
 
 @Preview
 @Composable
-fun ParticipantAvatarPreview() {
-    PttTheme {
+fun ChannelCardPreviewLight() {
+    PttTheme(appTheme = AppTheme.LIGHT) {
+        Surface {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ChannelCard(
+                    name = "Geral",
+                    id = "geral-xyz",
+                    participantCount = 42,
+                    isActive = true,
+                    onClick = {},
+                )
+                ChannelCard(
+                    name = "Inativo",
+                    id = "inativo-abc",
+                    participantCount = 0,
+                    isActive = false,
+                    onClick = {},
+                )
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun ParticipantAvatarPreviewDark() {
+    PttTheme(appTheme = AppTheme.DARK) {
+        Surface {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ParticipantAvatar(name = "João Silva", isSpeaking = false)
+                ParticipantAvatar(name = "Maria Souza", isSpeaking = true)
+                ParticipantAvatar(name = "Admin", isSpeaking = false, showDetails = false)
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun ParticipantAvatarPreviewLight() {
+    PttTheme(appTheme = AppTheme.LIGHT) {
         Surface {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ParticipantAvatar(name = "João Silva", isSpeaking = false)
