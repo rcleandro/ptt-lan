@@ -12,7 +12,6 @@ import com.pttlan.core.network.PttWebSocketClient
 import com.pttlan.core.network.protocol.AudioCodecType
 import com.pttlan.core.network.protocol.AudioEnvelope
 import com.pttlan.core.network.protocol.ControlMessage
-import com.pttlan.data.ptt.util.LocalFileCache
 import com.pttlan.domain.ptt.model.VoiceMessage
 import com.pttlan.domain.ptt.repository.VoiceRepository
 import com.russhwolf.settings.Settings
@@ -36,7 +35,6 @@ class VoiceRepositoryImpl(
     private val audioPlayer: AudioPlayer,
     private val webSocketClient: PttWebSocketClient,
     private val database: PttDatabase,
-    private val localFileCache: LocalFileCache,
     private val pcmCodec: AudioCodec,
     private val opusCodec: AudioCodec,
     private val settings: Settings,

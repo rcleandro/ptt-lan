@@ -25,12 +25,10 @@ val dataModule =
                 get(),
                 get(),
                 get(),
-                get(),
                 get(named("pcm")),
                 get(named("opus")),
                 get(),
                 get<StorageInfoProvider>(),
             )
         }
-        includes(platformDataModule)
     }
