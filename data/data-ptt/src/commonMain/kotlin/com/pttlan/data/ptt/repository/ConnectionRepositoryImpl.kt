@@ -6,6 +6,7 @@ import com.pttlan.core.network.normalizeHost
 import com.pttlan.domain.ptt.repository.ConnectionRepository
 import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.domain.ptt.repository.ServerNode
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -45,7 +46,7 @@ class ConnectionRepositoryImpl(
 
         connectionJob?.cancel()
         monitorJob?.cancel()
-        val deferred = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val deferred = CompletableDeferred<Unit>()
 
         connectionJob =
             scope.launch {

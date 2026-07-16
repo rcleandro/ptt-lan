@@ -1,5 +1,6 @@
 package com.pttlan.domain.ptt.repository
 import com.pttlan.domain.ptt.model.VoiceMessage
+import kotlinx.coroutines.flow.Flow
 
 interface VoiceRepository {
     suspend fun requestFloor(
@@ -20,7 +21,7 @@ interface VoiceRepository {
     suspend fun stopTransmitting()
 
     // History
-    fun getRecentMessages(channelId: String): kotlinx.coroutines.flow.Flow<List<VoiceMessage>>
+    fun getRecentMessages(channelId: String): Flow<List<VoiceMessage>>
 
     suspend fun playMessage(message: VoiceMessage)
 

@@ -7,8 +7,10 @@ import com.pttlan.domain.ptt.usecase.ConnectToServerUseCase
 import com.pttlan.domain.ptt.usecase.DiscoverServersUseCase
 import com.pttlan.domain.ptt.usecase.ObserveConnectionStatusUseCase
 import com.russhwolf.settings.Settings
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -113,9 +115,9 @@ class ConnectionComponent(
                     val result = connectToServerUseCase(intent.server.host, intent.server.port, _state.value.nickname)
                     if (result.isFailure) {
                         val exception = result.exceptionOrNull()
-                        if (exception is kotlinx.coroutines.TimeoutCancellationException) {
+                        if (exception is TimeoutCancellationException) {
                             _effects.send(ConnectionEffect.ShowError("Tempo de conexão excedido. O servidor está offline?"))
-                        } else if (exception !is kotlinx.coroutines.CancellationException) {
+                        } else if (exception !is CancellationException) {
                             _effects.send(ConnectionEffect.ShowError("Falha ao conectar: ${exception?.message}"))
                         }
                     }
@@ -132,9 +134,9 @@ class ConnectionComponent(
                     val result = connectToServerUseCase(intent.ip, 9443, _state.value.nickname)
                     if (result.isFailure) {
                         val exception = result.exceptionOrNull()
-                        if (exception is kotlinx.coroutines.TimeoutCancellationException) {
+                        if (exception is TimeoutCancellationException) {
                             _effects.send(ConnectionEffect.ShowError("Tempo de conexão excedido. Verifique o IP e tente novamente."))
-                        } else if (exception !is kotlinx.coroutines.CancellationException) {
+                        } else if (exception !is CancellationException) {
                             _effects.send(ConnectionEffect.ShowError("Falha ao conectar: ${exception?.message}"))
                         }
                     }

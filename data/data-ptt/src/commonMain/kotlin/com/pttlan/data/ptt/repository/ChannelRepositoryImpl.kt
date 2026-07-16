@@ -8,8 +8,10 @@ import com.pttlan.core.network.protocol.ControlMessage
 import com.pttlan.domain.ptt.repository.ActiveChannelDomain
 import com.pttlan.domain.ptt.repository.ChannelDomain
 import com.pttlan.domain.ptt.repository.ChannelRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -36,10 +38,10 @@ class ChannelRepositoryImpl(
                 }
             }
 
-    private val activeChannelsFlow = kotlinx.coroutines.flow.MutableStateFlow<List<ActiveChannelDomain>>(emptyList())
+    private val activeChannelsFlow = MutableStateFlow<List<ActiveChannelDomain>>(emptyList())
 
     init {
-        kotlinx.coroutines.CoroutineScope(Dispatchers.Default).launch {
+        CoroutineScope(Dispatchers.Default).launch {
             webSocketClient.controlMessages
                 .filterIsInstance<ControlMessage.ActiveChannelsList>()
                 .collect { message ->

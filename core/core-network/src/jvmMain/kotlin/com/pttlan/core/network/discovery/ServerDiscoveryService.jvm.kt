@@ -1,8 +1,10 @@
 package com.pttlan.core.network.discovery
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.withContext
 import java.net.InetAddress
 import javax.jmdns.JmDNS
 import javax.jmdns.ServiceEvent
@@ -16,7 +18,7 @@ actual class ServerDiscoveryService actual constructor() {
             val serviceType = "_pttlan._tcp.local."
             try {
                 jmdns =
-                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    withContext(Dispatchers.IO) {
                         val localIp = getLocalIpAddress()
                         if (localIp != null) JmDNS.create(localIp) else JmDNS.create()
                     }

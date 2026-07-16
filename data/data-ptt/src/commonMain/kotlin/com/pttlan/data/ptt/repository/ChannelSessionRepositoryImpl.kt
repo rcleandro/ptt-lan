@@ -6,17 +6,15 @@ import com.pttlan.domain.ptt.model.ParticipantDomain
 import com.pttlan.domain.ptt.repository.ChannelSessionRepository
 import com.pttlan.domain.ptt.repository.SpeakerState
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-
 class ChannelSessionRepositoryImpl(
     private val webSocketClient: PttWebSocketClient,
 ) : ChannelSessionRepository {
-
     private val _activeSessionChannelId = MutableStateFlow<String?>(null)
     override val activeSessionChannelId: StateFlow<String?> = _activeSessionChannelId
 
