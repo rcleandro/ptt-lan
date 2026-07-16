@@ -29,6 +29,9 @@ kotlin {
             api(libs.compose.components.resources)
             api(libs.ui.tooling.preview)
         }
+        androidMain.dependencies {
+            api(libs.ui.tooling)
+        }
         val androidHostTest = sourceSets.getByName("androidHostTest")
         androidHostTest.dependencies {
             implementation(kotlin("test"))
