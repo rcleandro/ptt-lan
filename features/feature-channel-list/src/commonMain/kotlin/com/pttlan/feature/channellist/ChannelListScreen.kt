@@ -16,7 +16,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -30,16 +29,6 @@ import com.pttlan.domain.ptt.repository.ActiveChannelDomain
 @Composable
 fun ChannelListScreen(component: ChannelListComponent) {
     val state by component.state.collectAsState()
-
-    LaunchedEffect(Unit) {
-        component.effects.collect { effect ->
-            when (effect) {
-                is ChannelListEffect.NavigateToChannel -> {
-                    // Handled by Decompose router
-                }
-            }
-        }
-    }
 
     ChannelListScreenContent(
         state = state,

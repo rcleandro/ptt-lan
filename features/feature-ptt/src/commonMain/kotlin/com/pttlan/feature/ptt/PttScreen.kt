@@ -38,18 +38,13 @@ fun PttScreen(component: PttComponent) {
 
     LaunchedEffect(Unit) {
         component.effects.collect { effect ->
-            when (effect) {
-                is PttEffect.NavigateBack -> {
-                    // Handled by Decompose router
-                }
-                is PttEffect.ShowFloorDenied -> {
-                    SnackbarController.sendEvent(
-                        SnackbarEvent(
-                            message = effect.reason,
-                            type = PttSnackbarType.ErrorOrWarning,
-                        ),
-                    )
-                }
+            if (effect is PttEffect.ShowFloorDenied) {
+                SnackbarController.sendEvent(
+                    SnackbarEvent(
+                        message = effect.reason,
+                        type = PttSnackbarType.ErrorOrWarning,
+                    ),
+                )
             }
         }
     }
