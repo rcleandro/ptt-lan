@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -29,6 +31,7 @@ import com.pttlan.core.designsystem.components.snackbar.SnackbarController
 import com.pttlan.feature.channellist.ChannelListScreen
 import com.pttlan.feature.connection.ConnectionScreen
 import com.pttlan.feature.ptt.PttScreen
+import com.pttlan.feature.settings.SettingsScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,6 +63,17 @@ fun RootScreen(component: RootComponent) {
                 )
             }
         },
+        floatingActionButton = {
+            val currentChild = childStack.active.instance
+            if (currentChild is RootComponent.Child.ConnectionChild || currentChild is RootComponent.Child.ChannelListChild) {
+                FloatingActionButton(onClick = component::navigateToSettings) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Configurações",
+                    )
+                }
+            }
+        },
         snackbarHost = { PttSnackbarHost(snackbarHostState, snackbarType) },
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
@@ -71,6 +85,7 @@ fun RootScreen(component: RootComponent) {
                     is RootComponent.Child.ConnectionChild -> ConnectionScreen(instance.component)
                     is RootComponent.Child.ChannelListChild -> ChannelListScreen(instance.component)
                     is RootComponent.Child.PttChild -> PttScreen(instance.component)
+                    is RootComponent.Child.SettingsChild -> SettingsScreen(instance.component)
                 }
             }
         }
@@ -82,4 +97,5 @@ private fun getScreenTitle(child: RootComponent.Child): String =
         is RootComponent.Child.ConnectionChild -> "Conectar"
         is RootComponent.Child.ChannelListChild -> "Canais"
         is RootComponent.Child.PttChild -> "Rádio (PTT)"
+        is RootComponent.Child.SettingsChild -> "Configurações"
     }

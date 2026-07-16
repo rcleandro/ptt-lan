@@ -18,6 +18,7 @@ import com.pttlan.feature.ptt.PttComponent
 import com.pttlan.feature.ptt.PttEffect
 import com.pttlan.feature.ptt.PttIntent.PressPtt
 import com.pttlan.feature.ptt.PttIntent.ReleasePtt
+import com.pttlan.feature.settings.SettingsComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -129,10 +130,20 @@ class RootComponent(
                 }
                 Child.PttChild(component)
             }
+            is Config.Settings -> {
+                val component: SettingsComponent = get(parameters = { parametersOf(context) })
+                Child.SettingsChild(component)
+            }
         }
 
     fun goBack() {
         navigation.pop()
+    }
+
+    fun navigateToSettings() {
+        navigation.navigate { stack ->
+            if (stack.lastOrNull() is Config.Settings) stack else stack + Config.Settings
+        }
     }
 
     fun handlePttKey(isPressed: Boolean): Boolean {
@@ -157,6 +168,10 @@ class RootComponent(
         class PttChild(
             val component: PttComponent,
         ) : Child
+
+        class SettingsChild(
+            val component: SettingsComponent,
+        ) : Child
     }
 
     @Serializable
@@ -171,5 +186,8 @@ class RootComponent(
         data class PttScreen(
             val channelId: String,
         ) : Config
+
+        @Serializable
+        data object Settings : Config
     }
 }
