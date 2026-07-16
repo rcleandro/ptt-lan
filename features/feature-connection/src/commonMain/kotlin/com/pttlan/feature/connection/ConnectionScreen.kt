@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -26,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,17 +37,21 @@ import com.pttlan.core.designsystem.components.ConnectionStatusBadge
 import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.domain.ptt.repository.ServerNode
+import kotlinx.coroutines.launch
 
 @Composable
 fun ConnectionScreen(component: ConnectionComponent) {
     val state by component.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         component.effects.collect { effect ->
             when (effect) {
                 is ConnectionEffect.ShowError -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    scope.launch {
+                        snackbarHostState.showSnackbar(effect.message)
+                    }
                 }
                 ConnectionEffect.NavigateToChannelList -> {
                     // Handled by RootComponent via Decompose navigation in a real app,
@@ -59,22 +65,12 @@ fun ConnectionScreen(component: ConnectionComponent) {
         snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = Modifier.fillMaxSize(),
     ) { paddingValues ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Text(
-                text = "PTT LAN",
-                style = MaterialTheme.typography.displayLarge,
-            )
-
-            if (state.status == ConnectionStatus.Connecting || state.status == ConnectionStatus.Reconnecting) {
+        if (state.status == ConnectionStatus.Connecting || state.status == ConnectionStatus.Reconnecting) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                contentAlignment = Alignment.Center,
+            ) {
                 Column(
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -82,7 +78,20 @@ fun ConnectionScreen(component: ConnectionComponent) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text("Conectando...")
                 }
-            } else {
+            }
+        } else {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Text(
+                    text = "PTT LAN",
+                    style = MaterialTheme.typography.displayLarge,
+                )
                 OutlinedTextField(
                     value = state.nickname,
                     onValueChange = { component.onIntent(ConnectionIntent.UpdateNickname(it)) },
