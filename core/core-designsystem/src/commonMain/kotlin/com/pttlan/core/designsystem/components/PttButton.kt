@@ -43,7 +43,7 @@ fun PttButton(
             when (state) {
                 PttButtonState.Idle -> PttTheme.customColors.surface3
                 PttButtonState.Requesting -> PttTheme.customColors.accentTx
-                PttButtonState.Transmitting -> Color(0xFF4CAF50) // Green for active transmission
+                PttButtonState.Transmitting -> PttTheme.customColors.statusTransmitting
                 PttButtonState.Receiving -> androidx.compose.material3.MaterialTheme.colorScheme.primary
             },
     )
@@ -53,7 +53,7 @@ fun PttButton(
             when (state) {
                 PttButtonState.Idle -> Color.Transparent
                 PttButtonState.Requesting -> PttTheme.customColors.accentTxGlow
-                PttButtonState.Transmitting -> Color(0x664CAF50) // Green glow
+                PttButtonState.Transmitting -> PttTheme.customColors.statusTransmittingGlow
                 PttButtonState.Receiving -> PttTheme.customColors.primaryGlow
             },
     )

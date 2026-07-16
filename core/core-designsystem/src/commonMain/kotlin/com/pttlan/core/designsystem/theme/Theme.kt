@@ -18,6 +18,8 @@ data class PttCustomColors(
     val primaryGlow: Color,
     val surface2: Color,
     val surface3: Color,
+    val statusTransmitting: Color,
+    val statusTransmittingGlow: Color,
     val textTertiary: Color,
 )
 
@@ -32,6 +34,8 @@ val LocalPttCustomColors =
             primaryGlow = Color.Unspecified,
             surface2 = Color.Unspecified,
             surface3 = Color.Unspecified,
+            statusTransmitting = Color.Unspecified,
+            statusTransmittingGlow = Color.Unspecified,
             textTertiary = Color.Unspecified,
         )
     }
@@ -46,6 +50,8 @@ private val DefaultPttCustomColors =
         primaryGlow = PrimaryGlow,
         surface2 = Surface2,
         surface3 = Surface3,
+        statusTransmitting = StatusTransmitting,
+        statusTransmittingGlow = StatusTransmittingGlow,
         textTertiary = TextTertiary,
     )
 

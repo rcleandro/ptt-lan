@@ -19,7 +19,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.pttlan.core.designsystem.theme.PttTheme
 
@@ -36,7 +35,7 @@ fun ParticipantAvatar(
     val borderColor by animateColorAsState(
         targetValue =
             when {
-                isSpeaking -> Color(0xFF4CAF50)
+                isSpeaking -> PttTheme.customColors.statusTransmitting
                 isRequesting -> PttTheme.customColors.accentTx
                 else -> MaterialTheme.colorScheme.outline
             },
