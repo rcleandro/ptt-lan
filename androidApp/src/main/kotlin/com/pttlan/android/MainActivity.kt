@@ -15,6 +15,9 @@ import com.pttlan.domain.ptt.repository.ChannelRepository
 import com.pttlan.domain.ptt.repository.VoiceRepository
 import com.pttlan.core.navigation.RootComponent
 import com.pttlan.core.navigation.RootScreen
+import com.pttlan.domain.ptt.repository.ConnectionStatus
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -41,11 +44,18 @@ class MainActivity : ComponentActivity() {
         }
         
         val settings: com.russhwolf.settings.Settings by inject()
-        val alwaysListening = settings.getBoolean("always_listening", true)
-        
-        if (alwaysListening) {
-            val intent = android.content.Intent(this, PttForegroundService::class.java)
-            startForegroundService(intent)
+        val connectionRepository: ConnectionRepository by inject()
+
+        lifecycleScope.launch {
+            connectionRepository.connectionStatus.collect { status ->
+                val alwaysListening = settings.getBoolean("always_listening", true)
+                val intent = android.content.Intent(this@MainActivity, PttForegroundService::class.java)
+                if (status == ConnectionStatus.Connected && alwaysListening) {
+                    startForegroundService(intent)
+                } else if (status == ConnectionStatus.Disconnected) {
+                    stopService(intent)
+                }
+            }
         }
 
         setContent {
