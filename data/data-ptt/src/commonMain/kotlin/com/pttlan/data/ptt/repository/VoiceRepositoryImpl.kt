@@ -5,6 +5,7 @@ import app.cash.sqldelight.coroutines.mapToList
 import com.pttlan.core.audio.AudioCodec
 import com.pttlan.core.audio.AudioPlayer
 import com.pttlan.core.audio.AudioRecorder
+import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.core.database.PttDatabase
 import com.pttlan.core.network.PttWebSocketClient
 import com.pttlan.core.network.protocol.AudioCodecType
@@ -38,6 +39,7 @@ class VoiceRepositoryImpl(
     private val pcmCodec: AudioCodec,
     private val opusCodec: AudioCodec,
     private val settings: Settings,
+    private val storageInfoProvider: StorageInfoProvider,
 ) : VoiceRepository {
     private val scope = CoroutineScope(Dispatchers.Default)
     private var transmissionJob: Job? = null
@@ -57,32 +59,43 @@ class VoiceRepositoryImpl(
                         currentSpeakerId = msg.userId
                         currentChannelId = msg.channelId
                         currentMessageStartMs = Clock.System.now().toEpochMilliseconds()
-                        val fileName = "${msg.channelId}_$currentMessageStartMs.pcm"
-                        val path = "${localFileCache.getCacheDir()}/$fileName".toPath()
-                        currentFilePath = path.toString()
-                        try {
-                            currentFileSink = FileSystem.SYSTEM.sink(path).buffer()
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+                        val allowCache = settings.getBoolean("allow_cache", false)
+                        if (allowCache) {
+                            val cacheLocation = settings.getString("cache_location", "Interno")
+                            val dirPath = storageInfoProvider.getCacheDirPath(cacheLocation)
+                            if (dirPath != null) {
+                                val fileName = "${msg.channelId}_$currentMessageStartMs.pcm"
+                                val path = "$dirPath/$fileName".toPath()
+                                currentFilePath = path.toString()
+                                try {
+                                    currentFileSink = FileSystem.SYSTEM.sink(path).buffer()
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
                         }
                     } else {
                         currentFileSink?.close()
                         currentFileSink = null
-                        if (currentSpeakerId == msg.userId && currentFilePath != null && currentChannelId != null) {
-                            val duration = Clock.System.now().toEpochMilliseconds() - currentMessageStartMs
-                            val id = "${msg.channelId}_$currentMessageStartMs"
-                            database.voiceMessageQueries.insert(
-                                id = id,
-                                channelId = msg.channelId,
-                                senderNickname = msg.userId, // using userId as fallback for now
-                                filePath = currentFilePath!!,
-                                durationMs = duration,
-                                recordedAt = currentMessageStartMs,
-                            )
-                            val count = database.voiceMessageQueries.countByChannel(msg.channelId).executeAsOne()
-                            if (count > 50) {
-                                val toDelete = count - 50
-                                database.voiceMessageQueries.deleteOldestByChannel(msg.channelId, toDelete)
+                        if (currentSpeakerId == msg.userId && currentChannelId != null) {
+                            if (currentFilePath != null) {
+                                val duration = Clock.System.now().toEpochMilliseconds() - currentMessageStartMs
+                                val id = "${msg.channelId}_$currentMessageStartMs"
+                                database.voiceMessageQueries.insert(
+                                    id = id,
+                                    channelId = msg.channelId,
+                                    senderNickname = msg.userId, // using userId as fallback for now
+                                    filePath = currentFilePath!!,
+                                    durationMs = duration,
+                                    recordedAt = currentMessageStartMs,
+                                )
+                                val count = database.voiceMessageQueries.countByChannel(msg.channelId).executeAsOne()
+                                if (count > 50) {
+                                    val toDelete = count - 50
+                                    database.voiceMessageQueries.deleteOldestByChannel(msg.channelId, toDelete)
+                                }
+
+                                manageCache()
                             }
                         }
                         currentSpeakerId = null
@@ -113,6 +126,32 @@ class VoiceRepositoryImpl(
                         e.printStackTrace()
                     }
                 }.launchIn(scope)
+    }
+
+    private fun manageCache() {
+        try {
+            val maxCacheSizeMb = settings.getInt("max_cache_size_mb", 500)
+            val limitBytes = maxCacheSizeMb * 1024L * 1024L
+            val cacheLocation = settings.getString("cache_location", "Interno")
+            val dirPath = storageInfoProvider.getCacheDirPath(cacheLocation) ?: return
+
+            val dir = dirPath.toPath()
+            val files = FileSystem.SYSTEM.list(dir).filter { it.name.endsWith(".pcm") }
+            var totalSize = files.sumOf { FileSystem.SYSTEM.metadata(it).size ?: 0L }
+
+            if (totalSize > limitBytes) {
+                val sortedFiles = files.sortedBy { FileSystem.SYSTEM.metadata(it).lastModifiedAtMillis ?: 0L }
+                for (file in sortedFiles) {
+                    if (totalSize <= limitBytes) break
+                    val size = FileSystem.SYSTEM.metadata(file).size ?: 0L
+                    FileSystem.SYSTEM.delete(file)
+                    database.voiceMessageQueries.deleteByFilePath(file.toString())
+                    totalSize -= size
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     override suspend fun requestFloor(

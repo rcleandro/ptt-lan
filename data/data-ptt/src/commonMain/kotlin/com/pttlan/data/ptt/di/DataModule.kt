@@ -1,5 +1,6 @@
 package com.pttlan.data.ptt.di
 
+import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.data.ptt.repository.ChannelRepositoryImpl
 import com.pttlan.data.ptt.repository.ChannelSessionRepositoryImpl
 import com.pttlan.data.ptt.repository.ConnectionRepositoryImpl
@@ -28,6 +29,7 @@ val dataModule =
                 get(named("pcm")),
                 get(named("opus")),
                 get(),
+                get<StorageInfoProvider>(),
             )
         }
         includes(platformDataModule)
