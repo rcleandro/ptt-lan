@@ -29,8 +29,6 @@ import com.pttlan.core.designsystem.components.PttButtonState.Transmitting
 import com.pttlan.core.designsystem.components.snackbar.PttSnackbarType
 import com.pttlan.core.designsystem.components.snackbar.SnackbarController
 import com.pttlan.core.designsystem.components.snackbar.SnackbarEvent
-import com.pttlan.feature.ptt.PttEffect
-import com.pttlan.feature.ptt.PttIntent
 
 @Composable
 fun PttScreen(component: PttComponent) {
