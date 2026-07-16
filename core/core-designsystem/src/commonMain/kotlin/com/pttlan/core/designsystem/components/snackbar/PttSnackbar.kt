@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
@@ -26,7 +27,10 @@ private fun BaseNewSnackbar(
     text: String,
     type: PttSnackbarType,
 ) {
-    Snackbar(containerColor = type.backgroundColor) {
+    Snackbar(
+        modifier = Modifier.padding(16.dp),
+        containerColor = type.backgroundColor,
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -60,24 +64,9 @@ fun PttSnackbarHost(
     modifier: Modifier = Modifier,
 ) {
     SnackbarHost(hostState = state, modifier = modifier) { data: SnackbarData ->
-        when (type) {
-            PttSnackbarType.Success ->
-                BaseNewSnackbar(
-                    text = data.visuals.message,
-                    type = type,
-                )
-
-            PttSnackbarType.ErrorOrWarning ->
-                BaseNewSnackbar(
-                    text = data.visuals.message,
-                    type = type,
-                )
-
-            PttSnackbarType.Generic ->
-                BaseNewSnackbar(
-                    text = data.visuals.message,
-                    type = type,
-                )
-        }
+        BaseNewSnackbar(
+            text = data.visuals.message,
+            type = type,
+        )
     }
 }
