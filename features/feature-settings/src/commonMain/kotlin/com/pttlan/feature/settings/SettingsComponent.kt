@@ -1,6 +1,7 @@
 package com.pttlan.feature.settings
 
 import com.arkivanov.decompose.ComponentContext
+import com.pttlan.core.designsystem.theme.AppTheme
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,7 +11,7 @@ import kotlinx.coroutines.flow.update
 data class SettingsState(
     val nickname: String = "",
     val useOpus: Boolean = false,
-    val useDarkTheme: Boolean = true,
+    val appTheme: AppTheme = AppTheme.SYSTEM,
     val alwaysListening: Boolean = true,
 )
 
@@ -23,8 +24,8 @@ sealed interface SettingsIntent {
         val enabled: Boolean,
     ) : SettingsIntent
 
-    data class ToggleTheme(
-        val useDark: Boolean,
+    data class ChangeTheme(
+        val theme: AppTheme,
     ) : SettingsIntent
 
     data class ToggleAlwaysListening(
@@ -41,7 +42,7 @@ class SettingsComponent(
             SettingsState(
                 nickname = settings.getString("nickname", ""),
                 useOpus = settings.getBoolean("use_opus", false),
-                useDarkTheme = settings.getBoolean("use_dark_theme", true),
+                appTheme = AppTheme.entries.getOrElse(settings.getInt("app_theme", 0)) { AppTheme.SYSTEM },
                 alwaysListening = settings.getBoolean("always_listening", true),
             ),
         )
@@ -57,9 +58,9 @@ class SettingsComponent(
                 settings.putBoolean("use_opus", intent.enabled)
                 _state.update { it.copy(useOpus = intent.enabled) }
             }
-            is SettingsIntent.ToggleTheme -> {
-                settings.putBoolean("use_dark_theme", intent.useDark)
-                _state.update { it.copy(useDarkTheme = intent.useDark) }
+            is SettingsIntent.ChangeTheme -> {
+                settings.putInt("app_theme", intent.theme.ordinal)
+                _state.update { it.copy(appTheme = intent.theme) }
             }
             is SettingsIntent.ToggleAlwaysListening -> {
                 settings.putBoolean("always_listening", intent.enabled)

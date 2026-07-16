@@ -33,7 +33,7 @@ class SettingsComponentTest {
 
         every { settings.getString("nickname", "") } returns "TestUser"
         every { settings.getBoolean("use_opus", false) } returns false
-        every { settings.getBoolean("use_dark_theme", true) } returns true
+        every { settings.getInt("app_theme", 0) } returns 0
         every { settings.getBoolean("always_listening", true) } returns true
     }
 
@@ -55,7 +55,7 @@ class SettingsComponentTest {
 
             assertEquals("TestUser", component.state.value.nickname)
             assertEquals(false, component.state.value.useOpus)
-            assertEquals(true, component.state.value.useDarkTheme)
+            assertEquals(com.pttlan.core.designsystem.theme.AppTheme.SYSTEM, component.state.value.appTheme)
             assertEquals(true, component.state.value.alwaysListening)
         }
 
@@ -82,14 +82,14 @@ class SettingsComponentTest {
         }
 
     @Test
-    fun `ToggleTheme intent updates state and settings`() =
+    fun `ChangeTheme intent updates state and settings`() =
         runTest(testDispatcher) {
             val component = createComponent()
 
-            component.onIntent(SettingsIntent.ToggleTheme(false))
+            component.onIntent(SettingsIntent.ChangeTheme(com.pttlan.core.designsystem.theme.AppTheme.DARK))
 
-            assertEquals(false, component.state.value.useDarkTheme)
-            verify(exactly = 1) { settings.putBoolean("use_dark_theme", false) }
+            assertEquals(com.pttlan.core.designsystem.theme.AppTheme.DARK, component.state.value.appTheme)
+            verify(exactly = 1) { settings.putInt("app_theme", com.pttlan.core.designsystem.theme.AppTheme.DARK.ordinal) }
         }
 
     @Test
