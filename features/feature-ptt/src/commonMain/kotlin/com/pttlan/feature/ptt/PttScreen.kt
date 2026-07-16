@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -121,25 +122,27 @@ fun PttScreenContent(
 @Composable
 private fun PttScreenPreview() {
     PttTheme {
-        PttScreenContent(
-            state =
-                PttState(
-                    channelId = "Geral",
-                    localUserId = "u1",
-                    isTransmitting = false,
-                    currentSpeakerId = "u2",
-                    currentSpeakerName = "João",
-                    participants =
-                        listOf(
-                            com.pttlan.core.network.protocol
-                                .ParticipantDto("u1", "Leandro", false),
-                            com.pttlan.core.network.protocol
-                                .ParticipantDto("u2", "João", true),
-                            com.pttlan.core.network.protocol
-                                .ParticipantDto("u3", "Maria", false),
-                        ),
-                ),
-            onIntent = {},
-        )
+        Surface {
+            PttScreenContent(
+                state =
+                    PttState(
+                        channelId = "Geral",
+                        localUserId = "u1",
+                        isTransmitting = false,
+                        currentSpeakerId = "u2",
+                        currentSpeakerName = "João",
+                        participants =
+                            listOf(
+                                com.pttlan.core.network.protocol
+                                    .ParticipantDto("u1", "Leandro", false),
+                                com.pttlan.core.network.protocol
+                                    .ParticipantDto("u2", "João", true),
+                                com.pttlan.core.network.protocol
+                                    .ParticipantDto("u3", "Maria", false),
+                            ),
+                    ),
+                onIntent = {},
+            )
+        }
     }
 }

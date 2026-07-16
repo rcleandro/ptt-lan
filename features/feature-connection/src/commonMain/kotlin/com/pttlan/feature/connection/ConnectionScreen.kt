@@ -18,7 +18,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -65,93 +65,89 @@ fun ConnectionScreen(component: ConnectionComponent) {
 fun ConnectionScreenContent(
     state: ConnectionState,
     onIntent: (ConnectionIntent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-    ) { paddingValues ->
-        if (state.status == ConnectionStatus.Connecting || state.status == ConnectionStatus.Reconnecting) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(paddingValues),
-                contentAlignment = Alignment.Center,
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    CircularProgressIndicator()
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("Conectando...")
-                }
-            }
-        } else {
+    if (state.status == ConnectionStatus.Connecting || state.status == ConnectionStatus.Reconnecting) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .then(modifier),
+            contentAlignment = Alignment.Center,
+        ) {
             Column(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
             ) {
-                Text(
-                    text = "PTT LAN",
-                    style = MaterialTheme.typography.displayLarge,
-                )
-                OutlinedTextField(
-                    value = state.nickname,
-                    onValueChange = { onIntent(ConnectionIntent.UpdateNickname(it)) },
-                    label = { Text("Seu Nome") },
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                CircularProgressIndicator()
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Conectando...")
+            }
+        }
+    } else {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+                    .then(modifier),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            OutlinedTextField(
+                value = state.nickname,
+                onValueChange = { onIntent(ConnectionIntent.UpdateNickname(it)) },
+                label = { Text("Seu Nome") },
+                modifier = Modifier.fillMaxWidth(),
+            )
 
-                Text(
-                    text = "Servidores Descobertos na Rede",
-                    style = MaterialTheme.typography.headlineMedium,
-                )
+            Text(
+                text = "Servidores Descobertos na Rede",
+                style = MaterialTheme.typography.headlineMedium,
+            )
 
-                if (state.discoveredServers.isEmpty()) {
-                    Text(
-                        text = "Procurando servidores...",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.weight(1f, fill = false),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        items(state.discoveredServers) { server ->
-                            ServerCard(server = server) {
-                                onIntent(ConnectionIntent.ConnectToDiscovered(server))
-                            }
+            if (state.discoveredServers.isEmpty()) {
+                Text(
+                    text = "Procurando servidores...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.weight(1f, fill = false),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    items(state.discoveredServers) { server ->
+                        ServerCard(server = server) {
+                            onIntent(ConnectionIntent.ConnectToDiscovered(server))
                         }
                     }
                 }
+            }
 
-                Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
-                    text = "Conectar Manualmente",
-                    style = MaterialTheme.typography.headlineMedium,
+            Text(
+                text = "Conectar Manualmente",
+                style = MaterialTheme.typography.headlineMedium,
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                OutlinedTextField(
+                    value = state.manualIp,
+                    onValueChange = { onIntent(ConnectionIntent.UpdateManualIp(it)) },
+                    label = { Text("IP do Servidor") },
+                    modifier = Modifier.weight(1f),
                 )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                Button(
+                    onClick = { onIntent(ConnectionIntent.ConnectToManualIp(state.manualIp)) },
+                    enabled = state.manualIp.isNotBlank(),
                 ) {
-                    OutlinedTextField(
-                        value = state.manualIp,
-                        onValueChange = { onIntent(ConnectionIntent.UpdateManualIp(it)) },
-                        label = { Text("IP do Servidor") },
-                        modifier = Modifier.weight(1f),
-                    )
-
-                    Button(
-                        onClick = { onIntent(ConnectionIntent.ConnectToManualIp(state.manualIp)) },
-                        enabled = state.manualIp.isNotBlank(),
-                    ) {
-                        Text("Conectar")
-                    }
+                    Text("Conectar")
                 }
             }
         }
@@ -198,19 +194,21 @@ fun ServerCard(
 @Composable
 private fun ConnectionScreenPreview() {
     PttTheme {
-        ConnectionScreenContent(
-            state =
-                ConnectionState(
-                    status = ConnectionStatus.Disconnected,
-                    nickname = "Leandro",
-                    manualIp = "192.168.0.1",
-                    discoveredServers =
-                        listOf(
-                            ServerNode("Servidor Local", "192.168.0.10", 9443),
-                            ServerNode("Servidor Remoto", "10.0.0.5", 9443),
-                        ),
-                ),
-            onIntent = {},
-        )
+        Surface {
+            ConnectionScreenContent(
+                state =
+                    ConnectionState(
+                        status = ConnectionStatus.Disconnected,
+                        nickname = "Leandro",
+                        manualIp = "192.168.0.1",
+                        discoveredServers =
+                            listOf(
+                                ServerNode("Servidor Local", "192.168.0.10", 9443),
+                                ServerNode("Servidor Remoto", "10.0.0.5", 9443),
+                            ),
+                    ),
+                onIntent = {},
+            )
+        }
     }
 }

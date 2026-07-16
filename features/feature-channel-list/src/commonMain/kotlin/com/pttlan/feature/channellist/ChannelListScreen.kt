@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -108,16 +109,18 @@ fun ChannelListScreenContent(
 @Composable
 private fun ChannelListScreenPreview() {
     PttTheme {
-        ChannelListScreenContent(
-            state =
-                ChannelListState(
-                    activeChannels =
-                        listOf(
-                            ActiveChannelDomain("Geral", 10),
-                            ActiveChannelDomain("Bate papo", 2),
-                        ),
-                ),
-            onIntent = {},
-        )
+        Surface {
+            ChannelListScreenContent(
+                state =
+                    ChannelListState(
+                        activeChannels =
+                            listOf(
+                                ActiveChannelDomain("Geral", 10),
+                                ActiveChannelDomain("Bate papo", 2),
+                            ),
+                    ),
+                onIntent = {},
+            )
+        }
     }
 }
