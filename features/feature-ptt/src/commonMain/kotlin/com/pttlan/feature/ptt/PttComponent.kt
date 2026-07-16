@@ -24,6 +24,7 @@ data class PttState(
     val currentSpeakerId: String? = null,
     val currentSpeakerName: String? = null,
     val floorBlocked: Boolean = false,
+    val isFloorGranted: Boolean = false,
     val participants: List<com.pttlan.core.network.protocol.ParticipantDto> = emptyList(),
 )
 
@@ -75,11 +76,13 @@ class PttComponent(
 
         scope.launch {
             observeSpeakerUseCase(channelId).collect { speakerState ->
+                val isMe = speakerState.userId == userId
                 _state.update {
                     it.copy(
                         currentSpeakerId = if (speakerState.isSpeaking) speakerState.userId else null,
                         currentSpeakerName = if (speakerState.isSpeaking) speakerState.nickname else null,
-                        floorBlocked = speakerState.isSpeaking && speakerState.userId != userId,
+                        floorBlocked = speakerState.isSpeaking && !isMe,
+                        isFloorGranted = speakerState.isSpeaking && isMe,
                     )
                 }
 
@@ -138,7 +141,7 @@ class PttComponent(
             }
             is PttIntent.ReleasePtt -> {
                 scope.launch {
-                    _state.update { it.copy(isTransmitting = false) }
+                    _state.update { it.copy(isTransmitting = false, isFloorGranted = false) }
                     stopTransmittingUseCase(channelId, userId)
                 }
             }

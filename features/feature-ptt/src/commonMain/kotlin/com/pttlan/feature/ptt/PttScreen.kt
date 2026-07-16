@@ -68,8 +68,10 @@ fun PttScreen(component: PttComponent) {
             Spacer(modifier = Modifier.height(32.dp))
 
             val pttState =
-                if (state.isTransmitting) {
+                if (state.isTransmitting && state.isFloorGranted) {
                     com.pttlan.core.designsystem.components.PttButtonState.Transmitting
+                } else if (state.isTransmitting) {
+                    com.pttlan.core.designsystem.components.PttButtonState.Requesting
                 } else if (state.currentSpeakerId != null) {
                     com.pttlan.core.designsystem.components.PttButtonState.Receiving
                 } else {

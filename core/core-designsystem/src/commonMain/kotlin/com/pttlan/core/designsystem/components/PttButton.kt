@@ -25,6 +25,7 @@ import com.pttlan.core.designsystem.theme.PttTheme
 
 enum class PttButtonState {
     Idle,
+    Requesting,
     Transmitting,
     Receiving,
 }
@@ -41,7 +42,8 @@ fun PttButton(
         targetValue =
             when (state) {
                 PttButtonState.Idle -> PttTheme.customColors.surface3
-                PttButtonState.Transmitting -> PttTheme.customColors.accentTx
+                PttButtonState.Requesting -> PttTheme.customColors.accentTx
+                PttButtonState.Transmitting -> Color(0xFF4CAF50) // Green for active transmission
                 PttButtonState.Receiving -> androidx.compose.material3.MaterialTheme.colorScheme.primary
             },
     )
@@ -50,7 +52,8 @@ fun PttButton(
         targetValue =
             when (state) {
                 PttButtonState.Idle -> Color.Transparent
-                PttButtonState.Transmitting -> PttTheme.customColors.accentTxGlow
+                PttButtonState.Requesting -> PttTheme.customColors.accentTxGlow
+                PttButtonState.Transmitting -> Color(0x664CAF50) // Green glow
                 PttButtonState.Receiving -> PttTheme.customColors.primaryGlow
             },
     )
@@ -63,7 +66,7 @@ fun PttButton(
         targetValue =
             when (state) {
                 PttButtonState.Idle -> androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
-                PttButtonState.Transmitting -> Color(0xFF1A1310)
+                PttButtonState.Requesting, PttButtonState.Transmitting -> Color(0xFF1A1310)
                 PttButtonState.Receiving -> Color(0xFF0E181D)
             },
     )
