@@ -21,6 +21,10 @@ class ChannelRegistry {
     private val cleanupJobs = ConcurrentHashMap<String, Job>()
     private val scope = CoroutineScope(Dispatchers.Default)
 
+    init {
+        getOrCreateChannel("Geral")
+    }
+
     fun addGlobalConnection(
         session: DefaultWebSocketServerSession,
         nickname: String,
@@ -47,6 +51,10 @@ class ChannelRegistry {
     fun getChannel(channelId: String): PttChannel? = channels[channelId]
 
     fun scheduleCleanupIfEmpty(channelId: String) {
+        if (channelId == "Geral") {
+            broadcastActiveChannels()
+            return
+        }
         val channel = channels[channelId] ?: return
         if (channel.participantCount == 0) {
             cleanupJobs[channelId]?.cancel()
