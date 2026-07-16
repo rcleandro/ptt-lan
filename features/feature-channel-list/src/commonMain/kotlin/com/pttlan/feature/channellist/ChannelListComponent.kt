@@ -66,7 +66,15 @@ class ChannelListComponent(
         }
         scope.launch {
             observeActiveChannelsUseCase().collect { active ->
-                _state.update { it.copy(activeChannels = active) }
+                _state.update {
+                    it.copy(
+                        activeChannels =
+                            active.sortedWith(
+                                compareByDescending<ActiveChannelDomain> { ch -> ch.id == "Geral" }
+                                    .thenBy { ch -> ch.id },
+                            ),
+                    )
+                }
             }
         }
     }
