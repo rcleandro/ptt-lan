@@ -122,8 +122,8 @@ private fun ChannelListScreenPreview() {
                 ChannelListState(
                     activeChannels =
                         listOf(
-                            ActiveChannelDomain("GERAL", 10),
-                            ActiveChannelDomain("BATE PAPO", 2),
+                            ActiveChannelDomain("Geral", 10),
+                            ActiveChannelDomain("Bate papo", 2),
                         ),
                 ),
             onIntent = {},

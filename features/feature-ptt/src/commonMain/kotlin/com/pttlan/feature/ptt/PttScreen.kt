@@ -128,7 +128,7 @@ private fun PttScreenPreview() {
         PttScreenContent(
             state =
                 PttState(
-                    channelId = "GERAL",
+                    channelId = "Geral",
                     localUserId = "u1",
                     isTransmitting = false,
                     currentSpeakerId = "u2",

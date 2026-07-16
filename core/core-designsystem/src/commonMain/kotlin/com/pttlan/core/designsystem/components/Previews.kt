@@ -4,7 +4,6 @@ package com.pttlan.core.designsystem.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -15,13 +14,41 @@ import com.pttlan.core.designsystem.theme.PttTheme
 
 @Preview
 @Composable
-fun PttButtonPreview() {
+fun PttButtonIdlePreview() {
     PttTheme {
         Surface {
-            Row(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                PttButton(state = PttButtonState.Idle, onPressStart = {}, onPressEnd = {})
-                PttButton(state = PttButtonState.Transmitting, onPressStart = {}, onPressEnd = {})
-                PttButton(state = PttButtonState.Receiving, onPressStart = {}, onPressEnd = {})
+            PttButton(state = PttButtonState.Idle, onPressStart = {}, onPressEnd = {})
+        }
+    }
+}
+
+@Preview
+@Composable
+fun PttButtonTransmittingPreview() {
+    PttTheme {
+        Surface {
+            PttButton(state = PttButtonState.Transmitting, onPressStart = {}, onPressEnd = {})
+        }
+    }
+}
+
+@Preview
+@Composable
+fun PttButtonReceivingPreview() {
+    PttTheme {
+        Surface {
+            PttButton(state = PttButtonState.Receiving, onPressStart = {}, onPressEnd = {})
+        }
+    }
+}
+
+@Preview
+@Composable
+fun ConnectionStatusBadgeOnlinePreview() {
+    PttTheme {
+        Surface {
+            Column(modifier = Modifier.padding(16.dp)) {
+                ConnectionStatusBadge(status = ConnectionStatus.Online)
             }
         }
     }
@@ -29,12 +56,22 @@ fun PttButtonPreview() {
 
 @Preview
 @Composable
-fun ConnectionStatusBadgePreview() {
+fun ConnectionStatusBadgeReconnectingPreview() {
     PttTheme {
         Surface {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ConnectionStatusBadge(status = ConnectionStatus.Online)
+            Column(modifier = Modifier.padding(16.dp)) {
                 ConnectionStatusBadge(status = ConnectionStatus.Reconnecting)
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun ConnectionStatusBadgeOfflinePreview() {
+    PttTheme {
+        Surface {
+            Column(modifier = Modifier.padding(16.dp)) {
                 ConnectionStatusBadge(status = ConnectionStatus.Offline)
             }
         }
