@@ -25,16 +25,17 @@ import kotlinx.coroutines.launch
 import com.pttlan.domain.ptt.repository.ChannelSessionRepository
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.coroutines.getIntFlow
+import com.russhwolf.settings.coroutines.getBooleanFlow
+import com.russhwolf.settings.ExperimentalSettingsApi
 
+@OptIn(ExperimentalSettingsApi::class)
 class MainActivity : ComponentActivity() {
 
 
     private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        if (!isGranted) {
-            // Permission denied, handle if needed
-        }
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        // Handle permissions if needed
     }
 
     private lateinit var rootComponent: RootComponent
@@ -42,8 +43,17 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        val permissionsToRequest = mutableListOf(Manifest.permission.RECORD_AUDIO)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        val ungrantedPermissions = permissionsToRequest.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        if (ungrantedPermissions.isNotEmpty()) {
+            requestPermissionLauncher.launch(ungrantedPermissions.toTypedArray())
         }
 
         rootComponent = retainedComponent { componentContext ->
@@ -57,11 +67,11 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             combine(
                 connectionRepository.connectionStatus,
-                channelSessionRepository.activeSessionChannelId
-            ) { status, activeChannel ->
-                Pair(status, activeChannel)
-            }.collect { (status, activeChannel) ->
-                val alwaysListening = settings.getBoolean("always_listening", true)
+                channelSessionRepository.activeSessionChannelId,
+                (settings as ObservableSettings).getBooleanFlow("always_listening", true)
+            ) { status, activeChannel, alwaysListening ->
+                Triple(status, activeChannel, alwaysListening)
+            }.collect { (status, activeChannel, alwaysListening) ->
                 val intent = android.content.Intent(this@MainActivity, PttForegroundService::class.java)
                 if (status == ConnectionStatus.Connected && activeChannel != null && alwaysListening) {
                     startForegroundService(intent)
