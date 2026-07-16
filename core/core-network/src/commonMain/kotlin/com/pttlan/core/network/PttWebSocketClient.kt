@@ -43,6 +43,7 @@ class PttWebSocketClient(
         nickname: String,
     ) {
         shouldReconnect = true
+        var isFirstAttempt = true
         var backoffMs = 1000L
         val maxBackoffMs = 30000L
 
@@ -56,6 +57,7 @@ class PttWebSocketClient(
                 }
 
                 println("PttWebSocketClient: Conectado com sucesso!")
+                isFirstAttempt = false
                 // Reset backoff on successful connection
                 backoffMs = 1000L
                 _isConnected.value = true
@@ -90,7 +92,7 @@ class PttWebSocketClient(
                     }
                 }
 
-                val closeReason = ws.closeReason.await()
+                val closeReason = kotlinx.coroutines.withTimeoutOrNull(1000) { ws.closeReason.await() }
                 if (closeReason?.message == "Nome já em uso") {
                     shouldReconnect = false
                     throw IllegalStateException("Nome já em uso. Por favor, escolha outro.")
@@ -98,6 +100,10 @@ class PttWebSocketClient(
             } catch (e: Exception) {
                 println("PttWebSocketClient: Falha ao conectar: ${e.message}")
                 e.printStackTrace()
+                if (isFirstAttempt) {
+                    shouldReconnect = false
+                    throw e
+                }
             } finally {
                 _isConnected.value = false
                 sessionMutex.withLock {
@@ -123,22 +129,46 @@ class PttWebSocketClient(
     }
 
     suspend fun sendControlMessage(message: ControlMessage) {
-        val json = Json.encodeToString(message)
-        session?.send(Frame.Text(json))
+        try {
+            val json = Json.encodeToString(message)
+            session?.send(Frame.Text(json))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            _isConnected.value = false
+            try {
+                sessionMutex.withLock {
+                    val s = session
+                    session = null
+                    s?.close()
+                }
+            } catch (ignore: Exception) {}
+        }
     }
 
     suspend fun sendAudioChunk(
         envelope: AudioEnvelope,
         chunk: ByteArray,
     ) {
-        val envJson = Json.encodeToString(envelope).encodeToByteArray()
-        val envLen = envJson.size
+        try {
+            val envJson = Json.encodeToString(envelope).encodeToByteArray()
+            val envLen = envJson.size
 
-        val buffer = okio.Buffer()
-        buffer.writeInt(envLen)
-        buffer.write(envJson)
-        buffer.write(chunk)
+            val buffer = okio.Buffer()
+            buffer.writeInt(envLen)
+            buffer.write(envJson)
+            buffer.write(chunk)
 
-        session?.send(Frame.Binary(true, buffer.readByteArray()))
+            session?.send(Frame.Binary(true, buffer.readByteArray()))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            _isConnected.value = false
+            try {
+                sessionMutex.withLock {
+                    val s = session
+                    session = null
+                    s?.close()
+                }
+            } catch (ignore: Exception) {}
+        }
     }
 }

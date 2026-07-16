@@ -14,6 +14,8 @@ import com.pttlan.feature.connection.ConnectionComponent
 import com.pttlan.feature.connection.ConnectionEffect
 import com.pttlan.feature.ptt.PttComponent
 import com.pttlan.feature.ptt.PttEffect
+import com.pttlan.domain.ptt.repository.ConnectionRepository
+import com.pttlan.domain.ptt.repository.ConnectionStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -45,6 +47,8 @@ class RootComponent(
     @OptIn(ExperimentalUuidApi::class)
     private val userId = Uuid.random().toString()
 
+    private val connectionRepository: ConnectionRepository = get()
+
     val childStack: Value<ChildStack<*, Child>> =
         childStack(
             source = navigation,
@@ -53,6 +57,26 @@ class RootComponent(
             handleBackButton = true,
             childFactory = ::createChild,
         )
+
+    init {
+        lifecycle.coroutineScope().launch {
+            var wasConnected = false
+            connectionRepository.connectionStatus.collect { status ->
+                if (status == ConnectionStatus.Connected) {
+                    wasConnected = true
+                } else if (status == ConnectionStatus.Reconnecting && wasConnected) {
+                    wasConnected = false
+                    connectionRepository.disconnect()
+                    navigation.navigate { listOf(Config.Connection) }
+                    
+                    val activeChild = childStack.value.active.instance
+                    if (activeChild is Child.ConnectionChild) {
+                        activeChild.component.showError("Servidor desconectado")
+                    }
+                }
+            }
+        }
+    }
 
     private fun createChild(
         config: Config,

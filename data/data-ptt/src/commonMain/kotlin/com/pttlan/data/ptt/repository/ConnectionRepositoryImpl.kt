@@ -25,6 +25,7 @@ class ConnectionRepositoryImpl(
 
     private val scope = CoroutineScope(Dispatchers.Default)
     private var connectionJob: Job? = null
+    private var monitorJob: Job? = null
 
     override fun discoverServers(): Flow<ServerNode> =
         discoveryService.discover().map {
@@ -43,6 +44,7 @@ class ConnectionRepositoryImpl(
         _connectionStatus.value = ConnectionStatus.Connecting
 
         connectionJob?.cancel()
+        monitorJob?.cancel()
         val deferred = kotlinx.coroutines.CompletableDeferred<Unit>()
 
         connectionJob =
@@ -58,7 +60,7 @@ class ConnectionRepositoryImpl(
                 }
             }
 
-        val monitorJob =
+        monitorJob =
             scope.launch {
                 webSocketClient.isConnected.collect { isConnected ->
                     if (isConnected) {
@@ -74,15 +76,15 @@ class ConnectionRepositoryImpl(
             deferred.await()
             Result.success(Unit)
         } catch (e: Exception) {
+            monitorJob?.cancel()
             Result.failure(e)
-        } finally {
-            monitorJob.cancel()
         }
     }
 
     override fun disconnect() {
         _connectionStatus.value = ConnectionStatus.Disconnected
         connectionJob?.cancel()
+        monitorJob?.cancel()
         scope.launch {
             webSocketClient.disconnect()
         }

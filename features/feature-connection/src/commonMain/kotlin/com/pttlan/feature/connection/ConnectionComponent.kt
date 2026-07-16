@@ -9,14 +9,14 @@ import com.pttlan.domain.ptt.usecase.ObserveConnectionStatusUseCase
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -71,8 +71,8 @@ class ConnectionComponent(
         )
     val state: StateFlow<ConnectionState> = _state.asStateFlow()
 
-    private val _effects = MutableSharedFlow<ConnectionEffect>()
-    val effects: SharedFlow<ConnectionEffect> = _effects.asSharedFlow()
+    private val _effects = Channel<ConnectionEffect>(Channel.BUFFERED)
+    val effects: Flow<ConnectionEffect> = _effects.receiveAsFlow()
 
     private val scope = CoroutineScope(Dispatchers.Main)
 
@@ -81,7 +81,7 @@ class ConnectionComponent(
             observeConnectionStatusUseCase().collect { status ->
                 _state.update { it.copy(status = status) }
                 if (status == ConnectionStatus.Connected) {
-                    _effects.emit(ConnectionEffect.NavigateToChannelList)
+                    _effects.send(ConnectionEffect.NavigateToChannelList)
                 }
             }
         }
@@ -104,7 +104,7 @@ class ConnectionComponent(
         when (intent) {
             is ConnectionIntent.ConnectToDiscovered -> {
                 if (_state.value.nickname.isBlank()) {
-                    scope.launch { _effects.emit(ConnectionEffect.ShowError("Por favor, preencha o seu Nome")) }
+                    scope.launch { _effects.send(ConnectionEffect.ShowError("Por favor, preencha o seu Nome")) }
                     return
                 }
                 settings.putString("nickname", _state.value.nickname)
@@ -112,13 +112,13 @@ class ConnectionComponent(
                 scope.launch {
                     val result = connectToServerUseCase(intent.server.host, intent.server.port, _state.value.nickname)
                     if (result.isFailure) {
-                        _effects.emit(ConnectionEffect.ShowError("Falha ao conectar: ${result.exceptionOrNull()?.message}"))
+                        _effects.send(ConnectionEffect.ShowError("Falha ao conectar: ${result.exceptionOrNull()?.message}"))
                     }
                 }
             }
             is ConnectionIntent.ConnectToManualIp -> {
                 if (_state.value.nickname.isBlank()) {
-                    scope.launch { _effects.emit(ConnectionEffect.ShowError("Por favor, preencha o seu Nome")) }
+                    scope.launch { _effects.send(ConnectionEffect.ShowError("Por favor, preencha o seu Nome")) }
                     return
                 }
                 settings.putString("nickname", _state.value.nickname)
@@ -126,7 +126,7 @@ class ConnectionComponent(
                 scope.launch {
                     val result = connectToServerUseCase(intent.ip, 9443, _state.value.nickname)
                     if (result.isFailure) {
-                        _effects.emit(ConnectionEffect.ShowError("Falha ao conectar: ${result.exceptionOrNull()?.message}"))
+                        _effects.send(ConnectionEffect.ShowError("Falha ao conectar: ${result.exceptionOrNull()?.message}"))
                     }
                 }
             }
@@ -137,5 +137,9 @@ class ConnectionComponent(
                 _state.update { it.copy(nickname = intent.nickname) }
             }
         }
+    }
+
+    fun showError(message: String) {
+        scope.launch { _effects.send(ConnectionEffect.ShowError(message)) }
     }
 }

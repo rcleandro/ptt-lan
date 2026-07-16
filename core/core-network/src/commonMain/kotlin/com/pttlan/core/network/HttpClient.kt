@@ -15,7 +15,7 @@ expect fun createPlatformHttpClient(): HttpClient
 fun createHttpClient(): HttpClient =
     createPlatformHttpClient().config {
         install(WebSockets) {
-            pingIntervalMillis = 20_000
+            pingIntervalMillis = 5_000
         }
 
         install(ContentNegotiation) {
