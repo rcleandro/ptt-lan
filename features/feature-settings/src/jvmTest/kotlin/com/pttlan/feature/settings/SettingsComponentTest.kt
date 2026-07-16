@@ -46,6 +46,8 @@ class SettingsComponentTest {
     }
 
     private class MockStorageInfoProvider : StorageInfoProvider {
+        override val isExternalStorageSupported: Boolean = true
+
         override fun getAvailableStorageOptions(): List<StorageOption> =
             listOf(
                 StorageOption("Interno", "Armazenamento interno", 10_000_000_000L),

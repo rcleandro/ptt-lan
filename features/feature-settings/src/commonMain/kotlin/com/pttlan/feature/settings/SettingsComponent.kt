@@ -20,6 +20,7 @@ data class SettingsState(
     val maxCacheSizeMb: Int = 500,
     val currentCacheUsageMb: Int = 125, // TODO: Obter uso real do diretório de cache
     val storageOptions: List<StorageOption> = emptyList(),
+    val isExternalStorageSupported: Boolean = false,
 )
 
 sealed interface SettingsIntent {
@@ -71,6 +72,7 @@ class SettingsComponent(
                 maxCacheSizeMb = settings.getInt("max_cache_size_mb", 500),
                 currentCacheUsageMb = 125, // TODO: Obter uso real do diretório de cache
                 storageOptions = storageInfoProvider.getAvailableStorageOptions(),
+                isExternalStorageSupported = storageInfoProvider.isExternalStorageSupported,
             ),
         )
     val state: StateFlow<SettingsState> = _state.asStateFlow()

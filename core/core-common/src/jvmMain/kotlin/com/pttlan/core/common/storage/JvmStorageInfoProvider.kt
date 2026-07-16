@@ -3,6 +3,8 @@ package com.pttlan.core.common.storage
 import java.io.File
 
 class JvmStorageInfoProvider : StorageInfoProvider {
+    override val isExternalStorageSupported: Boolean = false
+
     @Suppress("UsableSpace")
     override fun getAvailableStorageOptions(): List<StorageOption> {
         val userHome = System.getProperty("user.home")

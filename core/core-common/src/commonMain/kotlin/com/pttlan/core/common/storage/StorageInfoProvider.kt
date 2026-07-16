@@ -7,5 +7,7 @@ data class StorageOption(
 )
 
 interface StorageInfoProvider {
+    val isExternalStorageSupported: Boolean
+
     fun getAvailableStorageOptions(): List<StorageOption>
 }

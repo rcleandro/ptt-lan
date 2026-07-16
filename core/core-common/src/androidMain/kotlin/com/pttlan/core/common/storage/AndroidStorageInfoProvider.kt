@@ -9,6 +9,8 @@ import java.io.File
 class AndroidStorageInfoProvider(
     private val context: Context,
 ) : StorageInfoProvider {
+    override val isExternalStorageSupported: Boolean = true
+
     override fun getAvailableStorageOptions(): List<StorageOption> {
         val options = mutableListOf<StorageOption>()
 

@@ -350,6 +350,18 @@ fun SettingsScreenContent(
                             )
                         }
                     }
+
+                    if (state.isExternalStorageSupported && state.storageOptions.size == 1) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text =
+                                "O armazenamento SD não está disponível. " +
+                                    "Por favor, insira um cartão SD para poder usar essa funcionalidade.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                        )
+                    }
                 }
             },
             confirmButton = {

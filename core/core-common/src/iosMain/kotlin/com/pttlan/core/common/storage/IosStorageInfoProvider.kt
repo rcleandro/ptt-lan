@@ -11,6 +11,8 @@ import platform.Foundation.NSSearchPathForDirectoriesInDomains
 import platform.Foundation.NSUserDomainMask
 
 class IosStorageInfoProvider : StorageInfoProvider {
+    override val isExternalStorageSupported: Boolean = false
+
     override fun getAvailableStorageOptions(): List<StorageOption> {
         val paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true)
         val documentDirectory = paths.firstOrNull() as? String ?: return emptyList()
