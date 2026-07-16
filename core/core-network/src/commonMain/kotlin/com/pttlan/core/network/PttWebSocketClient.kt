@@ -53,7 +53,10 @@ class PttWebSocketClient(
                 sessionMutex.withLock {
                     if (session != null) return@withLock
                     println("PttWebSocketClient: Tentando conectar a wss://$cleanHost:$port/ws?nickname=$nickname")
-                    session = httpClient.webSocketSession("wss://$cleanHost:$port/ws?nickname=$nickname")
+                    session =
+                        kotlinx.coroutines.withTimeout(5000) {
+                            httpClient.webSocketSession("wss://$cleanHost:$port/ws?nickname=$nickname")
+                        }
                 }
 
                 println("PttWebSocketClient: Conectado com sucesso!")

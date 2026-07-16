@@ -112,7 +112,10 @@ class ConnectionComponent(
                 scope.launch {
                     val result = connectToServerUseCase(intent.server.host, intent.server.port, _state.value.nickname)
                     if (result.isFailure) {
-                        _effects.send(ConnectionEffect.ShowError("Falha ao conectar: ${result.exceptionOrNull()?.message}"))
+                        val exception = result.exceptionOrNull()
+                        if (exception !is kotlinx.coroutines.CancellationException) {
+                            _effects.send(ConnectionEffect.ShowError("Falha ao conectar: ${exception?.message}"))
+                        }
                     }
                 }
             }
@@ -126,7 +129,10 @@ class ConnectionComponent(
                 scope.launch {
                     val result = connectToServerUseCase(intent.ip, 9443, _state.value.nickname)
                     if (result.isFailure) {
-                        _effects.send(ConnectionEffect.ShowError("Falha ao conectar: ${result.exceptionOrNull()?.message}"))
+                        val exception = result.exceptionOrNull()
+                        if (exception !is kotlinx.coroutines.CancellationException) {
+                            _effects.send(ConnectionEffect.ShowError("Falha ao conectar: ${exception?.message}"))
+                        }
                     }
                 }
             }
