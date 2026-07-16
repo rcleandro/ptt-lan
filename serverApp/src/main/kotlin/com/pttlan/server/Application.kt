@@ -16,7 +16,9 @@ import kotlinx.serialization.json.Json
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 import java.io.File
+import java.net.Inet4Address
 import java.net.InetAddress
+import java.net.NetworkInterface
 import javax.jmdns.JmDNS
 import javax.jmdns.ServiceInfo
 import kotlin.time.Duration.Companion.seconds
@@ -70,7 +72,7 @@ fun Application.module() {
                 },
             )
         } catch (e: Exception) {
-            e.printStackTrace()
+            println("Error starting JmDNS: ${e.message}")
         }
     }.start()
 
@@ -91,11 +93,11 @@ fun Application.module() {
 }
 
 private fun getLocalIpAddress(): InetAddress? {
-    val interfaces = java.net.NetworkInterface.getNetworkInterfaces()
+    val interfaces = NetworkInterface.getNetworkInterfaces()
     for (networkInterface in interfaces) {
         if (networkInterface.isLoopback || !networkInterface.isUp) continue
         for (address in networkInterface.inetAddresses) {
-            if (address is java.net.Inet4Address) {
+            if (address is Inet4Address) {
                 return address
             }
         }

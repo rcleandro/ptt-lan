@@ -7,6 +7,7 @@ import com.pttlan.server.channel.ChannelRegistry
 import com.pttlan.server.channel.Participant
 import io.ktor.server.routing.Routing
 import io.ktor.server.websocket.webSocket
+import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
@@ -24,7 +25,7 @@ fun Routing.pttRoutes() {
         try {
             val nickname = call.request.queryParameters["nickname"] ?: "Desconhecido"
             if (!channelRegistry.addGlobalConnection(this, nickname)) {
-                close(io.ktor.websocket.CloseReason(io.ktor.websocket.CloseReason.Codes.VIOLATED_POLICY, "Nome já em uso"))
+                close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Nome já em uso"))
                 return@webSocket
             }
             println("Novo client conectado via WebSocket! ($nickname)")
@@ -80,7 +81,7 @@ fun Routing.pttRoutes() {
                                 else -> {} // ParticipantList, SpeakerChanged, FloorDenied are Server -> Client
                             }
                         } catch (e: Exception) {
-                            e.printStackTrace()
+                            println("Error in connection: ${e.message}")
                         }
                     }
                     is Frame.Binary -> {

@@ -21,8 +21,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.pttlan.core.designsystem.components.ChannelCard
+import com.pttlan.core.designsystem.theme.PttTheme
 
 @Composable
 fun ChannelListScreen(component: ChannelListComponent) {
@@ -121,10 +123,10 @@ fun ChannelListScreenContent(
     }
 }
 
-@org.jetbrains.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun ChannelListScreenPreview() {
-    com.pttlan.core.designsystem.theme.PttTheme {
+    PttTheme {
         ChannelListScreenContent(
             state =
                 ChannelListState(

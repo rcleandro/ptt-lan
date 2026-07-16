@@ -19,6 +19,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.pttlan.core.designsystem.components.ParticipantAvatar
 import com.pttlan.core.designsystem.components.PttButton
@@ -29,6 +30,7 @@ import com.pttlan.core.designsystem.components.PttButtonState.Transmitting
 import com.pttlan.core.designsystem.components.snackbar.PttSnackbarType
 import com.pttlan.core.designsystem.components.snackbar.SnackbarController
 import com.pttlan.core.designsystem.components.snackbar.SnackbarEvent
+import com.pttlan.core.designsystem.theme.PttTheme
 
 @Composable
 fun PttScreen(component: PttComponent) {
@@ -124,10 +126,10 @@ fun PttScreenContent(
     }
 }
 
-@org.jetbrains.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun PttScreenPreview() {
-    com.pttlan.core.designsystem.theme.PttTheme {
+    PttTheme {
         PttScreenContent(
             state =
                 PttState(

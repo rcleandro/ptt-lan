@@ -18,7 +18,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.pttlan.core.designsystem.theme.PttTheme
 
 @Composable
 fun SettingsScreen(component: SettingsComponent) {
@@ -131,10 +133,10 @@ fun SettingsScreenContent(
     }
 }
 
-@org.jetbrains.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun SettingsScreenPreview() {
-    com.pttlan.core.designsystem.theme.PttTheme {
+    PttTheme {
         SettingsScreenContent(
             state =
                 SettingsState(
