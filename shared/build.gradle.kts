@@ -31,7 +31,7 @@ kotlin {
             implementation(libs.material3)
             implementation(libs.ui)
             implementation(libs.compose.components.resources)
-            implementation(libs.ui.tooling.preview)
+            implementation(libs.compose.components.uiToolingPreview)
             implementation(libs.decompose)
             implementation(libs.decompose.extensions.compose)
         }

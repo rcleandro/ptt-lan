@@ -33,7 +33,7 @@ dependencies {
     implementation(project(":features:feature-settings"))
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
-    implementation(libs.androidx.activity.compose)
+    implementation(libs.ui.tooling.preview)
     implementation(libs.decompose)
     implementation(libs.decompose.extensions.compose)
 }

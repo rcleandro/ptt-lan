@@ -36,7 +36,7 @@ kotlin {
             implementation(libs.roborazzi)
             implementation(libs.roborazzi.compose)
             implementation(libs.roborazzi.junit)
-            implementation(libs.androidx.activity.compose)
+            implementation(libs.ui.tooling.preview)
             implementation(libs.androidx.junit)
             implementation(libs.androidx.ui.test.junit4)
             implementation(libs.androidx.ui.test.manifest)
