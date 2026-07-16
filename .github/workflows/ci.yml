@@ -42,6 +42,11 @@ jobs:
           distribution: 'temurin'
       - name: Build Android
         run: ./gradlew :androidApp:assembleDebug
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: androidApp/build/outputs/apk/debug/*.apk
 
   build-desktop:
     runs-on: ubuntu-latest
@@ -52,8 +57,13 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Build Desktop
-        run: ./gradlew :desktopApp:jvmMainClasses
+      - name: Build Desktop (Ubuntu)
+        run: ./gradlew :desktopApp:packageDistributionForCurrentOS
+      - name: Upload Desktop Installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-linux-deb
+          path: desktopApp/build/compose/binaries/main/deb/*.deb
 
   build-server:
     runs-on: ubuntu-latest
@@ -64,8 +74,13 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Build Server
-        run: ./gradlew :serverApp:classes
+      - name: Build Server Distribution
+        run: ./gradlew :serverApp:distZip
+      - name: Upload Server Distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-distribution
+          path: serverApp/build/distributions/*.zip
 
   build-ios:
     runs-on: macos-latest
@@ -85,4 +100,9 @@ jobs:
       - name: Build iOS App
         run: |
           cd iosApp
-          xcodebuild -project iosApp.xcodeproj -scheme iosApp -configuration Debug -sdk iphonesimulator -arch arm64 build
+          xcodebuild -project iosApp.xcodeproj -scheme iosApp -configuration Debug -sdk iphonesimulator -arch arm64 -derivedDataPath build build
+      - name: Upload iOS Simulator Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator-app
+          path: iosApp/build/Build/Products/Debug-iphonesimulator/*.app
