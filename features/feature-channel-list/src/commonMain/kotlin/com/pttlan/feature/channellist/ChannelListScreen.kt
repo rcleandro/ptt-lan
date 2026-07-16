@@ -25,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.pttlan.core.designsystem.components.ChannelCard
 import com.pttlan.core.designsystem.theme.PttTheme
+import com.pttlan.domain.ptt.repository.ActiveChannelDomain
 
 @Composable
 fun ChannelListScreen(component: ChannelListComponent) {
@@ -132,10 +133,8 @@ private fun ChannelListScreenPreview() {
                 ChannelListState(
                     activeChannels =
                         listOf(
-                            com.pttlan.domain.ptt.repository
-                                .ActiveChannelDomain("GERAL", 10),
-                            com.pttlan.domain.ptt.repository
-                                .ActiveChannelDomain("BATE PAPO", 2),
+                            ActiveChannelDomain("GERAL", 10),
+                            ActiveChannelDomain("BATE PAPO", 2),
                         ),
                 ),
             onIntent = {},

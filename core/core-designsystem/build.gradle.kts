@@ -27,7 +27,7 @@ kotlin {
             api(libs.runtime)
             implementation(libs.material.icons.extended)
             api(libs.compose.components.resources)
-            api(libs.compose.components.uiToolingPreview)
+            api(libs.ui.tooling.preview)
         }
         val androidHostTest = sourceSets.getByName("androidHostTest")
         androidHostTest.dependencies {
