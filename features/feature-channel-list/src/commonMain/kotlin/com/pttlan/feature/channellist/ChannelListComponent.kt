@@ -3,6 +3,10 @@ package com.pttlan.feature.channellist
 import com.arkivanov.decompose.ComponentContext
 import com.pttlan.domain.ptt.repository.ActiveChannelDomain
 import com.pttlan.domain.ptt.repository.ChannelDomain
+import com.pttlan.domain.ptt.usecase.CreateChannelUseCase
+import com.pttlan.domain.ptt.usecase.GetRecentChannelsUseCase
+import com.pttlan.domain.ptt.usecase.JoinChannelUseCaseImpl
+import com.pttlan.domain.ptt.usecase.ObserveActiveChannelsUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -41,10 +45,10 @@ sealed interface ChannelListEffect {
 
 class ChannelListComponent(
     componentContext: ComponentContext,
-    private val getRecentChannelsUseCase: com.pttlan.domain.ptt.usecase.GetRecentChannelsUseCase,
-    private val observeActiveChannelsUseCase: com.pttlan.domain.ptt.usecase.ObserveActiveChannelsUseCase,
-    private val joinChannelUseCase: com.pttlan.domain.ptt.usecase.JoinChannelUseCaseImpl,
-    private val createChannelUseCase: com.pttlan.domain.ptt.usecase.CreateChannelUseCase,
+    private val getRecentChannelsUseCase: GetRecentChannelsUseCase,
+    private val observeActiveChannelsUseCase: ObserveActiveChannelsUseCase,
+    private val joinChannelUseCase: JoinChannelUseCaseImpl,
+    private val createChannelUseCase: CreateChannelUseCase,
 ) : ComponentContext by componentContext {
     private val _state = MutableStateFlow(ChannelListState())
     val state: StateFlow<ChannelListState> = _state.asStateFlow()

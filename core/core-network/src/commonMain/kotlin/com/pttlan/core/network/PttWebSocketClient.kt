@@ -141,7 +141,8 @@ class PttWebSocketClient(
                     session = null
                     s?.close()
                 }
-            } catch (ignore: Exception) {}
+            } catch (ignore: Exception) {
+            }
         }
     }
 
@@ -168,7 +169,8 @@ class PttWebSocketClient(
                     session = null
                     s?.close()
                 }
-            } catch (ignore: Exception) {}
+            } catch (ignore: Exception) {
+            }
         }
     }
 }

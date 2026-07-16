@@ -30,6 +30,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.pttlan.core.designsystem.components.ConnectionStatus.Online
+import com.pttlan.core.designsystem.components.ConnectionStatusBadge
+import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.domain.ptt.repository.ServerNode
 
@@ -150,7 +153,7 @@ fun ServerCard(
             Modifier
                 .fillMaxWidth()
                 .clip(MaterialTheme.shapes.medium)
-                .background(com.pttlan.core.designsystem.theme.PttTheme.customColors.surface2)
+                .background(PttTheme.customColors.surface2)
                 .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.medium)
                 .clickable(onClick = onClick)
                 .padding(16.dp),
@@ -170,8 +173,8 @@ fun ServerCard(
             )
         }
 
-        com.pttlan.core.designsystem.components.ConnectionStatusBadge(
-            status = com.pttlan.core.designsystem.components.ConnectionStatus.Online,
+        ConnectionStatusBadge(
+            status = Online,
         )
     }
 }

@@ -8,19 +8,22 @@ import com.arkivanov.decompose.router.stack.navigate
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.lifecycle.Lifecycle
+import com.pttlan.domain.ptt.repository.ConnectionRepository
+import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.feature.channellist.ChannelListComponent
 import com.pttlan.feature.channellist.ChannelListEffect
 import com.pttlan.feature.connection.ConnectionComponent
 import com.pttlan.feature.connection.ConnectionEffect
 import com.pttlan.feature.ptt.PttComponent
 import com.pttlan.feature.ptt.PttEffect
-import com.pttlan.domain.ptt.repository.ConnectionRepository
-import com.pttlan.domain.ptt.repository.ConnectionStatus
+import com.pttlan.feature.ptt.PttIntent.PressPtt
+import com.pttlan.feature.ptt.PttIntent.ReleasePtt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import org.koin.core.parameter.parametersOf
 import kotlin.uuid.ExperimentalUuidApi
@@ -41,7 +44,7 @@ private fun Lifecycle.coroutineScope(): CoroutineScope {
 class RootComponent(
     componentContext: ComponentContext,
 ) : ComponentContext by componentContext,
-    org.koin.core.component.KoinComponent {
+    KoinComponent {
     private val navigation = StackNavigation<Config>()
 
     @OptIn(ExperimentalUuidApi::class)
@@ -68,7 +71,7 @@ class RootComponent(
                     wasConnected = false
                     connectionRepository.disconnect()
                     navigation.navigate { listOf(Config.Connection) }
-                    
+
                     val activeChild = childStack.value.active.instance
                     if (activeChild is Child.ConnectionChild) {
                         activeChild.component.showError("Servidor desconectado")
@@ -135,7 +138,7 @@ class RootComponent(
     fun handlePttKey(isPressed: Boolean): Boolean {
         val activeChild = childStack.value.active.instance
         if (activeChild is Child.PttChild) {
-            val intent = if (isPressed) com.pttlan.feature.ptt.PttIntent.PressPtt else com.pttlan.feature.ptt.PttIntent.ReleasePtt
+            val intent = if (isPressed) PressPtt else ReleasePtt
             activeChild.component.onIntent(intent)
             return true
         }

@@ -8,6 +8,7 @@ import com.pttlan.core.audio.AudioRecorder
 import com.pttlan.core.database.PttDatabase
 import com.pttlan.core.network.PttWebSocketClient
 import com.pttlan.core.network.protocol.AudioCodecType
+import com.pttlan.core.network.protocol.AudioEnvelope
 import com.pttlan.core.network.protocol.ControlMessage
 import com.pttlan.data.ptt.util.LocalFileCache
 import com.pttlan.domain.ptt.model.VoiceMessage
@@ -155,7 +156,7 @@ class VoiceRepositoryImpl(
                             chunk
                         }
                     val envelope =
-                        com.pttlan.core.network.protocol.AudioEnvelope(
+                        AudioEnvelope(
                             channelId = channelId,
                             senderId = userId,
                             sequenceNumber = sequenceNumber++,

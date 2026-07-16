@@ -2,7 +2,15 @@ package com.pttlan.feature.ptt
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.Lifecycle
+import com.pttlan.core.network.protocol.ParticipantDto
 import com.pttlan.domain.ptt.repository.VoiceRepository
+import com.pttlan.domain.ptt.usecase.JoinChannelUseCase
+import com.pttlan.domain.ptt.usecase.LeaveChannelUseCase
+import com.pttlan.domain.ptt.usecase.ObserveFloorDeniedUseCase
+import com.pttlan.domain.ptt.usecase.ObserveParticipantsUseCase
+import com.pttlan.domain.ptt.usecase.ObserveSpeakerUseCase
+import com.pttlan.domain.ptt.usecase.StartTransmittingUseCase
+import com.pttlan.domain.ptt.usecase.StopTransmittingUseCase
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,6 +24,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
 data class PttState(
@@ -25,7 +34,7 @@ data class PttState(
     val currentSpeakerName: String? = null,
     val floorBlocked: Boolean = false,
     val isFloorGranted: Boolean = false,
-    val participants: List<com.pttlan.core.network.protocol.ParticipantDto> = emptyList(),
+    val participants: List<ParticipantDto> = emptyList(),
 )
 
 sealed interface PttIntent {
@@ -49,15 +58,15 @@ class PttComponent(
     private val channelId: String,
     private val userId: String,
     private val voiceRepository: VoiceRepository,
-    private val joinChannelUseCase: com.pttlan.domain.ptt.usecase.JoinChannelUseCase,
-    private val leaveChannelUseCase: com.pttlan.domain.ptt.usecase.LeaveChannelUseCase,
-    private val observeParticipantsUseCase: com.pttlan.domain.ptt.usecase.ObserveParticipantsUseCase,
-    private val observeSpeakerUseCase: com.pttlan.domain.ptt.usecase.ObserveSpeakerUseCase,
-    private val observeFloorDeniedUseCase: com.pttlan.domain.ptt.usecase.ObserveFloorDeniedUseCase,
-    private val startTransmittingUseCase: com.pttlan.domain.ptt.usecase.StartTransmittingUseCase,
-    private val stopTransmittingUseCase: com.pttlan.domain.ptt.usecase.StopTransmittingUseCase,
+    private val joinChannelUseCase: JoinChannelUseCase,
+    private val leaveChannelUseCase: LeaveChannelUseCase,
+    private val observeParticipantsUseCase: ObserveParticipantsUseCase,
+    private val observeSpeakerUseCase: ObserveSpeakerUseCase,
+    private val observeFloorDeniedUseCase: ObserveFloorDeniedUseCase,
+    private val startTransmittingUseCase: StartTransmittingUseCase,
+    private val stopTransmittingUseCase: StopTransmittingUseCase,
 ) : ComponentContext by componentContext,
-    org.koin.core.component.KoinComponent {
+    KoinComponent {
     private val settings: Settings by inject()
 
     private val _state = MutableStateFlow(PttState(channelId = channelId))
@@ -104,8 +113,7 @@ class PttComponent(
             observeParticipantsUseCase(channelId).collect { participants ->
                 val dtos =
                     participants.map {
-                        com.pttlan.core.network.protocol
-                            .ParticipantDto(it.userId, it.nickname, it.isSpeaking)
+                        ParticipantDto(it.userId, it.nickname, it.isSpeaking)
                     }
                 _state.update { it.copy(participants = dtos) }
             }

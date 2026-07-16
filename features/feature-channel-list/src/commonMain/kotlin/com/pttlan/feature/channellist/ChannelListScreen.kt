@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.pttlan.core.designsystem.components.ChannelCard
 
 @Composable
 fun ChannelListScreen(component: ChannelListComponent) {
@@ -93,7 +94,7 @@ fun ChannelListScreen(component: ChannelListComponent) {
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     items(state.activeChannels) { channel ->
-                        com.pttlan.core.designsystem.components.ChannelCard(
+                        ChannelCard(
                             name = channel.id, // Displaying ID as name for now, could be formatted
                             id = channel.id,
                             participantCount = channel.participantCount,

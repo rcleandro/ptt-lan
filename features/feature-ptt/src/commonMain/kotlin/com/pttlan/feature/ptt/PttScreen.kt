@@ -24,6 +24,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.pttlan.core.designsystem.components.ParticipantAvatar
+import com.pttlan.core.designsystem.components.PttButton
+import com.pttlan.core.designsystem.components.PttButtonState.Idle
+import com.pttlan.core.designsystem.components.PttButtonState.Receiving
+import com.pttlan.core.designsystem.components.PttButtonState.Requesting
+import com.pttlan.core.designsystem.components.PttButtonState.Transmitting
 import kotlinx.coroutines.launch
 
 @Composable
@@ -69,16 +75,16 @@ fun PttScreen(component: PttComponent) {
 
             val pttState =
                 if (state.isTransmitting && state.isFloorGranted) {
-                    com.pttlan.core.designsystem.components.PttButtonState.Transmitting
+                    Transmitting
                 } else if (state.isTransmitting) {
-                    com.pttlan.core.designsystem.components.PttButtonState.Requesting
+                    Requesting
                 } else if (state.currentSpeakerId != null) {
-                    com.pttlan.core.designsystem.components.PttButtonState.Receiving
+                    Receiving
                 } else {
-                    com.pttlan.core.designsystem.components.PttButtonState.Idle
+                    Idle
                 }
 
-            com.pttlan.core.designsystem.components.PttButton(
+            PttButton(
                 state = pttState,
                 onPressStart = { component.onIntent(PttIntent.PressPtt) },
                 onPressEnd = { component.onIntent(PttIntent.ReleasePtt) },
@@ -93,7 +99,7 @@ fun PttScreen(component: PttComponent) {
             ) {
                 items(state.participants, key = { it.userId }) { participant ->
                     val isSpeaking = participant.userId == state.currentSpeakerId
-                    com.pttlan.core.designsystem.components.ParticipantAvatar(
+                    ParticipantAvatar(
                         name = participant.nickname,
                         isSpeaking = isSpeaking,
                     )
