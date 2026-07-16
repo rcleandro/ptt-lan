@@ -10,9 +10,16 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+
 class ChannelSessionRepositoryImpl(
     private val webSocketClient: PttWebSocketClient,
 ) : ChannelSessionRepository {
+
+    private val _activeSessionChannelId = MutableStateFlow<String?>(null)
+    override val activeSessionChannelId: StateFlow<String?> = _activeSessionChannelId
+
     override suspend fun joinChannel(
         channelId: String,
         userId: String,
@@ -25,6 +32,7 @@ class ChannelSessionRepositoryImpl(
                 userId = userId,
             ),
         )
+        _activeSessionChannelId.value = channelId
     }
 
     override suspend fun leaveChannel(
@@ -37,6 +45,9 @@ class ChannelSessionRepositoryImpl(
                 userId = userId,
             ),
         )
+        if (_activeSessionChannelId.value == channelId) {
+            _activeSessionChannelId.value = null
+        }
     }
 
     override fun observeParticipants(channelId: String): Flow<List<ParticipantDomain>> =

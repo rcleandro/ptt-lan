@@ -2,8 +2,11 @@ package com.pttlan.domain.ptt.repository
 
 import com.pttlan.domain.ptt.model.ParticipantDomain
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
 interface ChannelSessionRepository {
+    val activeSessionChannelId: StateFlow<String?>
+
     suspend fun joinChannel(
         channelId: String,
         userId: String,

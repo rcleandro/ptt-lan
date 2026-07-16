@@ -17,7 +17,9 @@ import com.pttlan.core.navigation.RootComponent
 import com.pttlan.core.navigation.RootScreen
 import com.pttlan.domain.ptt.repository.ConnectionStatus
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import com.pttlan.domain.ptt.repository.ChannelSessionRepository
 
 class MainActivity : ComponentActivity() {
 
@@ -45,14 +47,20 @@ class MainActivity : ComponentActivity() {
         
         val settings: com.russhwolf.settings.Settings by inject()
         val connectionRepository: ConnectionRepository by inject()
+        val channelSessionRepository: ChannelSessionRepository by inject()
 
         lifecycleScope.launch {
-            connectionRepository.connectionStatus.collect { status ->
+            combine(
+                connectionRepository.connectionStatus,
+                channelSessionRepository.activeSessionChannelId
+            ) { status, activeChannel ->
+                Pair(status, activeChannel)
+            }.collect { (status, activeChannel) ->
                 val alwaysListening = settings.getBoolean("always_listening", true)
                 val intent = android.content.Intent(this@MainActivity, PttForegroundService::class.java)
-                if (status == ConnectionStatus.Connected && alwaysListening) {
+                if (status == ConnectionStatus.Connected && activeChannel != null && alwaysListening) {
                     startForegroundService(intent)
-                } else if (status == ConnectionStatus.Disconnected) {
+                } else if (status == ConnectionStatus.Disconnected || activeChannel == null || !alwaysListening) {
                     stopService(intent)
                 }
             }
@@ -65,6 +73,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @android.annotation.SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
         val keyCode = event.keyCode
         // Automotive standard media keys or custom steering wheel buttons
