@@ -35,6 +35,9 @@ class SettingsComponentTest {
         every { settings.getBoolean("use_opus", false) } returns false
         every { settings.getInt("app_theme", 0) } returns 0
         every { settings.getBoolean("always_listening", true) } returns true
+        every { settings.getBoolean("allow_cache", false) } returns false
+        every { settings.getString("cache_location", "Interno") } returns "Interno"
+        every { settings.getInt("max_cache_size_mb", 500) } returns 500
     }
 
     @AfterTest
@@ -57,6 +60,9 @@ class SettingsComponentTest {
             assertEquals(false, component.state.value.useOpus)
             assertEquals(com.pttlan.core.designsystem.theme.AppTheme.SYSTEM, component.state.value.appTheme)
             assertEquals(true, component.state.value.alwaysListening)
+            assertEquals(false, component.state.value.allowCache)
+            assertEquals("Interno", component.state.value.cacheLocation)
+            assertEquals(500, component.state.value.maxCacheSizeMb)
         }
 
     @Test
@@ -101,5 +107,48 @@ class SettingsComponentTest {
 
             assertEquals(false, component.state.value.alwaysListening)
             verify(exactly = 1) { settings.putBoolean("always_listening", false) }
+        }
+
+    @Test
+    fun `ToggleAllowCache intent updates state and settings`() =
+        runTest(testDispatcher) {
+            val component = createComponent()
+
+            component.onIntent(SettingsIntent.ToggleAllowCache(true))
+
+            assertEquals(true, component.state.value.allowCache)
+            verify(exactly = 1) { settings.putBoolean("allow_cache", true) }
+        }
+
+    @Test
+    fun `ChangeCacheLocation intent updates state and settings`() =
+        runTest(testDispatcher) {
+            val component = createComponent()
+
+            component.onIntent(SettingsIntent.ChangeCacheLocation("Externo"))
+
+            assertEquals("Externo", component.state.value.cacheLocation)
+            verify(exactly = 1) { settings.putString("cache_location", "Externo") }
+        }
+
+    @Test
+    fun `ChangeMaxCacheSize intent updates state and settings`() =
+        runTest(testDispatcher) {
+            val component = createComponent()
+
+            component.onIntent(SettingsIntent.ChangeMaxCacheSize(1024))
+
+            assertEquals(1024, component.state.value.maxCacheSizeMb)
+            verify(exactly = 1) { settings.putInt("max_cache_size_mb", 1024) }
+        }
+
+    @Test
+    fun `ClearCache intent updates state to reset usage`() =
+        runTest(testDispatcher) {
+            val component = createComponent()
+
+            component.onIntent(SettingsIntent.ClearCache)
+
+            assertEquals(0, component.state.value.currentCacheUsageMb)
         }
 }

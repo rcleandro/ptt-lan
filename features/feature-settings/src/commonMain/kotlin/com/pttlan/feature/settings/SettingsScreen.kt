@@ -1,5 +1,8 @@
 package com.pttlan.feature.settings
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,8 +14,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -30,6 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.core.designsystem.theme.PttTheme
+import kotlin.math.roundToInt
 
 @Composable
 fun SettingsScreen(component: SettingsComponent) {
@@ -48,6 +55,7 @@ fun SettingsScreenContent(
     modifier: Modifier = Modifier,
 ) {
     var showThemeDialog by remember { mutableStateOf(false) }
+    var showCacheLocationDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier =
@@ -95,6 +103,121 @@ fun SettingsScreenContent(
                 checked = state.alwaysListening,
                 onCheckedChange = { onIntent(SettingsIntent.ToggleAlwaysListening(it)) },
             )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                Text("Permitir cache", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "Salvar histórico localmente para reduzir consumo de rede no futuro.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(
+                checked = state.allowCache,
+                onCheckedChange = { onIntent(SettingsIntent.ToggleAllowCache(it)) },
+            )
+        }
+
+        AnimatedVisibility(
+            visible = state.allowCache,
+            enter = expandVertically(),
+            exit = shrinkVertically(),
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { showCacheLocationDialog = true }
+                            .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                        Text("Onde armazenar", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            state.cacheLocation,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text(
+                            "Tamanho total permitido",
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Text(
+                            "${state.maxCacheSizeMb} MB",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                    Slider(
+                        value = state.maxCacheSizeMb.toFloat(),
+                        onValueChange = { onIntent(SettingsIntent.ChangeMaxCacheSize(it.roundToInt())) },
+                        valueRange = 100f..2000f,
+                        steps = 19,
+                    )
+                }
+
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text(
+                            "Armazenado",
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Text(
+                            "${state.currentCacheUsageMb} MB de ${state.maxCacheSizeMb} MB",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    LinearProgressIndicator(
+                        progress = {
+                            if (state.maxCacheSizeMb ==
+                                0
+                            ) {
+                                0f
+                            } else {
+                                (state.currentCacheUsageMb.toFloat() / state.maxCacheSizeMb).coerceIn(0f, 1f)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().height(8.dp),
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    OutlinedButton(
+                        onClick = { onIntent(SettingsIntent.ClearCache) },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            "Limpar cache",
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -172,6 +295,56 @@ fun SettingsScreenContent(
             },
             dismissButton = {
                 TextButton(onClick = { showThemeDialog = false }) {
+                    Text("Cancelar")
+                }
+            },
+        )
+    }
+
+    if (showCacheLocationDialog) {
+        AlertDialog(
+            onDismissRequest = { showCacheLocationDialog = false },
+            title = {
+                Text(text = "Onde de armazenamento")
+            },
+            text = {
+                Column {
+                    val locationOptions = listOf("Interno", "Externo")
+                    locationOptions.forEach { location ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
+                                .selectable(
+                                    selected = (location == state.cacheLocation),
+                                    onClick = {
+                                        onIntent(SettingsIntent.ChangeCacheLocation(location))
+                                        showCacheLocationDialog = false
+                                    },
+                                    role = Role.RadioButton,
+                                ).padding(horizontal = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(
+                                selected = (location == state.cacheLocation),
+                                onClick = null,
+                            )
+                            Text(
+                                text = location,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(start = 16.dp),
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showCacheLocationDialog = false }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCacheLocationDialog = false }) {
                     Text("Cancelar")
                 }
             },
