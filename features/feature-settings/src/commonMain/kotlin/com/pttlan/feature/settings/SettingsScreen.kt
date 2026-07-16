@@ -24,6 +24,17 @@ import androidx.compose.ui.unit.dp
 fun SettingsScreen(component: SettingsComponent) {
     val state by component.state.collectAsState()
 
+    SettingsScreenContent(
+        state = state,
+        onIntent = component::onIntent,
+    )
+}
+
+@Composable
+fun SettingsScreenContent(
+    state: SettingsState,
+    onIntent: (SettingsIntent) -> Unit,
+) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
     ) { paddingValues ->
@@ -42,7 +53,7 @@ fun SettingsScreen(component: SettingsComponent) {
 
             OutlinedTextField(
                 value = state.nickname,
-                onValueChange = { component.onIntent(SettingsIntent.UpdateNickname(it)) },
+                onValueChange = { onIntent(SettingsIntent.UpdateNickname(it)) },
                 label = { Text("Seu Nickname") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -71,7 +82,7 @@ fun SettingsScreen(component: SettingsComponent) {
                 }
                 Switch(
                     checked = state.useOpus,
-                    onCheckedChange = { component.onIntent(SettingsIntent.ToggleOpus(it)) },
+                    onCheckedChange = { onIntent(SettingsIntent.ToggleOpus(it)) },
                 )
             }
 
@@ -92,7 +103,7 @@ fun SettingsScreen(component: SettingsComponent) {
                 }
                 Switch(
                     checked = state.useDarkTheme,
-                    onCheckedChange = { component.onIntent(SettingsIntent.ToggleTheme(it)) },
+                    onCheckedChange = { onIntent(SettingsIntent.ToggleTheme(it)) },
                 )
             }
 
@@ -113,9 +124,26 @@ fun SettingsScreen(component: SettingsComponent) {
                 }
                 Switch(
                     checked = state.alwaysListening,
-                    onCheckedChange = { component.onIntent(SettingsIntent.ToggleAlwaysListening(it)) },
+                    onCheckedChange = { onIntent(SettingsIntent.ToggleAlwaysListening(it)) },
                 )
             }
         }
+    }
+}
+
+@org.jetbrains.compose.ui.tooling.preview.Preview
+@Composable
+private fun SettingsScreenPreview() {
+    com.pttlan.core.designsystem.theme.PttTheme {
+        SettingsScreenContent(
+            state =
+                SettingsState(
+                    nickname = "Leandro",
+                    useOpus = true,
+                    useDarkTheme = true,
+                    alwaysListening = false,
+                ),
+            onIntent = {},
+        )
     }
 }

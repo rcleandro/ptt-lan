@@ -47,12 +47,34 @@ fun HistoryScreen(component: HistoryComponent) {
     val messages by component.messages.collectAsState()
     val playingMessageId by component.playingMessageId.collectAsState()
 
+    HistoryScreenContent(
+        messages = messages,
+        playingMessageId = playingMessageId,
+        onBack = component::onBack,
+        onPlayClick = {
+            if (it.id == playingMessageId) {
+                component.stopPlaying()
+            } else {
+                component.playMessage(it)
+            }
+        },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HistoryScreenContent(
+    messages: List<VoiceMessage>,
+    playingMessageId: String?,
+    onBack: () -> Unit,
+    onPlayClick: (VoiceMessage) -> Unit,
+) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Channel History") },
                 navigationIcon = {
-                    IconButton(onClick = component::onBack) {
+                    IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -73,13 +95,7 @@ fun HistoryScreen(component: HistoryComponent) {
                     VoiceMessageItem(
                         message = message,
                         isPlaying = message.id == playingMessageId,
-                        onPlayClick = {
-                            if (message.id == playingMessageId) {
-                                component.stopPlaying()
-                            } else {
-                                component.playMessage(message)
-                            }
-                        },
+                        onPlayClick = { onPlayClick(message) },
                     )
                 }
             }
@@ -143,5 +159,22 @@ fun VoiceMessageItem(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+@org.jetbrains.compose.ui.tooling.preview.Preview
+@Composable
+private fun HistoryScreenPreview() {
+    PttTheme {
+        HistoryScreenContent(
+            messages =
+                listOf(
+                    VoiceMessage("1", "channel1", "Leandro", "/path1", 2500, 1721151600000L),
+                    VoiceMessage("2", "channel1", "João", "/path2", 5000, 1721151660000L),
+                ),
+            playingMessageId = "1",
+            onBack = {},
+            onPlayClick = {},
+        )
     }
 }

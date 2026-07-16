@@ -54,6 +54,17 @@ fun ConnectionScreen(component: ConnectionComponent) {
         }
     }
 
+    ConnectionScreenContent(
+        state = state,
+        onIntent = component::onIntent,
+    )
+}
+
+@Composable
+fun ConnectionScreenContent(
+    state: ConnectionState,
+    onIntent: (ConnectionIntent) -> Unit,
+) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
     ) { paddingValues ->
@@ -86,7 +97,7 @@ fun ConnectionScreen(component: ConnectionComponent) {
                 )
                 OutlinedTextField(
                     value = state.nickname,
-                    onValueChange = { component.onIntent(ConnectionIntent.UpdateNickname(it)) },
+                    onValueChange = { onIntent(ConnectionIntent.UpdateNickname(it)) },
                     label = { Text("Seu Nome") },
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -109,7 +120,7 @@ fun ConnectionScreen(component: ConnectionComponent) {
                     ) {
                         items(state.discoveredServers) { server ->
                             ServerCard(server = server) {
-                                component.onIntent(ConnectionIntent.ConnectToDiscovered(server))
+                                onIntent(ConnectionIntent.ConnectToDiscovered(server))
                             }
                         }
                     }
@@ -129,13 +140,13 @@ fun ConnectionScreen(component: ConnectionComponent) {
                 ) {
                     OutlinedTextField(
                         value = state.manualIp,
-                        onValueChange = { component.onIntent(ConnectionIntent.UpdateManualIp(it)) },
+                        onValueChange = { onIntent(ConnectionIntent.UpdateManualIp(it)) },
                         label = { Text("IP do Servidor") },
                         modifier = Modifier.weight(1f),
                     )
 
                     Button(
-                        onClick = { component.onIntent(ConnectionIntent.ConnectToManualIp(state.manualIp)) },
+                        onClick = { onIntent(ConnectionIntent.ConnectToManualIp(state.manualIp)) },
                         enabled = state.manualIp.isNotBlank(),
                     ) {
                         Text("Conectar")
@@ -178,6 +189,27 @@ fun ServerCard(
 
         ConnectionStatusBadge(
             status = Online,
+        )
+    }
+}
+
+@org.jetbrains.compose.ui.tooling.preview.Preview
+@Composable
+private fun ConnectionScreenPreview() {
+    PttTheme {
+        ConnectionScreenContent(
+            state =
+                ConnectionState(
+                    status = ConnectionStatus.Disconnected,
+                    nickname = "Leandro",
+                    manualIp = "192.168.0.1",
+                    discoveredServers =
+                        listOf(
+                            ServerNode("Servidor Local", "192.168.0.10", 9443),
+                            ServerNode("Servidor Remoto", "10.0.0.5", 9443),
+                        ),
+                ),
+            onIntent = {},
         )
     }
 }

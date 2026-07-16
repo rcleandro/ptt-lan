@@ -52,6 +52,17 @@ fun PttScreen(component: PttComponent) {
         }
     }
 
+    PttScreenContent(
+        state = state,
+        onIntent = component::onIntent,
+    )
+}
+
+@Composable
+fun PttScreenContent(
+    state: PttState,
+    onIntent: (PttIntent) -> Unit,
+) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
     ) { paddingValues ->
@@ -84,8 +95,8 @@ fun PttScreen(component: PttComponent) {
 
             PttButton(
                 state = pttState,
-                onPressStart = { component.onIntent(PttIntent.PressPtt) },
-                onPressEnd = { component.onIntent(PttIntent.ReleasePtt) },
+                onPressStart = { onIntent(PttIntent.PressPtt) },
+                onPressEnd = { onIntent(PttIntent.ReleasePtt) },
                 buttonSize = 140.dp,
             )
 
@@ -106,9 +117,36 @@ fun PttScreen(component: PttComponent) {
                 }
             }
 
-            Button(onClick = { component.onIntent(PttIntent.LeaveChannel) }) {
+            Button(onClick = { onIntent(PttIntent.LeaveChannel) }) {
                 Text("Sair do Canal")
             }
         }
+    }
+}
+
+@org.jetbrains.compose.ui.tooling.preview.Preview
+@Composable
+private fun PttScreenPreview() {
+    com.pttlan.core.designsystem.theme.PttTheme {
+        PttScreenContent(
+            state =
+                PttState(
+                    channelId = "GERAL",
+                    localUserId = "u1",
+                    isTransmitting = false,
+                    currentSpeakerId = "u2",
+                    currentSpeakerName = "João",
+                    participants =
+                        listOf(
+                            com.pttlan.core.network.protocol
+                                .ParticipantDto("u1", "Leandro", false),
+                            com.pttlan.core.network.protocol
+                                .ParticipantDto("u2", "João", true),
+                            com.pttlan.core.network.protocol
+                                .ParticipantDto("u3", "Maria", false),
+                        ),
+                ),
+            onIntent = {},
+        )
     }
 }

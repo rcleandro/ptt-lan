@@ -38,6 +38,17 @@ fun ChannelListScreen(component: ChannelListComponent) {
         }
     }
 
+    ChannelListScreenContent(
+        state = state,
+        onIntent = component::onIntent,
+    )
+}
+
+@Composable
+fun ChannelListScreenContent(
+    state: ChannelListState,
+    onIntent: (ChannelListIntent) -> Unit,
+) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
     ) { paddingValues ->
@@ -61,14 +72,14 @@ fun ChannelListScreen(component: ChannelListComponent) {
             ) {
                 OutlinedTextField(
                     value = state.newChannelName,
-                    onValueChange = { component.onIntent(ChannelListIntent.UpdateNewChannelName(it)) },
+                    onValueChange = { onIntent(ChannelListIntent.UpdateNewChannelName(it)) },
                     label = { Text("Nome do Canal") },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
                 )
 
                 Button(
-                    onClick = { component.onIntent(ChannelListIntent.CreateChannel) },
+                    onClick = { onIntent(ChannelListIntent.CreateChannel) },
                     enabled = state.newChannelName.isNotBlank(),
                 ) {
                     Text("Criar/Entrar")
@@ -100,12 +111,32 @@ fun ChannelListScreen(component: ChannelListComponent) {
                             participantCount = channel.participantCount,
                             isActive = true,
                             onClick = {
-                                component.onIntent(ChannelListIntent.JoinChannel(channel.id, channel.id))
+                                onIntent(ChannelListIntent.JoinChannel(channel.id, channel.id))
                             },
                         )
                     }
                 }
             }
         }
+    }
+}
+
+@org.jetbrains.compose.ui.tooling.preview.Preview
+@Composable
+private fun ChannelListScreenPreview() {
+    com.pttlan.core.designsystem.theme.PttTheme {
+        ChannelListScreenContent(
+            state =
+                ChannelListState(
+                    activeChannels =
+                        listOf(
+                            com.pttlan.domain.ptt.repository
+                                .ActiveChannelDomain("GERAL", 10),
+                            com.pttlan.domain.ptt.repository
+                                .ActiveChannelDomain("BATE PAPO", 2),
+                        ),
+                ),
+            onIntent = {},
+        )
     }
 }
