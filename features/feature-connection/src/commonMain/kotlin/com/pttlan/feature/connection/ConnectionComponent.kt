@@ -113,7 +113,9 @@ class ConnectionComponent(
                     val result = connectToServerUseCase(intent.server.host, intent.server.port, _state.value.nickname)
                     if (result.isFailure) {
                         val exception = result.exceptionOrNull()
-                        if (exception !is kotlinx.coroutines.CancellationException) {
+                        if (exception is kotlinx.coroutines.TimeoutCancellationException) {
+                            _effects.send(ConnectionEffect.ShowError("Tempo de conexão excedido. O servidor está offline?"))
+                        } else if (exception !is kotlinx.coroutines.CancellationException) {
                             _effects.send(ConnectionEffect.ShowError("Falha ao conectar: ${exception?.message}"))
                         }
                     }
@@ -130,7 +132,9 @@ class ConnectionComponent(
                     val result = connectToServerUseCase(intent.ip, 9443, _state.value.nickname)
                     if (result.isFailure) {
                         val exception = result.exceptionOrNull()
-                        if (exception !is kotlinx.coroutines.CancellationException) {
+                        if (exception is kotlinx.coroutines.TimeoutCancellationException) {
+                            _effects.send(ConnectionEffect.ShowError("Tempo de conexão excedido. Verifique o IP e tente novamente."))
+                        } else if (exception !is kotlinx.coroutines.CancellationException) {
                             _effects.send(ConnectionEffect.ShowError("Falha ao conectar: ${exception?.message}"))
                         }
                     }
