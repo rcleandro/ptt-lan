@@ -20,6 +20,7 @@ import com.pttlan.feature.ptt.PttEffect
 import com.pttlan.feature.ptt.PttIntent.PressPtt
 import com.pttlan.feature.ptt.PttIntent.ReleasePtt
 import com.pttlan.feature.settings.SettingsComponent
+import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.coroutines.getBooleanFlow
@@ -62,6 +63,7 @@ class RootComponent(
     private val connectionRepository: ConnectionRepository = get()
     private val settings: Settings = get()
 
+    @OptIn(ExperimentalSettingsApi::class)
     val isCacheEnabled: StateFlow<Boolean> =
         (settings as? ObservableSettings)
             ?.getBooleanFlow("allow_cache", false)

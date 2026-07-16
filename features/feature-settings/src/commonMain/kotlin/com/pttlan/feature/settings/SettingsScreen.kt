@@ -125,7 +125,7 @@ fun SettingsScreenContent(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
-                Text("Permitir cache", style = MaterialTheme.typography.titleMedium)
+                Text("Permitir histórico de audios", style = MaterialTheme.typography.titleMedium)
                 Text(
                     "Salvar histórico localmente para reduzir consumo de rede no futuro.",
                     style = MaterialTheme.typography.bodySmall,
