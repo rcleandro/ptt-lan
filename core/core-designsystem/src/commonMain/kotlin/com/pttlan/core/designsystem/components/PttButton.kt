@@ -1,7 +1,6 @@
 package com.pttlan.core.designsystem.components
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -39,6 +38,7 @@ fun PttButton(
     onPressEnd: () -> Unit,
     modifier: Modifier = Modifier,
     buttonSize: Dp = 120.dp,
+    buttonMargin: Dp = 16.dp,
 ) {
     val bgColor by animateColorAsState(
         targetValue =
@@ -60,10 +60,6 @@ fun PttButton(
             },
     )
 
-    val shadowSize by animateDpAsState(
-        targetValue = if (state == PttButtonState.Idle) 0.dp else 8.dp,
-    )
-
     val iconColor by animateColorAsState(
         targetValue =
             when (state) {
@@ -77,7 +73,7 @@ fun PttButton(
         contentAlignment = Alignment.Center,
         modifier =
             modifier
-                .size(buttonSize + (shadowSize * 2))
+                .size(buttonSize + buttonMargin)
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onPress = {
@@ -97,7 +93,7 @@ fun PttButton(
                 Modifier
                     .size(buttonSize)
                     .shadow(
-                        elevation = shadowSize,
+                        elevation = 8.dp,
                         shape = CircleShape,
                         ambientColor = shadowColor,
                         spotColor = shadowColor,
