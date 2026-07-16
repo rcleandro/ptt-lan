@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -40,73 +39,65 @@ fun ChannelListScreen(component: ChannelListComponent) {
 fun ChannelListScreenContent(
     state: ChannelListState,
     onIntent: (ChannelListIntent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-    ) { paddingValues ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+                .then(modifier),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = "Canais",
-                style = MaterialTheme.typography.displayLarge,
+            OutlinedTextField(
+                value = state.newChannelName,
+                onValueChange = { onIntent(ChannelListIntent.UpdateNewChannelName(it)) },
+                label = { Text("Nome do Canal") },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
             )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            Button(
+                onClick = { onIntent(ChannelListIntent.CreateChannel) },
+                enabled = state.newChannelName.isNotBlank(),
             ) {
-                OutlinedTextField(
-                    value = state.newChannelName,
-                    onValueChange = { onIntent(ChannelListIntent.UpdateNewChannelName(it)) },
-                    label = { Text("Nome do Canal") },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                )
-
-                Button(
-                    onClick = { onIntent(ChannelListIntent.CreateChannel) },
-                    enabled = state.newChannelName.isNotBlank(),
-                ) {
-                    Text("Criar/Entrar")
-                }
+                Text("Criar/Entrar")
             }
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
+        Text(
+            text = "Salas Ativas",
+            style = MaterialTheme.typography.headlineMedium,
+        )
+
+        if (state.activeChannels.isEmpty()) {
             Text(
-                text = "Salas Ativas",
-                style = MaterialTheme.typography.headlineMedium,
+                text = "Nenhuma sala ativa no momento.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-
-            if (state.activeChannels.isEmpty()) {
-                Text(
-                    text = "Nenhuma sala ativa no momento.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(state.activeChannels) { channel ->
-                        ChannelCard(
-                            name = channel.id, // Displaying ID as name for now, could be formatted
-                            id = channel.id,
-                            participantCount = channel.participantCount,
-                            isActive = true,
-                            onClick = {
-                                onIntent(ChannelListIntent.JoinChannel(channel.id, channel.id))
-                            },
-                        )
-                    }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(state.activeChannels) { channel ->
+                    ChannelCard(
+                        name = channel.id, // Displaying ID as name for now, could be formatted
+                        id = channel.id,
+                        participantCount = channel.participantCount,
+                        isActive = true,
+                        onClick = {
+                            onIntent(ChannelListIntent.JoinChannel(channel.id, channel.id))
+                        },
+                    )
                 }
             }
         }

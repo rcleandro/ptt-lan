@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -59,64 +58,61 @@ fun PttScreen(component: PttComponent) {
 fun PttScreenContent(
     state: PttState,
     onIntent: (PttIntent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-    ) { paddingValues ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+                .then(modifier),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = "Canal: #${state.channelId}",
+            style = MaterialTheme.typography.displayLarge,
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        val pttState =
+            if (state.isTransmitting && state.isFloorGranted) {
+                Transmitting
+            } else if (state.isTransmitting) {
+                Requesting
+            } else if (state.currentSpeakerId != null) {
+                Receiving
+            } else {
+                Idle
+            }
+
+        PttButton(
+            state = pttState,
+            onPressStart = { onIntent(PttIntent.PressPtt) },
+            onPressEnd = { onIntent(PttIntent.ReleasePtt) },
+            buttonSize = 140.dp,
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        LazyColumn(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(
-                text = "Canal: #${state.channelId}",
-                style = MaterialTheme.typography.displayLarge,
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            val pttState =
-                if (state.isTransmitting && state.isFloorGranted) {
-                    Transmitting
-                } else if (state.isTransmitting) {
-                    Requesting
-                } else if (state.currentSpeakerId != null) {
-                    Receiving
-                } else {
-                    Idle
-                }
-
-            PttButton(
-                state = pttState,
-                onPressStart = { onIntent(PttIntent.PressPtt) },
-                onPressEnd = { onIntent(PttIntent.ReleasePtt) },
-                buttonSize = 140.dp,
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            LazyColumn(
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                items(state.participants, key = { it.userId }) { participant ->
-                    val isSpeaking = participant.userId == state.currentSpeakerId
-                    val isRequesting = participant.userId == state.localUserId && state.isTransmitting && !state.isFloorGranted
-                    ParticipantAvatar(
-                        name = participant.nickname,
-                        isSpeaking = isSpeaking,
-                        isRequesting = isRequesting,
-                    )
-                }
+            items(state.participants, key = { it.userId }) { participant ->
+                val isSpeaking = participant.userId == state.currentSpeakerId
+                val isRequesting = participant.userId == state.localUserId && state.isTransmitting && !state.isFloorGranted
+                ParticipantAvatar(
+                    name = participant.nickname,
+                    isSpeaking = isSpeaking,
+                    isRequesting = isRequesting,
+                )
             }
+        }
 
-            Button(onClick = { onIntent(PttIntent.LeaveChannel) }) {
-                Text("Sair do Canal")
-            }
+        Button(onClick = { onIntent(PttIntent.LeaveChannel) }) {
+            Text("Sair do Canal")
         }
     }
 }

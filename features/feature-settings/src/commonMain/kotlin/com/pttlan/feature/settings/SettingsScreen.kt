@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,78 +34,75 @@ fun SettingsScreen(component: SettingsComponent) {
 fun SettingsScreenContent(
     state: SettingsState,
     onIntent: (SettingsIntent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-    ) { paddingValues ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+                .then(modifier),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
-                    Text("Usar codec Opus", style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        "Compressão avançada de áudio. Reduz consumo de rede significativamente.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Switch(
-                    checked = state.useOpus,
-                    onCheckedChange = { onIntent(SettingsIntent.ToggleOpus(it)) },
+            Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                Text("Usar codec Opus", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "Compressão avançada de áudio. Reduz consumo de rede significativamente.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            Switch(
+                checked = state.useOpus,
+                onCheckedChange = { onIntent(SettingsIntent.ToggleOpus(it)) },
+            )
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
-                    Text("Tema Escuro", style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        "Usa o esquema de cores sóbrio de baixo contraste.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Switch(
-                    checked = state.useDarkTheme,
-                    onCheckedChange = { onIntent(SettingsIntent.ToggleTheme(it)) },
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                Text("Tema Escuro", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "Usa o esquema de cores sóbrio de baixo contraste.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            Switch(
+                checked = state.useDarkTheme,
+                onCheckedChange = { onIntent(SettingsIntent.ToggleTheme(it)) },
+            )
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
-                    Text("Sempre Ouvindo", style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        "Receber áudio mesmo quando o app estiver em segundo plano (requer permissão especial).",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Switch(
-                    checked = state.alwaysListening,
-                    onCheckedChange = { onIntent(SettingsIntent.ToggleAlwaysListening(it)) },
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                Text("Sempre Ouvindo", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "Receber áudio mesmo quando o app estiver em segundo plano (requer permissão especial).",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            Switch(
+                checked = state.alwaysListening,
+                onCheckedChange = { onIntent(SettingsIntent.ToggleAlwaysListening(it)) },
+            )
         }
     }
 }
