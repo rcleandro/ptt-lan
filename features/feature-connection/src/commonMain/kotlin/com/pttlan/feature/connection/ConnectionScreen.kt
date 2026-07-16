@@ -47,15 +47,9 @@ fun ConnectionScreen(component: ConnectionComponent) {
 
     LaunchedEffect(Unit) {
         component.effects.collect { effect ->
-            when (effect) {
-                is ConnectionEffect.ShowError -> {
-                    scope.launch {
-                        snackbarHostState.showSnackbar(effect.message)
-                    }
-                }
-                ConnectionEffect.NavigateToChannelList -> {
-                    // Handled by RootComponent via Decompose navigation in a real app,
-                    // but keeping it here for completeness of the component contract
+            if (effect is ConnectionEffect.ShowError) {
+                scope.launch {
+                    snackbarHostState.showSnackbar(effect.message)
                 }
             }
         }
