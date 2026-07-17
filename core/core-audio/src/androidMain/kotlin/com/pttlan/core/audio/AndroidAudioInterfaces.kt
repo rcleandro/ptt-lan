@@ -1,8 +1,8 @@
 package com.pttlan.core.audio
 
 import android.annotation.SuppressLint
+import android.media.AudioAttributes
 import android.media.AudioFormat
-import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.AudioTrack
 import android.media.MediaRecorder
@@ -51,7 +51,7 @@ class AndroidAudioRecorder : AudioRecorder {
                     if (audioRecord?.state == AudioRecord.STATE_INITIALIZED) {
                         audioRecord?.stop()
                     }
-                } catch (e: IllegalStateException) {
+                } catch (_: IllegalStateException) {
                     // Ignored - AudioRecord might already be stopped or uninitialized
                 }
                 audioRecord?.release()
@@ -77,14 +77,24 @@ class AndroidAudioPlayer : AudioPlayer {
             val bufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat)
 
             audioTrack =
-                AudioTrack(
-                    AudioManager.STREAM_MUSIC,
-                    sampleRate,
-                    channelConfig,
-                    audioFormat,
-                    maxOf(bufferSize, chunk.size * 4),
-                    AudioTrack.MODE_STREAM,
-                )
+                AudioTrack
+                    .Builder()
+                    .setAudioAttributes(
+                        AudioAttributes
+                            .Builder()
+                            .setUsage(AudioAttributes.USAGE_MEDIA)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                            .build(),
+                    ).setAudioFormat(
+                        AudioFormat
+                            .Builder()
+                            .setEncoding(audioFormat)
+                            .setSampleRate(sampleRate)
+                            .setChannelMask(channelConfig)
+                            .build(),
+                    ).setBufferSizeInBytes(maxOf(bufferSize, chunk.size * 4))
+                    .setTransferMode(AudioTrack.MODE_STREAM)
+                    .build()
             audioTrack?.play()
         }
 
