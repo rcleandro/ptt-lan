@@ -16,7 +16,6 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
@@ -68,6 +67,7 @@ fun SettingsScreenContent(
 ) {
     var showThemeDialog by remember { mutableStateOf(false) }
     var showCacheLocationDialog by remember { mutableStateOf(false) }
+    var showClearDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier =
@@ -77,6 +77,31 @@ fun SettingsScreenContent(
                 .then(modifier),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { showThemeDialog = true }
+                    .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                Text("Tema", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    when (state.appTheme) {
+                        AppTheme.SYSTEM -> "Automático (sistema)"
+                        AppTheme.LIGHT -> "Claro"
+                        AppTheme.DARK -> "Escuro"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -222,41 +247,18 @@ fun SettingsScreenContent(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    OutlinedButton(
-                        onClick = { onIntent(SettingsIntent.ClearCache) },
+                    androidx.compose.material3.Button(
+                        onClick = { showClearDialog = true },
                         modifier = Modifier.fillMaxWidth(),
+                        colors =
+                            androidx.compose.material3.ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                            ),
                     ) {
-                        Text(
-                            "Limpar cache",
-                            color = MaterialTheme.colorScheme.error,
-                        )
+                        Text("Limpar histórico")
                     }
                 }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { showThemeDialog = true }
-                    .padding(vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
-                Text("Tema", style = MaterialTheme.typography.titleMedium)
-                Text(
-                    when (state.appTheme) {
-                        AppTheme.SYSTEM -> "Automático (sistema)"
-                        AppTheme.LIGHT -> "Claro"
-                        AppTheme.DARK -> "Escuro"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
         }
     }
@@ -371,6 +373,29 @@ fun SettingsScreenContent(
             },
             dismissButton = {
                 TextButton(onClick = { showCacheLocationDialog = false }) {
+                    Text("Cancelar")
+                }
+            },
+        )
+    }
+
+    if (showClearDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearDialog = false },
+            title = { Text("Limpar Histórico") },
+            text = { Text("Tem certeza que deseja apagar todos os áudios gravados? Esta ação não pode ser desfeita.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showClearDialog = false
+                        onIntent(SettingsIntent.ClearCache)
+                    },
+                ) {
+                    Text("Limpar", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearDialog = false }) {
                     Text("Cancelar")
                 }
             },
