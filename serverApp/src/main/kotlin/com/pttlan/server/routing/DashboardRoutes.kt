@@ -1,6 +1,7 @@
 package com.pttlan.server.routing
 
 import com.pttlan.server.channel.ChannelRegistry
+import com.sun.management.OperatingSystemMXBean
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.http.content.staticResources
 import io.ktor.server.request.receive
@@ -91,7 +92,7 @@ fun Routing.dashboardRoutes() {
 
             val osBean = ManagementFactory.getOperatingSystemMXBean()
             val rawCpuLoad =
-                if (osBean is com.sun.management.OperatingSystemMXBean) {
+                if (osBean is OperatingSystemMXBean) {
                     osBean.processCpuLoad * 100.0
                 } else {
                     0.0

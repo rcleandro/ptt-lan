@@ -8,6 +8,7 @@ import com.pttlan.server.routing.DashboardLogEventDto
 import com.pttlan.server.routing.DashboardParticipantDto
 import com.pttlan.server.routing.SpeakerTimeDto
 import com.pttlan.server.routing.TimeSeriesPointDto
+import com.sun.management.OperatingSystemMXBean
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
@@ -19,6 +20,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
+import java.lang.management.ManagementFactory
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -157,22 +159,19 @@ class ChannelRegistry {
 
     @Suppress("MagicNumber")
     suspend fun getTimeSeries(): List<TimeSeriesPointDto> {
-        val osBean =
-            java.lang.management.ManagementFactory
-                .getOperatingSystemMXBean()
+        val osBean = ManagementFactory.getOperatingSystemMXBean()
         val rawCpuLoad =
-            if (osBean is com.sun.management.OperatingSystemMXBean) {
+            if (osBean is OperatingSystemMXBean) {
                 osBean.processCpuLoad * 100.0
             } else {
                 0.0
             }
         val cpuLoad = rawCpuLoad.takeIf { it >= 0.0 && !it.isNaN() }?.coerceAtMost(100.0) ?: 0.0
 
-        val rawMem =
-            (
-                (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()).toDouble() /
-                    Runtime.getRuntime().maxMemory()
-            ) * 100.0
+        val totalMemory = Runtime.getRuntime().totalMemory()
+        val freeMemory = Runtime.getRuntime().freeMemory()
+        val maxMemory = Runtime.getRuntime().maxMemory()
+        val rawMem = ((totalMemory - freeMemory).toDouble() / maxMemory) * 100.0
         val memoryUsedPercent = rawMem.takeIf { !it.isNaN() }?.coerceIn(0.0, 100.0) ?: 0.0
 
         val currentPoint = getOrCreateCurrentMetric()
