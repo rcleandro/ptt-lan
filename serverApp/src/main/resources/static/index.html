@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PTT-LAN Admin Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --bg-color: #121212;
@@ -209,6 +210,11 @@
         </div>
         
         <div>
+            <h2>Quem Fala Mais (Segundos)</h2>
+            <div class="stat-card" style="margin-bottom: 20px;">
+                <canvas id="speakerChart"></canvas>
+            </div>
+            
             <h2>Atividade Recente</h2>
             <div id="logs-container" class="logs-container">
                 <!-- Logs serão inseridos aqui via JS -->
@@ -232,6 +238,7 @@
                 
                 renderChannels(data.channels);
                 renderLogs(data.logs || []);
+                renderChart(data.speakerTimes || []);
             } catch (error) {
                 console.error('Error fetching metrics:', error);
             }
@@ -302,6 +309,51 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        let speakerChartInstance = null;
+
+        function renderChart(speakerTimes) {
+            const ctx = document.getElementById('speakerChart');
+            if (!ctx) return;
+
+            // Sort by totalTimeSeconds descending
+            const sorted = [...speakerTimes].sort((a, b) => b.totalTimeSeconds - a.totalTimeSeconds);
+            const labels = sorted.map(s => s.nickname);
+            const data = sorted.map(s => s.totalTimeSeconds);
+
+            if (speakerChartInstance) {
+                speakerChartInstance.data.labels = labels;
+                speakerChartInstance.data.datasets[0].data = data;
+                speakerChartInstance.update();
+            } else {
+                speakerChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Segundos',
+                            data: data,
+                            backgroundColor: 'rgba(76, 158, 235, 0.6)',
+                            borderColor: '#4C9EEB',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }
         }
 
         // Poll a cada 2 segundos

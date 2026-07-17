@@ -30,6 +30,7 @@ data class Participant(
 class PttChannel(
     val id: String,
     private val onLog: suspend (participantName: String, eventType: String) -> Unit = { _, _ -> },
+    private val onSpeakDuration: suspend (participantName: String, durationMs: Long) -> Unit = { _, _ -> },
 ) {
     private val participants = mutableMapOf<String, Participant>()
     private val mutex = Mutex()
@@ -131,6 +132,8 @@ class PttChannel(
     var currentSpeakerId: String? = null
         private set
 
+    private var speakerStartTime: Long = 0
+
     suspend fun requestFloor(userId: String): Boolean =
         mutex
             .withLock {
@@ -144,23 +147,26 @@ class PttChannel(
                 }
             }.also { (granted, nickname) ->
                 if (granted) {
+                    speakerStartTime = System.currentTimeMillis()
                     onLog(nickname, "START_SPEAKING")
                     broadcast(ControlMessage.SpeakerChanged(id, userId, nickname, true))
                 }
             }.first
 
     suspend fun releaseFloor(userId: String) {
-        val nickname =
+        val (nickname, durationMs) =
             mutex.withLock {
                 if (currentSpeakerId == userId) {
                     currentSpeakerId = null
                     val p = participants[userId]
                     p?.isSpeaking = false
-                    p?.nickname ?: "Desconhecido"
+                    val duration = System.currentTimeMillis() - speakerStartTime
+                    Pair(p?.nickname ?: "Desconhecido", duration)
                 } else {
                     return // Not the current speaker, ignore
                 }
             }
+        onSpeakDuration(nickname, durationMs)
         onLog(nickname, "STOP_SPEAKING")
         broadcast(ControlMessage.SpeakerChanged(id, userId, nickname, false))
     }

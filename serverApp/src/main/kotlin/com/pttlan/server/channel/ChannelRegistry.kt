@@ -6,6 +6,7 @@ import com.pttlan.core.network.protocol.ControlMessage
 import com.pttlan.server.routing.DashboardChannelDto
 import com.pttlan.server.routing.DashboardLogEventDto
 import com.pttlan.server.routing.DashboardParticipantDto
+import com.pttlan.server.routing.SpeakerTimeDto
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.Frame
 import kotlinx.coroutines.CoroutineScope
@@ -20,11 +21,13 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private const val CLEANUP_DELAY_MS = 5 * 60 * 1000L
 private const val MAX_LOGS = 100
+private const val MS_PER_SECOND = 1000L
 
 class ChannelRegistry {
     private val channels = ConcurrentHashMap<String, PttChannel>()
     private val globalConnections = ConcurrentHashMap<DefaultWebSocketServerSession, String>()
     private val cleanupJobs = ConcurrentHashMap<String, Job>()
+    private val accumulatedSpeakerTime = ConcurrentHashMap<String, Long>()
     private val scope = CoroutineScope(Dispatchers.Default)
 
     private val logMutex = kotlinx.coroutines.sync.Mutex()
@@ -54,9 +57,16 @@ class ChannelRegistry {
         cleanupJobs.remove(channelId)?.cancel()
         val channel =
             channels.getOrPut(channelId) {
-                PttChannel(channelId) { participantName, eventType ->
-                    addLog(channelId, participantName, eventType)
-                }
+                PttChannel(
+                    id = channelId,
+                    onLog = { participantName, eventType ->
+                        addLog(channelId, participantName, eventType)
+                    },
+                    onSpeakDuration = { participantName, durationMs ->
+                        val current = accumulatedSpeakerTime[participantName] ?: 0L
+                        accumulatedSpeakerTime[participantName] = current + durationMs
+                    },
+                )
             }
         broadcastActiveChannels()
         return channel
@@ -101,6 +111,9 @@ class ChannelRegistry {
     }
 
     suspend fun getRecentLogs(): List<DashboardLogEventDto> = logMutex.withLock { recentLogs.toList() }
+
+    @Suppress("MaxLineLength")
+    fun getSpeakerTimes(): List<SpeakerTimeDto> = accumulatedSpeakerTime.map { SpeakerTimeDto(it.key, it.value / MS_PER_SECOND) }
 
     suspend fun getActiveChannelsInfo(): List<DashboardChannelDto> =
         channels.values.map { channel ->
