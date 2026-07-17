@@ -28,7 +28,14 @@ fun Instant.toRelativeDisplay(
     }
 
     return when {
-        duration < 1.minutes -> "agora mesmo"
+        duration < 1.minutes -> {
+            val seconds = duration.inWholeSeconds
+            if (seconds < 1) {
+                "agora mesmo"
+            } else {
+                "há ${pluralize(seconds, "segundo", "segundos")}"
+            }
+        }
         duration < 1.hours -> {
             val minutes = duration.inWholeMinutes
             "há ${pluralize(minutes, "minuto", "minutos")}"
