@@ -156,7 +156,7 @@
     <script>
         async function fetchMetrics() {
             try {
-                const response = await fetch('/api/admin/metrics');
+                const response = await fetch('/api/admin/metrics', { cache: 'no-store' });
                 if (!response.ok) throw new Error('Network response was not ok');
                 const data = await response.json();
                 
