@@ -7,6 +7,6 @@ import org.koin.dsl.module
 val settingsFeatureModule =
     module {
         factory { (componentContext: ComponentContext) ->
-            SettingsComponent(componentContext, get(), get())
+            SettingsComponent(componentContext, get(), get(), get())
         }
     }

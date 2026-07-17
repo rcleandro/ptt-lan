@@ -48,6 +48,7 @@ import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.domain.ptt.model.VoiceMessage
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -209,7 +210,7 @@ fun VoiceMessageItem(
             )
             Spacer(modifier = Modifier.height(4.dp))
             val time =
-                kotlin.time.Instant
+                Instant
                     .fromEpochMilliseconds(message.recordedAt)
                     .toLocalDateTime(TimeZone.currentSystemDefault())
             val durationSec = (message.durationMs / 1000).coerceAtLeast(1)

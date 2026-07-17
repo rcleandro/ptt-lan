@@ -63,7 +63,7 @@ class SettingsComponentTest {
 
     private fun createComponent(): SettingsComponent {
         val componentContext = DefaultComponentContext(lifecycle)
-        return SettingsComponent(componentContext, settings, MockStorageInfoProvider())
+        return SettingsComponent(componentContext, settings, MockStorageInfoProvider(), mockk(relaxed = true))
     }
 
     @Test

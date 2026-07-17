@@ -4,11 +4,15 @@ import com.arkivanov.decompose.ComponentContext
 import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.core.common.storage.StorageOption
 import com.pttlan.core.designsystem.theme.AppTheme
+import com.pttlan.domain.ptt.repository.VoiceRepository
 import com.russhwolf.settings.Settings
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 data class SettingsState(
     val nickname: String = "",
@@ -59,7 +63,9 @@ class SettingsComponent(
     componentContext: ComponentContext,
     private val settings: Settings,
     private val storageInfoProvider: StorageInfoProvider,
+    private val voiceRepository: VoiceRepository,
 ) : ComponentContext by componentContext {
+    private val scope = CoroutineScope(Dispatchers.Main)
     private val _state =
         MutableStateFlow(
             SettingsState(
@@ -117,6 +123,9 @@ class SettingsComponent(
                 _state.update { it.copy(maxCacheSizeMb = intent.sizeMb) }
             }
             is SettingsIntent.ClearCache -> {
+                scope.launch {
+                    voiceRepository.clearAllMessages()
+                }
                 storageInfoProvider.clearCache(_state.value.cacheLocation)
                 _state.update { it.copy(currentCacheUsageMb = 0) }
             }
