@@ -18,6 +18,7 @@ import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -30,6 +31,7 @@ import okio.Path.Companion.toPath
 import okio.SYSTEM
 import okio.buffer
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 
 class VoiceRepositoryImpl(
     private val audioRecorder: AudioRecorder,
@@ -274,7 +276,7 @@ class VoiceRepositoryImpl(
 
                     while (isActive) {
                         if (isPlaybackPaused) {
-                            kotlinx.coroutines.delay(100)
+                            delay(100.milliseconds)
                             continue
                         }
                         val read = source.read(buffer)
