@@ -161,8 +161,10 @@ fun HistoryScreenContent(
             }
         }
 
+        var showClearDialog by remember { mutableStateOf(false) }
+
         FloatingActionButton(
-            onClick = onClearCacheClick,
+            onClick = { showClearDialog = true },
             modifier =
                 Modifier
                     .align(Alignment.BottomEnd)
@@ -173,6 +175,29 @@ fun HistoryScreenContent(
             Icon(
                 imageVector = Icons.Default.Delete,
                 contentDescription = "Limpar Cache",
+            )
+        }
+
+        if (showClearDialog) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { showClearDialog = false },
+                title = { Text("Limpar Histórico") },
+                text = { Text("Tem certeza que deseja apagar todos os áudios gravados? Esta ação não pode ser desfeita.") },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(
+                        onClick = {
+                            showClearDialog = false
+                            onClearCacheClick()
+                        },
+                    ) {
+                        Text("Limpar", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(onClick = { showClearDialog = false }) {
+                        Text("Cancelar")
+                    }
+                },
             )
         }
     }
