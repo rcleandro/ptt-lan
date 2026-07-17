@@ -148,7 +148,6 @@ class VoiceRepositoryImpl(
                         if (currentFileSink != null && currentAudioCrypto != null) {
                             val encrypted = currentAudioCrypto!!.process(decoded)
                             currentFileSink?.write(encrypted)
-                            currentFileSink?.flush()
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
@@ -236,7 +235,6 @@ class VoiceRepositoryImpl(
                         if (currentFileSink != null && currentAudioCrypto != null) {
                             val encrypted = currentAudioCrypto!!.process(chunk)
                             currentFileSink?.write(encrypted)
-                            currentFileSink?.flush()
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()

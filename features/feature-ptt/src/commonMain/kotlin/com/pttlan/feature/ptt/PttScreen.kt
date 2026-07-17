@@ -82,7 +82,7 @@ fun PttScreenContent(
                 Transmitting
             } else if (state.isTransmitting) {
                 Requesting
-            } else if (state.currentSpeakerId != null) {
+            } else if (state.currentSpeakerId != null && state.currentSpeakerId != state.localUserId) {
                 Receiving
             } else {
                 Idle
