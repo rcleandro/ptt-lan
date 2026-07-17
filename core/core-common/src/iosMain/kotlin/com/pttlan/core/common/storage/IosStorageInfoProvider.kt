@@ -60,7 +60,7 @@ class IosStorageInfoProvider : StorageInfoProvider {
     override fun clearCache(cacheLocationId: String) {
         val path = getCacheDir() ?: return
         val fileManager = NSFileManager.defaultManager
-        val contents = fileManager.contentsOfDirectoryAtPath(path, null) as? List<String>
+        val contents = fileManager.contentsOfDirectoryAtPath(path, null)
         contents?.forEach { file ->
             fileManager.removeItemAtPath("$path/$file", null)
         }
