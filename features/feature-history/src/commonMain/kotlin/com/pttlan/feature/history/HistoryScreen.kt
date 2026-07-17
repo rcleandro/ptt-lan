@@ -163,19 +163,21 @@ fun HistoryScreenContent(
 
         var showClearDialog by remember { mutableStateOf(false) }
 
-        FloatingActionButton(
-            onClick = { showClearDialog = true },
-            modifier =
-                Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp),
-            containerColor = MaterialTheme.colorScheme.errorContainer,
-            contentColor = MaterialTheme.colorScheme.onErrorContainer,
-        ) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = "Limpar Cache",
-            )
+        if (messages.isNotEmpty()) {
+            FloatingActionButton(
+                onClick = { showClearDialog = true },
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp),
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Limpar Histórico",
+                )
+            }
         }
 
         if (showClearDialog) {
