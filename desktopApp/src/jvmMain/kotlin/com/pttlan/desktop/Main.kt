@@ -11,6 +11,7 @@ import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.core.di.appModules
 import com.pttlan.core.navigation.RootComponent
 import com.pttlan.core.navigation.RootScreen
+import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.coroutines.getIntFlow
@@ -18,6 +19,7 @@ import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
 import javax.swing.SwingUtilities
 
+@OptIn(ExperimentalSettingsApi::class)
 fun main() {
     startKoin {
         modules(appModules())
