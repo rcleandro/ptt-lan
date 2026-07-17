@@ -89,7 +89,6 @@ fun SettingsScreenContent(
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
                 .then(modifier),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Row(
             modifier =
