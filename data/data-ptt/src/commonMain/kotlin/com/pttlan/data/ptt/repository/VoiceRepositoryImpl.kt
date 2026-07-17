@@ -90,23 +90,36 @@ class VoiceRepositoryImpl(
                         currentAudioCrypto = null
                         if (currentSpeakerId == msg.userId && currentChannelId != null) {
                             if (currentFilePath != null) {
-                                val duration = Clock.System.now().toEpochMilliseconds() - currentMessageStartMs
-                                val id = "${msg.channelId}_$currentMessageStartMs"
-                                database.voiceMessageQueries.insert(
-                                    id = id,
-                                    channelId = msg.channelId,
-                                    senderNickname = currentSpeakerNickname ?: msg.userId,
-                                    filePath = currentFilePath!!,
-                                    durationMs = duration,
-                                    recordedAt = currentMessageStartMs,
-                                )
-                                val count = database.voiceMessageQueries.countByChannel(msg.channelId).executeAsOne()
-                                if (count > 50) {
-                                    val toDelete = count - 50
-                                    database.voiceMessageQueries.deleteOldestByChannel(msg.channelId, toDelete)
+                                val path = currentFilePath!!.toPath()
+                                val size =
+                                    try {
+                                        FileSystem.SYSTEM.metadataOrNull(path)?.size ?: 0L
+                                    } catch (e: Exception) {
+                                        0L
+                                    }
+                                if (size == 0L) {
+                                    try {
+                                        FileSystem.SYSTEM.delete(path)
+                                    } catch (e: Exception) {
+                                    }
+                                } else {
+                                    val duration = Clock.System.now().toEpochMilliseconds() - currentMessageStartMs
+                                    val id = "${msg.channelId}_$currentMessageStartMs"
+                                    database.voiceMessageQueries.insert(
+                                        id = id,
+                                        channelId = msg.channelId,
+                                        senderNickname = currentSpeakerNickname ?: msg.userId,
+                                        filePath = currentFilePath!!,
+                                        durationMs = duration,
+                                        recordedAt = currentMessageStartMs,
+                                    )
+                                    val count = database.voiceMessageQueries.countByChannel(msg.channelId).executeAsOne()
+                                    if (count > 50) {
+                                        val toDelete = count - 50
+                                        database.voiceMessageQueries.deleteOldestByChannel(msg.channelId, toDelete)
+                                    }
+                                    manageCache()
                                 }
-
-                                manageCache()
                             }
                         }
                         currentSpeakerId = null
@@ -218,6 +231,16 @@ class VoiceRepositoryImpl(
                             timestampMs = Clock.System.now().toEpochMilliseconds(),
                         )
                     webSocketClient.sendAudioChunk(envelope, encoded)
+
+                    try {
+                        if (currentFileSink != null && currentAudioCrypto != null) {
+                            val encrypted = currentAudioCrypto!!.process(chunk)
+                            currentFileSink?.write(encrypted)
+                            currentFileSink?.flush()
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                 }
             }
     }
