@@ -199,6 +199,7 @@
             <div id="last-updated" style="color: var(--text-muted); font-size: 14px;">Atualizado: --:--:--</div>
         </div>
         <div style="display: flex; gap: 10px;">
+            <button class="btn-warning" style="background-color: #9C27B0; color: white; padding: 8px 16px; border-radius: 4px;" onclick="broadcastAlert()">📢 Broadcast Alerta</button>
             <button class="btn-warning" style="background-color: #4C9EEB; color: white; padding: 8px 16px; border-radius: 4px;" onclick="restartServer()">🔄 Restart</button>
             <button class="btn-danger" style="background-color: #F44336; color: white; padding: 8px 16px; border-radius: 4px;" onclick="shutdownServer()">🛑 Desligar</button>
         </div>
@@ -206,24 +207,21 @@
 
     <div class="stats-grid">
         <div class="stat-card">
+            <h3>Saúde do Servidor</h3>
+            <div id="uptime-stat" class="stat-value" style="font-size: 20px;">0h 0m</div>
+            <div style="font-size: 14px; margin-top: 10px;">
+                Uso RAM: <span id="memory-stat" style="font-weight: bold;">0 MB</span> / <span id="memory-total-stat">0 MB</span><br/>
+                Uso CPU: <span id="cpu-stat" style="font-weight: bold;">0.0%</span><br/>
+                Threads: <span id="threads-stat" style="font-weight: bold;">0</span>
+            </div>
+        </div>
+        <div class="stat-card">
             <div class="stat-value" id="global-connections">0</div>
             <div class="stat-label">Conexões Globais</div>
         </div>
         <div class="stat-card">
             <div class="stat-value" id="active-channels-count">0</div>
             <div class="stat-label">Canais Ativos</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value" id="memory-usage">0 MB</div>
-            <div class="stat-label">Uso de RAM</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value" id="server-uptime">00:00:00</div>
-            <div class="stat-label">Uptime</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value" id="active-threads">0</div>
-            <div class="stat-label">Threads Ativas</div>
         </div>
     </div>
 
@@ -267,11 +265,13 @@
                 </div>
             </div>
             
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h2 style="margin: 0;">Atividade Recente</h2>
-                <select id="log-channel-filter" style="padding: 5px 10px; border-radius: 4px; background: var(--card-bg); color: var(--text-color); border: 1px solid #444; font-family: inherit;">
+            <h2>Logs Recentes</h2>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+                <label for="log-channel-filter" style="font-size: 14px; color: var(--text-muted);">Filtrar por canal:</label>
+                <select id="log-channel-filter" style="background-color: var(--surface-color); color: var(--text-color); border: 1px solid #444; border-radius: 4px; padding: 4px 8px; flex: 1;">
                     <option value="ALL">Todos os Canais</option>
                 </select>
+                <a href="/api/admin/logs/csv" download="ptt_logs.csv" style="text-decoration: none; background-color: #4CAF50; color: white; padding: 4px 12px; border-radius: 4px; font-size: 14px;">📥 Exportar CSV</a>
             </div>
             <div id="logs-container" class="logs-container">
                 <!-- Logs serão inseridos aqui via JS -->
@@ -291,15 +291,15 @@
                 document.getElementById('active-channels-count').textContent = data.channels.length;
                 
                 if (data.serverHealth) {
-                    document.getElementById('memory-usage').textContent = `${data.serverHealth.memoryUsedMb} MB`;
-                    document.getElementById('active-threads').textContent = data.serverHealth.activeThreads;
+                    document.getElementById('memory-stat').innerText = data.serverHealth.memoryUsedMb + ' MB';
+                    document.getElementById('memory-total-stat').innerText = data.serverHealth.memoryTotalMb + ' MB';
+                    document.getElementById('cpu-stat').innerText = data.serverHealth.cpuLoadPercent.toFixed(1) + '%';
+                    document.getElementById('threads-stat').innerText = data.serverHealth.activeThreads;
                     
                     const uptimeMs = data.serverHealth.uptimeMs;
                     const hours = Math.floor(uptimeMs / 3600000);
                     const minutes = Math.floor((uptimeMs % 3600000) / 60000);
-                    const seconds = Math.floor((uptimeMs % 60000) / 1000);
-                    document.getElementById('server-uptime').textContent = 
-                        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    document.getElementById('uptime-stat').textContent = `${hours}h ${minutes}m`;
                 }
 
                 const now = new Date();
@@ -346,11 +346,16 @@
                     </div>
                     <ul class="participant-list">
                         ${channel.participants.map(p => `
-                            <li class="participant-item" style="display:flex; justify-content:space-between; width:100%;">
-                                <div style="display:flex; align-items:center;">
-                                    <div class="status-dot ${p.isSpeaking ? 'speaking' : ''}"></div>
-                                    <span>${p.nickname}</span>
-                                    ${p.isSpeaking ? '<span style="margin-left: 8px; font-size: 12px; color: var(--speaking-color);">(Falando)</span>' : ''}
+                            <li class="participant-item" style="display:flex; justify-content:space-between; width:100%; align-items: flex-start;">
+                                <div>
+                                    <div style="display:flex; align-items:center;">
+                                        <div class="status-dot ${p.isSpeaking ? 'speaking' : ''}"></div>
+                                        <span style="font-weight: bold;">${p.nickname}</span>
+                                        ${p.isSpeaking ? '<span style="margin-left: 8px; font-size: 12px; color: var(--speaking-color);">(Falando)</span>' : ''}
+                                    </div>
+                                    <div style="font-size: 12px; color: var(--text-muted); margin-left: 14px; margin-top: 4px;">
+                                        IP: ${p.ipAddress} | App: ${p.appVersion} | Ping: ${p.pingMs > 0 ? p.pingMs + 'ms' : 'N/A'}
+                                    </div>
                                 </div>
                                 <button class="btn-warning" onclick="kickUser('${channel.id}', '${p.userId}')" title="Desconectar">🥾</button>
                             </li>
@@ -396,6 +401,21 @@
             try {
                 await fetch('/api/admin/system/shutdown', { method: 'POST' });
                 alert('Sinal de desligamento enviado. A página deixará de funcionar.');
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function broadcastAlert() {
+            const msg = prompt("Digite a mensagem para enviar a todos os apps conectados:");
+            if (!msg) return;
+            try {
+                await fetch('/api/admin/system/broadcast', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg })
+                });
+                alert('Mensagem enviada!');
             } catch (error) {
                 console.error(error);
             }

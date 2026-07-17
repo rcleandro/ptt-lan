@@ -4,6 +4,7 @@ package com.pttlan.server.routing
 import com.pttlan.core.network.protocol.ControlMessage
 import com.pttlan.server.channel.ChannelRegistry
 import com.pttlan.server.channel.Participant
+import io.ktor.server.plugins.origin
 import io.ktor.server.routing.Routing
 import io.ktor.server.websocket.webSocket
 import io.ktor.websocket.CloseReason
@@ -40,8 +41,20 @@ fun Routing.pttRoutes() {
                                     currentChannelId = message.channelId
                                     println("Usuário ${message.nickname} (${message.userId}) entrou no canal ${message.channelId}")
 
+                                    val appVersion = call.request.queryParameters["version"] ?: "Desconhecida"
+                                    val ipAddress = call.request.origin.remoteHost
+
                                     val channel = channelRegistry.getOrCreateChannel(message.channelId)
-                                    val participant = Participant(message.userId, message.nickname, this)
+                                    val participant =
+                                        Participant(
+                                            userId = message.userId,
+                                            nickname = message.nickname,
+                                            session = this,
+                                            isSpeaking = false,
+                                            ipAddress = ipAddress,
+                                            appVersion = appVersion,
+                                            pingMs = 0L,
+                                        )
                                     channel.addParticipant(participant)
                                     channelRegistry.broadcastActiveChannels()
                                 }

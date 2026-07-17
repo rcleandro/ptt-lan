@@ -81,4 +81,10 @@ sealed interface ControlMessage {
     data class ActiveChannelsList(
         val activeChannels: List<ActiveChannelDto>,
     ) : ControlMessage
+
+    @Serializable
+    @SerialName("system_alert")
+    data class SystemAlert(
+        val message: String,
+    ) : ControlMessage
 }

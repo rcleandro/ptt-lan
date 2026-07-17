@@ -3,7 +3,9 @@ package com.pttlan.server.routing
 import com.pttlan.server.channel.ChannelRegistry
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.http.content.staticResources
+import io.ktor.server.request.receive
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondText
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
@@ -19,6 +21,7 @@ data class ServerHealthDto(
     val memoryUsedMb: Long,
     val memoryTotalMb: Long,
     val activeThreads: Int,
+    val cpuLoadPercent: Double,
 )
 
 @Serializable
@@ -66,9 +69,12 @@ data class DashboardParticipantDto(
     val userId: String,
     val nickname: String,
     val isSpeaking: Boolean,
+    val ipAddress: String,
+    val appVersion: String,
+    val pingMs: Long,
 )
 
-@Suppress("MagicNumber")
+@Suppress("MagicNumber", "LongMethod")
 fun Routing.dashboardRoutes() {
     val channelRegistry by inject<ChannelRegistry>()
 
@@ -80,7 +86,16 @@ fun Routing.dashboardRoutes() {
             val memoryUsed = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024)
             val memoryTotal = Runtime.getRuntime().maxMemory() / (1024 * 1024)
             val threads = ManagementFactory.getThreadMXBean().threadCount
-            val serverHealth = ServerHealthDto(uptime, memoryUsed, memoryTotal, threads)
+
+            val osBean = ManagementFactory.getOperatingSystemMXBean()
+            val cpuLoad =
+                if (osBean is com.sun.management.OperatingSystemMXBean) {
+                    osBean.processCpuLoad * 100.0
+                } else {
+                    0.0
+                }
+
+            val serverHealth = ServerHealthDto(uptime, memoryUsed, memoryTotal, threads, cpuLoad)
 
             val activeChannels = channelRegistry.getActiveChannelsInfo()
             val globalConnections = channelRegistry.getGlobalConnectionsCount()
@@ -111,6 +126,28 @@ fun Routing.dashboardRoutes() {
                 Thread.sleep(500)
                 exitProcess(0)
             }.start()
+        }
+
+        post("/system/broadcast") {
+            @Serializable
+            data class BroadcastRequest(
+                val message: String,
+            )
+            val req = call.receive<BroadcastRequest>()
+            channelRegistry.broadcastGlobalAlert(req.message)
+            call.respond(HttpStatusCode.OK, mapOf("status" to "ok"))
+        }
+
+        get("/logs/csv") {
+            val logs = channelRegistry.getRecentLogs()
+            val csv =
+                buildString {
+                    appendLine("Timestamp,Channel,Participant,Event")
+                    logs.forEach {
+                        appendLine("${it.timestamp},${it.channelId},${it.participantName},${it.eventType}")
+                    }
+                }
+            call.respondText(csv, io.ktor.http.ContentType.Text.CSV)
         }
 
         post("/channels/{id}/kick/{userId}") {

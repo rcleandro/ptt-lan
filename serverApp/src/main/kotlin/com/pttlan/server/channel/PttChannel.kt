@@ -1,4 +1,3 @@
-
 package com.pttlan.server.channel
 
 import com.pttlan.core.network.protocol.ControlMessage
@@ -18,6 +17,9 @@ data class Participant(
     val nickname: String,
     val session: DefaultWebSocketServerSession,
     var isSpeaking: Boolean = false,
+    val ipAddress: String = "Desconhecido",
+    val appVersion: String = "Desconhecida",
+    var pingMs: Long = 0L,
 ) {
     fun toDto() =
         ParticipantDto(

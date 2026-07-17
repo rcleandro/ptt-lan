@@ -44,7 +44,7 @@ class ChannelRegistry {
     private val scope = CoroutineScope(Dispatchers.Default)
 
     private val logMutex = kotlinx.coroutines.sync.Mutex()
-    private val recentLogs = kotlin.collections.ArrayDeque<DashboardLogEventDto>()
+    private val recentLogs = ArrayDeque<DashboardLogEventDto>()
 
     private val timeSeriesMutex = kotlinx.coroutines.sync.Mutex()
     private val timeSeriesMetrics = ConcurrentHashMap<Long, MutableTimeSeriesPoint>()
@@ -176,6 +176,9 @@ class ChannelRegistry {
                             userId = p.userId,
                             nickname = p.nickname,
                             isSpeaking = p.isSpeaking,
+                            ipAddress = p.ipAddress,
+                            appVersion = p.appVersion,
+                            pingMs = p.pingMs,
                         )
                     },
             )
@@ -245,6 +248,18 @@ class ChannelRegistry {
         }
 
         getOrCreateChannel("Geral")
+    }
+
+    suspend fun broadcastGlobalAlert(message: String) {
+        val alert = ControlMessage.SystemAlert(message)
+        val json = Json.encodeToString(alert)
+        globalConnections.keys.forEach {
+            try {
+                it.send(Frame.Text(json))
+            } catch (_: Exception) {
+                // Ignore
+            }
+        }
     }
 
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
