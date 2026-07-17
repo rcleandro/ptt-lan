@@ -23,7 +23,7 @@ import javax.jmdns.JmDNS
 import javax.jmdns.ServiceInfo
 import kotlin.time.Duration.Companion.seconds
 
-@Suppress("TooGenericExceptionCaught", "MagicNumber")
+private const val DEFAULT_PORT = 9443
 fun main(args: Array<String>) {
     val keyStoreFile = File("build/keystore.jks")
     if (!keyStoreFile.exists()) {
@@ -34,7 +34,7 @@ fun main(args: Array<String>) {
     EngineMain.main(args)
 }
 
-@Suppress("TooGenericExceptionCaught", "MagicNumber")
+
 fun Application.module() {
     install(WebSockets) {
         pingPeriod = 20.seconds
@@ -58,10 +58,10 @@ fun Application.module() {
                 ServiceInfo.create(
                     "_pttlan._tcp.local.",
                     "PTT-LAN-Server-${System.currentTimeMillis()}",
-                    9443,
+                    DEFAULT_PORT,
                     0,
                     0,
-                    "SSL:9443",
+                    "SSL:$DEFAULT_PORT",
                 )
             jmdns.registerService(serviceInfo)
 
@@ -71,7 +71,7 @@ fun Application.module() {
                     jmdns.close()
                 },
             )
-        } catch (e: Exception) {
+        } catch (e: java.io.IOException) {
             println("Error starting JmDNS: ${e.message}")
         }
     }.start()
