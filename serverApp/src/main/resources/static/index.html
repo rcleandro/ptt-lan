@@ -194,8 +194,14 @@
 </head>
 <body>
     <header>
-        <h1>PTT-LAN Admin Dashboard</h1>
-        <div id="last-updated" style="color: var(--text-muted); font-size: 14px;">Atualizado: --:--:--</div>
+        <div>
+            <h1 style="margin-bottom: 5px;">PTT-LAN Admin Dashboard</h1>
+            <div id="last-updated" style="color: var(--text-muted); font-size: 14px;">Atualizado: --:--:--</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-warning" style="background-color: #4C9EEB; color: white; padding: 8px 16px; border-radius: 4px;" onclick="restartServer()">🔄 Restart</button>
+            <button class="btn-danger" style="background-color: #F44336; color: white; padding: 8px 16px; border-radius: 4px;" onclick="shutdownServer()">🛑 Desligar</button>
+        </div>
     </header>
 
     <div class="stats-grid">
@@ -369,6 +375,27 @@
             try {
                 await fetch(`/api/admin/channels/${channelId}/kick/${userId}`, { method: 'POST' });
                 fetchMetrics();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function restartServer() {
+            if (!confirm(`Tem certeza que deseja reiniciar o estado do servidor? Todos os usuários serão desconectados e os gráficos zerados.`)) return;
+            try {
+                await fetch('/api/admin/system/restart', { method: 'POST' });
+                alert('Servidor reiniciado com sucesso (Soft Restart).');
+                fetchMetrics();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function shutdownServer() {
+            if (!confirm(`Tem certeza que deseja DESLIGAR a JVM do servidor? Você precisará iniciá-lo manualmente depois (ex: via console).`)) return;
+            try {
+                await fetch('/api/admin/system/shutdown', { method: 'POST' });
+                alert('Sinal de desligamento enviado. A página deixará de funcionar.');
             } catch (error) {
                 console.error(error);
             }

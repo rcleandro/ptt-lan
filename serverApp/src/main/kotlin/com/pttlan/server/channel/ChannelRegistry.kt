@@ -212,6 +212,41 @@ class ChannelRegistry {
         return true
     }
 
+    suspend fun resetServer() {
+        globalConnections.keys.forEach {
+            try {
+                it.close(CloseReason(CloseReason.Codes.GOING_AWAY, "Server Restarting"))
+            } catch (_: Exception) {
+            }
+        }
+
+        channels.values.forEach { channel ->
+            val participants = channel.getParticipantsSnapshot()
+            participants.forEach {
+                try {
+                    it.session.close(CloseReason(CloseReason.Codes.GOING_AWAY, "Server Restarting"))
+                } catch (_: Exception) {
+                }
+            }
+        }
+
+        globalConnections.clear()
+        channels.clear()
+        accumulatedSpeakerTime.clear()
+        cleanupJobs.values.forEach { it.cancel() }
+        cleanupJobs.clear()
+
+        logMutex.withLock {
+            recentLogs.clear()
+        }
+
+        timeSeriesMutex.withLock {
+            timeSeriesMetrics.clear()
+        }
+
+        getOrCreateChannel("Geral")
+    }
+
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
     fun broadcastActiveChannels() {
         val activeChannels =

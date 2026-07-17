@@ -11,6 +11,7 @@ import io.ktor.server.routing.route
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import java.lang.management.ManagementFactory
+import kotlin.system.exitProcess
 
 @Serializable
 data class ServerHealthDto(
@@ -97,6 +98,19 @@ fun Routing.dashboardRoutes() {
                     timeSeries = timeSeries,
                 ),
             )
+        }
+
+        post("/system/restart") {
+            channelRegistry.resetServer()
+            call.respond(HttpStatusCode.OK, mapOf("status" to "ok"))
+        }
+
+        post("/system/shutdown") {
+            call.respond(HttpStatusCode.OK, mapOf("status" to "ok"))
+            Thread {
+                Thread.sleep(500)
+                exitProcess(0)
+            }.start()
         }
 
         post("/channels/{id}/kick/{userId}") {
