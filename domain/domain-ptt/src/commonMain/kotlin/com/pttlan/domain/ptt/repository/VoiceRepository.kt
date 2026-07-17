@@ -27,5 +27,9 @@ interface VoiceRepository {
 
     suspend fun playMessage(message: VoiceMessage)
 
+    suspend fun pausePlayingMessage()
+
+    suspend fun resumePlayingMessage()
+
     suspend fun stopPlayingMessage()
 }

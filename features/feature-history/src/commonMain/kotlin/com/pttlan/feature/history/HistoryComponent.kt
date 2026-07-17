@@ -25,6 +25,9 @@ class HistoryComponent(
     private val _playingMessageId = MutableStateFlow<String?>(null)
     val playingMessageId: StateFlow<String?> = _playingMessageId.asStateFlow()
 
+    private val _isPaused = MutableStateFlow<Boolean>(false)
+    val isPaused: StateFlow<Boolean> = _isPaused.asStateFlow()
+
     init {
         voiceRepository
             .getAllMessages()
@@ -38,9 +41,23 @@ class HistoryComponent(
 
     fun playMessage(message: VoiceMessage) {
         scope.launch {
-            _playingMessageId.value = message.id
-            voiceRepository.playMessage(message)
-            _playingMessageId.value = null
+            if (_playingMessageId.value == message.id) {
+                if (_isPaused.value) {
+                    _isPaused.value = false
+                    voiceRepository.resumePlayingMessage()
+                } else {
+                    _isPaused.value = true
+                    voiceRepository.pausePlayingMessage()
+                }
+            } else {
+                _playingMessageId.value = message.id
+                _isPaused.value = false
+                voiceRepository.playMessage(message)
+                if (_playingMessageId.value == message.id) {
+                    _playingMessageId.value = null
+                    _isPaused.value = false
+                }
+            }
         }
     }
 
@@ -48,6 +65,7 @@ class HistoryComponent(
         scope.launch {
             voiceRepository.stopPlayingMessage()
             _playingMessageId.value = null
+            _isPaused.value = false
         }
     }
 }

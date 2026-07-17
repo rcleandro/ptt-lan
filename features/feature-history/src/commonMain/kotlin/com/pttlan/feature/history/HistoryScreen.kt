@@ -18,8 +18,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,16 +46,14 @@ import kotlinx.datetime.toLocalDateTime
 fun HistoryScreen(component: HistoryComponent) {
     val messages by component.messages.collectAsState()
     val playingMessageId by component.playingMessageId.collectAsState()
+    val isPaused by component.isPaused.collectAsState()
 
     HistoryScreenContent(
         messages = messages,
         playingMessageId = playingMessageId,
+        isPaused = isPaused,
         onPlayClick = {
-            if (it.id == playingMessageId) {
-                component.stopPlaying()
-            } else {
-                component.playMessage(it)
-            }
+            component.playMessage(it)
         },
     )
 }
@@ -65,6 +63,7 @@ fun HistoryScreen(component: HistoryComponent) {
 fun HistoryScreenContent(
     messages: List<VoiceMessage>,
     playingMessageId: String?,
+    isPaused: Boolean,
     onPlayClick: (VoiceMessage) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -115,6 +114,7 @@ fun HistoryScreenContent(
                     VoiceMessageItem(
                         message = message,
                         isPlaying = message.id == playingMessageId,
+                        isPaused = message.id == playingMessageId && isPaused,
                         onPlayClick = { onPlayClick(message) },
                     )
                 }
@@ -127,6 +127,7 @@ fun HistoryScreenContent(
 fun VoiceMessageItem(
     message: VoiceMessage,
     isPlaying: Boolean,
+    isPaused: Boolean,
     onPlayClick: () -> Unit,
 ) {
     Row(
@@ -145,19 +146,6 @@ fun VoiceMessageItem(
                 .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(
-            onClick = onPlayClick,
-            modifier = Modifier.size(48.dp),
-        ) {
-            Icon(
-                imageVector = if (isPlaying) Icons.Default.Stop else Icons.Default.PlayArrow,
-                contentDescription = if (isPlaying) "Stop" else "Play",
-                tint = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-
-        Spacer(modifier = Modifier.width(16.dp))
-
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = message.senderNickname,
@@ -179,6 +167,19 @@ fun VoiceMessageItem(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        IconButton(
+            onClick = onPlayClick,
+            modifier = Modifier.size(48.dp),
+        ) {
+            Icon(
+                imageVector = if (isPlaying && !isPaused) Icons.Default.Pause else Icons.Default.PlayArrow,
+                contentDescription = if (isPlaying && !isPaused) "Pause" else "Play",
+                tint = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -194,6 +195,7 @@ private fun HistoryScreenPreviewDark() {
                         VoiceMessage("2", "channel1", "João", "/path2", 5000, 1721151660000L),
                     ),
                 playingMessageId = "1",
+                isPaused = false,
                 onPlayClick = {},
             )
         }
@@ -212,6 +214,7 @@ private fun HistoryScreenPreviewLight() {
                         VoiceMessage("2", "channel1", "João", "/path2", 5000, 1721151660000L),
                     ),
                 playingMessageId = "1",
+                isPaused = false,
                 onPlayClick = {},
             )
         }

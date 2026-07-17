@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import okio.BufferedSink
 import okio.FileSystem
@@ -43,6 +44,10 @@ class VoiceRepositoryImpl(
     private val scope = CoroutineScope(Dispatchers.Default)
     private var transmissionJob: Job? = null
     private var receptionJob: Job? = null
+
+    private var playbackJob: Job? = null
+    private var isPlaybackPaused = false
+    private var currentPlaybackMessageId: String? = null
 
     private var currentSpeakerId: String? = null
     private var currentChannelId: String? = null
@@ -255,19 +260,58 @@ class VoiceRepositoryImpl(
             }
 
     override suspend fun playMessage(message: VoiceMessage) {
-        try {
-            val path = message.filePath.toPath()
-            val source = FileSystem.SYSTEM.source(path).buffer()
-            val data = source.readByteArray()
-            source.close()
-            val decrypted = AudioCrypto().process(data)
-            audioPlayer.play(decrypted)
-        } catch (e: Exception) {
-            e.printStackTrace()
+        stopPlayingMessage()
+        currentPlaybackMessageId = message.id
+        isPlaybackPaused = false
+
+        playbackJob =
+            scope.launch {
+                try {
+                    val path = message.filePath.toPath()
+                    val source = FileSystem.SYSTEM.source(path).buffer()
+                    val crypto = AudioCrypto()
+                    val buffer = ByteArray(4096)
+
+                    while (isActive) {
+                        if (isPlaybackPaused) {
+                            kotlinx.coroutines.delay(100)
+                            continue
+                        }
+                        val read = source.read(buffer)
+                        if (read == -1) break
+                        val chunk = if (read == buffer.size) buffer else buffer.copyOf(read)
+                        val decrypted = crypto.process(chunk)
+                        audioPlayer.play(decrypted)
+                    }
+                    source.close()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                } finally {
+                    audioPlayer.stop()
+                    currentPlaybackMessageId = null
+                    isPlaybackPaused = false
+                }
+            }
+        playbackJob?.join()
+    }
+
+    override suspend fun pausePlayingMessage() {
+        if (currentPlaybackMessageId != null) {
+            isPlaybackPaused = true
+        }
+    }
+
+    override suspend fun resumePlayingMessage() {
+        if (currentPlaybackMessageId != null) {
+            isPlaybackPaused = false
         }
     }
 
     override suspend fun stopPlayingMessage() {
+        playbackJob?.cancel()
+        playbackJob = null
+        isPlaybackPaused = false
+        currentPlaybackMessageId = null
         audioPlayer.stop()
     }
 }
