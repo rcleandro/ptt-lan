@@ -49,3 +49,7 @@ WHERE filePath = :filePath;
 
 deleteAllMessages:
 DELETE FROM VoiceMessage;
+
+deleteById:
+DELETE FROM VoiceMessage
+WHERE id = :id;

@@ -34,4 +34,6 @@ interface VoiceRepository {
     suspend fun stopPlayingMessage()
 
     suspend fun clearAllMessages()
+
+    suspend fun deleteMessage(message: VoiceMessage)
 }

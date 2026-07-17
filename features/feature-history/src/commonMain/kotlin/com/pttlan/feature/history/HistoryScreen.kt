@@ -1,8 +1,10 @@
 package com.pttlan.feature.history
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -68,6 +70,9 @@ fun HistoryScreen(component: HistoryComponent) {
         onClearCacheClick = {
             component.clearAllMessages()
         },
+        onDeleteMessage = {
+            component.deleteMessage(it)
+        },
     )
 }
 
@@ -79,9 +84,13 @@ fun HistoryScreenContent(
     isPaused: Boolean,
     onPlayClick: (VoiceMessage) -> Unit,
     onClearCacheClick: () -> Unit,
+    onDeleteMessage: (VoiceMessage) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = Modifier.fillMaxSize().then(modifier)) {
+        var showClearDialog by remember { mutableStateOf(false) }
+        var messageToDelete by remember { mutableStateOf<VoiceMessage?>(null) }
+
         if (messages.isEmpty()) {
             Column(
                 modifier =
@@ -154,6 +163,9 @@ fun HistoryScreenContent(
                                 isPlaying = message.id == playingMessageId,
                                 isPaused = message.id == playingMessageId && isPaused,
                                 onPlayClick = { onPlayClick(message) },
+                                onLongClick = {
+                                    messageToDelete = message
+                                },
                             )
                         }
                     }
@@ -161,7 +173,28 @@ fun HistoryScreenContent(
             }
         }
 
-        var showClearDialog by remember { mutableStateOf(false) }
+        if (messageToDelete != null) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { messageToDelete = null },
+                title = { Text("Apagar Áudio") },
+                text = { Text("Tem certeza que deseja apagar este áudio?") },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(
+                        onClick = {
+                            messageToDelete?.let { onDeleteMessage(it) }
+                            messageToDelete = null
+                        },
+                    ) {
+                        Text("Apagar", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(onClick = { messageToDelete = null }) {
+                        Text("Cancelar")
+                    }
+                },
+            )
+        }
 
         if (messages.isNotEmpty()) {
             FloatingActionButton(
@@ -205,12 +238,14 @@ fun HistoryScreenContent(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun VoiceMessageItem(
     message: VoiceMessage,
     isPlaying: Boolean,
     isPaused: Boolean,
     onPlayClick: () -> Unit,
+    onLongClick: () -> Unit,
 ) {
     Row(
         modifier =
@@ -224,7 +259,10 @@ fun VoiceMessageItem(
                         PttTheme.customColors.surface2
                     },
                 ).border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.medium)
-                .clickable(onClick = onPlayClick)
+                .combinedClickable(
+                    onClick = onPlayClick,
+                    onLongClick = onLongClick,
+                )
                 .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -285,6 +323,7 @@ private fun HistoryScreenPreviewDark() {
                 isPaused = false,
                 onPlayClick = {},
                 onClearCacheClick = {},
+                onDeleteMessage = {},
             )
         }
     }
@@ -305,6 +344,7 @@ private fun HistoryScreenPreviewLight() {
                 isPaused = false,
                 onPlayClick = {},
                 onClearCacheClick = {},
+                onDeleteMessage = {},
             )
         }
     }

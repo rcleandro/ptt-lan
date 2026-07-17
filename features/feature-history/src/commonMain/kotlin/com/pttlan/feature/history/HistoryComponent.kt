@@ -74,4 +74,10 @@ class HistoryComponent(
             voiceRepository.clearAllMessages()
         }
     }
+
+    fun deleteMessage(message: VoiceMessage) {
+        scope.launch {
+            voiceRepository.deleteMessage(message)
+        }
+    }
 }

@@ -357,4 +357,17 @@ class VoiceRepositoryImpl(
             e.printStackTrace()
         }
     }
+
+    override suspend fun deleteMessage(message: VoiceMessage) {
+        if (currentPlaybackMessageId == message.id) {
+            stopPlayingMessage()
+        }
+        database.voiceMessageQueries.deleteById(message.id)
+        try {
+            val path = message.filePath.toPath()
+            FileSystem.SYSTEM.delete(path)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 }
