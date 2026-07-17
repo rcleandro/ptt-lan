@@ -9,6 +9,7 @@ import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.core.navigation.RootComponent
 import com.pttlan.core.navigation.RootScreen
+import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.coroutines.getIntFlow
@@ -20,6 +21,7 @@ private object IOSDependencies : KoinComponent {
     val settings: Settings = get()
 }
 
+@OptIn(ExperimentalSettingsApi::class)
 @Suppress("FunctionName")
 fun MainViewController(): UIViewController {
     val lifecycle = LifecycleRegistry()
