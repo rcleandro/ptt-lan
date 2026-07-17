@@ -14,6 +14,7 @@ kotlin {
             implementation(libs.koin.compose)
             api(libs.decompose)
             implementation(libs.decompose.extensions.compose)
+            implementation(libs.material.icons.extended)
         }
         jvmTest.dependencies {
             implementation(project(":core:core-testing"))

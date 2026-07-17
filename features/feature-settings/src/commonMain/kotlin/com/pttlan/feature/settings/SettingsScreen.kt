@@ -12,8 +12,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.Headset
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.SdStorage
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -86,6 +95,12 @@ fun SettingsScreenContent(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
+            Icon(
+                imageVector = Icons.Default.Palette,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(end = 16.dp),
+            )
             Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
                 Text("Tema", style = MaterialTheme.typography.titleMedium)
                 Text(
@@ -107,6 +122,12 @@ fun SettingsScreenContent(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
+            Icon(
+                imageVector = Icons.Default.GraphicEq,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(end = 16.dp),
+            )
             Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
                 Text("Usar codec Opus", style = MaterialTheme.typography.titleMedium)
                 Text(
@@ -128,6 +149,12 @@ fun SettingsScreenContent(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
+            Icon(
+                imageVector = Icons.Default.Headset,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(end = 16.dp),
+            )
             Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
                 Text("Sempre Ouvindo", style = MaterialTheme.typography.titleMedium)
                 Text(
@@ -149,6 +176,12 @@ fun SettingsScreenContent(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
+            Icon(
+                imageVector = Icons.Default.History,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(end = 16.dp),
+            )
             Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
                 Text("Permitir histórico de audios", style = MaterialTheme.typography.titleMedium)
                 Text(
@@ -181,6 +214,12 @@ fun SettingsScreenContent(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
+                    Icon(
+                        imageVector = Icons.Default.SdStorage,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(end = 16.dp),
+                    )
                     Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
                         Text("Local de armazenamento", style = MaterialTheme.typography.titleMedium)
 
@@ -256,6 +295,11 @@ fun SettingsScreenContent(
                                 contentColor = MaterialTheme.colorScheme.onErrorContainer,
                             ),
                     ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = null,
+                            modifier = Modifier.padding(end = 8.dp).size(20.dp),
+                        )
                         Text("Limpar histórico")
                     }
                 }
