@@ -22,6 +22,7 @@ dependencies {
     implementation(libs.koin.core)
     implementation("io.insert-koin:koin-ktor:${libs.versions.koin.get()}")
     implementation("io.ktor:ktor-network-tls-certificates:${libs.versions.ktor.get()}")
+    implementation(libs.logback.classic)
 
     testImplementation(libs.ktor.server.test.host)
     testImplementation(kotlin("test"))
