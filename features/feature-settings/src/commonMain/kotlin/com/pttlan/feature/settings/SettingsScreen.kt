@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.GraphicEq
@@ -22,6 +24,8 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SdStorage
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -83,6 +87,7 @@ fun SettingsScreenContent(
             Modifier
                 .fillMaxSize()
                 .padding(16.dp)
+                .verticalScroll(rememberScrollState())
                 .then(modifier),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -115,7 +120,7 @@ fun SettingsScreenContent(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -142,7 +147,7 @@ fun SettingsScreenContent(
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -169,7 +174,7 @@ fun SettingsScreenContent(
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -201,10 +206,9 @@ fun SettingsScreenContent(
             enter = expandVertically(),
             exit = shrinkVertically(),
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Spacer(modifier = Modifier.height(32.dp))
+
                 Row(
                     modifier =
                         Modifier
@@ -233,6 +237,8 @@ fun SettingsScreenContent(
                     }
                 }
 
+                Spacer(modifier = Modifier.height(32.dp))
+
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -256,9 +262,11 @@ fun SettingsScreenContent(
                     )
                 }
 
+                Spacer(modifier = Modifier.height(32.dp))
+
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
                         Text(
@@ -271,11 +279,12 @@ fun SettingsScreenContent(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
                     LinearProgressIndicator(
                         progress = {
-                            if (state.maxCacheSizeMb ==
-                                0
-                            ) {
+                            if (state.maxCacheSizeMb == 0) {
                                 0f
                             } else {
                                 (state.currentCacheUsageMb.toFloat() / state.maxCacheSizeMb).coerceIn(0f, 1f)
@@ -283,25 +292,25 @@ fun SettingsScreenContent(
                         },
                         modifier = Modifier.fillMaxWidth().height(8.dp),
                     )
+                }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-                    androidx.compose.material3.Button(
-                        onClick = { showClearDialog = true },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors =
-                            androidx.compose.material3.ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer,
-                                contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                            ),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = null,
-                            modifier = Modifier.padding(end = 8.dp).size(20.dp),
-                        )
-                        Text("Limpar histórico")
-                    }
+                Button(
+                    onClick = { showClearDialog = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                        ),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.padding(end = 8.dp).size(20.dp),
+                    )
+                    Text("Limpar histórico")
                 }
             }
         }
@@ -398,11 +407,10 @@ fun SettingsScreenContent(
                     }
 
                     if (state.isExternalStorageSupported && state.storageOptions.size == 1) {
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(32.dp))
                         Text(
                             text =
-                                "O armazenamento SD não está disponível. " +
-                                    "Por favor, insira um cartão SD para poder usar essa funcionalidade.",
+                                "O armazenamento SD não está disponível. Por favor, insira um cartão SD para poder usar essa funcionalidade.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error,
                             modifier = Modifier.padding(horizontal = 16.dp),
