@@ -257,7 +257,7 @@ fun SettingsScreenContent(
                         value = state.maxCacheSizeMb.toFloat(),
                         onValueChange = { onIntent(SettingsIntent.ChangeMaxCacheSize(it.roundToInt())) },
                         valueRange = 100f..2000f,
-                        steps = 19,
+                        steps = 18,
                     )
                 }
 
