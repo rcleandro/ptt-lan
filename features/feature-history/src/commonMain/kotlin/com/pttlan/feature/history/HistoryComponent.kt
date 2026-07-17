@@ -68,4 +68,10 @@ class HistoryComponent(
             _isPaused.value = false
         }
     }
+
+    fun clearAllMessages() {
+        scope.launch {
+            voiceRepository.clearAllMessages()
+        }
+    }
 }

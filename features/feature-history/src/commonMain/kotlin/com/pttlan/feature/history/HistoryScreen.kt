@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -17,12 +18,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -60,6 +63,9 @@ fun HistoryScreen(component: HistoryComponent) {
         onPlayClick = {
             component.playMessage(it)
         },
+        onClearCacheClick = {
+            component.clearAllMessages()
+        },
     )
 }
 
@@ -70,88 +76,102 @@ fun HistoryScreenContent(
     playingMessageId: String?,
     isPaused: Boolean,
     onPlayClick: (VoiceMessage) -> Unit,
+    onClearCacheClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (messages.isEmpty()) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(32.dp)
-                    .then(modifier),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Icon(
-                imageVector = Icons.Default.History,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Nenhum áudio salvo ainda.",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
-        }
-    } else {
-        var collapsedChannels by remember { mutableStateOf(setOf<String>()) }
+    Box(modifier = Modifier.fillMaxSize().then(modifier)) {
+        if (messages.isEmpty()) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.History,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Nenhum áudio salvo ainda.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        } else {
+            var collapsedChannels by remember { mutableStateOf(setOf<String>()) }
 
-        LazyColumn(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .then(modifier),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            val groupedMessages = messages.groupBy { it.channelId }
-            groupedMessages.forEach { (channelId, channelMessages) ->
-                val isCollapsed = collapsedChannels.contains(channelId)
-                item(key = "header_$channelId") {
-                    Row(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .clip(MaterialTheme.shapes.medium)
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
-                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
-                                .clickable {
-                                    collapsedChannels =
-                                        if (isCollapsed) {
-                                            collapsedChannels - channelId
-                                        } else {
-                                            collapsedChannels + channelId
-                                        }
-                                }.padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Text(
-                            text = "Canal: #$channelId",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                        Icon(
-                            imageVector = if (isCollapsed) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
-                            contentDescription = if (isCollapsed) "Expandir" else "Recolher",
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                val groupedMessages = messages.groupBy { it.channelId }
+                groupedMessages.forEach { (channelId, channelMessages) ->
+                    val isCollapsed = collapsedChannels.contains(channelId)
+                    item(key = "header_$channelId") {
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clip(MaterialTheme.shapes.medium)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
+                                    .clickable {
+                                        collapsedChannels =
+                                            if (isCollapsed) {
+                                                collapsedChannels - channelId
+                                            } else {
+                                                collapsedChannels + channelId
+                                            }
+                                    }.padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(
+                                text = "Canal: #$channelId",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                            Icon(
+                                imageVector = if (isCollapsed) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+                                contentDescription = if (isCollapsed) "Expandir" else "Recolher",
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                        }
                     }
-                }
-                if (!isCollapsed) {
-                    items(channelMessages, key = { it.id }) { message ->
-                        VoiceMessageItem(
-                            message = message,
-                            isPlaying = message.id == playingMessageId,
-                            isPaused = message.id == playingMessageId && isPaused,
-                            onPlayClick = { onPlayClick(message) },
-                        )
+                    if (!isCollapsed) {
+                        items(channelMessages, key = { it.id }) { message ->
+                            VoiceMessageItem(
+                                message = message,
+                                isPlaying = message.id == playingMessageId,
+                                isPaused = message.id == playingMessageId && isPaused,
+                                onPlayClick = { onPlayClick(message) },
+                            )
+                        }
                     }
                 }
             }
+        }
+
+        FloatingActionButton(
+            onClick = onClearCacheClick,
+            modifier =
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        ) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = "Limpar Cache",
+            )
         }
     }
 }
@@ -230,6 +250,7 @@ private fun HistoryScreenPreviewDark() {
                 playingMessageId = "1",
                 isPaused = false,
                 onPlayClick = {},
+                onClearCacheClick = {},
             )
         }
     }
@@ -249,6 +270,7 @@ private fun HistoryScreenPreviewLight() {
                 playingMessageId = "1",
                 isPaused = false,
                 onPlayClick = {},
+                onClearCacheClick = {},
             )
         }
     }

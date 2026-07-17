@@ -46,3 +46,6 @@ WHERE channelId = :channelId;
 deleteByFilePath:
 DELETE FROM VoiceMessage
 WHERE filePath = :filePath;
+
+deleteAllMessages:
+DELETE FROM VoiceMessage;

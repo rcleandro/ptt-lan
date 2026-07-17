@@ -316,4 +316,21 @@ class VoiceRepositoryImpl(
         currentPlaybackMessageId = null
         audioPlayer.stop()
     }
+
+    override suspend fun clearAllMessages() {
+        stopPlayingMessage()
+        database.voiceMessageQueries.deleteAllMessages()
+
+        try {
+            val cacheLocation = settings.getString("cache_location", "Interno")
+            val dirPath = storageInfoProvider.getCacheDirPath(cacheLocation) ?: return
+            val dir = dirPath.toPath()
+            val files = FileSystem.SYSTEM.list(dir).filter { it.name.endsWith(".pcm") }
+            for (file in files) {
+                FileSystem.SYSTEM.delete(file)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 }
