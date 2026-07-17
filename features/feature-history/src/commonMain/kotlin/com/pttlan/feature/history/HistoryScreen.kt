@@ -1,10 +1,6 @@
 package com.pttlan.feature.history
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.History
@@ -97,89 +94,88 @@ fun HistoryScreenContent(
         var showClearDialog by remember { mutableStateOf(false) }
         var messageToDelete by remember { mutableStateOf<VoiceMessage?>(null) }
 
-        if (messages.isEmpty()) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Default.History,
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Nenhum áudio salvo ainda.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        } else {
-            var collapsedChannels by remember { mutableStateOf(setOf<String>()) }
+        AnimatedContent(
+            targetState = messages.isEmpty(),
+            label = "empty_state_animation",
+            modifier = Modifier.fillMaxSize()
+        ) { isEmpty ->
+            if (isEmpty) {
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.History,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Nenhum áudio salvo ainda.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            } else {
+                var collapsedChannels by remember { mutableStateOf(setOf<String>()) }
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                val groupedMessages = messages.groupBy { it.channelId }
-                groupedMessages.forEach { (channelId, channelMessages) ->
-                    val isCollapsed = collapsedChannels.contains(channelId)
-                    item(key = "header_$channelId") {
-                        Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clip(MaterialTheme.shapes.medium)
-                                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
-                                    .clickable {
-                                        collapsedChannels =
-                                            if (isCollapsed) {
-                                                collapsedChannels - channelId
-                                            } else {
-                                                collapsedChannels + channelId
-                                            }
-                                    }.padding(horizontal = 16.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Text(
-                                text = "Canal: #$channelId",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                            Icon(
-                                imageVector = if (isCollapsed) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
-                                contentDescription = if (isCollapsed) "Expandir" else "Recolher",
-                                tint = MaterialTheme.colorScheme.primary,
-                            )
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    val groupedMessages = messages.groupBy { it.channelId }
+                    groupedMessages.forEach { (channelId, channelMessages) ->
+                        val isCollapsed = collapsedChannels.contains(channelId)
+                        item(key = "header_$channelId") {
+                            Row(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .clip(MaterialTheme.shapes.medium)
+                                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
+                                        .clickable {
+                                            collapsedChannels =
+                                                if (isCollapsed) {
+                                                    collapsedChannels - channelId
+                                                } else {
+                                                    collapsedChannels + channelId
+                                                }
+                                        }.padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Text(
+                                    text = "Canal: #$channelId",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                                Icon(
+                                    imageVector = if (isCollapsed) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+                                    contentDescription = if (isCollapsed) "Expandir" else "Recolher",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                )
+                            }
                         }
-                    }
-                    item(key = "content_$channelId") {
-                        AnimatedVisibility(
-                            visible = !isCollapsed,
-                            enter = expandVertically() + fadeIn(),
-                            exit = shrinkVertically() + fadeOut(),
-                        ) {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                channelMessages.forEach { message ->
-                                    VoiceMessageItem(
-                                        message = message,
-                                        isPlaying = message.id == playingMessageId,
-                                        isPaused = message.id == playingMessageId && isPaused,
-                                        onPlayClick = { onPlayClick(message) },
-                                        onLongClick = {
-                                            messageToDelete = message
-                                        },
-                                    )
-                                }
+                        if (!isCollapsed) {
+                            items(channelMessages, key = { it.id }) { message ->
+                                VoiceMessageItem(
+                                    message = message,
+                                    isPlaying = message.id == playingMessageId,
+                                    isPaused = message.id == playingMessageId && isPaused,
+                                    onPlayClick = { onPlayClick(message) },
+                                    onLongClick = {
+                                        messageToDelete = message
+                                    },
+                                    modifier = Modifier.animateItem(),
+                                )
                             }
                         }
                     }
@@ -260,12 +256,12 @@ fun VoiceMessageItem(
     isPaused: Boolean,
     onPlayClick: () -> Unit,
     onLongClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(MaterialTheme.shapes.medium)
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
                 .background(
                     if (isPlaying) {
                         PttTheme.customColors.primaryGlow
