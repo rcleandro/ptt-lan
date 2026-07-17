@@ -1,4 +1,3 @@
-@file:Suppress("LongMethod", "CyclomaticComplexMethod", "TooGenericExceptionCaught", "MaxLineLength")
 
 package com.pttlan.server.routing
 
@@ -15,6 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.koin.ktor.ext.inject
 
+@Suppress("LongMethod", "CyclomaticComplexMethod", "TooGenericExceptionCaught", "MaxLineLength")
 fun Routing.pttRoutes() {
     val channelRegistry by inject<ChannelRegistry>()
 

@@ -2,7 +2,6 @@ plugins {
     id("com.android.library")
 }
 
-@Suppress("DEPRECATION")
 android {
     namespace = "com.pttlan" + project.path.replace(":", ".").replace("-", "")
     compileSdk = 37

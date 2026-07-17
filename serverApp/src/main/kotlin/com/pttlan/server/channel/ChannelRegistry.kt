@@ -1,4 +1,3 @@
-@file:Suppress("TooGenericExceptionCaught", "SwallowedException", "MagicNumber")
 
 package com.pttlan.server.channel
 
@@ -14,6 +13,8 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
+
+private const val CLEANUP_DELAY_MS = 5 * 60 * 1000L
 
 class ChannelRegistry {
     private val channels = ConcurrentHashMap<String, PttChannel>()
@@ -60,7 +61,7 @@ class ChannelRegistry {
             cleanupJobs[channelId]?.cancel()
             cleanupJobs[channelId] =
                 scope.launch {
-                    delay((5 * 60 * 1000L).milliseconds) // 5 minutes
+                    delay(CLEANUP_DELAY_MS.milliseconds) // 5 minutes
                     if (channel.participantCount == 0) {
                         channels.remove(channelId)
                         broadcastActiveChannels()
@@ -89,6 +90,7 @@ class ChannelRegistry {
             )
         }
 
+    @Suppress("TooGenericExceptionCaught", "SwallowedException")
     fun broadcastActiveChannels() {
         val activeChannels =
             channels.values

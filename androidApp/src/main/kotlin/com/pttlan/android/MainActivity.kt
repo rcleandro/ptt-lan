@@ -14,8 +14,6 @@ import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.domain.ptt.repository.ConnectionRepository
 import org.koin.android.ext.android.inject
-import com.pttlan.domain.ptt.repository.ChannelRepository
-import com.pttlan.domain.ptt.repository.VoiceRepository
 import com.pttlan.core.navigation.RootComponent
 import com.pttlan.core.navigation.RootScreen
 import com.pttlan.domain.ptt.repository.ConnectionStatus

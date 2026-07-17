@@ -12,6 +12,7 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
+import kotlinx.io.IOException
 import kotlinx.serialization.json.Json
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
@@ -24,6 +25,7 @@ import javax.jmdns.ServiceInfo
 import kotlin.time.Duration.Companion.seconds
 
 private const val DEFAULT_PORT = 9443
+
 fun main(args: Array<String>) {
     val keyStoreFile = File("build/keystore.jks")
     if (!keyStoreFile.exists()) {
@@ -33,7 +35,6 @@ fun main(args: Array<String>) {
 
     EngineMain.main(args)
 }
-
 
 fun Application.module() {
     install(WebSockets) {
@@ -71,7 +72,7 @@ fun Application.module() {
                     jmdns.close()
                 },
             )
-        } catch (e: java.io.IOException) {
+        } catch (e: IOException) {
             println("Error starting JmDNS: ${e.message}")
         }
     }.start()

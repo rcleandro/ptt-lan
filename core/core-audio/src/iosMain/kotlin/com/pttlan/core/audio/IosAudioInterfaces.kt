@@ -17,6 +17,8 @@ import platform.AVFAudio.AVAudioSession
 import platform.AVFAudio.AVAudioSessionCategoryOptionDefaultToSpeaker
 import platform.AVFAudio.AVAudioSessionCategoryPlayAndRecord
 import platform.AVFAudio.AVAudioSessionCategoryPlayback
+import platform.AVFAudio.setActive
+import platform.AVFAudio.setPreferredSampleRate
 import platform.AVFoundation.AVAuthorizationStatusAuthorized
 import platform.AVFoundation.AVCaptureDevice
 import platform.AVFoundation.AVMediaTypeAudio

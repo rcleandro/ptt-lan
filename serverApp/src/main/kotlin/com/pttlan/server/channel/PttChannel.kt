@@ -1,4 +1,3 @@
-@file:Suppress("TooGenericExceptionCaught", "SwallowedException")
 
 package com.pttlan.server.channel
 
@@ -52,6 +51,7 @@ class PttChannel(
         broadcastParticipantList()
     }
 
+    @Suppress("TooGenericExceptionCaught", "SwallowedException")
     suspend fun broadcast(message: ControlMessage) {
         val json = Json.encodeToString(message)
         val snapshot = mutex.withLock { participants.values.toList() }
@@ -65,6 +65,7 @@ class PttChannel(
         }
     }
 
+    @Suppress("TooGenericExceptionCaught")
     suspend fun broadcastBinary(
         frame: Frame.Binary,
         senderUserId: String,
