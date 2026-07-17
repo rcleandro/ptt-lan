@@ -17,4 +17,8 @@ subprojects {
             }
         }
     }
+
+    tasks.withType<org.gradle.api.tasks.testing.Test> {
+        jvmArgs("-Xshare:off")
+    }
 }
