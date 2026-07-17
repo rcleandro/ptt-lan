@@ -3,6 +3,8 @@ package com.pttlan.server.channel
 
 import com.pttlan.core.network.protocol.ActiveChannelDto
 import com.pttlan.core.network.protocol.ControlMessage
+import com.pttlan.server.routing.DashboardChannelDto
+import com.pttlan.server.routing.DashboardParticipantDto
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.Frame
 import kotlinx.coroutines.CoroutineScope
@@ -73,18 +75,18 @@ class ChannelRegistry {
 
     fun getGlobalConnectionsCount(): Int = globalConnections.size
 
-    suspend fun getActiveChannelsInfo(): List<Map<String, Any?>> =
+    suspend fun getActiveChannelsInfo(): List<DashboardChannelDto> =
         channels.values.map { channel ->
-            mapOf(
-                "id" to channel.id,
-                "participantCount" to channel.participantCount,
-                "currentSpeakerId" to channel.currentSpeakerId,
-                "participants" to
+            DashboardChannelDto(
+                id = channel.id,
+                participantCount = channel.participantCount,
+                currentSpeakerId = channel.currentSpeakerId,
+                participants =
                     channel.getParticipantsSnapshot().map { p ->
-                        mapOf(
-                            "userId" to p.userId,
-                            "nickname" to p.nickname,
-                            "isSpeaking" to p.isSpeaking,
+                        DashboardParticipantDto(
+                            userId = p.userId,
+                            nickname = p.nickname,
+                            isSpeaking = p.isSpeaking,
                         )
                     },
             )
