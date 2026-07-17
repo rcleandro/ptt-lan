@@ -36,4 +36,6 @@ interface VoiceRepository {
     suspend fun clearAllMessages()
 
     suspend fun deleteMessage(message: VoiceMessage)
+
+    suspend fun deleteChannelMessages(channelId: String)
 }

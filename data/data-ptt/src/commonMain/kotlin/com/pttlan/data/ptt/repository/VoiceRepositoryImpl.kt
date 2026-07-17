@@ -370,4 +370,20 @@ class VoiceRepositoryImpl(
             e.printStackTrace()
         }
     }
+
+    override suspend fun deleteChannelMessages(channelId: String) {
+        val messages = database.voiceMessageQueries.getRecentMessagesByChannel(channelId).executeAsList()
+        messages.forEach { message ->
+            if (currentPlaybackMessageId == message.id) {
+                stopPlayingMessage()
+            }
+            try {
+                val path = message.filePath.toPath()
+                FileSystem.SYSTEM.delete(path)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        database.voiceMessageQueries.deleteAllByChannel(channelId)
+    }
 }

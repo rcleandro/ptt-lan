@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -76,6 +75,9 @@ fun HistoryScreen(component: HistoryComponent) {
         onDeleteMessage = {
             component.deleteMessage(it)
         },
+        onDeleteChannelClick = {
+            component.deleteChannelMessages(it)
+        },
     )
 }
 
@@ -88,11 +90,13 @@ fun HistoryScreenContent(
     onPlayClick: (VoiceMessage) -> Unit,
     onClearCacheClick: () -> Unit,
     onDeleteMessage: (VoiceMessage) -> Unit,
+    onDeleteChannelClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = Modifier.fillMaxSize().then(modifier)) {
         var showClearDialog by remember { mutableStateOf(false) }
         var messageToDelete by remember { mutableStateOf<VoiceMessage?>(null) }
+        var channelToDelete by remember { mutableStateOf<String?>(null) }
 
         AnimatedContent(
             targetState = messages.isEmpty(),
@@ -141,14 +145,19 @@ fun HistoryScreenContent(
                                         .clip(MaterialTheme.shapes.medium)
                                         .background(MaterialTheme.colorScheme.surfaceVariant)
                                         .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
-                                        .clickable {
-                                            collapsedChannels =
-                                                if (isCollapsed) {
-                                                    collapsedChannels - channelId
-                                                } else {
-                                                    collapsedChannels + channelId
-                                                }
-                                        }.padding(horizontal = 16.dp, vertical = 12.dp),
+                                        .combinedClickable(
+                                            onClick = {
+                                                collapsedChannels =
+                                                    if (isCollapsed) {
+                                                        collapsedChannels - channelId
+                                                    } else {
+                                                        collapsedChannels + channelId
+                                                    }
+                                            },
+                                            onLongClick = {
+                                                channelToDelete = channelId
+                                            },
+                                        ).padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
@@ -200,6 +209,29 @@ fun HistoryScreenContent(
                 },
                 dismissButton = {
                     TextButton(onClick = { messageToDelete = null }) {
+                        Text("Cancelar")
+                    }
+                },
+            )
+        }
+
+        if (channelToDelete != null) {
+            AlertDialog(
+                onDismissRequest = { channelToDelete = null },
+                title = { Text("Apagar Canal") },
+                text = { Text("Tem certeza que deseja apagar todos os áudios do canal #$channelToDelete?") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            channelToDelete?.let { onDeleteChannelClick(it) }
+                            channelToDelete = null
+                        },
+                    ) {
+                        Text("Apagar", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { channelToDelete = null }) {
                         Text("Cancelar")
                     }
                 },
@@ -334,6 +366,7 @@ private fun HistoryScreenPreviewDark() {
                 onPlayClick = {},
                 onClearCacheClick = {},
                 onDeleteMessage = {},
+                onDeleteChannelClick = {},
             )
         }
     }
@@ -355,6 +388,7 @@ private fun HistoryScreenPreviewLight() {
                 onPlayClick = {},
                 onClearCacheClick = {},
                 onDeleteMessage = {},
+                onDeleteChannelClick = {},
             )
         }
     }

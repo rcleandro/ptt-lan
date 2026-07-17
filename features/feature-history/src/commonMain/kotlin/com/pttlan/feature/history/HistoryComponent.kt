@@ -80,4 +80,10 @@ class HistoryComponent(
             voiceRepository.deleteMessage(message)
         }
     }
+
+    fun deleteChannelMessages(channelId: String) {
+        scope.launch {
+            voiceRepository.deleteChannelMessages(channelId)
+        }
+    }
 }
