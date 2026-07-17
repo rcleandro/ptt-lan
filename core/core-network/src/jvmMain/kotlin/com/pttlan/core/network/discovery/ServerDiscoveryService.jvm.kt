@@ -61,16 +61,21 @@ actual class ServerDiscoveryService actual constructor() {
         jmdns = null
     }
 
-    private fun getLocalIpAddress(): InetAddress? {
-        val interfaces = java.net.NetworkInterface.getNetworkInterfaces()
-        for (networkInterface in interfaces) {
-            if (networkInterface.isLoopback || !networkInterface.isUp) continue
-            for (address in networkInterface.inetAddresses) {
-                if (address is java.net.Inet4Address) {
-                    return address
-                }
-            }
-        }
-        return null
+    private fun getLocalIpAddress(): InetAddress? =
+        java.net.NetworkInterface
+            .getNetworkInterfaces()
+            .toList()
+            .asSequence()
+            .filter { !it.isLoopback && it.isUp && !it.isVirtual && !it.isPointToPoint }
+            .filter { isValidInterfaceName(it.name) }
+            .flatMap { it.inetAddresses.toList() }
+            .firstOrNull { it is java.net.Inet4Address }
+
+    private fun isValidInterfaceName(name: String): Boolean {
+        val lowerName = name.lowercase()
+        val invalidPrefixes = listOf("docker", "utun", "tailscale", "awdl", "llw", "br-")
+        return !invalidPrefixes.any { lowerName.startsWith(it) } &&
+            !lowerName.contains("vbox") &&
+            !lowerName.contains("vmnet")
     }
 }
