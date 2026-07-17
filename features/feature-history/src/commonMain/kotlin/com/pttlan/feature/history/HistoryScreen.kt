@@ -46,8 +46,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.domain.ptt.model.VoiceMessage
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import com.pttlan.feature.history.util.toRelativeDisplay
+import kotlin.time.Clock
+import kotlin.time.Duration
 import kotlin.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -209,14 +210,11 @@ fun VoiceMessageItem(
                 overflow = TextOverflow.Ellipsis,
             )
             Spacer(modifier = Modifier.height(4.dp))
-            val time =
-                Instant
-                    .fromEpochMilliseconds(message.recordedAt)
-                    .toLocalDateTime(TimeZone.currentSystemDefault())
+            val recordedAt = Instant.fromEpochMilliseconds(message.recordedAt)
             val durationSec = (message.durationMs / 1000).coerceAtLeast(1)
 
             Text(
-                text = "${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')} • $durationSec sec",
+                text = "${recordedAt.toRelativeDisplay()} • $durationSec sec",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -247,6 +245,14 @@ private fun HistoryScreenPreviewDark() {
                     listOf(
                         VoiceMessage("1", "channel1", "Leandro", "/path1", 2500, 1721151600000L),
                         VoiceMessage("2", "channel1", "João", "/path2", 5000, 1721151660000L),
+                        VoiceMessage(
+                            "3",
+                            "channel1",
+                            "Maria",
+                            "/path3",
+                            3000,
+                            (Clock.System.now() - Duration.parse("PT2H15M")).toEpochMilliseconds(),
+                        ),
                     ),
                 playingMessageId = "1",
                 isPaused = false,
