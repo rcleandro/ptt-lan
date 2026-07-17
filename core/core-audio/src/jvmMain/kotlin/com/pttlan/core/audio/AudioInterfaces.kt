@@ -28,7 +28,8 @@ class JvmAudioRecorder : AudioRecorder {
             line?.start()
 
             isRecording = true
-            val buffer = ByteArray(1024)
+            val chunkSizeBytes = sampleRate * 2 * 20 / 1000
+            val buffer = ByteArray(chunkSizeBytes)
 
             try {
                 while (isRecording) {
