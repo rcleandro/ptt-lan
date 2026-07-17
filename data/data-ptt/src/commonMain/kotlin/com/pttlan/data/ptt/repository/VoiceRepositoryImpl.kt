@@ -52,6 +52,7 @@ class VoiceRepositoryImpl(
     private var currentPlaybackMessageId: String? = null
 
     private var currentSpeakerId: String? = null
+    private var currentSpeakerNickname: String? = null
     private var currentChannelId: String? = null
     private var currentMessageStartMs: Long = 0
     private var currentFileSink: BufferedSink? = null
@@ -64,6 +65,7 @@ class VoiceRepositoryImpl(
                 if (msg is ControlMessage.SpeakerChanged) {
                     if (msg.isSpeaking) {
                         currentSpeakerId = msg.userId
+                        currentSpeakerNickname = msg.nickname
                         currentChannelId = msg.channelId
                         currentMessageStartMs = Clock.System.now().toEpochMilliseconds()
                         val allowCache = settings.getBoolean("allow_cache", false)
@@ -93,7 +95,7 @@ class VoiceRepositoryImpl(
                                 database.voiceMessageQueries.insert(
                                     id = id,
                                     channelId = msg.channelId,
-                                    senderNickname = msg.userId, // using userId as fallback for now
+                                    senderNickname = currentSpeakerNickname ?: msg.userId,
                                     filePath = currentFilePath!!,
                                     durationMs = duration,
                                     recordedAt = currentMessageStartMs,
@@ -108,6 +110,7 @@ class VoiceRepositoryImpl(
                             }
                         }
                         currentSpeakerId = null
+                        currentSpeakerNickname = null
                         currentFilePath = null
                         currentChannelId = null
                     }
