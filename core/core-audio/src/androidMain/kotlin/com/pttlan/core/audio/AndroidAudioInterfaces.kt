@@ -106,7 +106,7 @@ class AndroidAudioPlayer : AudioPlayer {
             if (audioTrack?.state == AudioTrack.STATE_INITIALIZED) {
                 audioTrack?.stop()
             }
-        } catch (e: IllegalStateException) {
+        } catch (_: IllegalStateException) {
             // Ignored - AudioTrack might already be stopped or uninitialized
         }
         audioTrack?.release()
