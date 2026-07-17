@@ -12,8 +12,13 @@ import com.pttlan.core.navigation.RootScreen
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.coroutines.getIntFlow
-import org.koin.core.context.GlobalContext
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 import platform.UIKit.UIViewController
+
+private object IOSDependencies : KoinComponent {
+    val settings: Settings = get()
+}
 
 @Suppress("FunctionName")
 fun MainViewController(): UIViewController {
@@ -28,7 +33,7 @@ fun MainViewController(): UIViewController {
             enforceStrictPlistSanityCheck = false
         },
     ) {
-        val settings = GlobalContext.get().get<Settings>()
+        val settings = IOSDependencies.settings
         val appThemeInt =
             if (settings is ObservableSettings) {
                 settings.getIntFlow("app_theme", 0).collectAsState(initial = settings.getInt("app_theme", 0)).value
