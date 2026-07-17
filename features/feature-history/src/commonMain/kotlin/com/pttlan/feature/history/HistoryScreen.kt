@@ -31,6 +31,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -95,9 +97,7 @@ fun HistoryScreenContent(
             )
         }
     } else {
-        var collapsedChannels by androidx.compose.runtime.remember {
-            androidx.compose.runtime.mutableStateOf(setOf<String>())
-        }
+        var collapsedChannels by remember { mutableStateOf(setOf<String>()) }
 
         LazyColumn(
             modifier =
@@ -115,6 +115,9 @@ fun HistoryScreenContent(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
+                                .clip(MaterialTheme.shapes.medium)
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
                                 .clickable {
                                     collapsedChannels =
                                         if (isCollapsed) {
@@ -122,7 +125,7 @@ fun HistoryScreenContent(
                                         } else {
                                             collapsedChannels + channelId
                                         }
-                                }.padding(vertical = 12.dp),
+                                }.padding(horizontal = 16.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
