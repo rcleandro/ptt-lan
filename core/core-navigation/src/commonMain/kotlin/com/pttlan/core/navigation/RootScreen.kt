@@ -41,6 +41,7 @@ import com.pttlan.core.designsystem.components.snackbar.PttSnackbarType
 import com.pttlan.core.designsystem.components.snackbar.SnackbarController
 import com.pttlan.feature.channellist.ChannelListScreen
 import com.pttlan.feature.connection.ConnectionScreen
+import com.pttlan.feature.history.HistoryScreen
 import com.pttlan.feature.ptt.PttScreen
 import com.pttlan.feature.settings.SettingsScreen
 
@@ -138,9 +139,7 @@ fun RootScreen(component: RootComponent) {
                     is RootComponent.Child.ConnectionChild -> ConnectionScreen(instance.component)
                     is RootComponent.Child.ChannelListChild -> ChannelListScreen(instance.component)
                     is RootComponent.Child.PttChild -> PttScreen(instance.component)
-                    is RootComponent.Child.HistoryChild ->
-                        com.pttlan.feature.history
-                            .HistoryScreen(instance.component)
+                    is RootComponent.Child.HistoryChild -> HistoryScreen(instance.component)
                     is RootComponent.Child.SettingsChild -> SettingsScreen(instance.component)
                 }
             }
