@@ -176,8 +176,8 @@ class ChannelRegistry {
         val memoryUsedPercent = rawMem.takeIf { !it.isNaN() }?.coerceIn(0.0, 100.0) ?: 0.0
 
         val currentPoint = getOrCreateCurrentMetric()
-        if (cpuLoad > currentPoint.maxCpuLoad) currentPoint.maxCpuLoad = cpuLoad
-        if (memoryUsedPercent > currentPoint.maxMemoryUsedPercent) currentPoint.maxMemoryUsedPercent = memoryUsedPercent
+        currentPoint.maxCpuLoad = cpuLoad
+        currentPoint.maxMemoryUsedPercent = memoryUsedPercent
 
         val cutoff = (System.currentTimeMillis() / MS_PER_MINUTE) - TIME_SERIES_CUTOFF_MINUTES
         return timeSeriesMutex.withLock {
