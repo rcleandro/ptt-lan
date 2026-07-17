@@ -9,7 +9,9 @@ import com.pttlan.server.routing.DashboardParticipantDto
 import com.pttlan.server.routing.SpeakerTimeDto
 import com.pttlan.server.routing.TimeSeriesPointDto
 import io.ktor.server.websocket.DefaultWebSocketServerSession
+import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
+import io.ktor.websocket.close
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -178,6 +180,37 @@ class ChannelRegistry {
                     },
             )
         }
+
+    suspend fun kickUser(
+        channelId: String,
+        userId: String,
+    ): Boolean {
+        val channel = getChannel(channelId)
+        val participant = channel?.getParticipant(userId)
+        if (participant != null) {
+            try {
+                participant.session.close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Kicked by Admin"))
+            } catch (_: Exception) {
+                // Ignore
+            }
+            return true
+        }
+        return false
+    }
+
+    suspend fun closeChannel(channelId: String): Boolean {
+        val channel = channels.remove(channelId) ?: return false
+        val participants = channel.getParticipantsSnapshot()
+        participants.forEach {
+            try {
+                it.session.close(CloseReason(CloseReason.Codes.NORMAL, "Channel closed by Admin"))
+            } catch (_: Exception) {
+                // Ignore
+            }
+        }
+        broadcastActiveChannels()
+        return true
+    }
 
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
     fun broadcastActiveChannels() {

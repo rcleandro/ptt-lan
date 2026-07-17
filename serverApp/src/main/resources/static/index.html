@@ -176,6 +176,20 @@
         .badge-leave { background-color: rgba(244, 67, 54, 0.2); color: #F44336; }
         .badge-speak { background-color: rgba(199, 125, 76, 0.2); color: var(--speaking-color); }
         .badge-stop { background-color: rgba(158, 158, 158, 0.2); color: #9E9E9E; }
+
+        .btn-danger {
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        .btn-warning {
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -192,6 +206,18 @@
         <div class="stat-card">
             <div class="stat-value" id="active-channels-count">0</div>
             <div class="stat-label">Canais Ativos</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="memory-usage">0 MB</div>
+            <div class="stat-label">Uso de RAM</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="server-uptime">00:00:00</div>
+            <div class="stat-label">Uptime</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="active-threads">0</div>
+            <div class="stat-label">Threads Ativas</div>
         </div>
     </div>
 
@@ -258,6 +284,18 @@
                 document.getElementById('global-connections').textContent = data.globalConnections;
                 document.getElementById('active-channels-count').textContent = data.channels.length;
                 
+                if (data.serverHealth) {
+                    document.getElementById('memory-usage').textContent = `${data.serverHealth.memoryUsedMb} MB`;
+                    document.getElementById('active-threads').textContent = data.serverHealth.activeThreads;
+                    
+                    const uptimeMs = data.serverHealth.uptimeMs;
+                    const hours = Math.floor(uptimeMs / 3600000);
+                    const minutes = Math.floor((uptimeMs % 3600000) / 60000);
+                    const seconds = Math.floor((uptimeMs % 60000) / 1000);
+                    document.getElementById('server-uptime').textContent = 
+                        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+
                 const now = new Date();
                 document.getElementById('last-updated').textContent = `Atualizado: ${now.toLocaleTimeString()}`;
                 
@@ -295,19 +333,45 @@
                 <div class="channel-card">
                     <div class="channel-header">
                         <div class="channel-name">Canal ${channel.id}</div>
-                        <div class="channel-count">${channel.participantCount} users</div>
+                        <div>
+                            <span class="channel-count">${channel.participantCount} users</span>
+                            <button class="btn-danger" onclick="deleteChannel('${channel.id}')" title="Encerrar Canal">❌</button>
+                        </div>
                     </div>
                     <ul class="participant-list">
                         ${channel.participants.map(p => `
-                            <li class="participant-item">
-                                <div class="status-dot ${p.isSpeaking ? 'speaking' : ''}"></div>
-                                <span>${p.nickname}</span>
-                                ${p.isSpeaking ? '<span style="margin-left: 8px; font-size: 12px; color: var(--speaking-color);">(Falando)</span>' : ''}
+                            <li class="participant-item" style="display:flex; justify-content:space-between; width:100%;">
+                                <div style="display:flex; align-items:center;">
+                                    <div class="status-dot ${p.isSpeaking ? 'speaking' : ''}"></div>
+                                    <span>${p.nickname}</span>
+                                    ${p.isSpeaking ? '<span style="margin-left: 8px; font-size: 12px; color: var(--speaking-color);">(Falando)</span>' : ''}
+                                </div>
+                                <button class="btn-warning" onclick="kickUser('${channel.id}', '${p.userId}')" title="Desconectar">🥾</button>
                             </li>
                         `).join('')}
                     </ul>
                 </div>
             `).join('');
+        }
+
+        async function deleteChannel(channelId) {
+            if (!confirm(`Tem certeza que deseja encerrar o canal ${channelId}? Todos os usuários serão desconectados.`)) return;
+            try {
+                await fetch(`/api/admin/channels/${channelId}/delete`, { method: 'POST' });
+                fetchMetrics();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function kickUser(channelId, userId) {
+            if (!confirm(`Tem certeza que deseja desconectar este usuário?`)) return;
+            try {
+                await fetch(`/api/admin/channels/${channelId}/kick/${userId}`, { method: 'POST' });
+                fetchMetrics();
+            } catch (error) {
+                console.error(error);
+            }
         }
 
         function renderLogs() {

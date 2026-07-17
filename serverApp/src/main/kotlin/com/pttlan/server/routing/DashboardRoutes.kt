@@ -1,16 +1,28 @@
 package com.pttlan.server.routing
 
 import com.pttlan.server.channel.ChannelRegistry
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.http.content.staticResources
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
+import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
+import java.lang.management.ManagementFactory
+
+@Serializable
+data class ServerHealthDto(
+    val uptimeMs: Long,
+    val memoryUsedMb: Long,
+    val memoryTotalMb: Long,
+    val activeThreads: Int,
+)
 
 @Serializable
 data class DashboardMetricsDto(
+    val serverHealth: ServerHealthDto,
     val globalConnections: Int,
     val channels: List<DashboardChannelDto>,
     val logs: List<DashboardLogEventDto>,
@@ -55,6 +67,7 @@ data class DashboardParticipantDto(
     val isSpeaking: Boolean,
 )
 
+@Suppress("MagicNumber")
 fun Routing.dashboardRoutes() {
     val channelRegistry by inject<ChannelRegistry>()
 
@@ -62,6 +75,12 @@ fun Routing.dashboardRoutes() {
 
     route("/api/admin") {
         get("/metrics") {
+            val uptime = ManagementFactory.getRuntimeMXBean().uptime
+            val memoryUsed = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024)
+            val memoryTotal = Runtime.getRuntime().maxMemory() / (1024 * 1024)
+            val threads = ManagementFactory.getThreadMXBean().threadCount
+            val serverHealth = ServerHealthDto(uptime, memoryUsed, memoryTotal, threads)
+
             val activeChannels = channelRegistry.getActiveChannelsInfo()
             val globalConnections = channelRegistry.getGlobalConnectionsCount()
             val recentLogs = channelRegistry.getRecentLogs()
@@ -70,6 +89,7 @@ fun Routing.dashboardRoutes() {
 
             call.respond(
                 DashboardMetricsDto(
+                    serverHealth = serverHealth,
                     globalConnections = globalConnections,
                     channels = activeChannels,
                     logs = recentLogs,
@@ -77,6 +97,25 @@ fun Routing.dashboardRoutes() {
                     timeSeries = timeSeries,
                 ),
             )
+        }
+
+        post("/channels/{id}/kick/{userId}") {
+            val channelId = call.parameters["id"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+            val userId = call.parameters["userId"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+            if (channelRegistry.kickUser(channelId, userId)) {
+                call.respond(HttpStatusCode.OK, mapOf("status" to "ok"))
+            } else {
+                call.respond(HttpStatusCode.NotFound, mapOf("status" to "not_found"))
+            }
+        }
+
+        post("/channels/{id}/delete") {
+            val channelId = call.parameters["id"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+            if (channelRegistry.closeChannel(channelId)) {
+                call.respond(HttpStatusCode.OK, mapOf("status" to "ok"))
+            } else {
+                call.respond(HttpStatusCode.NotFound, mapOf("status" to "not_found"))
+            }
         }
     }
 }
