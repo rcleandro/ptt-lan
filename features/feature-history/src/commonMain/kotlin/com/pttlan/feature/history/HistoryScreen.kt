@@ -86,7 +86,7 @@ fun HistoryScreenContent(
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Nenhum áudio salvo neste canal ainda.",
+                text = "Nenhum áudio salvo ainda.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -101,12 +101,23 @@ fun HistoryScreenContent(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            items(messages, key = { it.id }) { message ->
-                VoiceMessageItem(
-                    message = message,
-                    isPlaying = message.id == playingMessageId,
-                    onPlayClick = { onPlayClick(message) },
-                )
+            val groupedMessages = messages.groupBy { it.channelId }
+            groupedMessages.forEach { (channelId, channelMessages) ->
+                item(key = "header_$channelId") {
+                    Text(
+                        text = "Canal: #$channelId",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),
+                    )
+                }
+                items(channelMessages, key = { it.id }) { message ->
+                    VoiceMessageItem(
+                        message = message,
+                        isPlaying = message.id == playingMessageId,
+                        onPlayClick = { onPlayClick(message) },
+                    )
+                }
             }
         }
     }

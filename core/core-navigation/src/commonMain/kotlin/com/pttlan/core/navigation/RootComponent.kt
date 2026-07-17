@@ -146,9 +146,8 @@ class RootComponent(
                         if (effect is PttEffect.NavigateBack) {
                             navigation.pop()
                         } else if (effect is PttEffect.NavigateToHistory) {
-                            val nextConfig = Config.HistoryScreen(config.channelId)
                             navigation.navigate { stack ->
-                                if (stack.lastOrNull() == nextConfig) stack else stack + nextConfig
+                                if (stack.lastOrNull() == Config.HistoryScreen) stack else stack + Config.HistoryScreen
                             }
                         }
                     }
@@ -159,7 +158,7 @@ class RootComponent(
                 val component: HistoryComponent =
                     get(
                         parameters = {
-                            parametersOf(context, config.channelId, { navigation.pop() })
+                            parametersOf(context, { navigation.pop() })
                         },
                     )
                 Child.HistoryChild(component)
@@ -177,6 +176,12 @@ class RootComponent(
     fun navigateToSettings() {
         navigation.navigate { stack ->
             if (stack.lastOrNull() is Config.Settings) stack else stack + Config.Settings
+        }
+    }
+
+    fun navigateToHistory() {
+        navigation.navigate { stack ->
+            if (stack.lastOrNull() is Config.HistoryScreen) stack else stack + Config.HistoryScreen
         }
     }
 
@@ -226,9 +231,7 @@ class RootComponent(
         ) : Config
 
         @Serializable
-        data class HistoryScreen(
-            val channelId: String,
-        ) : Config
+        data object HistoryScreen : Config
 
         @Serializable
         data object Settings : Config

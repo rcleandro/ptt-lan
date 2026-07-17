@@ -16,6 +16,10 @@ SELECT * FROM VoiceMessage
 WHERE channelId = :channelId
 ORDER BY recordedAt ASC;
 
+getAllMessages:
+SELECT * FROM VoiceMessage
+ORDER BY recordedAt ASC;
+
 countByChannel:
 SELECT count(*) FROM VoiceMessage
 WHERE channelId = :channelId;

@@ -14,7 +14,6 @@ import kotlinx.coroutines.launch
 
 class HistoryComponent(
     componentContext: ComponentContext,
-    private val channelId: String,
     private val voiceRepository: VoiceRepository,
     private val onBackClicked: () -> Unit,
 ) : ComponentContext by componentContext {
@@ -28,7 +27,7 @@ class HistoryComponent(
 
     init {
         voiceRepository
-            .getRecentMessages(channelId)
+            .getAllMessages()
             .onEach { _messages.value = it }
             .launchIn(scope)
     }

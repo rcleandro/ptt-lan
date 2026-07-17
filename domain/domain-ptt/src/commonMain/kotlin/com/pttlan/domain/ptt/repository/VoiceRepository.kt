@@ -23,6 +23,8 @@ interface VoiceRepository {
     // History
     fun getRecentMessages(channelId: String): Flow<List<VoiceMessage>>
 
+    fun getAllMessages(): Flow<List<VoiceMessage>>
+
     suspend fun playMessage(message: VoiceMessage)
 
     suspend fun stopPlayingMessage()

@@ -83,8 +83,7 @@ fun RootScreen(component: RootComponent) {
                 currentChild is RootComponent.Child.ConnectionChild ||
                     currentChild is RootComponent.Child.ChannelListChild
 
-            val showHistoryFab =
-                currentChild is RootComponent.Child.PttChild && isCacheEnabled
+            val showHistoryFab = isCacheEnabled
 
             Column(
                 horizontalAlignment = Alignment.End,
@@ -96,12 +95,7 @@ fun RootScreen(component: RootComponent) {
                     exit = scaleOut() + fadeOut(),
                 ) {
                     FloatingActionButton(
-                        onClick = {
-                            val activeChild = component.childStack.value.active.instance
-                            if (activeChild is RootComponent.Child.PttChild) {
-                                activeChild.component.onIntent(com.pttlan.feature.ptt.PttIntent.GoToHistory)
-                            }
-                        },
+                        onClick = component::navigateToHistory,
                     ) {
                         Icon(
                             imageVector = Icons.Default.History,

@@ -6,10 +6,9 @@ import org.koin.dsl.module
 
 val historyFeatureModule =
     module {
-        factory { (componentContext: ComponentContext, channelId: String, onBackClicked: () -> Unit) ->
+        factory { (componentContext: ComponentContext, onBackClicked: () -> Unit) ->
             HistoryComponent(
                 componentContext = componentContext,
-                channelId = channelId,
                 voiceRepository = get(),
                 onBackClicked = onBackClicked,
             )

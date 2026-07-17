@@ -236,6 +236,24 @@ class VoiceRepositoryImpl(
                 }
             }
 
+    override fun getAllMessages(): Flow<List<VoiceMessage>> =
+        database.voiceMessageQueries
+            .getAllMessages()
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { list ->
+                list.map {
+                    VoiceMessage(
+                        id = it.id,
+                        channelId = it.channelId,
+                        senderNickname = it.senderNickname,
+                        filePath = it.filePath,
+                        durationMs = it.durationMs,
+                        recordedAt = it.recordedAt,
+                    )
+                }
+            }
+
     override suspend fun playMessage(message: VoiceMessage) {
         try {
             val path = message.filePath.toPath()
