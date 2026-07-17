@@ -80,10 +80,14 @@ fun RootScreen(component: RootComponent) {
 
             val showConfigFab =
                 currentChild is RootComponent.Child.ConnectionChild ||
-                    currentChild is RootComponent.Child.ChannelListChild ||
-                    currentChild is RootComponent.Child.PttChild
+                    currentChild is RootComponent.Child.ChannelListChild
 
-            val showHistoryFab = currentChild is RootComponent.Child.PttChild && isCacheEnabled
+            val showHistoryFab =
+                (
+                    currentChild is RootComponent.Child.ConnectionChild ||
+                        currentChild is RootComponent.Child.ChannelListChild
+                ) &&
+                    isCacheEnabled
 
             Column(
                 horizontalAlignment = Alignment.End,
