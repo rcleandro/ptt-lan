@@ -37,7 +37,7 @@ class HistoryComponentTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
 
-        coEvery { voiceRepository.getRecentMessages(any()) } returns emptyFlow()
+        coEvery { voiceRepository.getAllMessages() } returns emptyFlow()
     }
 
     @AfterTest
@@ -45,10 +45,9 @@ class HistoryComponentTest {
         Dispatchers.resetMain()
     }
 
-    private fun createComponent(channelId: String = "ch-1") =
+    private fun createComponent() =
         HistoryComponent(
             componentContext = componentContext,
-            channelId = channelId,
             voiceRepository = voiceRepository,
             onBackClicked = onBackClicked,
         )
@@ -58,9 +57,9 @@ class HistoryComponentTest {
         runTest(testDispatcher) {
             val mockMessage = mockk<VoiceMessage>(relaxed = true)
             coEvery { mockMessage.id } returns "msg-1"
-            coEvery { voiceRepository.getRecentMessages("ch-1") } returns flowOf(listOf(mockMessage))
+            coEvery { voiceRepository.getAllMessages() } returns flowOf(listOf(mockMessage))
 
-            val component = createComponent("ch-1")
+            val component = createComponent()
             advanceUntilIdle()
 
             assertEquals(listOf(mockMessage), component.messages.value)
