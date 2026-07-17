@@ -15,6 +15,15 @@ data class DashboardMetricsDto(
     val channels: List<DashboardChannelDto>,
     val logs: List<DashboardLogEventDto>,
     val speakerTimes: List<SpeakerTimeDto>,
+    val timeSeries: List<TimeSeriesPointDto>,
+)
+
+@Serializable
+data class TimeSeriesPointDto(
+    val timestampMs: Long,
+    val bytesTransferred: Long,
+    val pttStarts: Int,
+    val slowConnections: Int,
 )
 
 @Serializable
@@ -57,6 +66,7 @@ fun Routing.dashboardRoutes() {
             val globalConnections = channelRegistry.getGlobalConnectionsCount()
             val recentLogs = channelRegistry.getRecentLogs()
             val speakerTimes = channelRegistry.getSpeakerTimes()
+            val timeSeries = channelRegistry.getTimeSeries()
 
             call.respond(
                 DashboardMetricsDto(
@@ -64,6 +74,7 @@ fun Routing.dashboardRoutes() {
                     channels = activeChannels,
                     logs = recentLogs,
                     speakerTimes = speakerTimes,
+                    timeSeries = timeSeries,
                 ),
             )
         }

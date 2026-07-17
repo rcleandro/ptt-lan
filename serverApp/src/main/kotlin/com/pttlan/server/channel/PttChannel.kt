@@ -31,6 +31,7 @@ class PttChannel(
     val id: String,
     private val onLog: suspend (participantName: String, eventType: String) -> Unit = { _, _ -> },
     private val onSpeakDuration: suspend (participantName: String, durationMs: Long) -> Unit = { _, _ -> },
+    private val onMetric: suspend (bytes: Long, slowCount: Int) -> Unit = { _, _ -> },
 ) {
     private val participants = mutableMapOf<String, Participant>()
     private val mutex = Mutex()
@@ -95,14 +96,19 @@ class PttChannel(
                 "de $senderUserId para ${targets.size} participantes.",
         )
 
+        var slowCount = 0
+        var bytesCount = 0L
+
         coroutineScope {
             targets.forEach { participant ->
                 launch {
                     val startMs = System.currentTimeMillis()
                     try {
                         participant.session.send(Frame.Binary(true, frame.data.copyOf()))
+                        bytesCount += size
                         val elapsed = System.currentTimeMillis() - startMs
                         if (elapsed > SLOW_CONNECTION_THRESHOLD_MS) {
+                            slowCount++
                             println(
                                 "PttChannel[$id]: AVISO - Envio de áudio para " +
                                     "${participant.nickname} demorou ${elapsed}ms (conexão lenta?)",
@@ -116,6 +122,10 @@ class PttChannel(
                     }
                 }
             }
+        }
+
+        if (bytesCount > 0 || slowCount > 0) {
+            onMetric(bytesCount, slowCount)
         }
     }
 

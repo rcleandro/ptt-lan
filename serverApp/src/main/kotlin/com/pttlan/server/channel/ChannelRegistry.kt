@@ -7,6 +7,7 @@ import com.pttlan.server.routing.DashboardChannelDto
 import com.pttlan.server.routing.DashboardLogEventDto
 import com.pttlan.server.routing.DashboardParticipantDto
 import com.pttlan.server.routing.SpeakerTimeDto
+import com.pttlan.server.routing.TimeSeriesPointDto
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.Frame
 import kotlinx.coroutines.CoroutineScope
@@ -22,7 +23,17 @@ import kotlin.time.Duration.Companion.milliseconds
 private const val CLEANUP_DELAY_MS = 5 * 60 * 1000L
 private const val MAX_LOGS = 100
 private const val MS_PER_SECOND = 1000L
+private const val TIME_SERIES_CUTOFF_MINUTES = 30
+private const val MS_PER_MINUTE = 60_000L
 
+private class MutableTimeSeriesPoint(
+    val timestampMs: Long,
+    var bytesTransferred: Long = 0,
+    var pttStarts: Int = 0,
+    var slowConnections: Int = 0,
+)
+
+@Suppress("TooManyFunctions")
 class ChannelRegistry {
     private val channels = ConcurrentHashMap<String, PttChannel>()
     private val globalConnections = ConcurrentHashMap<DefaultWebSocketServerSession, String>()
@@ -32,6 +43,16 @@ class ChannelRegistry {
 
     private val logMutex = kotlinx.coroutines.sync.Mutex()
     private val recentLogs = kotlin.collections.ArrayDeque<DashboardLogEventDto>()
+
+    private val timeSeriesMutex = kotlinx.coroutines.sync.Mutex()
+    private val timeSeriesMetrics = ConcurrentHashMap<Long, MutableTimeSeriesPoint>()
+
+    private suspend fun getOrCreateCurrentMetric(): MutableTimeSeriesPoint {
+        val currentMinute = System.currentTimeMillis() / MS_PER_MINUTE
+        return timeSeriesMutex.withLock {
+            timeSeriesMetrics.getOrPut(currentMinute) { MutableTimeSeriesPoint(currentMinute * MS_PER_MINUTE) }
+        }
+    }
 
     init {
         getOrCreateChannel("Geral")
@@ -61,10 +82,25 @@ class ChannelRegistry {
                     id = channelId,
                     onLog = { participantName, eventType ->
                         addLog(channelId, participantName, eventType)
+                        if (eventType == "START_SPEAKING") {
+                            scope.launch {
+                                val metric = getOrCreateCurrentMetric()
+                                timeSeriesMutex.withLock { metric.pttStarts += 1 }
+                            }
+                        }
                     },
                     onSpeakDuration = { participantName, durationMs ->
                         val current = accumulatedSpeakerTime[participantName] ?: 0L
                         accumulatedSpeakerTime[participantName] = current + durationMs
+                    },
+                    onMetric = { bytes, slowCount ->
+                        scope.launch {
+                            val metric = getOrCreateCurrentMetric()
+                            timeSeriesMutex.withLock {
+                                metric.bytesTransferred += bytes
+                                metric.slowConnections += slowCount
+                            }
+                        }
                     },
                 )
             }
@@ -114,6 +150,17 @@ class ChannelRegistry {
 
     @Suppress("MaxLineLength")
     fun getSpeakerTimes(): List<SpeakerTimeDto> = accumulatedSpeakerTime.map { SpeakerTimeDto(it.key, it.value / MS_PER_SECOND) }
+
+    suspend fun getTimeSeries(): List<TimeSeriesPointDto> {
+        val cutoff = (System.currentTimeMillis() / MS_PER_MINUTE) - TIME_SERIES_CUTOFF_MINUTES
+        return timeSeriesMutex.withLock {
+            timeSeriesMetrics.keys.removeAll { it < cutoff }
+            timeSeriesMetrics.values
+                .map {
+                    TimeSeriesPointDto(it.timestampMs, it.bytesTransferred, it.pttStarts, it.slowConnections)
+                }.sortedBy { it.timestampMs }
+        }
+    }
 
     suspend fun getActiveChannelsInfo(): List<DashboardChannelDto> =
         channels.values.map { channel ->
