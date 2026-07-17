@@ -97,7 +97,7 @@ fun HistoryScreenContent(
         AnimatedContent(
             targetState = messages.isEmpty(),
             label = "empty_state_animation",
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         ) { isEmpty ->
             if (isEmpty) {
                 Column(
@@ -259,9 +259,10 @@ fun VoiceMessageItem(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.medium)
                 .background(
                     if (isPlaying) {
                         PttTheme.customColors.primaryGlow
@@ -272,8 +273,7 @@ fun VoiceMessageItem(
                 .combinedClickable(
                     onClick = onPlayClick,
                     onLongClick = onLongClick,
-                )
-                .padding(16.dp),
+                ).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
