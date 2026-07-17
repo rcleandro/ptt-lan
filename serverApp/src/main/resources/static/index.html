@@ -235,6 +235,12 @@
         
         <div>
             <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 20px;">
+                <div style="grid-column: span 2;">
+                    <h2 style="margin-top: 0;">Carga do Servidor (CPU/RAM)</h2>
+                    <div class="stat-card" style="height: 300px; position: relative;">
+                        <canvas id="loadChart"></canvas>
+                    </div>
+                </div>
                 <div>
                     <h2 style="margin-top: 0;">Quem Fala Mais (Seg)</h2>
                     <div class="stat-card" style="height: 300px; position: relative;">
@@ -246,9 +252,6 @@
                     <div class="stat-card" style="height: 300px; position: relative;">
                         <canvas id="channelParticipantsChart"></canvas>
                     </div>
-                </div>
-                <div class="chart-container" style="height: 250px;">
-                    <canvas id="loadChart"></canvas>
                 </div>
             </div>
 
