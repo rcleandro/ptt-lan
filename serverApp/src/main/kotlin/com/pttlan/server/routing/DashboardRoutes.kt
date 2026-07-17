@@ -90,12 +90,13 @@ fun Routing.dashboardRoutes() {
             val threads = ManagementFactory.getThreadMXBean().threadCount
 
             val osBean = ManagementFactory.getOperatingSystemMXBean()
-            val cpuLoad =
+            val rawCpuLoad =
                 if (osBean is com.sun.management.OperatingSystemMXBean) {
                     osBean.processCpuLoad * 100.0
                 } else {
                     0.0
                 }
+            val cpuLoad = rawCpuLoad.takeIf { it >= 0.0 && !it.isNaN() }?.coerceAtMost(100.0) ?: 0.0
 
             val serverHealth = ServerHealthDto(uptime, memoryUsed, memoryTotal, threads, cpuLoad)
 

@@ -613,13 +613,16 @@
             }
 
             // Load Chart
-            const loadDataCpu = timeSeries.map(t => t.cpuLoadPercent);
-            const loadDataMem = timeSeries.map(t => t.memoryUsedPercent);
+            const loadDataCpu = timeSeries.map(t => Math.min(100, Math.max(0, t.cpuLoadPercent || 0)));
+            const loadDataMem = timeSeries.map(t => Math.min(100, Math.max(0, t.memoryUsedPercent || 0)));
             const ctxLoad = document.getElementById('loadChart');
             if (loadChartInstance) {
                 loadChartInstance.data.labels = labels;
                 loadChartInstance.data.datasets[0].data = loadDataCpu;
                 loadChartInstance.data.datasets[1].data = loadDataMem;
+                if (loadChartInstance.options.scales && loadChartInstance.options.scales.y) {
+                    loadChartInstance.options.scales.y.max = 100;
+                }
                 loadChartInstance.update();
             } else if (ctxLoad) {
                 loadChartInstance = new Chart(ctxLoad, {
@@ -635,7 +638,7 @@
                         ...commonOptions, 
                         plugins: { legend: { display: true, labels: { color: '#e0e0e0' } } }, 
                         scales: { 
-                            y: { min: 0, max: 100, ticks: { color: '#aaa' }, grid: { color: '#333' } }, 
+                            y: { min: 0, max: 100, suggestedMax: 100, ticks: { color: '#aaa' }, grid: { color: '#333' } }, 
                             x: { ticks: { color: '#aaa' }, grid: { color: '#333' } } 
                         } 
                     }

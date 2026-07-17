@@ -160,17 +160,20 @@ class ChannelRegistry {
         val osBean =
             java.lang.management.ManagementFactory
                 .getOperatingSystemMXBean()
-        val cpuLoad =
+        val rawCpuLoad =
             if (osBean is com.sun.management.OperatingSystemMXBean) {
                 osBean.processCpuLoad * 100.0
             } else {
                 0.0
             }
-        val memoryUsedPercent =
+        val cpuLoad = rawCpuLoad.takeIf { it >= 0.0 && !it.isNaN() }?.coerceAtMost(100.0) ?: 0.0
+
+        val rawMem =
             (
                 (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()).toDouble() /
                     Runtime.getRuntime().maxMemory()
             ) * 100.0
+        val memoryUsedPercent = rawMem.takeIf { !it.isNaN() }?.coerceIn(0.0, 100.0) ?: 0.0
 
         val currentPoint = getOrCreateCurrentMetric()
         if (cpuLoad > currentPoint.maxCpuLoad) currentPoint.maxCpuLoad = cpuLoad
