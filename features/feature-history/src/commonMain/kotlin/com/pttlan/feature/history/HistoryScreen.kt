@@ -1,5 +1,10 @@
 package com.pttlan.feature.history
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,7 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.History
@@ -26,6 +30,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -33,6 +38,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -156,17 +162,25 @@ fun HistoryScreenContent(
                             )
                         }
                     }
-                    if (!isCollapsed) {
-                        items(channelMessages, key = { it.id }) { message ->
-                            VoiceMessageItem(
-                                message = message,
-                                isPlaying = message.id == playingMessageId,
-                                isPaused = message.id == playingMessageId && isPaused,
-                                onPlayClick = { onPlayClick(message) },
-                                onLongClick = {
-                                    messageToDelete = message
-                                },
-                            )
+                    item(key = "content_$channelId") {
+                        AnimatedVisibility(
+                            visible = !isCollapsed,
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut(),
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                channelMessages.forEach { message ->
+                                    VoiceMessageItem(
+                                        message = message,
+                                        isPlaying = message.id == playingMessageId,
+                                        isPaused = message.id == playingMessageId && isPaused,
+                                        onPlayClick = { onPlayClick(message) },
+                                        onLongClick = {
+                                            messageToDelete = message
+                                        },
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -174,12 +188,12 @@ fun HistoryScreenContent(
         }
 
         if (messageToDelete != null) {
-            androidx.compose.material3.AlertDialog(
+            AlertDialog(
                 onDismissRequest = { messageToDelete = null },
                 title = { Text("Apagar Áudio") },
                 text = { Text("Tem certeza que deseja apagar este áudio?") },
                 confirmButton = {
-                    androidx.compose.material3.TextButton(
+                    TextButton(
                         onClick = {
                             messageToDelete?.let { onDeleteMessage(it) }
                             messageToDelete = null
@@ -189,7 +203,7 @@ fun HistoryScreenContent(
                     }
                 },
                 dismissButton = {
-                    androidx.compose.material3.TextButton(onClick = { messageToDelete = null }) {
+                    TextButton(onClick = { messageToDelete = null }) {
                         Text("Cancelar")
                     }
                 },
@@ -214,12 +228,12 @@ fun HistoryScreenContent(
         }
 
         if (showClearDialog) {
-            androidx.compose.material3.AlertDialog(
+            AlertDialog(
                 onDismissRequest = { showClearDialog = false },
                 title = { Text("Limpar Histórico") },
                 text = { Text("Tem certeza que deseja apagar todos os áudios gravados? Esta ação não pode ser desfeita.") },
                 confirmButton = {
-                    androidx.compose.material3.TextButton(
+                    TextButton(
                         onClick = {
                             showClearDialog = false
                             onClearCacheClick()
@@ -229,7 +243,7 @@ fun HistoryScreenContent(
                     }
                 },
                 dismissButton = {
-                    androidx.compose.material3.TextButton(onClick = { showClearDialog = false }) {
+                    TextButton(onClick = { showClearDialog = false }) {
                         Text("Cancelar")
                     }
                 },
