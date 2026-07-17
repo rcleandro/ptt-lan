@@ -129,6 +129,58 @@
             background-color: var(--surface-color);
             border-radius: 8px;
         }
+
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .logs-container {
+            background-color: var(--surface-color);
+            border-radius: 8px;
+            padding: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .log-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 10px 0;
+            border-bottom: 1px solid #333;
+            font-size: 14px;
+        }
+
+        .log-item:last-child {
+            border-bottom: none;
+        }
+
+        .log-time {
+            color: var(--text-muted);
+            min-width: 70px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .log-badge {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-right: 10px;
+            text-transform: uppercase;
+        }
+
+        .badge-join { background-color: rgba(76, 175, 80, 0.2); color: #4CAF50; }
+        .badge-leave { background-color: rgba(244, 67, 54, 0.2); color: #F44336; }
+        .badge-speak { background-color: rgba(199, 125, 76, 0.2); color: var(--speaking-color); }
+        .badge-stop { background-color: rgba(158, 158, 158, 0.2); color: #9E9E9E; }
     </style>
 </head>
 <body>
@@ -148,9 +200,21 @@
         </div>
     </div>
 
-    <h2>Canais Ativos</h2>
-    <div id="channels-container" class="channels-container">
-        <!-- Canais serão inseridos aqui via JS -->
+    <div class="dashboard-layout">
+        <div>
+            <h2>Canais Ativos</h2>
+            <div id="channels-container" class="channels-container">
+                <!-- Canais serão inseridos aqui via JS -->
+            </div>
+        </div>
+        
+        <div>
+            <h2>Atividade Recente</h2>
+            <div id="logs-container" class="logs-container">
+                <!-- Logs serão inseridos aqui via JS -->
+                <div class="empty-state" style="padding: 20px;">Aguardando eventos...</div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -167,6 +231,7 @@
                 document.getElementById('last-updated').textContent = `Atualizado: ${now.toLocaleTimeString()}`;
                 
                 renderChannels(data.channels);
+                renderLogs(data.logs || []);
             } catch (error) {
                 console.error('Error fetching metrics:', error);
             }
@@ -197,6 +262,46 @@
                     </ul>
                 </div>
             `).join('');
+        }
+
+        function renderLogs(logs) {
+            const container = document.getElementById('logs-container');
+            
+            if (!logs || logs.length === 0) {
+                return;
+            }
+
+            container.innerHTML = logs.map(log => {
+                const date = new Date(log.timestamp);
+                const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                
+                let badgeClass = '';
+                let label = '';
+                let actionText = '';
+
+                switch(log.eventType) {
+                    case 'JOIN':
+                        badgeClass = 'badge-join'; label = 'Entrou'; actionText = 'entrou no canal'; break;
+                    case 'LEAVE':
+                        badgeClass = 'badge-leave'; label = 'Saiu'; actionText = 'saiu do canal'; break;
+                    case 'START_SPEAKING':
+                        badgeClass = 'badge-speak'; label = 'Falando'; actionText = 'começou a transmitir no canal'; break;
+                    case 'STOP_SPEAKING':
+                        badgeClass = 'badge-stop'; label = 'Parou'; actionText = 'parou de transmitir no canal'; break;
+                    default:
+                        badgeClass = 'badge-stop'; label = log.eventType; actionText = 'fez algo no canal'; break;
+                }
+
+                return `
+                    <div class="log-item">
+                        <div class="log-time">${timeStr}</div>
+                        <div class="log-badge ${badgeClass}">${label}</div>
+                        <div>
+                            <strong>${log.participantName}</strong> ${actionText} <strong>${log.channelId}</strong>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         // Poll a cada 2 segundos

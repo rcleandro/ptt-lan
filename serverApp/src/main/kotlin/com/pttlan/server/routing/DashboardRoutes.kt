@@ -13,6 +13,15 @@ import org.koin.ktor.ext.inject
 data class DashboardMetricsDto(
     val globalConnections: Int,
     val channels: List<DashboardChannelDto>,
+    val logs: List<DashboardLogEventDto>,
+)
+
+@Serializable
+data class DashboardLogEventDto(
+    val timestamp: Long,
+    val channelId: String,
+    val participantName: String,
+    val eventType: String,
 )
 
 @Serializable
@@ -39,11 +48,13 @@ fun Routing.dashboardRoutes() {
         get("/metrics") {
             val activeChannels = channelRegistry.getActiveChannelsInfo()
             val globalConnections = channelRegistry.getGlobalConnectionsCount()
+            val recentLogs = channelRegistry.getRecentLogs()
 
             call.respond(
                 DashboardMetricsDto(
                     globalConnections = globalConnections,
                     channels = activeChannels,
+                    logs = recentLogs,
                 ),
             )
         }

@@ -4,6 +4,7 @@ package com.pttlan.server.channel
 import com.pttlan.core.network.protocol.ActiveChannelDto
 import com.pttlan.core.network.protocol.ControlMessage
 import com.pttlan.server.routing.DashboardChannelDto
+import com.pttlan.server.routing.DashboardLogEventDto
 import com.pttlan.server.routing.DashboardParticipantDto
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.Frame
@@ -12,17 +13,22 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val CLEANUP_DELAY_MS = 5 * 60 * 1000L
+private const val MAX_LOGS = 100
 
 class ChannelRegistry {
     private val channels = ConcurrentHashMap<String, PttChannel>()
     private val globalConnections = ConcurrentHashMap<DefaultWebSocketServerSession, String>()
     private val cleanupJobs = ConcurrentHashMap<String, Job>()
     private val scope = CoroutineScope(Dispatchers.Default)
+
+    private val logMutex = kotlinx.coroutines.sync.Mutex()
+    private val recentLogs = kotlin.collections.ArrayDeque<DashboardLogEventDto>()
 
     init {
         getOrCreateChannel("Geral")
@@ -46,7 +52,12 @@ class ChannelRegistry {
 
     fun getOrCreateChannel(channelId: String): PttChannel {
         cleanupJobs.remove(channelId)?.cancel()
-        val channel = channels.getOrPut(channelId) { PttChannel(channelId) }
+        val channel =
+            channels.getOrPut(channelId) {
+                PttChannel(channelId) { participantName, eventType ->
+                    addLog(channelId, participantName, eventType)
+                }
+            }
         broadcastActiveChannels()
         return channel
     }
@@ -74,6 +85,22 @@ class ChannelRegistry {
     }
 
     fun getGlobalConnectionsCount(): Int = globalConnections.size
+
+    private suspend fun addLog(
+        channelId: String,
+        participantName: String,
+        eventType: String,
+    ) {
+        logMutex.withLock {
+            val event = DashboardLogEventDto(System.currentTimeMillis(), channelId, participantName, eventType)
+            recentLogs.addFirst(event)
+            if (recentLogs.size > MAX_LOGS) {
+                recentLogs.removeLast()
+            }
+        }
+    }
+
+    suspend fun getRecentLogs(): List<DashboardLogEventDto> = logMutex.withLock { recentLogs.toList() }
 
     suspend fun getActiveChannelsInfo(): List<DashboardChannelDto> =
         channels.values.map { channel ->

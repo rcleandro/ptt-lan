@@ -29,6 +29,7 @@ data class Participant(
 
 class PttChannel(
     val id: String,
+    private val onLog: suspend (participantName: String, eventType: String) -> Unit = { _, _ -> },
 ) {
     private val participants = mutableMapOf<String, Participant>()
     private val mutex = Mutex()
@@ -40,14 +41,14 @@ class PttChannel(
         mutex.withLock {
             participants[participant.userId] = participant
         }
+        onLog(participant.nickname, "JOIN")
         broadcastParticipantList()
     }
 
     suspend fun removeParticipant(userId: String) {
         releaseFloorIfHeldBy(userId)
-        mutex.withLock {
-            participants.remove(userId)
-        }
+        val p = mutex.withLock { participants.remove(userId) }
+        p?.let { onLog(it.nickname, "LEAVE") }
         broadcastParticipantList()
     }
 
@@ -143,6 +144,7 @@ class PttChannel(
                 }
             }.also { (granted, nickname) ->
                 if (granted) {
+                    onLog(nickname, "START_SPEAKING")
                     broadcast(ControlMessage.SpeakerChanged(id, userId, nickname, true))
                 }
             }.first
@@ -159,6 +161,7 @@ class PttChannel(
                     return // Not the current speaker, ignore
                 }
             }
+        onLog(nickname, "STOP_SPEAKING")
         broadcast(ControlMessage.SpeakerChanged(id, userId, nickname, false))
     }
 
