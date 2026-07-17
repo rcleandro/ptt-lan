@@ -247,6 +247,9 @@
                         <canvas id="channelParticipantsChart"></canvas>
                     </div>
                 </div>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="loadChart"></canvas>
+                </div>
             </div>
 
             <h2 style="margin-top: 0;">Monitoramento de Rede e Uso</h2>
@@ -471,6 +474,7 @@
         let bandwidthChartInstance = null;
         let pttFrequencyChartInstance = null;
         let networkDelaysChartInstance = null;
+        let loadChartInstance = null;
 
         function renderSpeakerChart(speakerTimes) {
             const ctx = document.getElementById('speakerChart');
@@ -602,6 +606,36 @@
                         datasets: [{ data: delaysData, backgroundColor: '#FF6384' }]
                     },
                     options: commonOptions
+                });
+            }
+
+            // Load Chart
+            const loadDataCpu = timeSeries.map(t => t.cpuLoadPercent);
+            const loadDataMem = timeSeries.map(t => t.memoryUsedPercent);
+            const ctxLoad = document.getElementById('loadChart');
+            if (loadChartInstance) {
+                loadChartInstance.data.labels = labels;
+                loadChartInstance.data.datasets[0].data = loadDataCpu;
+                loadChartInstance.data.datasets[1].data = loadDataMem;
+                loadChartInstance.update();
+            } else if (ctxLoad) {
+                loadChartInstance = new Chart(ctxLoad, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            { label: 'CPU (%)', data: loadDataCpu, borderColor: '#F44336', backgroundColor: 'transparent', tension: 0.3 },
+                            { label: 'RAM (%)', data: loadDataMem, borderColor: '#2196F3', backgroundColor: 'transparent', tension: 0.3 }
+                        ]
+                    },
+                    options: { 
+                        ...commonOptions, 
+                        plugins: { legend: { display: true, labels: { color: '#e0e0e0' } } }, 
+                        scales: { 
+                            y: { min: 0, max: 100, ticks: { color: '#aaa' }, grid: { color: '#333' } }, 
+                            x: { ticks: { color: '#aaa' }, grid: { color: '#333' } } 
+                        } 
+                    }
                 });
             }
         }

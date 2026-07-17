@@ -40,6 +40,8 @@ data class TimeSeriesPointDto(
     val bytesTransferred: Long,
     val pttStarts: Int,
     val slowConnections: Int,
+    val cpuLoadPercent: Double,
+    val memoryUsedPercent: Double,
 )
 
 @Serializable

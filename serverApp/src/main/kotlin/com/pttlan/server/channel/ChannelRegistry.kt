@@ -33,6 +33,8 @@ private class MutableTimeSeriesPoint(
     var bytesTransferred: Long = 0,
     var pttStarts: Int = 0,
     var slowConnections: Int = 0,
+    var maxCpuLoad: Double = 0.0,
+    var maxMemoryUsedPercent: Double = 0.0,
 )
 
 @Suppress("TooManyFunctions")
@@ -153,13 +155,40 @@ class ChannelRegistry {
     @Suppress("MaxLineLength")
     fun getSpeakerTimes(): List<SpeakerTimeDto> = accumulatedSpeakerTime.map { SpeakerTimeDto(it.key, it.value / MS_PER_SECOND) }
 
+    @Suppress("MagicNumber")
     suspend fun getTimeSeries(): List<TimeSeriesPointDto> {
+        val osBean =
+            java.lang.management.ManagementFactory
+                .getOperatingSystemMXBean()
+        val cpuLoad =
+            if (osBean is com.sun.management.OperatingSystemMXBean) {
+                osBean.processCpuLoad * 100.0
+            } else {
+                0.0
+            }
+        val memoryUsedPercent =
+            (
+                (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()).toDouble() /
+                    Runtime.getRuntime().maxMemory()
+            ) * 100.0
+
+        val currentPoint = getOrCreateCurrentMetric()
+        if (cpuLoad > currentPoint.maxCpuLoad) currentPoint.maxCpuLoad = cpuLoad
+        if (memoryUsedPercent > currentPoint.maxMemoryUsedPercent) currentPoint.maxMemoryUsedPercent = memoryUsedPercent
+
         val cutoff = (System.currentTimeMillis() / MS_PER_MINUTE) - TIME_SERIES_CUTOFF_MINUTES
         return timeSeriesMutex.withLock {
             timeSeriesMetrics.keys.removeAll { it < cutoff }
             timeSeriesMetrics.values
                 .map {
-                    TimeSeriesPointDto(it.timestampMs, it.bytesTransferred, it.pttStarts, it.slowConnections)
+                    TimeSeriesPointDto(
+                        it.timestampMs,
+                        it.bytesTransferred,
+                        it.pttStarts,
+                        it.slowConnections,
+                        it.maxCpuLoad,
+                        it.maxMemoryUsedPercent,
+                    )
                 }.sortedBy { it.timestampMs }
         }
     }
