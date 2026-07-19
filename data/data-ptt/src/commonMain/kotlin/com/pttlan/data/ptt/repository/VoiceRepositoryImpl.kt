@@ -18,8 +18,10 @@ import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -94,13 +96,14 @@ class VoiceRepositoryImpl(
                                 val size =
                                     try {
                                         FileSystem.SYSTEM.metadataOrNull(path)?.size ?: 0L
-                                    } catch (e: Exception) {
+                                    } catch (_: Exception) {
                                         0L
                                     }
                                 if (size == 0L) {
                                     try {
                                         FileSystem.SYSTEM.delete(path)
-                                    } catch (e: Exception) {
+                                    } catch (_: Exception) {
+                                        // Ignore
                                     }
                                 } else {
                                     val duration = Clock.System.now().toEpochMilliseconds() - currentMessageStartMs
@@ -214,32 +217,34 @@ class VoiceRepositoryImpl(
         transmissionJob =
             scope.launch {
                 val audioStream = audioRecorder.startCapture()
-                audioStream.collect { chunk ->
-                    val encoded =
-                        try {
-                            codec.encode(chunk)
-                        } catch (_: Exception) {
-                            chunk
-                        }
-                    val envelope =
-                        AudioEnvelope(
-                            channelId = channelId,
-                            senderId = userId,
-                            sequenceNumber = sequenceNumber++,
-                            codec = codecType,
-                            timestampMs = Clock.System.now().toEpochMilliseconds(),
-                        )
-                    webSocketClient.sendAudioChunk(envelope, encoded)
+                audioStream
+                    .buffer(100, BufferOverflow.DROP_OLDEST)
+                    .collect { chunk ->
+                        val encoded =
+                            try {
+                                codec.encode(chunk)
+                            } catch (_: Exception) {
+                                chunk
+                            }
+                        val envelope =
+                            AudioEnvelope(
+                                channelId = channelId,
+                                senderId = userId,
+                                sequenceNumber = sequenceNumber++,
+                                codec = codecType,
+                                timestampMs = Clock.System.now().toEpochMilliseconds(),
+                            )
+                        webSocketClient.sendAudioChunk(envelope, encoded)
 
-                    try {
-                        if (currentFileSink != null && currentAudioCrypto != null) {
-                            val encrypted = currentAudioCrypto!!.process(chunk)
-                            currentFileSink?.write(encrypted)
+                        try {
+                            if (currentFileSink != null && currentAudioCrypto != null) {
+                                val encrypted = currentAudioCrypto!!.process(chunk)
+                                currentFileSink?.write(encrypted)
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
                         }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
                     }
-                }
             }
     }
 

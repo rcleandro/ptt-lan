@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import java.util.concurrent.TimeUnit
 import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.DataLine
@@ -32,10 +33,15 @@ class JvmAudioRecorder : AudioRecorder {
             val buffer = ByteArray(chunkSizeBytes)
 
             try {
+                var offset = 0
                 while (isRecording) {
-                    val bytesRead = line?.read(buffer, 0, buffer.size) ?: 0
+                    val bytesRead = line?.read(buffer, offset, buffer.size - offset) ?: 0
                     if (bytesRead > 0) {
-                        emit(buffer.copyOf(bytesRead))
+                        offset += bytesRead
+                        if (offset == buffer.size) {
+                            emit(buffer.copyOf())
+                            offset = 0
+                        }
                     }
                 }
             } finally {
@@ -51,6 +57,9 @@ class JvmAudioRecorder : AudioRecorder {
 
 class JvmAudioPlayer : AudioPlayer {
     private var line: SourceDataLine? = null
+    private val queue = java.util.concurrent.LinkedBlockingQueue<ByteArray>()
+    private var isPlaying = false
+    private var playThread: Thread? = null
 
     override fun play(
         chunk: ByteArray,
@@ -62,16 +71,51 @@ class JvmAudioPlayer : AudioPlayer {
             line = AudioSystem.getLine(info) as SourceDataLine
             line?.open(format)
             line?.start()
+
+            isPlaying = true
+            playThread =
+                Thread {
+                    var isBuffering = true
+
+                    while (isPlaying) {
+                        if (isBuffering) {
+                            if (queue.size < 5) {
+                                Thread.sleep(10)
+                                continue
+                            } else {
+                                isBuffering = false
+                            }
+                        }
+
+                        val c = queue.poll(500, TimeUnit.MILLISECONDS)
+                        if (c != null && line != null) {
+                            line?.write(c, 0, c.size)
+                        } else {
+                            isBuffering = true
+                        }
+                    }
+                }
+            playThread?.isDaemon = true
+            playThread?.start()
         }
 
-        line?.write(chunk, 0, chunk.size)
+        queue.offer(chunk)
     }
 
     override fun stop() {
+        isPlaying = false
+        try {
+            playThread?.join(500)
+        } catch (_: Exception) {
+            // Ignore
+        }
+        playThread = null
+
         line?.drain()
         line?.stop()
         line?.close()
         line = null
+        queue.clear()
     }
 }
 

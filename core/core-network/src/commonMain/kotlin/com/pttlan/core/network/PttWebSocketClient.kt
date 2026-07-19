@@ -8,6 +8,7 @@ import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -29,10 +30,18 @@ class PttWebSocketClient(
     private var session: DefaultClientWebSocketSession? = null
     private val sessionMutex = Mutex()
 
-    private val _controlMessages = MutableSharedFlow<ControlMessage>()
+    private val _controlMessages =
+        MutableSharedFlow<ControlMessage>(
+            extraBufferCapacity = 100,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        )
     val controlMessages: Flow<ControlMessage> = _controlMessages.asSharedFlow()
 
-    private val _audioChunks = MutableSharedFlow<Pair<AudioEnvelope?, ByteArray>>()
+    private val _audioChunks =
+        MutableSharedFlow<Pair<AudioEnvelope?, ByteArray>>(
+            extraBufferCapacity = 100,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        )
     val audioChunks: Flow<Pair<AudioEnvelope?, ByteArray>> = _audioChunks.asSharedFlow()
 
     private var shouldReconnect = false

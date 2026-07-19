@@ -3,7 +3,7 @@ package com.pttlan.core.audio
 import kotlinx.coroutines.flow.Flow
 
 interface AudioRecorder {
-    fun startCapture(sampleRate: Int = 16_000): Flow<ByteArray>
+    fun startCapture(sampleRate: Int = 48_000): Flow<ByteArray>
 
     fun stopCapture()
 }
@@ -11,7 +11,7 @@ interface AudioRecorder {
 interface AudioPlayer {
     fun play(
         chunk: ByteArray,
-        sampleRate: Int = 16_000,
+        sampleRate: Int = 48_000,
     )
 
     fun stop()

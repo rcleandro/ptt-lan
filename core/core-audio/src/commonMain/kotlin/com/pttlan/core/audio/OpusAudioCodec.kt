@@ -5,7 +5,7 @@ import eu.buney.kopus.OpusDecoder
 import eu.buney.kopus.OpusEncoder
 
 class OpusAudioCodec(
-    sampleRate: Int = 16000,
+    sampleRate: Int = 48000,
     private val channels: Int = 1,
 ) : AudioCodec {
     private val encoder = OpusEncoder(sampleRate, channels, OpusApplication.Voip)
