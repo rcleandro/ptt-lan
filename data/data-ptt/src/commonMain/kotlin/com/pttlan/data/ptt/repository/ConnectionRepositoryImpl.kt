@@ -61,8 +61,12 @@ class ConnectionRepositoryImpl(
         connectionJob =
             scope.launch {
                 try {
+                    // Simula deviceId para fins de auth offline-first. Numa Fase futura pode vir do settings
+                    val deviceId = "device-${nickname.hashCode()}"
+                    val token = webSocketClient.login(endpoint.host, endpoint.port, endpoint.isLocal, nickname, deviceId)
+
                     // We launch the infinite reconnect loop in the background
-                    webSocketClient.connect(endpoint.host, endpoint.port, endpoint.isLocal, nickname)
+                    webSocketClient.connect(endpoint.host, endpoint.port, endpoint.isLocal, token)
                 } catch (e: Exception) {
                     deferred.completeExceptionally(e)
                     e.printStackTrace()

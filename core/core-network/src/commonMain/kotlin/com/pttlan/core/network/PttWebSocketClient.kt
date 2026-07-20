@@ -3,8 +3,13 @@ package com.pttlan.core.network
 import com.pttlan.core.network.protocol.AudioEnvelope
 import com.pttlan.core.network.protocol.ControlMessage
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.webSocketSession
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
@@ -23,6 +28,17 @@ import kotlinx.serialization.json.Json
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+
+@kotlinx.serialization.Serializable
+data class LoginRequest(
+    val nickname: String,
+    val deviceId: String,
+)
+
+@kotlinx.serialization.Serializable
+data class LoginResponse(
+    val token: String,
+)
 
 class PttWebSocketClient(
     private val httpClient: HttpClient,
@@ -49,11 +65,29 @@ class PttWebSocketClient(
     private val _isConnected = MutableStateFlow(false)
     val isConnected = _isConnected.asStateFlow()
 
-    suspend fun connect(
+    suspend fun login(
         host: String,
         port: Int,
         isLocal: Boolean,
         nickname: String,
+        deviceId: String,
+    ): String {
+        val cleanHost = normalizeHost(host)
+        val url = "https://$cleanHost:$port/api/auth/login"
+        val response: LoginResponse =
+            httpClient
+                .post(url) {
+                    contentType(ContentType.Application.Json)
+                    setBody(LoginRequest(nickname, deviceId))
+                }.body()
+        return response.token
+    }
+
+    suspend fun connect(
+        host: String,
+        port: Int,
+        isLocal: Boolean,
+        token: String,
     ) {
         shouldReconnect = true
         var isFirstAttempt = true
@@ -65,11 +99,11 @@ class PttWebSocketClient(
                 val cleanHost = normalizeHost(host)
                 sessionMutex.withLock {
                     if (session != null) return@withLock
-                    println("PttWebSocketClient: Tentando conectar a wss://$cleanHost:$port/ws?nickname=$nickname")
+                    println("PttWebSocketClient: Tentando conectar a wss://$cleanHost:$port/ws com token")
                     val timeout = if (isLocal) 5.seconds else 15.seconds
                     session =
                         withTimeout(timeout) {
-                            httpClient.webSocketSession("wss://$cleanHost:$port/ws?nickname=$nickname")
+                            httpClient.webSocketSession("wss://$cleanHost:$port/ws?token=$token")
                         }
                 }
 

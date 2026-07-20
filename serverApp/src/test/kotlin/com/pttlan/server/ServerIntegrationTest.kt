@@ -44,7 +44,10 @@ class ServerIntegrationTest {
 
             val job1 =
                 testScope.launch {
-                    client1.webSocket("/ws?nickname=Client1") {
+                    val token1 =
+                        com.pttlan.server.auth.JwtConfig
+                            .generateToken("Client1", "u1")
+                    client1.webSocket("/ws?token=$token1") {
                         // Client1 joins
                         val join1 = ControlMessage.JoinChannel("channel-1", "Client1", "u1")
                         send(Frame.Text(Json.encodeToString<ControlMessage>(join1)))
@@ -69,7 +72,10 @@ class ServerIntegrationTest {
 
             val job2 =
                 testScope.launch {
-                    client2.webSocket("/ws?nickname=Client2") {
+                    val token2 =
+                        com.pttlan.server.auth.JwtConfig
+                            .generateToken("Client2", "u2")
+                    client2.webSocket("/ws?token=$token2") {
                         // Wait for Client1 to connect and join
                         client1Connected.await()
 

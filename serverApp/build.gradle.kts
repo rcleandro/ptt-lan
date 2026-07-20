@@ -21,6 +21,7 @@ dependencies {
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.ktor.server.auth)
     implementation(libs.ktor.server.auth.jwt)
+    implementation(libs.ktor.server.rate.limit)
 
     implementation(libs.koin.core)
     implementation("io.insert-koin:koin-ktor:${libs.versions.koin.get()}")
@@ -28,5 +29,6 @@ dependencies {
     implementation(libs.logback.classic)
 
     testImplementation(libs.ktor.server.test.host)
+    testImplementation(libs.ktor.client.content.negotiation)
     testImplementation(kotlin("test"))
 }

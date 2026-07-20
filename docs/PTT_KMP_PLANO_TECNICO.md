@@ -1087,11 +1087,11 @@ Checklist:
 **Objetivo:** Substituir modelo de confiança LAN (UUID) por autenticação real para evitar acessos indevidos e spoofing na internet.
 
 Checklist:
-- [ ] `serverApp`: Integrar autenticação por JWT/OAuth ou provedor como Firebase Auth.
-- [ ] Validar token JWT no handshake do WebSocket (`wss://.../ws?token=...`).
-- [ ] Implementar Rate Limiting no Ktor (plugin oficial ou Redis) por IP/Usuário.
-- [ ] `feature-settings`/`feature-connection`: Adicionar fluxo de login de usuário no App client.
-- [ ] Atualizar testes unitários e de integração para contemplar novos fluxos de autenticação (JWT) e bloqueios por Rate Limiting.
+- [x] `serverApp`: Integrar autenticação por JWT/OAuth ou provedor como Firebase Auth.
+- [x] Validar token JWT no handshake do WebSocket (`wss://.../ws?token=...`).
+- [x] Implementar Rate Limiting no Ktor (plugin oficial ou Redis) por IP/Usuário.
+- [x] `feature-settings`/`feature-connection`: Adicionar fluxo de login de usuário no App client.
+- [x] Atualizar testes unitários e de integração para contemplar novos fluxos de autenticação (JWT) e bloqueios por Rate Limiting.
 
 **Critério de conclusão:** Impossível conectar ao WebSocket ou executar ações de controle sem um token de acesso válido de um usuário real.
 
@@ -1195,7 +1195,7 @@ Antes de marcar qualquer fase como concluída, o agente deve confirmar:
 - [x] Fase 13 — Documentação Final concluída
 - [x] Fase 14 — Cobertura Total de Testes (TDD/BDD) concluída
 - [x] Fase 15 — Deploy na Nuvem e Descoberta Direta (Internet-ready) concluída
-- [ ] Fase 16 — Autenticação e Segurança Robusta concluída
+- [x] Fase 16 — Autenticação e Segurança Robusta concluída
 - [ ] Fase 17 — Escalabilidade e Resiliência concluída
 - [ ] Todos os critérios de aceite globais (seção 23) satisfeitos
 - [x] Nenhuma decisão arquitetural em aberto restante neste documento

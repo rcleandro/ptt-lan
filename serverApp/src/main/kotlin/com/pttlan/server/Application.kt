@@ -1,14 +1,20 @@
 package com.pttlan.server
 
+import com.pttlan.server.auth.JwtConfig
 import com.pttlan.server.channel.ChannelRegistry
+import com.pttlan.server.routing.authRoutes
 import com.pttlan.server.routing.dashboardRoutes
 import com.pttlan.server.routing.pttRoutes
 import io.ktor.network.tls.certificates.generateCertificate
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
+import io.ktor.server.auth.Authentication
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.netty.EngineMain
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.origin
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
@@ -50,32 +56,7 @@ fun Application.module() {
         )
     }
 
-    // Broadcast mDNS
-    Thread {
-        try {
-            val localIp = getLocalIpAddress()
-            val jmdns = if (localIp != null) JmDNS.create(localIp) else JmDNS.create()
-            val serviceInfo =
-                ServiceInfo.create(
-                    "_pttlan._tcp.local.",
-                    "PTT-LAN-Server-${System.currentTimeMillis()}",
-                    DEFAULT_PORT,
-                    0,
-                    0,
-                    "SSL:$DEFAULT_PORT",
-                )
-            jmdns.registerService(serviceInfo)
-
-            Runtime.getRuntime().addShutdownHook(
-                Thread {
-                    jmdns.unregisterAllServices()
-                    jmdns.close()
-                },
-            )
-        } catch (e: IOException) {
-            println("Error starting JmDNS: ${e.message}")
-        }
-    }.start()
+    startMdnsBroadcast(DEFAULT_PORT)
 
     install(Koin) {
         modules(
@@ -87,7 +68,36 @@ fun Application.module() {
         )
     }
 
+    install(Authentication) {
+        jwt("auth-jwt") {
+            realm = "PTT-LAN Server"
+            verifier(JwtConfig.verifier)
+            validate { credential ->
+                if (credential.payload.getClaim("nickname").asString() != "") {
+                    JWTPrincipal(credential.payload)
+                } else {
+                    null
+                }
+            }
+        }
+    }
+
+    install(io.ktor.server.plugins.ratelimit.RateLimit) {
+        global {
+            rateLimiter(limit = 100, refillPeriod = 60.seconds)
+            requestKey { call -> call.request.origin.remoteHost }
+        }
+        register(
+            io.ktor.server.plugins.ratelimit
+                .RateLimitName("login"),
+        ) {
+            rateLimiter(limit = 5, refillPeriod = 60.seconds)
+            requestKey { call -> call.request.origin.remoteHost }
+        }
+    }
+
     routing {
+        authRoutes()
         pttRoutes()
         dashboardRoutes()
     }
@@ -109,4 +119,32 @@ private fun isValidInterfaceName(name: String): Boolean {
     return !invalidPrefixes.any { lowerName.startsWith(it) } &&
         !lowerName.contains("vbox") &&
         !lowerName.contains("vmnet")
+}
+
+private fun startMdnsBroadcast(port: Int) {
+    Thread {
+        try {
+            val localIp = getLocalIpAddress()
+            val jmdns = if (localIp != null) javax.jmdns.JmDNS.create(localIp) else javax.jmdns.JmDNS.create()
+            val serviceInfo =
+                javax.jmdns.ServiceInfo.create(
+                    "_pttlan._tcp.local.",
+                    "PTT-LAN-Server-${System.currentTimeMillis()}",
+                    port,
+                    0,
+                    0,
+                    "SSL:$port",
+                )
+            jmdns.registerService(serviceInfo)
+
+            Runtime.getRuntime().addShutdownHook(
+                Thread {
+                    jmdns.unregisterAllServices()
+                    jmdns.close()
+                },
+            )
+        } catch (e: kotlinx.io.IOException) {
+            println("Error starting JmDNS: ${e.message}")
+        }
+    }.start()
 }

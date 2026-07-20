@@ -2,6 +2,7 @@
 package com.pttlan.server.routing
 
 import com.pttlan.core.network.protocol.ControlMessage
+import com.pttlan.server.auth.JwtConfig
 import com.pttlan.server.channel.ChannelRegistry
 import com.pttlan.server.channel.Participant
 import io.ktor.server.plugins.origin
@@ -24,7 +25,22 @@ fun Routing.pttRoutes() {
         var currentChannelId: String? = null
 
         try {
-            val nickname = call.request.queryParameters["nickname"] ?: "Desconhecido"
+            val token = call.request.queryParameters["token"]
+            if (token.isNullOrBlank()) {
+                close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Token JWT ausente"))
+                return@webSocket
+            }
+
+            val decodedJwt =
+                try {
+                    JwtConfig.verifier.verify(token)
+                } catch (e: Exception) {
+                    println("PttRoutes: Falha na validacao do token JWT: ${e.message}")
+                    close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Token JWT inválido ou expirado"))
+                    return@webSocket
+                }
+
+            val nickname = decodedJwt.getClaim("nickname").asString() ?: "Desconhecido"
             if (!channelRegistry.addGlobalConnection(this, nickname)) {
                 close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Nome já em uso"))
                 return@webSocket
