@@ -15,5 +15,10 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(project(":core:core-datastore"))
         }
+        jvmTest.dependencies {
+            implementation(project(":core:core-testing"))
+            implementation(kotlin("test"))
+            implementation(libs.multiplatform.settings.test)
+        }
     }
 }

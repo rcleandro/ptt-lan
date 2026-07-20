@@ -14,7 +14,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -22,6 +22,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withTimeout
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
@@ -29,6 +30,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ConnectionComponentTest {
@@ -121,7 +123,13 @@ class ConnectionComponentTest {
             component.onIntent(ConnectionIntent.UpdateManualIp("10.0.0.1"))
 
             val expectedEndpoint = ServerEndpoint("10.0.0.1", 9443, isLocal = true)
-            coEvery { connectToServerUseCase(expectedEndpoint, "User1") } returns Result.failure(TimeoutCancellationException("Timeout"))
+            coEvery { connectToServerUseCase(expectedEndpoint, "User1") } coAnswers {
+                Result.failure(
+                    runCatching {
+                        withTimeout(1.milliseconds) { delay(10.milliseconds) }
+                    }.exceptionOrNull() ?: Exception("Timeout"),
+                )
+            }
 
             // Act
             component.onIntent(ConnectionIntent.ConnectToManualIp("10.0.0.1"))

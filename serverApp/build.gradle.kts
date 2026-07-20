@@ -19,6 +19,8 @@ dependencies {
     implementation("io.ktor:ktor-server-websockets:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-content-negotiation:${libs.versions.ktor.get()}")
     implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.server.auth)
+    implementation(libs.ktor.server.auth.jwt)
 
     implementation(libs.koin.core)
     implementation("io.insert-koin:koin-ktor:${libs.versions.koin.get()}")
