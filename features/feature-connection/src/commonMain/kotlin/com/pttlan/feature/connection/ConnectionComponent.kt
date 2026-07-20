@@ -1,10 +1,10 @@
 package com.pttlan.feature.connection
 
 import com.arkivanov.decompose.ComponentContext
+import com.pttlan.core.common.network.isLocalNetwork
 import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.domain.ptt.repository.ServerEndpoint
 import com.pttlan.domain.ptt.repository.ServerNode
-import com.pttlan.domain.ptt.repository.isLocalNetwork
 import com.pttlan.domain.ptt.usecase.ConnectToServerUseCase
 import com.pttlan.domain.ptt.usecase.DiscoverServersUseCase
 import com.pttlan.domain.ptt.usecase.ObserveConnectionStatusUseCase

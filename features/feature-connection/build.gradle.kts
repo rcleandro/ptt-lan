@@ -8,6 +8,7 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":domain:domain-ptt"))
             implementation(project(":core:core-designsystem"))
+            implementation(project(":core:core-common"))
             api(libs.decompose)
             implementation(libs.decompose.extensions.compose)
             implementation(libs.koin.core)

@@ -1,5 +1,6 @@
 package com.pttlan.data.ptt.repository
 
+import com.pttlan.core.common.network.isLocalNetwork
 import com.pttlan.core.network.PttWebSocketClient
 import com.pttlan.core.network.discovery.ServerDiscoveryService
 import com.pttlan.core.network.normalizeHost
@@ -7,7 +8,6 @@ import com.pttlan.domain.ptt.repository.ConnectionRepository
 import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.domain.ptt.repository.ServerEndpoint
 import com.pttlan.domain.ptt.repository.ServerNode
-import com.pttlan.domain.ptt.repository.isLocalNetwork
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
