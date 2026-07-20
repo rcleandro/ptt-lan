@@ -101,7 +101,7 @@ class JvmAudioPlayer : AudioPlayer {
 
                         val packet = queue.poll(500, TimeUnit.MILLISECONDS)
                         if (packet != null && line != null) {
-                            if (expectedSequenceNumber == -1) {
+                            if (expectedSequenceNumber == -1 || packet.sequenceNumber < expectedSequenceNumber - 20) {
                                 expectedSequenceNumber = packet.sequenceNumber
                             }
                             if (packet.sequenceNumber >= expectedSequenceNumber) {
@@ -110,6 +110,7 @@ class JvmAudioPlayer : AudioPlayer {
                             }
                         } else {
                             isBuffering = true
+                            expectedSequenceNumber = -1
                         }
                     }
                 }

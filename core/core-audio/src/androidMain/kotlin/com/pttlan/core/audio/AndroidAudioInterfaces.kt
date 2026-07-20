@@ -129,7 +129,7 @@ class AndroidAudioPlayer : AudioPlayer {
 
                         val packet = queue.poll(500, TimeUnit.MILLISECONDS)
                         if (packet != null && audioTrack != null) {
-                            if (expectedSequenceNumber == -1) {
+                            if (expectedSequenceNumber == -1 || packet.sequenceNumber < expectedSequenceNumber - 20) {
                                 expectedSequenceNumber = packet.sequenceNumber
                             }
                             if (packet.sequenceNumber >= expectedSequenceNumber) {
@@ -138,6 +138,7 @@ class AndroidAudioPlayer : AudioPlayer {
                             }
                         } else {
                             isBuffering = true
+                            expectedSequenceNumber = -1
                         }
                     }
                 }
