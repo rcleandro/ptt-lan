@@ -12,6 +12,8 @@ interface AudioPlayer {
     fun play(
         chunk: ByteArray,
         sampleRate: Int = 48_000,
+        sequenceNumber: Int = 0,
+        timestampMs: Long = 0L,
     )
 
     fun stop()

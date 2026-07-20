@@ -133,6 +133,8 @@ class IosAudioPlayer : AudioPlayer {
     override fun play(
         chunk: ByteArray,
         sampleRate: Int,
+        sequenceNumber: Int,
+        timestampMs: Long,
     ) {
         try {
             val session = AVAudioSession.sharedInstance()

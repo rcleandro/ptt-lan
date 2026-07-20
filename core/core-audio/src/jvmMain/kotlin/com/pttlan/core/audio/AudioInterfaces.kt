@@ -4,7 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.PriorityBlockingQueue
 import java.util.concurrent.TimeUnit
 import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioSystem
@@ -56,15 +56,26 @@ class JvmAudioRecorder : AudioRecorder {
     }
 }
 
+private data class AudioPacket(
+    val chunk: ByteArray,
+    val sequenceNumber: Int,
+    val timestampMs: Long,
+) : Comparable<AudioPacket> {
+    override fun compareTo(other: AudioPacket): Int = this.sequenceNumber.compareTo(other.sequenceNumber)
+}
+
 class JvmAudioPlayer : AudioPlayer {
     private var line: SourceDataLine? = null
-    private val queue = LinkedBlockingQueue<ByteArray>()
+    private val queue = PriorityBlockingQueue<AudioPacket>()
     private var isPlaying = false
     private var playThread: Thread? = null
+    private var expectedSequenceNumber = -1
 
     override fun play(
         chunk: ByteArray,
         sampleRate: Int,
+        sequenceNumber: Int,
+        timestampMs: Long,
     ) {
         if (line == null) {
             val format = AudioFormat(sampleRate.toFloat(), 16, 1, true, false)
@@ -88,9 +99,15 @@ class JvmAudioPlayer : AudioPlayer {
                             }
                         }
 
-                        val c = queue.poll(500, TimeUnit.MILLISECONDS)
-                        if (c != null && line != null) {
-                            line?.write(c, 0, c.size)
+                        val packet = queue.poll(500, TimeUnit.MILLISECONDS)
+                        if (packet != null && line != null) {
+                            if (expectedSequenceNumber == -1) {
+                                expectedSequenceNumber = packet.sequenceNumber
+                            }
+                            if (packet.sequenceNumber >= expectedSequenceNumber) {
+                                line?.write(packet.chunk, 0, packet.chunk.size)
+                                expectedSequenceNumber = packet.sequenceNumber + 1
+                            }
                         } else {
                             isBuffering = true
                         }
@@ -100,7 +117,7 @@ class JvmAudioPlayer : AudioPlayer {
             playThread?.start()
         }
 
-        queue.offer(chunk)
+        queue.offer(AudioPacket(chunk, sequenceNumber, timestampMs))
     }
 
     override fun stop() {
@@ -117,6 +134,7 @@ class JvmAudioPlayer : AudioPlayer {
         line?.close()
         line = null
         queue.clear()
+        expectedSequenceNumber = -1
     }
 }
 

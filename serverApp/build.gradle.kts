@@ -22,6 +22,7 @@ dependencies {
     implementation(libs.ktor.server.auth)
     implementation(libs.ktor.server.auth.jwt)
     implementation(libs.ktor.server.rate.limit)
+    implementation(libs.lettuce.core)
 
     implementation(libs.koin.core)
     implementation("io.insert-koin:koin-ktor:${libs.versions.koin.get()}")

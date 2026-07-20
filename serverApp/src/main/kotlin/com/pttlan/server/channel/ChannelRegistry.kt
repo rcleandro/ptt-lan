@@ -3,6 +3,7 @@ package com.pttlan.server.channel
 
 import com.pttlan.core.network.protocol.ActiveChannelDto
 import com.pttlan.core.network.protocol.ControlMessage
+import com.pttlan.server.redis.RedisManager
 import com.pttlan.server.routing.DashboardChannelDto
 import com.pttlan.server.routing.DashboardLogEventDto
 import com.pttlan.server.routing.DashboardParticipantDto
@@ -41,7 +42,9 @@ private class MutableTimeSeriesPoint(
 )
 
 @Suppress("TooManyFunctions")
-class ChannelRegistry {
+class ChannelRegistry(
+    private val redisManager: RedisManager? = null,
+) {
     private val channels = ConcurrentHashMap<String, PttChannel>()
     private val globalConnections = ConcurrentHashMap<DefaultWebSocketServerSession, String>()
     private val cleanupJobs = ConcurrentHashMap<String, Job>()

@@ -146,7 +146,11 @@ class VoiceRepositoryImpl(
                         } catch (_: Exception) {
                             chunk
                         }
-                    audioPlayer.play(decoded)
+                    audioPlayer.play(
+                        chunk = decoded,
+                        sequenceNumber = envelope?.sequenceNumber ?: 0,
+                        timestampMs = envelope?.timestampMs ?: 0L,
+                    )
                     try {
                         if (currentFileSink != null && currentAudioCrypto != null) {
                             val encrypted = currentAudioCrypto!!.process(decoded)

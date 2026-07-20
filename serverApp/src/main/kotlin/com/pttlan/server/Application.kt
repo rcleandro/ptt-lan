@@ -2,12 +2,14 @@ package com.pttlan.server
 
 import com.pttlan.server.auth.JwtConfig
 import com.pttlan.server.channel.ChannelRegistry
+import com.pttlan.server.redis.RedisManager
 import com.pttlan.server.routing.authRoutes
 import com.pttlan.server.routing.dashboardRoutes
 import com.pttlan.server.routing.pttRoutes
 import io.ktor.network.tls.certificates.generateCertificate
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.jwt.JWTPrincipal
@@ -44,6 +46,7 @@ fun main(args: Array<String>) {
     EngineMain.main(args)
 }
 
+@Suppress("LongMethod")
 fun Application.module() {
     install(WebSockets) {
         pingPeriod = 20.seconds
@@ -64,10 +67,23 @@ fun Application.module() {
         modules(
             module {
                 single {
-                    ChannelRegistry()
+                    val redisManager = RedisManager()
+                    redisManager.start()
+                    redisManager
+                }
+                single {
+                    ChannelRegistry(get())
                 }
             },
         )
+    }
+
+    environment.monitor.subscribe(ApplicationStopped) {
+        val koin =
+            org.koin.java.KoinJavaComponent
+                .getKoin()
+        val redisManager: RedisManager = koin.get()
+        redisManager.stop()
     }
 
     install(Authentication) {
