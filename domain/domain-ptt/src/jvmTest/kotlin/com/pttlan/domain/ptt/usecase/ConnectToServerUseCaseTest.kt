@@ -1,6 +1,7 @@
 package com.pttlan.domain.ptt.usecase
 
 import com.pttlan.domain.ptt.repository.ConnectionRepository
+import com.pttlan.domain.ptt.repository.ServerEndpoint
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -16,12 +17,13 @@ class ConnectToServerUseCaseTest {
     @Test
     fun `invoke should return failure when nickname is blank`() =
         runTest {
-            val result = useCase("192.168.0.1", 8080, "   ")
+            val endpoint = ServerEndpoint("192.168.0.1", 8080, true)
+            val result = useCase(endpoint, "   ")
 
             assertTrue(result.isFailure)
             assertEquals("Nickname cannot be empty", result.exceptionOrNull()?.message)
 
-            coVerify(exactly = 0) { connectionRepository.connect(any(), any(), any()) }
+            coVerify(exactly = 0) { connectionRepository.connect(any(), any()) }
         }
 
     @Test
@@ -31,12 +33,14 @@ class ConnectToServerUseCaseTest {
             val port = 8080
             val nickname = "User1"
 
-            coEvery { connectionRepository.connect(host, port, nickname) } returns Result.success(Unit)
+            val endpoint = ServerEndpoint(host, port, true)
 
-            val result = useCase(host, port, nickname)
+            coEvery { connectionRepository.connect(endpoint, nickname) } returns Result.success(Unit)
+
+            val result = useCase(endpoint, nickname)
 
             assertTrue(result.isSuccess)
-            coVerify(exactly = 1) { connectionRepository.connect(host, port, nickname) }
+            coVerify(exactly = 1) { connectionRepository.connect(endpoint, nickname) }
         }
 
     @Test
@@ -45,14 +49,15 @@ class ConnectToServerUseCaseTest {
             val host = "192.168.0.1"
             val port = 8080
             val nickname = "User1"
+            val endpoint = ServerEndpoint(host, port, true)
             val exception = RuntimeException("Connection refused")
 
-            coEvery { connectionRepository.connect(host, port, nickname) } returns Result.failure(exception)
+            coEvery { connectionRepository.connect(endpoint, nickname) } returns Result.failure(exception)
 
-            val result = useCase(host, port, nickname)
+            val result = useCase(endpoint, nickname)
 
             assertTrue(result.isFailure)
             assertEquals(exception, result.exceptionOrNull())
-            coVerify(exactly = 1) { connectionRepository.connect(host, port, nickname) }
+            coVerify(exactly = 1) { connectionRepository.connect(endpoint, nickname) }
         }
 }

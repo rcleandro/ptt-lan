@@ -2,6 +2,7 @@ package com.pttlan.domain.ptt.usecase
 
 import com.pttlan.domain.ptt.repository.ConnectionRepository
 import com.pttlan.domain.ptt.repository.ConnectionStatus
+import com.pttlan.domain.ptt.repository.ServerEndpoint
 import com.pttlan.domain.ptt.repository.ServerNode
 import kotlinx.coroutines.flow.Flow
 
@@ -21,13 +22,12 @@ class ConnectToServerUseCase(
     private val connectionRepository: ConnectionRepository,
 ) {
     suspend operator fun invoke(
-        host: String,
-        port: Int,
+        endpoint: ServerEndpoint,
         nickname: String,
     ): Result<Unit> {
         if (nickname.isBlank()) {
             return Result.failure(IllegalArgumentException("Nickname cannot be empty"))
         }
-        return connectionRepository.connect(host, port, nickname)
+        return connectionRepository.connect(endpoint, nickname)
     }
 }

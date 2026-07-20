@@ -52,6 +52,7 @@ class PttWebSocketClient(
     suspend fun connect(
         host: String,
         port: Int,
+        isLocal: Boolean,
         nickname: String,
     ) {
         shouldReconnect = true
@@ -65,8 +66,9 @@ class PttWebSocketClient(
                 sessionMutex.withLock {
                     if (session != null) return@withLock
                     println("PttWebSocketClient: Tentando conectar a wss://$cleanHost:$port/ws?nickname=$nickname")
+                    val timeout = if (isLocal) 5.seconds else 15.seconds
                     session =
-                        withTimeout(5.seconds) {
+                        withTimeout(timeout) {
                             httpClient.webSocketSession("wss://$cleanHost:$port/ws?nickname=$nickname")
                         }
                 }

@@ -2,7 +2,9 @@ package com.pttlan.feature.connection
 
 import com.arkivanov.decompose.ComponentContext
 import com.pttlan.domain.ptt.repository.ConnectionStatus
+import com.pttlan.domain.ptt.repository.ServerEndpoint
 import com.pttlan.domain.ptt.repository.ServerNode
+import com.pttlan.domain.ptt.repository.isLocalNetwork
 import com.pttlan.domain.ptt.usecase.ConnectToServerUseCase
 import com.pttlan.domain.ptt.usecase.DiscoverServersUseCase
 import com.pttlan.domain.ptt.usecase.ObserveConnectionStatusUseCase
@@ -112,7 +114,7 @@ class ConnectionComponent(
                 settings.putString("nickname", _state.value.nickname)
 
                 scope.launch {
-                    val result = connectToServerUseCase(intent.server.host, intent.server.port, _state.value.nickname)
+                    val result = connectToServerUseCase(intent.server.endpoint, _state.value.nickname)
                     if (result.isFailure) {
                         val exception = result.exceptionOrNull()
                         if (exception is TimeoutCancellationException) {
@@ -131,7 +133,13 @@ class ConnectionComponent(
                 settings.putString("nickname", _state.value.nickname)
                 settings.putString("manualIp", _state.value.manualIp)
                 scope.launch {
-                    val result = connectToServerUseCase(intent.ip, 9443, _state.value.nickname)
+                    val endpoint =
+                        ServerEndpoint(
+                            host = intent.ip,
+                            port = 9443,
+                            isLocal = isLocalNetwork(intent.ip),
+                        )
+                    val result = connectToServerUseCase(endpoint, _state.value.nickname)
                     if (result.isFailure) {
                         val exception = result.exceptionOrNull()
                         if (exception is TimeoutCancellationException) {

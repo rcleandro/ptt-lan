@@ -5,7 +5,9 @@ import com.pttlan.core.network.discovery.ServerDiscoveryService
 import com.pttlan.core.network.normalizeHost
 import com.pttlan.domain.ptt.repository.ConnectionRepository
 import com.pttlan.domain.ptt.repository.ConnectionStatus
+import com.pttlan.domain.ptt.repository.ServerEndpoint
 import com.pttlan.domain.ptt.repository.ServerNode
+import com.pttlan.domain.ptt.repository.isLocalNetwork
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,7 +32,16 @@ class ConnectionRepositoryImpl(
 
     override fun discoverServers(): Flow<ServerNode> =
         discoveryService.discover().map {
-            ServerNode(name = it.name, host = normalizeHost(it.host), port = it.port)
+            val normalizedHost = normalizeHost(it.host)
+            ServerNode(
+                name = it.name,
+                endpoint =
+                    ServerEndpoint(
+                        host = normalizedHost,
+                        port = it.port,
+                        isLocal = isLocalNetwork(normalizedHost),
+                    ),
+            )
         }
 
     override fun stopDiscovery() {
@@ -38,8 +49,7 @@ class ConnectionRepositoryImpl(
     }
 
     override suspend fun connect(
-        host: String,
-        port: Int,
+        endpoint: ServerEndpoint,
         nickname: String,
     ): Result<Unit> {
         _connectionStatus.value = ConnectionStatus.Connecting
@@ -52,7 +62,7 @@ class ConnectionRepositoryImpl(
             scope.launch {
                 try {
                     // We launch the infinite reconnect loop in the background
-                    webSocketClient.connect(host, port, nickname)
+                    webSocketClient.connect(endpoint.host, endpoint.port, endpoint.isLocal, nickname)
                 } catch (e: Exception) {
                     deferred.completeExceptionally(e)
                     e.printStackTrace()

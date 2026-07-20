@@ -1074,8 +1074,8 @@ Checklist:
 **Objetivo:** Preparar o cliente para se conectar a um domínio estático (internet) sem perder a capacidade de descoberta local (mDNS), permitindo o uso em ambos os cenários.
 
 Checklist:
-- [ ] `feature-connection`: Manter `ServerDiscoveryService` (mDNS) para LAN, mas adicionar suporte opcional a URL/domínio estático na UI e armazenamento local (ex: Servidores Favoritos).
-- [ ] Ajustar timeouts do `HttpClient` (`core-network`) de forma dinâmica (agressivos para LAN, tolerantes para domínios externos via 4G/5G).
+- [x] `feature-connection`: Manter `ServerDiscoveryService` (mDNS) para LAN, mas adicionar suporte opcional a URL/domínio estático na UI e armazenamento local (ex: Servidores Favoritos).
+- [x] Ajustar timeouts do `HttpClient` (`core-network`) de forma dinâmica (agressivos para LAN, tolerantes para domínios externos via 4G/5G).
 - [ ] Preparar a arquitetura para aceitar proxy reverso com SSL real (quando na internet) mantendo a viabilidade de SSL self-signed + TOFU (quando na LAN).
 
 **Critério de conclusão:** Cliente mobile pode alternar sem erros entre descobrir um servidor na LAN (mDNS) ou inserir uma URL externa estática, adaptando as regras de SSL e timeout automaticamente.

@@ -178,7 +178,7 @@ fun ServerCard(
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Text(
-                text = "${server.host}:${server.port}",
+                text = "${server.endpoint.host}:${server.endpoint.port}",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -203,8 +203,16 @@ private fun ConnectionScreenPreviewDark() {
                         manualIp = "192.168.0.1",
                         discoveredServers =
                             listOf(
-                                ServerNode("Servidor Local", "192.168.0.10", 9443),
-                                ServerNode("Servidor Remoto", "10.0.0.5", 9443),
+                                ServerNode(
+                                    "Servidor Local",
+                                    com.pttlan.domain.ptt.repository
+                                        .ServerEndpoint("192.168.0.10", 9443, true),
+                                ),
+                                ServerNode(
+                                    "Servidor Remoto",
+                                    com.pttlan.domain.ptt.repository
+                                        .ServerEndpoint("10.0.0.5", 9443, true),
+                                ),
                             ),
                     ),
                 onIntent = {},
@@ -226,8 +234,16 @@ private fun ConnectionScreenPreviewLight() {
                         manualIp = "192.168.0.1",
                         discoveredServers =
                             listOf(
-                                ServerNode("Servidor Local", "192.168.0.10", 9443),
-                                ServerNode("Servidor Remoto", "10.0.0.5", 9443),
+                                ServerNode(
+                                    "Servidor Local",
+                                    com.pttlan.domain.ptt.repository
+                                        .ServerEndpoint("192.168.0.10", 9443, true),
+                                ),
+                                ServerNode(
+                                    "Servidor Remoto",
+                                    com.pttlan.domain.ptt.repository
+                                        .ServerEndpoint("10.0.0.5", 9443, true),
+                                ),
                             ),
                     ),
                 onIntent = {},
