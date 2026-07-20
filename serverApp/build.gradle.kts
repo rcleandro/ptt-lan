@@ -9,8 +9,8 @@ application {
 }
 
 dependencies {
-    implementation(project(":core:core-common"))
-    implementation(project(":core:core-network"))
+    implementation(projects.core.coreCommon)
+    implementation(projects.core.coreNetwork)
     implementation(libs.jmdns)
 
     // Server dependencies

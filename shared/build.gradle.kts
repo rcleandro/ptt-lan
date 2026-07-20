@@ -18,14 +18,14 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":core:core-di"))
-            implementation(project(":core:core-designsystem"))
-            implementation(project(":core:core-navigation"))
-            implementation(project(":features:feature-connection"))
-            implementation(project(":features:feature-channel-list"))
-            implementation(project(":features:feature-ptt"))
-            implementation(project(":features:feature-history"))
-            implementation(project(":features:feature-settings"))
+            implementation(projects.core.coreDi)
+            implementation(projects.core.coreDesignsystem)
+            implementation(projects.core.coreNavigation)
+            implementation(projects.features.featureConnection)
+            implementation(projects.features.featureChannelList)
+            implementation(projects.features.featurePtt)
+            implementation(projects.features.featureHistory)
+            implementation(projects.features.featureSettings)
             implementation(libs.runtime)
             implementation(libs.foundation)
             implementation(libs.material3)

@@ -6,17 +6,17 @@ plugins {
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":core:core-common"))
-            implementation(project(":core:core-designsystem"))
+            implementation(projects.core.coreCommon)
+            implementation(projects.core.coreDesignsystem)
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
-            implementation(project(":domain:domain-ptt"))
+            implementation(projects.domain.domainPtt)
 
             api(libs.decompose)
             implementation(libs.decompose.extensions.compose)
         }
         jvmTest.dependencies {
-            implementation(project(":core:core-testing"))
+            implementation(projects.core.coreTesting)
             implementation(kotlin("test"))
         }
     }

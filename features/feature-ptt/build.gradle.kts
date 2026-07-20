@@ -6,12 +6,12 @@ plugins {
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":core:core-common"))
-            implementation(project(":core:core-designsystem"))
-            implementation(project(":core:core-audio"))
-            implementation(project(":domain:domain-ptt"))
-            implementation(project(":core:core-network"))
-            implementation(project(":core:core-datastore"))
+            implementation(projects.core.coreCommon)
+            implementation(projects.core.coreDesignsystem)
+            implementation(projects.core.coreAudio)
+            implementation(projects.domain.domainPtt)
+            implementation(projects.core.coreNetwork)
+            implementation(projects.core.coreDatastore)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
@@ -19,7 +19,7 @@ kotlin {
             implementation(libs.decompose.extensions.compose)
         }
         commonTest.dependencies {
-            implementation(project(":core:core-testing"))
+            implementation(projects.core.coreTesting)
             implementation(kotlin("test"))
         }
         jvmTest.dependencies {

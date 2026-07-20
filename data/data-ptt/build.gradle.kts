@@ -5,12 +5,12 @@ plugins {
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":domain:domain-ptt"))
-            implementation(project(":core:core-common"))
-            implementation(project(":core:core-network"))
-            implementation(project(":core:core-database"))
-            implementation(project(":core:core-audio"))
-            implementation(project(":core:core-datastore"))
+            implementation(projects.domain.domainPtt)
+            implementation(projects.core.coreCommon)
+            implementation(projects.core.coreNetwork)
+            implementation(projects.core.coreDatabase)
+            implementation(projects.core.coreAudio)
+            implementation(projects.core.coreDatastore)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.koin.core)
             implementation(libs.kotlinx.datetime)

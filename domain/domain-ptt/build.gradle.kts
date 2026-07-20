@@ -5,12 +5,12 @@ plugins {
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":core:core-common"))
+            implementation(projects.core.coreCommon)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.koin.core)
         }
         commonTest.dependencies {
-            implementation(project(":core:core-testing"))
+            implementation(projects.core.coreTesting)
             implementation(kotlin("test"))
         }
         jvmTest.dependencies {
