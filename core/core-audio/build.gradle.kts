@@ -5,7 +5,7 @@ plugins {
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation(project.dependencies.project(":core:core-common"))
+            implementation(project(":core:core-common"))
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kopus)
         }

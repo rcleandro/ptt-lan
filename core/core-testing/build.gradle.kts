@@ -5,7 +5,7 @@ plugins {
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation(project.dependencies.project(":core:core-common"))
+            implementation(project(":core:core-common"))
             api(kotlin("test"))
             api(libs.kotlinx.coroutines.core)
             api(libs.kotlinx.coroutines.test)
