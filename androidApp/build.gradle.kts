@@ -22,14 +22,14 @@ android {
 }
 
 dependencies {
-    implementation(project(":core:core-di"))
-    implementation(project(":core:core-navigation"))
-    implementation(project(":core:core-designsystem"))
-    implementation(project(":features:feature-connection"))
-    implementation(project(":features:feature-channel-list"))
-    implementation(project(":features:feature-ptt"))
-    implementation(project(":features:feature-history"))
-    implementation(project(":features:feature-settings"))
+    implementation(project.dependencies.project(":core:core-di"))
+    implementation(project.dependencies.project(":core:core-navigation"))
+    implementation(project.dependencies.project(":core:core-designsystem"))
+    implementation(project.dependencies.project(":features:feature-connection"))
+    implementation(project.dependencies.project(":features:feature-channel-list"))
+    implementation(project.dependencies.project(":features:feature-ptt"))
+    implementation(project.dependencies.project(":features:feature-history"))
+    implementation(project.dependencies.project(":features:feature-settings"))
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
     implementation(libs.ui.tooling)

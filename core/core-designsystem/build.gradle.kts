@@ -20,7 +20,7 @@ kotlin {
     
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":core:core-common"))
+            implementation(project.dependencies.project(":core:core-common"))
             api(libs.ui)
             api(libs.foundation)
             api(libs.material3)

@@ -5,7 +5,7 @@ plugins {
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":core:core-common"))
+            implementation(project.dependencies.project(":core:core-common"))
             api(libs.kermit)
         }
     }

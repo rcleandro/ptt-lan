@@ -6,9 +6,9 @@ plugins {
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":domain:domain-ptt"))
-            implementation(project(":core:core-designsystem"))
-            implementation(project(":core:core-common"))
+            implementation(project.dependencies.project(":domain:domain-ptt"))
+            implementation(project.dependencies.project(":core:core-designsystem"))
+            implementation(project.dependencies.project(":core:core-common"))
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             api(libs.decompose)
@@ -18,7 +18,7 @@ kotlin {
             implementation(libs.material.icons.extended)
         }
         jvmTest.dependencies {
-            implementation(project(":core:core-testing"))
+            implementation(project.dependencies.project(":core:core-testing"))
             implementation(kotlin("test"))
         }
     }
