@@ -6,18 +6,27 @@ import com.pttlan.domain.ptt.repository.ServerEndpoint
 import com.pttlan.domain.ptt.repository.ServerNode
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * UseCase responsável por observar o status de conexão atual com o servidor (Conectado, Desconectado, etc).
+ */
 class ObserveConnectionStatusUseCase(
     private val connectionRepository: ConnectionRepository,
 ) {
     operator fun invoke(): Flow<ConnectionStatus> = connectionRepository.connectionStatus
 }
 
+/**
+ * UseCase responsável por iniciar a descoberta de servidores PTT na rede local usando JmDNS.
+ */
 class DiscoverServersUseCase(
     private val connectionRepository: ConnectionRepository,
 ) {
     operator fun invoke(): Flow<ServerNode> = connectionRepository.discoverServers()
 }
 
+/**
+ * UseCase responsável por conectar ativamente em um servidor PTT descoberto via WebSocket.
+ */
 class ConnectToServerUseCase(
     private val connectionRepository: ConnectionRepository,
 ) {

@@ -6,6 +6,7 @@ detekt = "2.0.0-alpha.5"
 ktlint = "14.2.0"
 benManesVersions = "0.54.0"
 dokka = "2.2.0"
+kover = "0.9.1"
 
 # Compose / UI
 compose = "1.11.1"
@@ -134,3 +135,4 @@ sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 benManesVersions = { id = "com.github.ben-manes.versions", version.ref = "benManesVersions" }
 roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }

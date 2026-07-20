@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.serialization)
     application
+    alias(libs.plugins.kover)
 }
 application {
     mainClass.set("com.pttlan.server.ApplicationKt")

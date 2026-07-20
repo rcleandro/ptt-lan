@@ -5,18 +5,27 @@ import com.pttlan.domain.ptt.repository.ChannelDomain
 import com.pttlan.domain.ptt.repository.ChannelRepository
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * UseCase responsável por obter a lista de canais recentes (acessados anteriormente).
+ */
 class GetRecentChannelsUseCase(
     private val channelRepository: ChannelRepository,
 ) {
     operator fun invoke(): Flow<List<ChannelDomain>> = channelRepository.getRecentChannels()
 }
 
+/**
+ * UseCase responsável por observar os canais ativos no servidor atual.
+ */
 class ObserveActiveChannelsUseCase(
     private val channelRepository: ChannelRepository,
 ) {
     operator fun invoke(): Flow<List<ActiveChannelDomain>> = channelRepository.observeActiveChannels()
 }
 
+/**
+ * UseCase responsável por registrar o ingresso em um canal para salvar no histórico recente.
+ */
 class JoinChannelUseCaseImpl(
     private val channelRepository: ChannelRepository,
 ) {
@@ -28,6 +37,9 @@ class JoinChannelUseCaseImpl(
     }
 }
 
+/**
+ * UseCase responsável por criar e salvar um novo canal.
+ */
 class CreateChannelUseCase(
     private val channelRepository: ChannelRepository,
 ) {

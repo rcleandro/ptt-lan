@@ -1197,7 +1197,7 @@ Antes de marcar qualquer fase como concluída, o agente deve confirmar:
 - [x] Fase 15 — Deploy na Nuvem e Descoberta Direta (Internet-ready) concluída
 - [x] Fase 16 — Autenticação e Segurança Robusta concluída
 - [x] Fase 17 — Escalabilidade e Resiliência concluída
-- [ ] Todos os critérios de aceite globais (seção 23) satisfeitos
+- [x] Todos os critérios de aceite globais (seção 23) satisfeitos
 - [x] Nenhuma decisão arquitetural em aberto restante neste documento
 - [x] Repositório com README de onboarding para novos desenvolvedores apontando para este documento como SSOT
 
