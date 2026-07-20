@@ -30,6 +30,7 @@ import com.pttlan.core.designsystem.components.PttButtonState.Transmitting
 import com.pttlan.core.designsystem.components.snackbar.PttSnackbarType
 import com.pttlan.core.designsystem.components.snackbar.SnackbarController
 import com.pttlan.core.designsystem.components.snackbar.SnackbarEvent
+import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.core.designsystem.theme.PttTheme
 
 @Composable
@@ -121,7 +122,7 @@ fun PttScreenContent(
 @Preview
 @Composable
 private fun PttScreenPreviewDark() {
-    PttTheme(appTheme = com.pttlan.core.designsystem.theme.AppTheme.DARK) {
+    PttTheme(appTheme = AppTheme.DARK) {
         Surface {
             PttScreenContent(
                 state =
@@ -150,7 +151,7 @@ private fun PttScreenPreviewDark() {
 @Preview
 @Composable
 private fun PttScreenPreviewLight() {
-    PttTheme(appTheme = com.pttlan.core.designsystem.theme.AppTheme.LIGHT) {
+    PttTheme(appTheme = AppTheme.LIGHT) {
         Surface {
             PttScreenContent(
                 state =

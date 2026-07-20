@@ -18,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import java.lang.management.ManagementFactory
@@ -47,10 +48,10 @@ class ChannelRegistry {
     private val accumulatedSpeakerTime = ConcurrentHashMap<String, Long>()
     private val scope = CoroutineScope(Dispatchers.Default)
 
-    private val logMutex = kotlinx.coroutines.sync.Mutex()
+    private val logMutex = Mutex()
     private val recentLogs = ArrayDeque<DashboardLogEventDto>()
 
-    private val timeSeriesMutex = kotlinx.coroutines.sync.Mutex()
+    private val timeSeriesMutex = Mutex()
     private val timeSeriesMetrics = ConcurrentHashMap<Long, MutableTimeSeriesPoint>()
 
     private suspend fun getOrCreateCurrentMetric(): MutableTimeSeriesPoint {

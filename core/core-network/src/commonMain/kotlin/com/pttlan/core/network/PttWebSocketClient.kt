@@ -24,18 +24,19 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-@kotlinx.serialization.Serializable
+@Serializable
 data class LoginRequest(
     val nickname: String,
     val deviceId: String,
 )
 
-@kotlinx.serialization.Serializable
+@Serializable
 data class LoginResponse(
     val token: String,
 )

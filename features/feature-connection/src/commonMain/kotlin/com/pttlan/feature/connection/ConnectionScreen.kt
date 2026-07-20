@@ -34,6 +34,7 @@ import com.pttlan.core.designsystem.components.ConnectionStatusBadge
 import com.pttlan.core.designsystem.components.snackbar.PttSnackbarType
 import com.pttlan.core.designsystem.components.snackbar.SnackbarController
 import com.pttlan.core.designsystem.components.snackbar.SnackbarEvent
+import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.domain.ptt.repository.ServerNode
@@ -193,7 +194,7 @@ fun ServerCard(
 @Preview
 @Composable
 private fun ConnectionScreenPreviewDark() {
-    PttTheme(appTheme = com.pttlan.core.designsystem.theme.AppTheme.DARK) {
+    PttTheme(appTheme = AppTheme.DARK) {
         Surface {
             ConnectionScreenContent(
                 state =
@@ -224,7 +225,7 @@ private fun ConnectionScreenPreviewDark() {
 @Preview
 @Composable
 private fun ConnectionScreenPreviewLight() {
-    PttTheme(appTheme = com.pttlan.core.designsystem.theme.AppTheme.LIGHT) {
+    PttTheme(appTheme = AppTheme.LIGHT) {
         Surface {
             ConnectionScreenContent(
                 state =

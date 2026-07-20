@@ -5,7 +5,9 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.withContext
+import java.net.Inet4Address
 import java.net.InetAddress
+import java.net.NetworkInterface
 import javax.jmdns.JmDNS
 import javax.jmdns.ServiceEvent
 import javax.jmdns.ServiceListener
@@ -62,14 +64,14 @@ actual class ServerDiscoveryService actual constructor() {
     }
 
     private fun getLocalIpAddress(): InetAddress? =
-        java.net.NetworkInterface
+        NetworkInterface
             .getNetworkInterfaces()
             .toList()
             .asSequence()
             .filter { !it.isLoopback && it.isUp && !it.isVirtual && !it.isPointToPoint }
             .filter { isValidInterfaceName(it.name) }
             .flatMap { it.inetAddresses.toList() }
-            .firstOrNull { it is java.net.Inet4Address }
+            .firstOrNull { it is Inet4Address }
 
     private fun isValidInterfaceName(name: String): Boolean {
         val lowerName = name.lowercase()

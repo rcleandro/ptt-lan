@@ -1,6 +1,7 @@
 package com.pttlan.server
 
 import com.pttlan.core.network.protocol.ControlMessage
+import com.pttlan.server.auth.JwtConfig
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.server.testing.testApplication
@@ -45,7 +46,7 @@ class ServerIntegrationTest {
             val job1 =
                 testScope.launch {
                     val token1 =
-                        com.pttlan.server.auth.JwtConfig
+                        JwtConfig
                             .generateToken("Client1", "u1")
                     client1.webSocket("/ws?token=$token1") {
                         // Client1 joins
@@ -73,7 +74,7 @@ class ServerIntegrationTest {
             val job2 =
                 testScope.launch {
                     val token2 =
-                        com.pttlan.server.auth.JwtConfig
+                        JwtConfig
                             .generateToken("Client2", "u2")
                     client2.webSocket("/ws?token=$token2") {
                         // Wait for Client1 to connect and join

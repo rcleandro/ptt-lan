@@ -15,6 +15,8 @@ import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.netty.EngineMain
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.origin
+import io.ktor.server.plugins.ratelimit.RateLimit
+import io.ktor.server.plugins.ratelimit.RateLimitName
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
@@ -82,14 +84,13 @@ fun Application.module() {
         }
     }
 
-    install(io.ktor.server.plugins.ratelimit.RateLimit) {
+    install(RateLimit) {
         global {
             rateLimiter(limit = 100, refillPeriod = 60.seconds)
             requestKey { call -> call.request.origin.remoteHost }
         }
         register(
-            io.ktor.server.plugins.ratelimit
-                .RateLimitName("login"),
+            RateLimitName("login"),
         ) {
             rateLimiter(limit = 5, refillPeriod = 60.seconds)
             requestKey { call -> call.request.origin.remoteHost }
@@ -125,9 +126,9 @@ private fun startMdnsBroadcast(port: Int) {
     Thread {
         try {
             val localIp = getLocalIpAddress()
-            val jmdns = if (localIp != null) javax.jmdns.JmDNS.create(localIp) else javax.jmdns.JmDNS.create()
+            val jmdns = if (localIp != null) JmDNS.create(localIp) else JmDNS.create()
             val serviceInfo =
-                javax.jmdns.ServiceInfo.create(
+                ServiceInfo.create(
                     "_pttlan._tcp.local.",
                     "PTT-LAN-Server-${System.currentTimeMillis()}",
                     port,
@@ -143,7 +144,7 @@ private fun startMdnsBroadcast(port: Int) {
                     jmdns.close()
                 },
             )
-        } catch (e: kotlinx.io.IOException) {
+        } catch (e: IOException) {
             println("Error starting JmDNS: ${e.message}")
         }
     }.start()

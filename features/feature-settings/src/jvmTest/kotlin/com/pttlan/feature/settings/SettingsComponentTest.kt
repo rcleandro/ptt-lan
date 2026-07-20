@@ -4,6 +4,7 @@ import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.core.common.storage.StorageOption
+import com.pttlan.core.designsystem.theme.AppTheme
 import com.russhwolf.settings.Settings
 import io.mockk.every
 import io.mockk.mockk
@@ -73,7 +74,7 @@ class SettingsComponentTest {
 
             assertEquals("TestUser", component.state.value.nickname)
             assertEquals(false, component.state.value.useOpus)
-            assertEquals(com.pttlan.core.designsystem.theme.AppTheme.SYSTEM, component.state.value.appTheme)
+            assertEquals(AppTheme.SYSTEM, component.state.value.appTheme)
             assertEquals(true, component.state.value.alwaysListening)
             assertEquals(false, component.state.value.allowCache)
             assertEquals("Interno", component.state.value.cacheLocation)
@@ -107,10 +108,10 @@ class SettingsComponentTest {
         runTest(testDispatcher) {
             val component = createComponent()
 
-            component.onIntent(SettingsIntent.ChangeTheme(com.pttlan.core.designsystem.theme.AppTheme.DARK))
+            component.onIntent(SettingsIntent.ChangeTheme(AppTheme.DARK))
 
-            assertEquals(com.pttlan.core.designsystem.theme.AppTheme.DARK, component.state.value.appTheme)
-            verify(exactly = 1) { settings.putInt("app_theme", com.pttlan.core.designsystem.theme.AppTheme.DARK.ordinal) }
+            assertEquals(AppTheme.DARK, component.state.value.appTheme)
+            verify(exactly = 1) { settings.putInt("app_theme", AppTheme.DARK.ordinal) }
         }
 
     @Test

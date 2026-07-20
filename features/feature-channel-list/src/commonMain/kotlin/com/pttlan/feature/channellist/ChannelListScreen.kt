@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.pttlan.core.designsystem.components.ChannelCard
+import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.domain.ptt.repository.ActiveChannelDomain
 
@@ -108,7 +109,7 @@ fun ChannelListScreenContent(
 @Preview
 @Composable
 private fun ChannelListScreenPreviewDark() {
-    PttTheme(appTheme = com.pttlan.core.designsystem.theme.AppTheme.DARK) {
+    PttTheme(appTheme = AppTheme.DARK) {
         Surface {
             ChannelListScreenContent(
                 state =
@@ -128,7 +129,7 @@ private fun ChannelListScreenPreviewDark() {
 @Preview
 @Composable
 private fun ChannelListScreenPreviewLight() {
-    PttTheme(appTheme = com.pttlan.core.designsystem.theme.AppTheme.LIGHT) {
+    PttTheme(appTheme = AppTheme.LIGHT) {
         Surface {
             ChannelListScreenContent(
                 state =

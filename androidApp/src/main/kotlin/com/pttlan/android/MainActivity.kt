@@ -25,6 +25,7 @@ import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.coroutines.getIntFlow
 import com.russhwolf.settings.coroutines.getBooleanFlow
 import com.russhwolf.settings.ExperimentalSettingsApi
+import android.os.Build
 
 @OptIn(ExperimentalSettingsApi::class)
 class MainActivity : ComponentActivity() {
@@ -42,7 +43,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         
         val permissionsToRequest = mutableListOf(Manifest.permission.RECORD_AUDIO)
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
         }
 

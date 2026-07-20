@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioSystem
@@ -57,7 +58,7 @@ class JvmAudioRecorder : AudioRecorder {
 
 class JvmAudioPlayer : AudioPlayer {
     private var line: SourceDataLine? = null
-    private val queue = java.util.concurrent.LinkedBlockingQueue<ByteArray>()
+    private val queue = LinkedBlockingQueue<ByteArray>()
     private var isPlaying = false
     private var playThread: Thread? = null
 

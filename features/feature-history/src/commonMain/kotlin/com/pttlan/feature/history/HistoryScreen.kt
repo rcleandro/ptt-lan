@@ -48,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.domain.ptt.model.VoiceMessage
 import com.pttlan.feature.history.util.toRelativeDisplay
@@ -345,7 +346,7 @@ fun VoiceMessageItem(
 @Preview
 @Composable
 private fun HistoryScreenPreviewDark() {
-    PttTheme(appTheme = com.pttlan.core.designsystem.theme.AppTheme.DARK) {
+    PttTheme(appTheme = AppTheme.DARK) {
         Surface {
             HistoryScreenContent(
                 messages =
@@ -375,7 +376,7 @@ private fun HistoryScreenPreviewDark() {
 @Preview
 @Composable
 private fun HistoryScreenPreviewLight() {
-    PttTheme(appTheme = com.pttlan.core.designsystem.theme.AppTheme.LIGHT) {
+    PttTheme(appTheme = AppTheme.LIGHT) {
         Surface {
             HistoryScreenContent(
                 messages =

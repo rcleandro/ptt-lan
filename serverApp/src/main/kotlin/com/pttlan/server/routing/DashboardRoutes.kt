@@ -2,6 +2,7 @@ package com.pttlan.server.routing
 
 import com.pttlan.server.channel.ChannelRegistry
 import com.sun.management.OperatingSystemMXBean
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.http.content.staticResources
 import io.ktor.server.request.receive
@@ -151,7 +152,7 @@ fun Routing.dashboardRoutes() {
                         appendLine("${it.timestamp},${it.channelId},${it.participantName},${it.eventType}")
                     }
                 }
-            call.respondText(csv, io.ktor.http.ContentType.Text.CSV)
+            call.respondText(csv, ContentType.Text.CSV)
         }
 
         post("/channels/{id}/kick/{userId}") {
