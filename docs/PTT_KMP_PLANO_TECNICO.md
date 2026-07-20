@@ -1077,9 +1077,9 @@ Checklist:
 - [x] `feature-connection`: Manter `ServerDiscoveryService` (mDNS) para LAN, mas adicionar suporte opcional a URL/domínio estático na UI e armazenamento local (ex: Servidores Favoritos).
 - [x] Ajustar timeouts do `HttpClient` (`core-network`) de forma dinâmica (agressivos para LAN, tolerantes para domínios externos via 4G/5G).
 - [x] Preparar a arquitetura para aceitar proxy reverso com SSL real (quando na internet) mantendo a viabilidade de SSL self-signed + TOFU (quando na LAN).
-- [ ] Criar `NetworkCommonUtilsTest` para validar a lógica de `isLocalNetwork`.
-- [ ] Criar `ConnectionComponentTest` para validar o fluxo de `ConnectToManualIp` e os timeouts.
-- [ ] Atualizar `ConnectToServerUseCaseTest` para simular as regras de timeout distintas (LAN vs Internet).
+- [x] Criar `NetworkCommonUtilsTest` para validar a lógica de `isLocalNetwork`.
+- [x] Criar `ConnectionComponentTest` para validar o fluxo de `ConnectToManualIp` e os timeouts.
+- [x] Atualizar `ConnectToServerUseCaseTest` para simular as regras de timeout distintas (LAN vs Internet).
 
 **Critério de conclusão:** Cliente mobile pode alternar sem erros entre descobrir um servidor na LAN (mDNS) ou inserir uma URL externa estática, adaptando as regras de SSL e timeout automaticamente.
 
@@ -1194,7 +1194,7 @@ Antes de marcar qualquer fase como concluída, o agente deve confirmar:
 - [x] Fase 12 — Android Automotive concluída
 - [x] Fase 13 — Documentação Final concluída
 - [x] Fase 14 — Cobertura Total de Testes (TDD/BDD) concluída
-- [ ] Fase 15 — Deploy na Nuvem e Descoberta Direta (Internet-ready) concluída
+- [x] Fase 15 — Deploy na Nuvem e Descoberta Direta (Internet-ready) concluída
 - [ ] Fase 16 — Autenticação e Segurança Robusta concluída
 - [ ] Fase 17 — Escalabilidade e Resiliência concluída
 - [ ] Todos os critérios de aceite globais (seção 23) satisfeitos
