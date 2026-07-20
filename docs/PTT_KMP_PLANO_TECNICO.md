@@ -1099,10 +1099,10 @@ Checklist:
 **Objetivo:** Suportar tráfego escalável e lidar com perdas de pacotes na internet.
 
 Checklist:
-- [ ] `serverApp`: Extrair estado do `ChannelRegistry` (hoje em memória) para o Redis.
-- [ ] Implementar Pub/Sub no Redis para distribuir áudio entre múltiplas instâncias Ktor.
-- [ ] `core-audio`: Implementar um Jitter Buffer (cliente) para absorver variações de latência de áudio.
-- [ ] Atualizar testes unitários e de integração para validar os cenários de concorrência com Redis e ajustes de jitter.
+- [x] `serverApp`: Extrair estado do `ChannelRegistry` (hoje em memória) para o Redis.
+- [x] Implementar Pub/Sub no Redis para distribuir áudio entre múltiplas instâncias Ktor.
+- [x] `core-audio`: Implementar um Jitter Buffer (cliente) para absorver variações de latência de áudio.
+- [x] Atualizar testes unitários e de integração para validar os cenários de concorrência com Redis e ajustes de jitter.
 
 **Critério de conclusão:** Múltiplas instâncias do Ktor processando clientes da mesma sala (via Redis) sincronizadas.
 
@@ -1196,7 +1196,7 @@ Antes de marcar qualquer fase como concluída, o agente deve confirmar:
 - [x] Fase 14 — Cobertura Total de Testes (TDD/BDD) concluída
 - [x] Fase 15 — Deploy na Nuvem e Descoberta Direta (Internet-ready) concluída
 - [x] Fase 16 — Autenticação e Segurança Robusta concluída
-- [ ] Fase 17 — Escalabilidade e Resiliência concluída
+- [x] Fase 17 — Escalabilidade e Resiliência concluída
 - [ ] Todos os critérios de aceite globais (seção 23) satisfeitos
 - [x] Nenhuma decisão arquitetural em aberto restante neste documento
 - [x] Repositório com README de onboarding para novos desenvolvedores apontando para este documento como SSOT
