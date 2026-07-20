@@ -1070,6 +1070,37 @@ Checklist:
 
 **Critério de conclusão:** Todos os requisitos da Seção 16 satisfeitos; pipeline de CI roda todos os 3 níveis de teste com sucesso.
 
+### Fase 15 — Descoberta Híbrida (Internet e Local)
+**Objetivo:** Preparar o cliente para se conectar a um domínio estático (internet) sem perder a capacidade de descoberta local (mDNS), permitindo o uso em ambos os cenários.
+
+Checklist:
+- [ ] `feature-connection`: Manter `ServerDiscoveryService` (mDNS) para LAN, mas adicionar suporte opcional a URL/domínio estático na UI e armazenamento local (ex: Servidores Favoritos).
+- [ ] Ajustar timeouts do `HttpClient` (`core-network`) de forma dinâmica (agressivos para LAN, tolerantes para domínios externos via 4G/5G).
+- [ ] Preparar a arquitetura para aceitar proxy reverso com SSL real (quando na internet) mantendo a viabilidade de SSL self-signed + TOFU (quando na LAN).
+
+**Critério de conclusão:** Cliente mobile pode alternar sem erros entre descobrir um servidor na LAN (mDNS) ou inserir uma URL externa estática, adaptando as regras de SSL e timeout automaticamente.
+
+### Fase 16 — Autenticação e Segurança Robusta
+**Objetivo:** Substituir modelo de confiança LAN (UUID) por autenticação real para evitar acessos indevidos e spoofing na internet.
+
+Checklist:
+- [ ] `serverApp`: Integrar autenticação por JWT/OAuth ou provedor como Firebase Auth.
+- [ ] Validar token JWT no handshake do WebSocket (`wss://.../ws?token=...`).
+- [ ] Implementar Rate Limiting no Ktor (plugin oficial ou Redis) por IP/Usuário.
+- [ ] `feature-settings`/`feature-connection`: Adicionar fluxo de login de usuário no App client.
+
+**Critério de conclusão:** Impossível conectar ao WebSocket ou executar ações de controle sem um token de acesso válido de um usuário real.
+
+### Fase 17 — Escalabilidade e Resiliência
+**Objetivo:** Suportar tráfego escalável e lidar com perdas de pacotes na internet.
+
+Checklist:
+- [ ] `serverApp`: Extrair estado do `ChannelRegistry` (hoje em memória) para o Redis.
+- [ ] Implementar Pub/Sub no Redis para distribuir áudio entre múltiplas instâncias Ktor.
+- [ ] `core-audio`: Implementar um Jitter Buffer (cliente) para absorver variações de latência de áudio.
+
+**Critério de conclusão:** Múltiplas instâncias do Ktor processando clientes da mesma sala (via Redis) sincronizadas.
+
 ---
 
 ## 22. Plano de Execução para Agente CLI
@@ -1113,6 +1144,9 @@ graph TD
     F11 --> F12[Fase 12: Automotive]
     F12 --> F13[Fase 13: Documentação Final]
     F13 --> F14[Fase 14: Testes/TDD]
+    F14 --> F15[Fase 15: Deploy e Nuvem]
+    F15 --> F16[Fase 16: Autenticação/Segurança]
+    F16 --> F17[Fase 17: Escalabilidade/Redis]
 ```
 
 ### 22.4 Regra de não regressão
@@ -1154,7 +1188,10 @@ Antes de marcar qualquer fase como concluída, o agente deve confirmar:
 - [x] Fase 12 — Android Automotive concluída
 - [x] Fase 13 — Documentação Final concluída
 - [x] Fase 14 — Cobertura Total de Testes (TDD/BDD) concluída
-- [x] Todos os critérios de aceite globais (seção 23) satisfeitos
+- [ ] Fase 15 — Deploy na Nuvem e Descoberta Direta (Internet-ready) concluída
+- [ ] Fase 16 — Autenticação e Segurança Robusta concluída
+- [ ] Fase 17 — Escalabilidade e Resiliência concluída
+- [ ] Todos os critérios de aceite globais (seção 23) satisfeitos
 - [x] Nenhuma decisão arquitetural em aberto restante neste documento
 - [x] Repositório com README de onboarding para novos desenvolvedores apontando para este documento como SSOT
 
