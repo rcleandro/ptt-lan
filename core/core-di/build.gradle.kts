@@ -20,8 +20,9 @@ kotlin {
             api(project(":features:feature-settings"))
             api(libs.koin.core)
         }
-        androidMain.dependencies {
-            api(libs.koin.android)
-        }
     }
+}
+
+dependencies {
+    "androidMainApi"(libs.koin.android)
 }

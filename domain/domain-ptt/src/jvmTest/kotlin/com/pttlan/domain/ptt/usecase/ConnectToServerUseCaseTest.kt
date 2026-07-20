@@ -62,12 +62,13 @@ class ConnectToServerUseCaseTest {
         }
 
     @Test
-    fun `invoke should call repository connect when endpoint is on the internet isLocal false`() = runTest {
-        val endpoint = ServerEndpoint("ptt.meuservidor.com", 9443, isLocal = false)
-        val nickname = "User2"
-        coEvery { connectionRepository.connect(endpoint, nickname) } returns Result.success(Unit)
-        val result = useCase(endpoint, nickname)
-        assertTrue(result.isSuccess)
-        coVerify(exactly = 1) { connectionRepository.connect(endpoint, nickname) }
-    }
+    fun `invoke should call repository connect when endpoint is on the internet isLocal false`() =
+        runTest {
+            val endpoint = ServerEndpoint("ptt.meuservidor.com", 9443, isLocal = false)
+            val nickname = "User2"
+            coEvery { connectionRepository.connect(endpoint, nickname) } returns Result.success(Unit)
+            val result = useCase(endpoint, nickname)
+            assertTrue(result.isSuccess)
+            coVerify(exactly = 1) { connectionRepository.connect(endpoint, nickname) }
+        }
 }

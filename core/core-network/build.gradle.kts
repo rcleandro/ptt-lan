@@ -20,9 +20,6 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
-        androidMain.dependencies {
-            implementation(libs.ktor.client.okhttp)
-        }
         jvmMain.dependencies {
             implementation(libs.ktor.client.okhttp)
             implementation(libs.jmdns)
@@ -31,4 +28,8 @@ kotlin {
             implementation(libs.ktor.client.darwin)
         }
     }
+}
+
+dependencies {
+    "androidMainImplementation"(libs.ktor.client.okhttp)
 }

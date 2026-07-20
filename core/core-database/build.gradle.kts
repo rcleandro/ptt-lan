@@ -9,9 +9,6 @@ kotlin {
             implementation(project(":core:core-common"))
             api(libs.sqldelight.coroutines)
         }
-        androidMain.dependencies {
-            implementation(libs.sqldelight.android)
-        }
         jvmMain.dependencies {
             implementation(libs.sqldelight.sqlite)
         }
@@ -19,6 +16,10 @@ kotlin {
             implementation(libs.sqldelight.native)
         }
     }
+}
+
+dependencies {
+    "androidMainImplementation"(libs.sqldelight.android)
 }
 
 sqldelight {

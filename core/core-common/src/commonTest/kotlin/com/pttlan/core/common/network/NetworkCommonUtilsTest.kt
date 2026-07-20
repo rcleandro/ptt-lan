@@ -5,7 +5,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class NetworkCommonUtilsTest {
-
     @Test
     fun testIsLocalNetworkWithLocalhost() {
         assertTrue(isLocalNetwork("localhost"))

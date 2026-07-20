@@ -29,22 +29,20 @@ kotlin {
             api(libs.compose.components.resources)
             api(libs.ui.tooling.preview)
         }
-        androidMain.dependencies {
-            api(libs.ui.tooling)
-        }
-        val androidHostTest = sourceSets.getByName("androidHostTest")
-        androidHostTest.dependencies {
-            implementation(kotlin("test"))
-            implementation(libs.robolectric)
-            implementation(libs.roborazzi)
-            implementation(libs.roborazzi.compose)
-            implementation(libs.roborazzi.junit)
-            implementation(libs.ui.tooling.preview)
-            implementation(libs.androidx.junit)
-            implementation(libs.androidx.ui.test.junit4)
-            implementation(libs.androidx.ui.test.manifest)
-        }
     }
+}
+
+dependencies {
+    "androidMainApi"(libs.ui.tooling)
+    "androidHostTestImplementation"(kotlin("test"))
+    "androidHostTestImplementation"(libs.robolectric)
+    "androidHostTestImplementation"(libs.roborazzi)
+    "androidHostTestImplementation"(libs.roborazzi.compose)
+    "androidHostTestImplementation"(libs.roborazzi.junit)
+    "androidHostTestImplementation"(libs.ui.tooling.preview)
+    "androidHostTestImplementation"(libs.androidx.junit)
+    "androidHostTestImplementation"(libs.androidx.ui.test.junit4)
+    "androidHostTestImplementation"(libs.androidx.ui.test.manifest)
 }
 
 compose.resources {
