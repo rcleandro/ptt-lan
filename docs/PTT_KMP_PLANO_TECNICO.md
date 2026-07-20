@@ -1088,6 +1088,7 @@ Checklist:
 - [ ] Validar token JWT no handshake do WebSocket (`wss://.../ws?token=...`).
 - [ ] Implementar Rate Limiting no Ktor (plugin oficial ou Redis) por IP/Usuário.
 - [ ] `feature-settings`/`feature-connection`: Adicionar fluxo de login de usuário no App client.
+- [ ] Atualizar testes unitários e de integração para contemplar novos fluxos de autenticação (JWT) e bloqueios por Rate Limiting.
 
 **Critério de conclusão:** Impossível conectar ao WebSocket ou executar ações de controle sem um token de acesso válido de um usuário real.
 
@@ -1098,6 +1099,7 @@ Checklist:
 - [ ] `serverApp`: Extrair estado do `ChannelRegistry` (hoje em memória) para o Redis.
 - [ ] Implementar Pub/Sub no Redis para distribuir áudio entre múltiplas instâncias Ktor.
 - [ ] `core-audio`: Implementar um Jitter Buffer (cliente) para absorver variações de latência de áudio.
+- [ ] Atualizar testes unitários e de integração para validar os cenários de concorrência com Redis e ajustes de jitter.
 
 **Critério de conclusão:** Múltiplas instâncias do Ktor processando clientes da mesma sala (via Redis) sincronizadas.
 
@@ -1154,6 +1156,7 @@ graph TD
 Antes de marcar qualquer fase como concluída, o agente deve confirmar:
 
 - [ ] Todos os testes de fases anteriores continuam passando (nenhuma regressão).
+- [ ] Os testes (unitários, de UI e de integração) foram criados ou atualizados para cobrir as novas regras de negócio e componentes da fase atual.
 - [ ] Nenhuma regra de dependência entre módulos (seção 4.1/17.3) foi violada pela nova fase.
 - [ ] Cobertura de código não caiu abaixo dos mínimos da seção 16.2 em nenhum módulo tocado.
 
