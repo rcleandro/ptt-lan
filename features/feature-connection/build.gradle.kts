@@ -17,7 +17,8 @@ kotlin {
             implementation(projects.core.coreDatastore)
         }
         jvmTest.dependencies {
-            implementation(projects.core.coreTesting)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.mockk)
             implementation(kotlin("test"))
             implementation(libs.multiplatform.settings.test)
         }

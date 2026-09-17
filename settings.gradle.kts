@@ -32,7 +32,6 @@ include(":core:core-di")
 include(":core:core-navigation")
 include(":core:core-designsystem")
 include(":core:core-telemetry")
-include(":core:core-testing")
 
 include(":domain:domain-ptt")
 
@@ -43,4 +42,3 @@ include(":features:feature-channel-list")
 include(":features:feature-ptt")
 include(":features:feature-history")
 include(":features:feature-settings")
-include(":features:feature-admin-web")

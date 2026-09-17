@@ -10,7 +10,7 @@ kotlin {
             implementation(libs.koin.core)
         }
         commonTest.dependencies {
-            implementation(projects.core.coreTesting)
+            implementation(libs.kotlinx.coroutines.test)
             implementation(kotlin("test"))
         }
         jvmTest.dependencies {

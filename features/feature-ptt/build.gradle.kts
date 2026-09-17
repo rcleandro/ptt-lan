@@ -21,7 +21,8 @@ kotlin {
             implementation(libs.decompose.extensions.compose)
         }
         commonTest.dependencies {
-            implementation(projects.core.coreTesting)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.turbine)
             implementation(kotlin("test"))
         }
         jvmTest.dependencies {

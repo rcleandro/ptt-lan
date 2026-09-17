@@ -69,7 +69,7 @@ androidApp/  desktopApp/  iosApp/ (Xcode + shared.framework)   serverApp/ (Ktor 
 | `core-di` | `coreModule` + `platformModule` (expect/actual) e `appModules()` que agrega domain, data e **todos os módulos de feature** |
 | `core-navigation` | `RootComponent` (stack Decompose, tema e transparência vindos das settings) e `RootScreen` (aplica o tema; sem Scaffold) |
 | `core-telemetry` | Apenas `AnalyticsTracker` + `NoOpAnalyticsTracker` |
-| `core-testing`, `feature-admin-web` | **Vazios** (só `build.gradle.kts`). O painel admin real está em `serverApp/src/main/resources/static/index.html` |
+| ~~`core-testing`, `feature-admin-web`~~ | Removidos na 22.2. O painel admin real está em `serverApp/src/main/resources/static/index.html` |
 | `domain-ptt` | Interfaces de repositório, modelos e use cases (finos, delegam ao repositório) |
 | `data-ptt` | `ConnectionRepositoryImpl`, `ChannelRepositoryImpl`, `ChannelSessionRepositoryImpl`, `VoiceRepositoryImpl` |
 | `features/*` | `connection`, `channel-list`, `ptt`, `history`, `settings` — cada uma com `XComponent` (MVI), `XScreen` (Compose) e `di/XFeatureModule` |

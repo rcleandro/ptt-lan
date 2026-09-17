@@ -17,7 +17,9 @@ kotlin {
             implementation(libs.decompose.extensions.compose)
         }
         jvmTest.dependencies {
-            implementation(projects.core.coreTesting)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.turbine)
+            implementation(libs.mockk)
             implementation(kotlin("test"))
         }
     }
