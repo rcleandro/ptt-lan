@@ -9,11 +9,13 @@ object JwtConfig {
     private const val ISSUER = "ptt-lan-server"
     private const val AUDIENCE = "ptt-lan-clients"
 
-    // Gerar uma chave aleatória no boot para invalidar tokens de sessões anteriores
+    // `PTT_JWT_SECRET` mantém os tokens válidos entre reinícios e entre instâncias.
+    // Sem ele, uma chave aleatória por boot: bom para LAN, mas desloga todo mundo a cada restart.
     private val SECRET =
-        java.util.UUID
-            .randomUUID()
-            .toString()
+        System.getenv("PTT_JWT_SECRET")?.takeIf { it.isNotBlank() }
+            ?: java.util.UUID
+                .randomUUID()
+                .toString()
 
     private val algorithm = Algorithm.HMAC256(SECRET)
 

@@ -19,6 +19,7 @@ import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.netty.EngineMain
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.forwardedheaders.XForwardedHeaders
 import io.ktor.server.plugins.origin
 import io.ktor.server.plugins.ratelimit.RateLimit
 import io.ktor.server.plugins.ratelimit.RateLimitName
@@ -43,8 +44,15 @@ private const val DEFAULT_PORT = 9443
 fun main(args: Array<String>) {
     val keyStoreFile = File("build/keystore.jks")
     if (!keyStoreFile.exists()) {
+        // The same password must reach `ktor.security.ssl` in application.conf, hence the shared env var
+        val keyStorePassword = System.getenv("PTT_KEYSTORE_PASSWORD")?.takeIf { it.isNotBlank() } ?: "password"
         keyStoreFile.parentFile?.mkdirs()
-        generateCertificate(keyStoreFile, keyAlias = "pttlan", keyPassword = "password", jksPassword = "password")
+        generateCertificate(
+            keyStoreFile,
+            keyAlias = "pttlan",
+            keyPassword = keyStorePassword,
+            jksPassword = keyStorePassword,
+        )
     }
 
     EngineMain.main(args)
@@ -116,6 +124,16 @@ fun Application.module() {
                 }
             }
         }
+    }
+
+    // Only behind a reverse proxy: otherwise any client could spoof its IP through X-Forwarded-For
+    // and get its own rate limit bucket.
+    if (environment.config
+            .propertyOrNull("ptt.trustProxy")
+            ?.getString()
+            .toBoolean()
+    ) {
+        install(XForwardedHeaders)
     }
 
     install(RateLimit) {

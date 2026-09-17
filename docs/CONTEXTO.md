@@ -151,8 +151,10 @@ Existe teste de round-trip em `ControlMessageTest`.
 - Entrada `Application.kt`: `main` gera `build/keystore.jks` self-signed (alias `pttlan`, senha `password`) se não existir
   e sobe via `EngineMain` com `application.conf` (só **HTTPS 9443**; o conector HTTP em claro foi removido na 19.2).
 - `module()`: WebSockets (ping 20s), ContentNegotiation, anúncio mDNS (porta 9443, ignora interfaces docker/utun/tailscale/vbox…),
-  Koin (`RedisManager`, `ChannelRegistry`), autenticação JWT, RateLimit (global 100/min por IP; login 5/min).
-- **Auth** (`JwtConfig`): HMAC256 com segredo aleatório gerado no boot → reiniciar o servidor invalida todos os tokens. Validade 1 dia.
+  Koin (`RedisManager`, `ChannelRegistry`), autenticação JWT + Basic (admin), RateLimit (global 100/min por IP; login 5/min).
+  `XForwardedHeaders` só é instalado com `PTT_TRUST_PROXY=true`, para o rate limit enxergar o IP real atrás do proxy sem permitir spoofing em LAN.
+  Senhas e segredos vêm do ambiente (`PTT_ADMIN_PASSWORD`, `PTT_JWT_SECRET`, `PTT_KEYSTORE_PASSWORD`), com fallback de LAN — ver README.
+- **Auth** (`JwtConfig`): HMAC256 com segredo de `PTT_JWT_SECRET`; sem a variável, um aleatório por boot → reiniciar invalida todos os tokens. Validade 1 dia.
   O login não tem senha: qualquer nickname/deviceId não vazio recebe token. O servidor gera o `userId` (claim `sub`)
   e o devolve em `LoginResponse`.
 - `/ws`: exige `?token=`; `userId` e `nickname` vêm só do token (os das mensagens são ignorados); nickname precisa ser único (case-insensitive) entre conexões — senão fecha com "Nome já em uso".
