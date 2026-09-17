@@ -12,8 +12,11 @@ WORKDIR /app
 # Copia apenas a distribuição final do estágio de build
 COPY --from=builder /app/serverApp/build/install/serverApp ./
 
-# Expõe as portas configuradas no Ktor (9393 para HTTP e 9443 para HTTPS)
-EXPOSE 9393 9443
+# Expõe a porta HTTPS configurada no Ktor (o conector HTTP em claro foi desligado)
+EXPOSE 9443
+
+# Senha do painel admin (Basic auth). Sem ela, as rotas de escrita do /admin ficam desligadas.
+ENV PTT_ADMIN_PASSWORD=
 
 # Comando para iniciar o servidor
 ENTRYPOINT ["./bin/serverApp"]

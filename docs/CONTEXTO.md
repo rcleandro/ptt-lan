@@ -147,7 +147,7 @@ Existe teste de round-trip em `ControlMessageTest`.
 ## 6. Servidor (`serverApp`)
 
 - Entrada `Application.kt`: `main` gera `build/keystore.jks` self-signed (alias `pttlan`, senha `password`) se não existir
-  e sobe via `EngineMain` com `application.conf` (HTTP **9393**, HTTPS **9443**).
+  e sobe via `EngineMain` com `application.conf` (só **HTTPS 9443**; o conector HTTP em claro foi removido na 19.2).
 - `module()`: WebSockets (ping 20s), ContentNegotiation, anúncio mDNS (porta 9443, ignora interfaces docker/utun/tailscale/vbox…),
   Koin (`RedisManager`, `ChannelRegistry`), autenticação JWT, RateLimit (global 100/min por IP; login 5/min).
 - **Auth** (`JwtConfig`): HMAC256 com segredo aleatório gerado no boot → reiniciar o servidor invalida todos os tokens. Validade 1 dia.
@@ -159,6 +159,8 @@ Existe teste de round-trip em `ControlMessageTest`.
 - `PttChannel`: participantes + floor control com `Mutex`. Floor liberado por `StopSpeaking` ou desconexão.
 - Painel admin: `GET /admin` (HTML + Chart.js via CDN) consumindo `GET /api/admin/metrics`, `POST /api/admin/system/{restart|shutdown|broadcast}`,
   `GET /api/admin/logs/csv`, `POST /api/admin/channels/{id}/kick/{userId}`, `POST /api/admin/channels/{id}/delete`.
+  Protegido por Basic auth (usuário `admin`) quando `PTT_ADMIN_PASSWORD` (config `ptt.adminPassword`) está definida; sem a variável
+  as rotas de escrita não são registradas e só sobram `metrics` e `logs/csv` abertos.
 - Docker: `Dockerfile` multi-stage (Temurin 21, `installDist`), imagem publicada no GHCR para amd64/arm64 (Raspberry Pi).
 
 ## 7. Settings (multiplatform-settings)
@@ -186,7 +188,7 @@ O plano é o SSOT de intenção, mas estes pontos refletem o código atual:
 | TLS | Self-signed + TOFU com fingerprint exibido | Android/JVM aceitam **qualquer** certificado e hostname quando o host é "local" (`isLocalNetwork`: localhost, `.local`, 10/8, 172.16/12, 192.168/16); iOS aceita qualquer certificado de servidor. Sem fingerprint |
 | "Criptografia do stream" | Sobre TLS | Só TLS. `AudioCrypto` (RC4, chave fixa no código) protege apenas os arquivos de cache |
 | Redis / multi-instância (Fase 17) | Estado e pub/sub no Redis | `RedisManager` conecta em `redis://localhost:6379` (falha tolerada), mas `ChannelRegistry` **não usa** o Redis; estado continua em memória e não há distribuição entre instâncias |
-| Admin | — | Rotas `/admin` e `/api/admin/*` **sem autenticação** (inclui shutdown e kick) |
+| Admin | — | Basic auth com `PTT_ADMIN_PASSWORD`; sem a variável, leitura (`metrics`, `logs/csv`) segue aberta e as rotas de escrita ficam desligadas |
 | Floor control | Liberado também por timeout de heartbeat; regra replicada no domain | Heartbeat é ignorado no servidor; regra só existe no servidor |
 | Dependências entre módulos | `core-di` não conhece features; features não usam `core-network` | `core-di` e `core-navigation` dependem de todas as features; `feature-ptt` usa `ParticipantDto` de `core-network`. Não há regra automática (17.3) |
 | Engine do client | CIO | OkHttp (Android/JVM), Darwin (iOS) |
@@ -221,7 +223,7 @@ cd iosApp && xcodegen && open iosApp.xcodeproj # cliente iOS (framework gerado p
 ./gradlew detekt ktlintCheck                   # lint (ktlintFormat para corrigir)
 ./gradlew dokkaHtmlMultiModule                 # docs em build/dokka/htmlMultiModule
 ./gradlew :desktopApp:packageDistributionForCurrentOS
-docker build -t ptt-server .                   # imagem do servidor (portas 9393/9443)
+docker build -t ptt-server .                   # imagem do servidor (porta 9443)
 ```
 
 Run configurations do IntelliJ/Android Studio: `.run/Run_Desktop__JVM_.run.xml` e `.run/Run_Server__Ktor_.run.xml`.
