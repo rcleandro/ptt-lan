@@ -27,16 +27,25 @@ kotlin {
             implementation(libs.ktor.server.websockets)
             implementation(libs.ktor.network.tls.certificates)
         }
-        jvmMain.dependencies {
-            implementation(libs.ktor.client.okhttp)
-            implementation(libs.jmdns)
+        // Android and the JVM share the OkHttp client and its TLS rules, so they share a source set
+        // instead of keeping two identical `actual` files (22.3).
+        val jvmAndAndroidMain by creating {
+            dependsOn(commonMain.get())
+            dependencies {
+                implementation(libs.ktor.client.okhttp)
+            }
+        }
+        jvmMain {
+            dependsOn(jvmAndAndroidMain)
+            dependencies {
+                implementation(libs.jmdns)
+            }
+        }
+        androidMain {
+            dependsOn(jvmAndAndroidMain)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
         }
     }
-}
-
-dependencies {
-    "androidMainImplementation"(libs.ktor.client.okhttp)
 }
