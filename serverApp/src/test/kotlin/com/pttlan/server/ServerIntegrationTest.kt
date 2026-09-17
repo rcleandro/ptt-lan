@@ -5,6 +5,10 @@ import com.pttlan.server.auth.JwtConfig
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocket
+import io.ktor.server.config.ApplicationConfig
+import io.ktor.server.config.MapApplicationConfig
+import io.ktor.server.config.mergeWith
+import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
@@ -22,13 +26,24 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
 class ServerIntegrationTest {
+    /**
+     * These tests hold the floor without streaming audio, which the 20.4 watchdog would take back after 2s.
+     * They are about contention and identity, so the idle timeout is pushed out of the way.
+     */
+    private fun ApplicationTestBuilder.serverWithoutFloorIdleTimeout() {
+        environment {
+            config =
+                ApplicationConfig("application.conf").mergeWith(
+                    MapApplicationConfig("ptt.floorIdleTimeoutMs" to "60000"),
+                )
+        }
+    }
+
     @Test
     @Suppress("LongMethod")
     fun testPttFloorControl() =
         testApplication {
-            application {
-                module()
-            }
+            serverWithoutFloorIdleTimeout()
 
             val client1 =
                 createClient {
@@ -86,14 +101,20 @@ class ServerIntegrationTest {
                         // Client2 joins
                         val join2 = ControlMessage.JoinChannel("channel-1", "Client2", "u2")
                         send(Frame.Text(Json.encodeToString<ControlMessage>(join2)))
-                        client2Connected.complete(Unit)
 
-                        // Wait for Client1 to acquire the floor (SpeakerChanged)
+                        // Releasing Client1 right after `send` races the server: if Client1 takes the floor
+                        // before the join is processed, the SpeakerChanged broadcast never reaches Client2.
+                        // The participant list that follows the join is the server's own confirmation.
                         var client1IsSpeaking = false
                         for (frame in incoming) {
                             if (frame is Frame.Text) {
                                 val text = frame.readText()
                                 val msg = Json.decodeFromString<ControlMessage>(text)
+                                if (msg is ControlMessage.ParticipantList &&
+                                    msg.participants.any { it.userId == "u2" }
+                                ) {
+                                    client2Connected.complete(Unit)
+                                }
                                 if (msg is ControlMessage.SpeakerChanged && msg.userId == "u1" && msg.isSpeaking) {
                                     client1IsSpeaking = true
                                     break
@@ -141,9 +162,7 @@ class ServerIntegrationTest {
     @Test
     fun serverUsesTokenIdentityAndIgnoresUserIdInMessages() =
         testApplication {
-            application {
-                module()
-            }
+            serverWithoutFloorIdleTimeout()
 
             val client = createClient { install(WebSockets) }
             val testScope = CoroutineScope(Dispatchers.Default)

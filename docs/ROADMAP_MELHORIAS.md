@@ -133,12 +133,20 @@ com testes de integração cobrindo cada caso.
   Adicionar ao `PttWebSocketClient` o limite de tentativas do plano (padrão 10), que hoje não existe.
   Depois de reconectar, reenviar `JoinChannel` para o canal ativo (`ChannelSessionRepository.activeSessionChannelId`).
 - **Testes:** `PttWebSocketClient` com `MockEngine` simulando queda → status `Reconnecting` → `Connected` com re-join.
+- **Implementado:** `RootComponent` só volta para a tela de conexão em `Disconnected`; em `Reconnecting` a tela atual
+  continua e o `ConnectionStatusBadge` (agora alimentado pelo status real, não mais fixo em `Online`) mostra "reconectando".
+  `PttWebSocketClient` ganhou `maxReconnectAttempts` (padrão 10) e reenvia sozinho o último `JoinChannel` ao reconectar.
+  `PttWebSocketClientReconnectTest` sobe um servidor WSS de verdade: derruba a primeira sessão e exige o re-join na segunda,
+  e verifica que o loop desiste depois do limite em vez de tentar para sempre.
 
 ### 20.2 Identidade estável do dispositivo ✅ — P
 - **Problema:** desde a 19.1 o `userId` é emitido pelo servidor a cada login, então muda a cada conexão; `deviceId = "device-${nickname.hashCode()}"`
   (`ConnectionRepositoryImpl.kt:65`) muda se o nickname mudar e colide entre pessoas com o mesmo nome.
 - **Ação:** gerar um UUID de dispositivo uma vez e persistir em settings (`device_id`), enviado como `deviceId` no login.
   O `userId` continua emitido pelo servidor (19.1); para a 20.3, o servidor pode reaproveitar o `userId` do mesmo `deviceId`.
+- **Implementado:** `deviceId(settings)` em `ConnectionRepositoryImpl.kt` grava um `Uuid.random()` (stdlib do Kotlin) na chave
+  `device_id` na primeira vez e reusa depois; o login passou a enviá-lo. `DeviceIdTest` cobre a estabilidade entre chamadas
+  e a diferença entre instalações.
 
 ### 20.3 "Nome já em uso" ao reconectar 🔎 — M
 - **Problema provável:** quando a rede cai sem close, o servidor só remove a sessão antiga no timeout de ping (~20s + timeout).
@@ -148,6 +156,11 @@ com testes de integração cobrindo cada caso.
 - **Ação:** unicidade por nickname só entre `deviceId`s **diferentes**. Se o mesmo `deviceId` reconectar, a nova sessão substitui a antiga,
   que é fechada. Propagar o motivo do close como `ConnectionStatus`/erro até a UI.
 - **Reproduzir antes:** derrubar o Wi-Fi do cliente por ~3s com o servidor em pé.
+- **Implementado:** `addGlobalConnection` passou a receber o `deviceId` (claim do JWT) e só recusa o nickname quando ele
+  está em uso por **outro** dispositivo; o mesmo `deviceId` substitui a própria sessão antiga, que é fechada com
+  "Sessão substituída por uma nova conexão". No cliente, um close `VIOLATED_POLICY` vira `ServerRefusedException`, que é
+  relançada mesmo depois da primeira tentativa (antes era engolida) e fica em `lastCloseReason` → `ConnectionRepository.lastDisconnectReason`
+  → mensagem real na tela de conexão. Testes: `ReconnectSameDeviceTest` (servidor) e `surfacesTheReasonWhenTheServerRefusesTheConnection` (cliente).
 
 ### 20.4 Floor preso quando o speaker some ✅ — M
 - **Problema:** o servidor ignora `Heartbeat` (`PttRoutes.kt:107`) e nenhum cliente envia heartbeat. O floor só é liberado com
@@ -156,10 +169,17 @@ com testes de integração cobrindo cada caso.
   por N ms (ex.: 2000), libera o floor e faz broadcast de `SpeakerChanged(false)`. Também vale um teto de duração
   por fala (ex.: 60s), configurável. Com isso, o `Heartbeat` pode ser **removido** do protocolo, já que o ping do WebSocket cobre a conexão.
 - **Testes:** `ServerIntegrationTest` com um speaker que para de enviar áudio → floor liberado após o timeout.
+- **Implementado:** `PttChannel` ganhou um watchdog que solta a palavra quando o áudio para por `floorIdleTimeoutMs`
+  (padrão 2s) ou quando a fala passa de `maxSpeechDurationMs` (padrão 60s); ambos configuráveis por `application.conf`
+  (`ptt.floorIdleTimeoutMs`/`ptt.maxSpeechDurationMs`, com `PTT_FLOOR_IDLE_TIMEOUT_MS`/`PTT_MAX_SPEECH_DURATION_MS`).
+  `FloorTimeoutTest` usa 300 ms e exige o `SpeakerChanged(isSpeaking = false)`. O `Heartbeat` continua no protocolo,
+  mas segue sem uso — a remoção fica para a 21.5, junto com a discussão de compatibilidade.
 
 ### 20.5 Versão do app nunca chega ao servidor ✅ — P
 - **Problema:** o painel lê o parâmetro `version` na query, mas `PttWebSocketClient` não o envia. O painel mostra sempre "Desconhecida".
 - **Ação:** incluir `&version=` na URL do WebSocket (a mesma versão usada no 21.5).
+- **Implementado:** `APP_VERSION` em `core-network/AppVersion.kt` vai na query do handshake; o teste de reconexão
+  confere que as duas conexões (a original e a reconectada) informam a versão. A 21.5 acrescenta o `PROTOCOL_VERSION` ao lado dela.
 
 **Critério de conclusão:** derrubar e religar o Wi-Fi durante uma fala não tira o usuário do canal, e o floor é liberado em ≤ 2s quando o speaker cai.
 

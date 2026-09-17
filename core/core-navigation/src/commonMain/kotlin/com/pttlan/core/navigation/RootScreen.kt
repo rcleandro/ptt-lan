@@ -25,11 +25,13 @@ import com.pttlan.core.designsystem.components.snackbar.PttSnackbarHost
 import com.pttlan.core.designsystem.components.snackbar.PttSnackbarType
 import com.pttlan.core.designsystem.components.snackbar.SnackbarController
 import com.pttlan.core.designsystem.theme.PttTheme
+import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.feature.channellist.ChannelListScreen
 import com.pttlan.feature.connection.ConnectionScreen
 import com.pttlan.feature.history.HistoryScreen
 import com.pttlan.feature.ptt.PttScreen
 import com.pttlan.feature.settings.SettingsScreen
+import com.pttlan.core.designsystem.components.ConnectionStatus as BadgeStatus
 
 /**
  * App root: applies the theme and hosts the screens. Each screen draws its own floating glass
@@ -49,6 +51,13 @@ fun RootScreen(component: RootComponent) {
 private fun RootContent(component: RootComponent) {
     val childStack by component.childStack.subscribeAsState()
     val isCacheEnabled by component.isCacheEnabled.collectAsState()
+    val connectionStatus by component.connectionStatus.collectAsState()
+    val badgeStatus =
+        when (connectionStatus) {
+            ConnectionStatus.Connected -> BadgeStatus.Online
+            ConnectionStatus.Connecting, ConnectionStatus.Reconnecting -> BadgeStatus.Reconnecting
+            ConnectionStatus.Disconnected -> BadgeStatus.Offline
+        }
     val snackbarHostState = remember { SnackbarHostState() }
     var snackbarType by remember { mutableStateOf(PttSnackbarType.Generic) }
     val openHistory = if (isCacheEnabled) component::navigateToHistory else null
@@ -80,6 +89,7 @@ private fun RootContent(component: RootComponent) {
                         onBack = component::goBack,
                         onOpenSettings = component::navigateToSettings,
                         onOpenHistory = openHistory,
+                        connectionStatus = badgeStatus,
                     )
                 }
 
@@ -88,6 +98,7 @@ private fun RootContent(component: RootComponent) {
                         component = instance.component,
                         onBack = component::goBack,
                         showHistory = isCacheEnabled,
+                        connectionStatus = badgeStatus,
                     )
                 }
 

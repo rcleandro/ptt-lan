@@ -158,10 +158,11 @@ Existe teste de round-trip em `ControlMessageTest`.
   O login não tem senha: qualquer nickname/deviceId não vazio recebe token. O servidor gera o `userId` (claim `sub`)
   e o devolve em `LoginResponse`.
 - `/ws`: exige `?token=`; `userId` e `nickname` vêm só do token (os das mensagens são ignorados); nickname precisa ser único (case-insensitive) entre conexões — senão fecha com "Nome já em uso".
-  Query param opcional `version` aparece no painel.
+  Query param `version` (constante `APP_VERSION` do cliente, 20.5) aparece no painel.
 - `ChannelRegistry`: estado em memória (`ConcurrentHashMap`). Canal `Geral` sempre existe; canais vazios são removidos após 5 min.
   Guarda logs (últimos 100), tempo de fala por nickname e série temporal por minuto (30 min).
-- `PttChannel`: participantes + floor control com `Mutex`. Floor liberado por `StopSpeaking` ou desconexão.
+- `PttChannel`: participantes + floor control com `Mutex`. Floor liberado por `StopSpeaking`, por desconexão ou pelo
+  watchdog da 20.4 (sem áudio por `ptt.floorIdleTimeoutMs`, padrão 2s, ou fala acima de `ptt.maxSpeechDurationMs`, padrão 60s).
 - Painel admin: `GET /admin` (HTML + Chart.js via CDN) consumindo `GET /api/admin/metrics`, `POST /api/admin/system/{restart|shutdown|broadcast}`,
   `GET /api/admin/logs/csv`, `POST /api/admin/channels/{id}/kick/{userId}`, `POST /api/admin/channels/{id}/delete`.
   Protegido por Basic auth (usuário `admin`) quando `PTT_ADMIN_PASSWORD` (config `ptt.adminPassword`) está definida; sem a variável
@@ -194,7 +195,7 @@ O plano é o SSOT de intenção, mas estes pontos refletem o código atual:
 | "Criptografia do stream" | Sobre TLS | Só TLS. `AudioCrypto` (RC4, chave fixa no código) protege apenas os arquivos de cache |
 | Redis / multi-instância (Fase 17) | Estado e pub/sub no Redis | `RedisManager` conecta em `redis://localhost:6379` (falha tolerada), mas `ChannelRegistry` **não usa** o Redis; estado continua em memória e não há distribuição entre instâncias |
 | Admin | — | Basic auth com `PTT_ADMIN_PASSWORD`; sem a variável, leitura (`metrics`, `logs/csv`) segue aberta e as rotas de escrita ficam desligadas |
-| Floor control | Liberado também por timeout de heartbeat; regra replicada no domain | Heartbeat é ignorado no servidor; regra só existe no servidor |
+| Floor control | Liberado também por timeout de heartbeat; regra replicada no domain | O `Heartbeat` continua ignorado, mas o watchdog de inatividade da 20.4 cobre o caso; regra só existe no servidor |
 | Dependências entre módulos | `core-di` não conhece features; features não usam `core-network` | `core-di` e `core-navigation` dependem de todas as features; `feature-ptt` usa `ParticipantDto` de `core-network`. Não há regra automática (17.3) |
 | Engine do client | CIO | OkHttp (Android/JVM), Darwin (iOS) |
 | Limites Detekt | Classe 300 / função 40 linhas | `LargeClass` 600 / `LongMethod` 60 em `config/detekt/detekt.yml` |

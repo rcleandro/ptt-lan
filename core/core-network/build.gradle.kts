@@ -20,6 +20,12 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
+        jvmTest.dependencies {
+            // Reconnection is only meaningful against a real WSS endpoint, so the test boots a tiny Ktor server
+            implementation(libs.ktor.server.netty)
+            implementation(libs.ktor.server.websockets)
+            implementation(libs.ktor.network.tls.certificates)
+        }
         jvmMain.dependencies {
             implementation(libs.ktor.client.okhttp)
             implementation(libs.jmdns)

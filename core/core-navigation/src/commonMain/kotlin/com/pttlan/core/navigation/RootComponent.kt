@@ -100,20 +100,26 @@ class RootComponent(
             childFactory = ::createChild,
         )
 
+    /** Drives the "reconectando" badge; the screens keep showing while the client retries. */
+    val connectionStatus: StateFlow<ConnectionStatus> = connectionRepository.connectionStatus
+
     init {
         lifecycle.coroutineScope().launch {
             var wasConnected = false
             connectionRepository.connectionStatus.collect { status ->
+                // `Reconnecting` keeps the current screen: PttWebSocketClient is still retrying with backoff.
+                // Only `Disconnected` (attempts exhausted or manual exit) sends the user back.
                 if (status == ConnectionStatus.Connected) {
                     wasConnected = true
-                } else if (status == ConnectionStatus.Reconnecting && wasConnected) {
+                } else if (status == ConnectionStatus.Disconnected && wasConnected) {
                     wasConnected = false
+                    val reason = connectionRepository.lastDisconnectReason
                     connectionRepository.disconnect()
                     navigation.navigate { listOf(Config.Connection) }
 
                     val activeChild = childStack.value.active.instance
                     if (activeChild is Child.ConnectionChild) {
-                        activeChild.component.showError("Servidor desconectado")
+                        activeChild.component.showError(reason ?: "Servidor desconectado")
                     }
                 }
             }

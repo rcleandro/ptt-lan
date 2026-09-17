@@ -4,13 +4,24 @@ import com.pttlan.core.network.protocol.ControlMessage
 import com.pttlan.core.network.protocol.ParticipantDto
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.Frame
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 
 private const val SLOW_CONNECTION_THRESHOLD_MS = 100L
+
+/** No audio for this long and the floor goes back, so a speaker that vanishes does not block the channel. */
+const val DEFAULT_FLOOR_IDLE_TIMEOUT_MS = 2_000L
+
+/** Hard ceiling for a single turn, in case a device keeps streaming unattended. */
+const val DEFAULT_MAX_SPEECH_DURATION_MS = 60_000L
 
 data class Participant(
     val userId: String,
@@ -31,6 +42,9 @@ data class Participant(
 
 class PttChannel(
     val id: String,
+    private val floorIdleTimeoutMs: Long = DEFAULT_FLOOR_IDLE_TIMEOUT_MS,
+    private val maxSpeechDurationMs: Long = DEFAULT_MAX_SPEECH_DURATION_MS,
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default),
     private val onLog: suspend (participantName: String, eventType: String) -> Unit = { _, _ -> },
     private val onSpeakDuration: suspend (participantName: String, durationMs: Long) -> Unit = { _, _ -> },
     private val onMetric: suspend (bytes: Long, slowCount: Int) -> Unit = { _, _ -> },
@@ -76,6 +90,7 @@ class PttChannel(
         senderUserId: String,
     ) {
         val size = frame.data.size
+        lastAudioAtMs = System.currentTimeMillis()
         val snapshot =
             mutex.withLock {
                 if (currentSpeakerId != senderUserId) {
@@ -146,6 +161,34 @@ class PttChannel(
 
     private var speakerStartTime: Long = 0
 
+    @Volatile
+    private var lastAudioAtMs: Long = 0
+
+    private var floorWatchdog: Job? = null
+
+    /**
+     * Releases the floor when the speaker goes quiet (dropped connection, app killed) or talks past the
+     * per-turn ceiling. Without it the floor is only freed by `StopSpeaking` or by the ping timeout (~35s).
+     */
+    private fun startFloorWatchdog(userId: String) {
+        floorWatchdog?.cancel()
+        floorWatchdog =
+            scope.launch {
+                while (isActive) {
+                    val now = System.currentTimeMillis()
+                    val idleLeftMs = floorIdleTimeoutMs - (now - lastAudioAtMs)
+                    val speechLeftMs = maxSpeechDurationMs - (now - speakerStartTime)
+                    if (idleLeftMs <= 0 || speechLeftMs <= 0) {
+                        // Cleared first so releaseFloor does not cancel the coroutine running it
+                        floorWatchdog = null
+                        releaseFloor(userId)
+                        return@launch
+                    }
+                    delay(minOf(idleLeftMs, speechLeftMs))
+                }
+            }
+    }
+
     suspend fun requestFloor(userId: String): Boolean =
         mutex
             .withLock {
@@ -160,12 +203,16 @@ class PttChannel(
             }.also { (granted, nickname) ->
                 if (granted) {
                     speakerStartTime = System.currentTimeMillis()
+                    lastAudioAtMs = speakerStartTime
+                    startFloorWatchdog(userId)
                     onLog(nickname, "START_SPEAKING")
                     broadcast(ControlMessage.SpeakerChanged(id, userId, nickname, true))
                 }
             }.first
 
     suspend fun releaseFloor(userId: String) {
+        floorWatchdog?.cancel()
+        floorWatchdog = null
         val (nickname, durationMs) =
             mutex.withLock {
                 if (currentSpeakerId == userId) {
