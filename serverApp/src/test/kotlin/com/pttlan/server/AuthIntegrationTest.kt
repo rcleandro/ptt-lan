@@ -1,7 +1,8 @@
 package com.pttlan.server
 
-import com.pttlan.server.routing.LoginRequest
-import com.pttlan.server.routing.LoginResponse
+import com.pttlan.core.network.protocol.LoginRequest
+import com.pttlan.core.network.protocol.LoginResponse
+import com.pttlan.server.auth.JwtConfig
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.post
@@ -47,6 +48,9 @@ class AuthIntegrationTest {
             assertEquals(HttpStatusCode.OK, response1.status)
             val body = response1.body<LoginResponse>()
             assertTrue(body.token.isNotBlank())
+            // The server issues the identity and binds it to the token subject
+            assertTrue(body.userId.isNotBlank())
+            assertEquals(body.userId, JwtConfig.verifier.verify(body.token).subject)
 
             // Fazer mais 5 requisições rápidas para acionar o rate limit (o limite é 5)
             for (i in 1..4) {

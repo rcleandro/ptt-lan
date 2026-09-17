@@ -39,8 +39,6 @@ import kotlinx.serialization.Serializable
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import org.koin.core.parameter.parametersOf
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 private fun Lifecycle.coroutineScope(): CoroutineScope {
     val scope = CoroutineScope(Dispatchers.Main)
@@ -59,9 +57,6 @@ class RootComponent(
 ) : ComponentContext by componentContext,
     KoinComponent {
     private val navigation = StackNavigation<Config>()
-
-    @OptIn(ExperimentalUuidApi::class)
-    private val userId = Uuid.random().toString()
 
     private val connectionRepository: ConnectionRepository = get()
     private val settings: Settings = get()
@@ -163,7 +158,7 @@ class RootComponent(
                 val component: PttComponent =
                     get(
                         parameters = {
-                            parametersOf(context, config.channelId, userId)
+                            parametersOf(context, config.channelId, connectionRepository.sessionUserId.orEmpty())
                         },
                     )
                 context.lifecycle.coroutineScope().launch {

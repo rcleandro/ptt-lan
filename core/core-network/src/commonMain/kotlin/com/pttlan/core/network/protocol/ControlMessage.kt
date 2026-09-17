@@ -16,6 +16,12 @@ data class ActiveChannelDto(
     val participantCount: Int,
 )
 
+/**
+ * Control messages exchanged as JSON text frames on `/ws`.
+ *
+ * The `userId`/`nickname` fields of client-to-server messages are kept for wire compatibility but are ignored
+ * by the server: the sender's identity always comes from the JWT validated in the WebSocket handshake.
+ */
 @Serializable
 sealed interface ControlMessage {
     @Serializable

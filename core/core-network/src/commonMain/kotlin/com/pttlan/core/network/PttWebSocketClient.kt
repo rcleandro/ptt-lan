@@ -2,6 +2,8 @@ package com.pttlan.core.network
 
 import com.pttlan.core.network.protocol.AudioEnvelope
 import com.pttlan.core.network.protocol.ControlMessage
+import com.pttlan.core.network.protocol.LoginRequest
+import com.pttlan.core.network.protocol.LoginResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
@@ -24,22 +26,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-
-@Serializable
-data class LoginRequest(
-    val nickname: String,
-    val deviceId: String,
-)
-
-@Serializable
-data class LoginResponse(
-    val token: String,
-)
 
 class PttWebSocketClient(
     private val httpClient: HttpClient,
@@ -72,16 +62,14 @@ class PttWebSocketClient(
         isLocal: Boolean,
         nickname: String,
         deviceId: String,
-    ): String {
+    ): LoginResponse {
         val cleanHost = normalizeHost(host)
         val url = "https://$cleanHost:$port/api/auth/login"
-        val response: LoginResponse =
-            httpClient
-                .post(url) {
-                    contentType(ContentType.Application.Json)
-                    setBody(LoginRequest(nickname, deviceId))
-                }.body()
-        return response.token
+        return httpClient
+            .post(url) {
+                contentType(ContentType.Application.Json)
+                setBody(LoginRequest(nickname, deviceId))
+            }.body()
     }
 
     suspend fun connect(
