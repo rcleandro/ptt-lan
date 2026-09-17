@@ -22,7 +22,6 @@ kotlinxDatetime = "0.8.0"
 
 # Networking
 ktor = "3.6.0"
-lettuce = "7.7.0.RELEASE"
 
 # Persistence / storage
 sqldelight = "2.3.2"
@@ -95,7 +94,6 @@ ktor-server-auth = { module = "io.ktor:ktor-server-auth", version.ref = "ktor" }
 ktor-server-auth-jwt = { module = "io.ktor:ktor-server-auth-jwt", version.ref = "ktor" }
 ktor-server-rate-limit = { module = "io.ktor:ktor-server-rate-limit", version.ref = "ktor" }
 ktor-server-forwarded-header = { module = "io.ktor:ktor-server-forwarded-header", version.ref = "ktor" }
-lettuce-core = { module = "io.lettuce:lettuce-core", version.ref = "lettuce" }
 
 # Persistence / storage
 sqldelight-android = { module = "app.cash.sqldelight:android-driver", version.ref = "sqldelight" }

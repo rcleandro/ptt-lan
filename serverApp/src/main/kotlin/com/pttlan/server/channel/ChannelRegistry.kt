@@ -4,7 +4,6 @@ package com.pttlan.server.channel
 import com.pttlan.core.network.PttJson
 import com.pttlan.core.network.protocol.ActiveChannelDto
 import com.pttlan.core.network.protocol.ControlMessage
-import com.pttlan.server.redis.RedisManager
 import com.pttlan.server.routing.DashboardChannelDto
 import com.pttlan.server.routing.DashboardLogEventDto
 import com.pttlan.server.routing.DashboardParticipantDto
@@ -49,7 +48,6 @@ private class MutableTimeSeriesPoint(
 
 @Suppress("TooManyFunctions")
 class ChannelRegistry(
-    private val redisManager: RedisManager? = null,
     private val floorIdleTimeoutMs: Long = DEFAULT_FLOOR_IDLE_TIMEOUT_MS,
     private val maxSpeechDurationMs: Long = DEFAULT_MAX_SPEECH_DURATION_MS,
 ) {

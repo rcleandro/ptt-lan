@@ -34,7 +34,7 @@ Todas as 17 fases do roadmap estão marcadas como concluídas no plano.
 | Persistência | SQLDelight 2.3.2, multiplatform-settings 1.3.0, Okio (arquivos) |
 | Áudio | APIs nativas por plataforma + Opus via `kopus` 1.6.1.3 |
 | Descoberta | NSD (Android), Bonjour (iOS), JmDNS (JVM/servidor) |
-| Servidor extra | ktor-server-auth-jwt, ktor-server-rate-limit, Lettuce (Redis), Logback |
+| Servidor extra | ktor-server-auth-jwt, ktor-server-rate-limit, ktor-server-forwarded-header, Logback |
 | Qualidade | Detekt 2.0.0-alpha.6, ktlint-gradle (motor 1.8.0), Kover, Dokka, MockK, Turbine |
 
 ## 3. Mapa de módulos
@@ -59,7 +59,7 @@ androidApp/  desktopApp/  iosApp/ (Xcode + shared.framework)   serverApp/ (Ktor 
 | `desktopApp` | `Main.kt`: startKoin + `RootComponent` + janela Compose; empacota DMG/MSI/DEB |
 | `iosApp` | Shell SwiftUI (`ContentView` → `MainViewControllerKt.MainViewController()`); `project.yml` para XcodeGen |
 | `shared` | Só `iosMain`: gera `shared.framework` estático e expõe `MainViewController` |
-| `serverApp` | Servidor Ktor: `/ws`, `/api/auth/login`, painel `/admin` + `/api/admin/*`, mDNS, Redis |
+| `serverApp` | Servidor Ktor: `/ws`, `/api/auth/login`, painel `/admin` + `/api/admin/*`, mDNS |
 | `core-common` | `isLocalNetwork()`, `AudioCrypto` (RC4 para o cache), `StorageInfoProvider` expect/actual |
 | `core-network` | `HttpClient` + `createPlatformHttpClient` (expect/actual), `PttWebSocketClient`, protocolo (`ControlMessage`, `AudioEnvelope`), `ServerDiscoveryService` |
 | `core-audio` | Interfaces `AudioRecorder`/`AudioPlayer`/`AudioCodec`, `PcmPassthroughCodec`, `OpusAudioCodec`, implementações por plataforma com jitter buffer, `MicrophonePermissionManager` |
@@ -150,7 +150,7 @@ Existe teste de round-trip em `ControlMessageTest`.
 - Entrada `Application.kt`: `main` gera `build/keystore.jks` self-signed (alias `pttlan`, senha `password`) se não existir
   e sobe via `EngineMain` com `application.conf` (só **HTTPS 9443**; o conector HTTP em claro foi removido na 19.2).
 - `module()`: WebSockets (ping 20s), ContentNegotiation, anúncio mDNS (porta 9443, ignora interfaces docker/utun/tailscale/vbox…),
-  Koin (`RedisManager`, `ChannelRegistry`), autenticação JWT + Basic (admin), RateLimit (global 100/min por IP; login 5/min).
+  Koin (`ChannelRegistry`), autenticação JWT + Basic (admin), RateLimit (global 100/min por IP; login 5/min).
   `XForwardedHeaders` só é instalado com `PTT_TRUST_PROXY=true`, para o rate limit enxergar o IP real atrás do proxy sem permitir spoofing em LAN.
   Senhas e segredos vêm do ambiente (`PTT_ADMIN_PASSWORD`, `PTT_JWT_SECRET`, `PTT_KEYSTORE_PASSWORD`), com fallback de LAN — ver README.
 - **Auth** (`JwtConfig`): HMAC256 com segredo de `PTT_JWT_SECRET`; sem a variável, um aleatório por boot → reiniciar invalida todos os tokens. Validade 1 dia.
@@ -194,7 +194,7 @@ O plano é o SSOT de intenção, mas estes pontos refletem o código atual:
 | Taxa de amostragem | 16 kHz | 48 kHz |
 | TLS | Self-signed + TOFU com fingerprint exibido | Android/JVM/iOS aceitam **qualquer** certificado e hostname quando o host é "local" (`isLocalNetwork`: localhost, `.local`, 10/8, 172.16/12, 192.168/16) e usam a validação do sistema fora da LAN. Sem fingerprint |
 | "Criptografia do stream" | Sobre TLS | Só TLS. `AudioCrypto` (RC4, chave fixa no código) protege apenas os arquivos de cache |
-| Redis / multi-instância (Fase 17) | Estado e pub/sub no Redis | `RedisManager` conecta em `redis://localhost:6379` (falha tolerada), mas `ChannelRegistry` **não usa** o Redis; estado continua em memória e não há distribuição entre instâncias |
+| Redis / multi-instância (Fase 17) | Estado e pub/sub no Redis | Removido na 22.1 ([ADR 0007](adr/0007-remover-redis.md)): o estado é em memória e o servidor roda em uma instância só |
 | Admin | — | Basic auth com `PTT_ADMIN_PASSWORD`; sem a variável, leitura (`metrics`, `logs/csv`) segue aberta e as rotas de escrita ficam desligadas |
 | Floor control | Liberado também por timeout de heartbeat; regra replicada no domain | O `Heartbeat` saiu do protocolo (21.5); quem cobre é o watchdog de inatividade da 20.4, e a regra só existe no servidor |
 | Dependências entre módulos | `core-di` não conhece features; features não usam `core-network` | `core-di` e `core-navigation` dependem de todas as features; `feature-ptt` usa `ParticipantDto` de `core-network`. Não há regra automática (17.3) |

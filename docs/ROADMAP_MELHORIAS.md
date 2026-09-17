@@ -271,7 +271,7 @@ sem atraso para os demais; servidor sem log por pacote em `INFO`.
 
 | Item | Status | Evidência | Ação | Esforço |
 |---|---|---|---|---|
-| 22.1 Redis sem uso | ✅ | `RedisManager` sobe e tenta `localhost:6379` a cada boot; `ChannelRegistry.kt:46` recebe e nunca usa | **Decisão via ADR 0006.** Recomendado: remover `RedisManager`, Lettuce e o item da Fase 17 até existir necessidade real de várias instâncias. A alternativa, estado e pub/sub no Redis, é G e só vale com deploy multi-instância em vista | P (remover) / G (implementar) |
+| 22.1 Redis sem uso | ✔ feito | `RedisManager` sobe e tenta `localhost:6379` a cada boot; `ChannelRegistry.kt:46` recebe e nunca usa | **Decidido na [ADR 0007](adr/0007-remover-redis.md): removido.** `RedisManager`, Lettuce e o parâmetro morto do `ChannelRegistry` saíram; o estado segue em memória e multi-instância volta como fase própria quando houver necessidade real | P (remover) / G (implementar) |
 | 22.2 Módulos vazios | ✅ | `core-testing`, `feature-admin-web` | Remover do `settings.gradle.kts` (o painel vive no `serverApp`). Recriar `core-testing` só quando houver fakes compartilhados de fato | P |
 | 22.3 HttpClient duplicado | ✅ | `HttpClient.android.kt` e `HttpClient.jvm.kt` idênticos | Source set intermediário `jvmAndAndroidMain` (hierarquia KMP) com uma única implementação | P |
 | 22.4 Jitter buffer duplicado | ✅ | `AudioPacket` + lógica de sequência em `AndroidAudioInterfaces.kt` e `jvmMain/AudioInterfaces.kt` | Extrair a lógica de ordenação/descarte para `commonMain` (classe pura, testável). Plataformas só escrevem no `AudioTrack`/`SourceDataLine` | M |
