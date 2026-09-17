@@ -111,7 +111,7 @@ class PttWebSocketClient(
                     val timeout = if (isLocal) 5.seconds else 15.seconds
                     session =
                         withTimeout(timeout) {
-                            httpClient.webSocketSession("wss://$cleanHost:$port/ws?token=$token")
+                            httpClient.webSocketSession("wss://$cleanHost:$port/ws?token=$token&version=$APP_VERSION")
                         }
                 }
 

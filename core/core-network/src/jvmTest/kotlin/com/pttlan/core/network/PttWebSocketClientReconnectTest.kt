@@ -25,6 +25,7 @@ import kotlinx.serialization.json.Json
 import java.io.File
 import java.net.ServerSocket
 import java.security.KeyStore
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -77,6 +78,8 @@ class PttWebSocketClientReconnectTest {
         }.start(wait = false)
 
     /** Boots a WSS endpoint that records the text frames it receives and closes the first session on demand. */
+    private val reportedVersions = CopyOnWriteArrayList<String?>()
+
     private fun startServer(
         port: Int,
         received: Channel<String>,
@@ -99,6 +102,7 @@ class PttWebSocketClientReconnectTest {
         routing {
             webSocket("/ws") {
                 val session = sessions.incrementAndGet()
+                reportedVersions.add(call.request.queryParameters["version"])
                 for (frame in incoming) {
                     if (frame is Frame.Text) {
                         received.send(frame.readText())
@@ -143,6 +147,8 @@ class PttWebSocketClientReconnectTest {
                 assertNotNull(reJoin, "the client should re-send JoinChannel after reconnecting")
                 assertTrue(reJoin.isJoinOf("Geral"))
                 assertEquals(2, sessions.get())
+                // 20.5: the panel shows "Desconhecida" unless the client sends its version on every handshake
+                assertEquals(listOf(APP_VERSION, APP_VERSION), reportedVersions.toList())
             } finally {
                 client.disconnect()
                 httpClient.close()

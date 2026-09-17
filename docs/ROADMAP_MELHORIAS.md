@@ -173,6 +173,8 @@ com testes de integração cobrindo cada caso.
 ### 20.5 Versão do app nunca chega ao servidor ✅ — P
 - **Problema:** o painel lê o parâmetro `version` na query, mas `PttWebSocketClient` não o envia. O painel mostra sempre "Desconhecida".
 - **Ação:** incluir `&version=` na URL do WebSocket (a mesma versão usada no 21.5).
+- **Implementado:** `APP_VERSION` em `core-network/AppVersion.kt` vai na query do handshake; o teste de reconexão
+  confere que as duas conexões (a original e a reconectada) informam a versão. A 21.5 acrescenta o `PROTOCOL_VERSION` ao lado dela.
 
 **Critério de conclusão:** derrubar e religar o Wi-Fi durante uma fala não tira o usuário do canal, e o floor é liberado em ≤ 2s quando o speaker cai.
 

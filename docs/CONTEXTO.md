@@ -156,7 +156,7 @@ Existe teste de round-trip em `ControlMessageTest`.
   O login não tem senha: qualquer nickname/deviceId não vazio recebe token. O servidor gera o `userId` (claim `sub`)
   e o devolve em `LoginResponse`.
 - `/ws`: exige `?token=`; `userId` e `nickname` vêm só do token (os das mensagens são ignorados); nickname precisa ser único (case-insensitive) entre conexões — senão fecha com "Nome já em uso".
-  Query param opcional `version` aparece no painel.
+  Query param `version` (constante `APP_VERSION` do cliente, 20.5) aparece no painel.
 - `ChannelRegistry`: estado em memória (`ConcurrentHashMap`). Canal `Geral` sempre existe; canais vazios são removidos após 5 min.
   Guarda logs (últimos 100), tempo de fala por nickname e série temporal por minuto (30 min).
 - `PttChannel`: participantes + floor control com `Mutex`. Floor liberado por `StopSpeaking`, por desconexão ou pelo
