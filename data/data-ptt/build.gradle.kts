@@ -20,6 +20,8 @@ kotlin {
         jvmTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.multiplatform.settings.test)
+            implementation(libs.sqldelight.sqlite)
+            implementation(libs.okio.fakefilesystem)
         }
     }
 }

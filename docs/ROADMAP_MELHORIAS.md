@@ -255,6 +255,10 @@ com testes de integração cobrindo cada caso.
   até o limite de tamanho mandar apagar.
 - **Ação:** buscar os mais antigos com `getOldestMessagesByChannel` (query que já existe), apagar os arquivos e depois as linhas.
 - **Testes:** repositório com driver SQLite in-memory + `FakeFileSystem` do Okio.
+- **Implementado:** `purgeOldestMessages` busca as mensagens mais antigas com `getOldestMessagesByChannel`, apaga os
+  arquivos e só então remove as linhas. O `VoiceRepositoryImpl` passou a receber o `FileSystem` (padrão `FileSystem.SYSTEM`),
+  o que tornou possível o `VoiceMessagePurgeTest` com driver SQLite in-memory + `FakeFileSystem`, incluindo o caso em que
+  o arquivo já sumiu.
 
 **Critério de conclusão:** iOS ↔ Android ↔ Desktop se ouvem com Opus; teste de carga simples (1 speaker, 10 ouvintes, 1 ouvinte com atraso artificial)
 sem atraso para os demais; servidor sem log por pacote em `INFO`.

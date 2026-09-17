@@ -45,6 +45,7 @@ class VoiceRepositoryImpl(
     private val opusCodec: AudioCodec,
     private val settings: Settings,
     private val storageInfoProvider: StorageInfoProvider,
+    private val fileSystem: FileSystem = FileSystem.SYSTEM,
 ) : VoiceRepository {
     private val logger = Logger.withTag("audio")
     private val scope = CoroutineScope(Dispatchers.Default)
@@ -81,7 +82,7 @@ class VoiceRepositoryImpl(
                                 val path = "$dirPath/$fileName".toPath()
                                 currentFilePath = path.toString()
                                 try {
-                                    currentFileSink = FileSystem.SYSTEM.sink(path).buffer()
+                                    currentFileSink = fileSystem.sink(path).buffer()
                                     currentAudioCrypto = AudioCrypto()
                                 } catch (e: Exception) {
                                     logger.w(e) { "Failed to open the recording file" }
@@ -97,13 +98,13 @@ class VoiceRepositoryImpl(
                                 val path = currentFilePath!!.toPath()
                                 val size =
                                     try {
-                                        FileSystem.SYSTEM.metadataOrNull(path)?.size ?: 0L
+                                        fileSystem.metadataOrNull(path)?.size ?: 0L
                                     } catch (_: Exception) {
                                         0L
                                     }
                                 if (size == 0L) {
                                     try {
-                                        FileSystem.SYSTEM.delete(path)
+                                        fileSystem.delete(path)
                                     } catch (_: Exception) {
                                         // Ignore
                                     }
@@ -119,9 +120,13 @@ class VoiceRepositoryImpl(
                                         recordedAt = currentMessageStartMs,
                                     )
                                     val count = database.voiceMessageQueries.countByChannel(msg.channelId).executeAsOne()
-                                    if (count > 50) {
-                                        val toDelete = count - 50
-                                        database.voiceMessageQueries.deleteOldestByChannel(msg.channelId, toDelete)
+                                    if (count > MAX_MESSAGES_PER_CHANNEL) {
+                                        purgeOldestMessages(
+                                            queries = database.voiceMessageQueries,
+                                            fileSystem = fileSystem,
+                                            channelId = msg.channelId,
+                                            toDelete = count - MAX_MESSAGES_PER_CHANNEL,
+                                        )
                                     }
                                     manageCache()
                                 }
@@ -172,15 +177,15 @@ class VoiceRepositoryImpl(
             val dirPath = storageInfoProvider.getCacheDirPath(cacheLocation) ?: return
 
             val dir = dirPath.toPath()
-            val files = FileSystem.SYSTEM.list(dir).filter { it.name.endsWith(".pcm") }
-            var totalSize = files.sumOf { FileSystem.SYSTEM.metadata(it).size ?: 0L }
+            val files = fileSystem.list(dir).filter { it.name.endsWith(".pcm") }
+            var totalSize = files.sumOf { fileSystem.metadata(it).size ?: 0L }
 
             if (totalSize > limitBytes) {
-                val sortedFiles = files.sortedBy { FileSystem.SYSTEM.metadata(it).lastModifiedAtMillis ?: 0L }
+                val sortedFiles = files.sortedBy { fileSystem.metadata(it).lastModifiedAtMillis ?: 0L }
                 for (file in sortedFiles) {
                     if (totalSize <= limitBytes) break
-                    val size = FileSystem.SYSTEM.metadata(file).size ?: 0L
-                    FileSystem.SYSTEM.delete(file)
+                    val size = fileSystem.metadata(file).size ?: 0L
+                    fileSystem.delete(file)
                     database.voiceMessageQueries.deleteByFilePath(file.toString())
                     totalSize -= size
                 }
@@ -311,7 +316,7 @@ class VoiceRepositoryImpl(
             scope.launch {
                 try {
                     val path = message.filePath.toPath()
-                    val source = FileSystem.SYSTEM.source(path).buffer()
+                    val source = fileSystem.source(path).buffer()
                     val crypto = AudioCrypto()
                     val buffer = ByteArray(4096)
 
@@ -366,9 +371,9 @@ class VoiceRepositoryImpl(
             val cacheLocation = settings.getString("cache_location", "Interno")
             val dirPath = storageInfoProvider.getCacheDirPath(cacheLocation) ?: return
             val dir = dirPath.toPath()
-            val files = FileSystem.SYSTEM.list(dir).filter { it.name.endsWith(".pcm") }
+            val files = fileSystem.list(dir).filter { it.name.endsWith(".pcm") }
             for (file in files) {
-                FileSystem.SYSTEM.delete(file)
+                fileSystem.delete(file)
             }
         } catch (e: Exception) {
             logger.w(e) { "Failed to delete audio files" }
@@ -382,7 +387,7 @@ class VoiceRepositoryImpl(
         database.voiceMessageQueries.deleteById(message.id)
         try {
             val path = message.filePath.toPath()
-            FileSystem.SYSTEM.delete(path)
+            fileSystem.delete(path)
         } catch (e: Exception) {
             logger.w(e) { "Failed to delete the message file" }
         }
@@ -396,7 +401,7 @@ class VoiceRepositoryImpl(
             }
             try {
                 val path = message.filePath.toPath()
-                FileSystem.SYSTEM.delete(path)
+                fileSystem.delete(path)
             } catch (e: Exception) {
                 logger.w(e) { "Failed to delete purged files" }
             }
