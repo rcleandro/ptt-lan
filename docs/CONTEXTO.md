@@ -188,7 +188,7 @@ O plano é o SSOT de intenção, mas estes pontos refletem o código atual:
 |---|---|---|
 | Envelope de áudio | ProtoBuf | JSON com prefixo de tamanho (Int32) |
 | Taxa de amostragem | 16 kHz | 48 kHz |
-| TLS | Self-signed + TOFU com fingerprint exibido | Android/JVM aceitam **qualquer** certificado e hostname quando o host é "local" (`isLocalNetwork`: localhost, `.local`, 10/8, 172.16/12, 192.168/16); iOS aceita qualquer certificado de servidor. Sem fingerprint |
+| TLS | Self-signed + TOFU com fingerprint exibido | Android/JVM/iOS aceitam **qualquer** certificado e hostname quando o host é "local" (`isLocalNetwork`: localhost, `.local`, 10/8, 172.16/12, 192.168/16) e usam a validação do sistema fora da LAN. Sem fingerprint |
 | "Criptografia do stream" | Sobre TLS | Só TLS. `AudioCrypto` (RC4, chave fixa no código) protege apenas os arquivos de cache |
 | Redis / multi-instância (Fase 17) | Estado e pub/sub no Redis | `RedisManager` conecta em `redis://localhost:6379` (falha tolerada), mas `ChannelRegistry` **não usa** o Redis; estado continua em memória e não há distribuição entre instâncias |
 | Admin | — | Basic auth com `PTT_ADMIN_PASSWORD`; sem a variável, leitura (`metrics`, `logs/csv`) segue aberta e as rotas de escrita ficam desligadas |
