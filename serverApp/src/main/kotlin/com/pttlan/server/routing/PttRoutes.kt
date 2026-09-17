@@ -48,7 +48,8 @@ fun Routing.pttRoutes() {
             }
             currentUserId = userId
             val nickname = decodedJwt.getClaim("nickname").asString() ?: "Desconhecido"
-            if (!channelRegistry.addGlobalConnection(this, nickname)) {
+            val deviceId = decodedJwt.getClaim("deviceId").asString() ?: userId
+            if (!channelRegistry.addGlobalConnection(this, nickname, deviceId)) {
                 close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Nome já em uso"))
                 return@webSocket
             }

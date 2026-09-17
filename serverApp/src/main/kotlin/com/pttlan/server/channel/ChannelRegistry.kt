@@ -32,6 +32,12 @@ private const val MS_PER_SECOND = 1000L
 private const val TIME_SERIES_CUTOFF_MINUTES = 30
 private const val MS_PER_MINUTE = 60_000L
 
+/** A live WebSocket connection: the nickname it holds and the device that owns it. */
+private data class GlobalConnection(
+    val nickname: String,
+    val deviceId: String,
+)
+
 private class MutableTimeSeriesPoint(
     val timestampMs: Long,
     var bytesTransferred: Long = 0,
@@ -46,7 +52,7 @@ class ChannelRegistry(
     private val redisManager: RedisManager? = null,
 ) {
     private val channels = ConcurrentHashMap<String, PttChannel>()
-    private val globalConnections = ConcurrentHashMap<DefaultWebSocketServerSession, String>()
+    private val globalConnections = ConcurrentHashMap<DefaultWebSocketServerSession, GlobalConnection>()
     private val cleanupJobs = ConcurrentHashMap<String, Job>()
     private val accumulatedSpeakerTime = ConcurrentHashMap<String, Long>()
     private val scope = CoroutineScope(Dispatchers.Default)
@@ -68,14 +74,31 @@ class ChannelRegistry(
         getOrCreateChannel("Geral")
     }
 
+    /**
+     * Registers a connection, keeping nicknames unique **between devices**. A reconnection from the same
+     * `deviceId` replaces its own previous session — which may still be open because the server only notices
+     * a silent drop at the ping timeout (~20s) — instead of refusing the user their own name.
+     */
     fun addGlobalConnection(
         session: DefaultWebSocketServerSession,
         nickname: String,
+        deviceId: String,
     ): Boolean {
-        if (globalConnections.values.any { it.equals(nickname, ignoreCase = true) }) {
+        val sameNickname =
+            globalConnections.entries.filter { it.value.nickname.equals(nickname, ignoreCase = true) }
+        val fromAnotherDevice = sameNickname.any { it.value.deviceId != deviceId }
+        if (fromAnotherDevice) {
             return false
         }
-        globalConnections[session] = nickname
+
+        sameNickname.forEach { (staleSession, _) ->
+            globalConnections.remove(staleSession)
+            scope.launch {
+                staleSession.close(CloseReason(CloseReason.Codes.NORMAL, "Sessão substituída por uma nova conexão"))
+            }
+        }
+
+        globalConnections[session] = GlobalConnection(nickname, deviceId)
         broadcastActiveChannels()
         return true
     }

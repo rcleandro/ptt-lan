@@ -31,6 +31,9 @@ interface ConnectionRepository {
      */
     val sessionUserId: String?
 
+    /** Reason the server gave for closing the session ("Nome já em uso", …), when there was one. */
+    val lastDisconnectReason: String?
+
     fun discoverServers(): Flow<ServerNode>
 
     fun stopDiscovery()

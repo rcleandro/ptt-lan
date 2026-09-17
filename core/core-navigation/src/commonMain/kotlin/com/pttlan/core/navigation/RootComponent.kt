@@ -113,12 +113,13 @@ class RootComponent(
                     wasConnected = true
                 } else if (status == ConnectionStatus.Disconnected && wasConnected) {
                     wasConnected = false
+                    val reason = connectionRepository.lastDisconnectReason
                     connectionRepository.disconnect()
                     navigation.navigate { listOf(Config.Connection) }
 
                     val activeChild = childStack.value.active.instance
                     if (activeChild is Child.ConnectionChild) {
-                        activeChild.component.showError("Servidor desconectado")
+                        activeChild.component.showError(reason ?: "Servidor desconectado")
                     }
                 }
             }

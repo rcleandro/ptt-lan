@@ -12,6 +12,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
@@ -30,6 +31,11 @@ import kotlinx.serialization.json.Json
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+
+/** The server closed the session on purpose (name taken, invalid token). Retrying will not help. */
+class ServerRefusedException(
+    val reason: String,
+) : IllegalStateException(reason)
 
 /** Default from the technical plan: give up after 10 failed reconnection attempts. */
 const val DEFAULT_MAX_RECONNECT_ATTEMPTS = 10
@@ -62,6 +68,10 @@ class PttWebSocketClient(
 
     private val _isConnected = MutableStateFlow(false)
     val isConnected = _isConnected.asStateFlow()
+
+    /** Why the server closed the last session, when it said so. Null when the drop had no stated reason. */
+    var lastCloseReason: String? = null
+        private set
 
     suspend fun login(
         host: String,
@@ -106,6 +116,7 @@ class PttWebSocketClient(
                 }
 
                 println("PttWebSocketClient: Conectado com sucesso!")
+                lastCloseReason = null
                 if (hadConnected) {
                     lastJoinChannel?.let { sendControlMessage(it) }
                 }
@@ -148,15 +159,21 @@ class PttWebSocketClient(
                     }
                 }
 
+                // A policy close is the server refusing this client (name taken, bad token): retrying is pointless
+                // and the reason has to reach the UI instead of a generic "desconectado".
                 val closeReason = withTimeoutOrNull(1.seconds) { ws.closeReason.await() }
-                if (closeReason?.message == "Nome já em uso") {
+                if (closeReason?.knownReason == CloseReason.Codes.VIOLATED_POLICY) {
+                    val reason = closeReason.message.takeIf { it.isNotBlank() } ?: "Conexão recusada pelo servidor"
+                    lastCloseReason = reason
                     shouldReconnect = false
-                    throw IllegalStateException("Nome já em uso. Por favor, escolha outro.")
+                    throw ServerRefusedException(reason)
                 }
             } catch (e: Exception) {
                 println("PttWebSocketClient: Falha ao conectar: ${e.message}")
                 e.printStackTrace()
-                if (isFirstAttempt) {
+                // A refusal is rethrown even mid-session: otherwise the reason dies here and the UI only ever
+                // learns that the connection dropped.
+                if (isFirstAttempt || e is ServerRefusedException) {
                     shouldReconnect = false
                     throw e
                 }
@@ -185,6 +202,7 @@ class PttWebSocketClient(
     suspend fun disconnect() {
         shouldReconnect = false
         lastJoinChannel = null
+        lastCloseReason = null
         sessionMutex.withLock {
             session?.close()
             session = null

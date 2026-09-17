@@ -151,6 +151,11 @@ com testes de integração cobrindo cada caso.
 - **Ação:** unicidade por nickname só entre `deviceId`s **diferentes**. Se o mesmo `deviceId` reconectar, a nova sessão substitui a antiga,
   que é fechada. Propagar o motivo do close como `ConnectionStatus`/erro até a UI.
 - **Reproduzir antes:** derrubar o Wi-Fi do cliente por ~3s com o servidor em pé.
+- **Implementado:** `addGlobalConnection` passou a receber o `deviceId` (claim do JWT) e só recusa o nickname quando ele
+  está em uso por **outro** dispositivo; o mesmo `deviceId` substitui a própria sessão antiga, que é fechada com
+  "Sessão substituída por uma nova conexão". No cliente, um close `VIOLATED_POLICY` vira `ServerRefusedException`, que é
+  relançada mesmo depois da primeira tentativa (antes era engolida) e fica em `lastCloseReason` → `ConnectionRepository.lastDisconnectReason`
+  → mensagem real na tela de conexão. Testes: `ReconnectSameDeviceTest` (servidor) e `surfacesTheReasonWhenTheServerRefusesTheConnection` (cliente).
 
 ### 20.4 Floor preso quando o speaker some ✅ — M
 - **Problema:** o servidor ignora `Heartbeat` (`PttRoutes.kt:107`) e nenhum cliente envia heartbeat. O floor só é liberado com

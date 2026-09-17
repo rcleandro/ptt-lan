@@ -44,6 +44,9 @@ class ConnectionRepositoryImpl(
     override var sessionUserId: String? = null
         private set
 
+    override val lastDisconnectReason: String?
+        get() = webSocketClient.lastCloseReason
+
     private val scope = CoroutineScope(Dispatchers.Default)
     private var connectionJob: Job? = null
     private var monitorJob: Job? = null

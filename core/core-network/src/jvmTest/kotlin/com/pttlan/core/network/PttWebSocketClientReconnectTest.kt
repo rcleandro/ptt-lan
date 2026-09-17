@@ -9,6 +9,7 @@ import io.ktor.server.netty.Netty
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.webSocket
+import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
@@ -27,6 +28,7 @@ import java.security.KeyStore
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
@@ -50,6 +52,29 @@ class PttWebSocketClientReconnectTest {
             jksPassword = KEYSTORE_PASSWORD,
         )
     }
+
+    /** Boots a WSS endpoint that refuses every connection the way the server refuses a taken nickname. */
+    private fun startRefusingServer(port: Int) =
+        embeddedServer(
+            factory = Netty,
+            configure = {
+                sslConnector(
+                    keyStore = testKeyStore(),
+                    keyAlias = "pttlan",
+                    keyStorePassword = { KEYSTORE_PASSWORD.toCharArray() },
+                    privateKeyPassword = { KEYSTORE_PASSWORD.toCharArray() },
+                ) {
+                    this.port = port
+                }
+            },
+        ) {
+            install(WebSockets)
+            routing {
+                webSocket("/ws") {
+                    close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Nome já em uso"))
+                }
+            }
+        }.start(wait = false)
 
     /** Boots a WSS endpoint that records the text frames it receives and closes the first session on demand. */
     private fun startServer(
@@ -149,6 +174,30 @@ class PttWebSocketClientReconnectTest {
             } finally {
                 client.disconnect()
                 httpClient.close()
+            }
+        }
+
+    @Test
+    fun surfacesTheReasonWhenTheServerRefusesTheConnection() =
+        runBlocking {
+            val port = freePort()
+            val server = startRefusingServer(port)
+            val httpClient = createHttpClient()
+            val client = PttWebSocketClient(httpClient)
+
+            try {
+                val error =
+                    assertFailsWith<ServerRefusedException> {
+                        withTimeout(15.seconds) {
+                            client.connect(host = "127.0.0.1", port = port, isLocal = true, token = "test-token")
+                        }
+                    }
+
+                assertEquals("Nome já em uso", error.message)
+                assertEquals("Nome já em uso", client.lastCloseReason)
+            } finally {
+                httpClient.close()
+                server.stop(0, 0)
             }
         }
 }
