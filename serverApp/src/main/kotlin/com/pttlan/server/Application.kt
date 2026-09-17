@@ -32,6 +32,7 @@ import kotlinx.io.IOException
 import kotlinx.serialization.json.Json
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.net.Inet4Address
 import java.net.InetAddress
@@ -212,7 +213,7 @@ private fun startMdnsBroadcast(port: Int) {
                 },
             )
         } catch (e: IOException) {
-            println("Error starting JmDNS: ${e.message}")
+            LoggerFactory.getLogger("com.pttlan.server.mdns").warn("Failed to start JmDNS: {}", e.message)
         }
     }.start()
 }

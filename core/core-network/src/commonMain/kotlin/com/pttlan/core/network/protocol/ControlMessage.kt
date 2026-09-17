@@ -77,12 +77,6 @@ sealed interface ControlMessage {
     ) : ControlMessage
 
     @Serializable
-    @SerialName("heartbeat")
-    data class Heartbeat(
-        val userId: String,
-    ) : ControlMessage
-
-    @Serializable
     @SerialName("active_channels_list")
     data class ActiveChannelsList(
         val activeChannels: List<ActiveChannelDto>,

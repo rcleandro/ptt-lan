@@ -1,6 +1,7 @@
 
 package com.pttlan.server.channel
 
+import com.pttlan.core.network.PttJson
 import com.pttlan.core.network.protocol.ActiveChannelDto
 import com.pttlan.core.network.protocol.ControlMessage
 import com.pttlan.server.redis.RedisManager
@@ -21,7 +22,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.json.Json
 import java.lang.management.ManagementFactory
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
@@ -315,7 +315,7 @@ class ChannelRegistry(
 
     suspend fun broadcastGlobalAlert(message: String) {
         val alert = ControlMessage.SystemAlert(message)
-        val json = Json.encodeToString(alert)
+        val json = PttJson.encodeToString(alert)
         globalConnections.keys.forEach {
             try {
                 it.send(Frame.Text(json))
@@ -333,7 +333,7 @@ class ChannelRegistry(
         // Optionally filter empty ones if you don't want them visible, but they should be visible until deleted.
 
         val message: ControlMessage = ControlMessage.ActiveChannelsList(activeChannels)
-        val json = Json.encodeToString<ControlMessage>(message)
+        val json = PttJson.encodeToString<ControlMessage>(message)
 
         scope.launch {
             globalConnections.keys.forEach { session ->

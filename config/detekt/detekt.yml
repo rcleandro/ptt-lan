@@ -569,12 +569,15 @@ style:
     active: false
     forbiddenImports: []
   ForbiddenMethodCall:
-    active: false
+    active: true
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
     methods:
       - reason: 'print does not allow you to configure the output stream. Use a logger instead.'
         value: 'kotlin.io.print'
       - reason: 'println does not allow you to configure the output stream. Use a logger instead.'
         value: 'kotlin.io.println'
+      - reason: 'printStackTrace writes to stderr and is lost in production. Use Kermit (clients) or SLF4J (server).'
+        value: 'java.lang.Throwable.printStackTrace'
   ForbiddenSuppress:
     active: false
     rules: []

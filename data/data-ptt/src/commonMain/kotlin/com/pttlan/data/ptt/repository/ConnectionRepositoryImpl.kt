@@ -1,5 +1,6 @@
 package com.pttlan.data.ptt.repository
 
+import co.touchlab.kermit.Logger
 import com.pttlan.core.common.network.isLocalNetwork
 import com.pttlan.core.network.PttWebSocketClient
 import com.pttlan.core.network.discovery.ServerDiscoveryService
@@ -47,6 +48,7 @@ class ConnectionRepositoryImpl(
     override val lastDisconnectReason: String?
         get() = webSocketClient.lastCloseReason
 
+    private val logger = Logger.withTag("network")
     private val scope = CoroutineScope(Dispatchers.Default)
     private var connectionJob: Job? = null
     private var monitorJob: Job? = null
@@ -96,7 +98,7 @@ class ConnectionRepositoryImpl(
                     webSocketClient.connect(endpoint.host, endpoint.port, endpoint.isLocal, login.token)
                 } catch (e: Exception) {
                     deferred.completeExceptionally(e)
-                    e.printStackTrace()
+                    logger.w(e) { "Failed to connect to ${endpoint.host}:${endpoint.port}" }
                 } finally {
                     _connectionStatus.value = ConnectionStatus.Disconnected
                 }

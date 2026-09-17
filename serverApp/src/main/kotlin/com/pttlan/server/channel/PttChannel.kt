@@ -1,5 +1,6 @@
 package com.pttlan.server.channel
 
+import com.pttlan.core.network.PttJson
 import com.pttlan.core.network.protocol.ControlMessage
 import com.pttlan.core.network.protocol.ParticipantDto
 import io.ktor.server.websocket.DefaultWebSocketServerSession
@@ -7,15 +8,23 @@ import io.ktor.websocket.Frame
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.json.Json
+import org.slf4j.LoggerFactory
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
+
+private val logger = LoggerFactory.getLogger(PttChannel::class.java)
 
 private const val SLOW_CONNECTION_THRESHOLD_MS = 100L
+
+/** Audio packets buffered per listener (~1s of 20ms frames) before the oldest ones are dropped. */
+private const val OUTBOUND_BUFFER = 50
 
 /** No audio for this long and the floor goes back, so a speaker that vanishes does not block the channel. */
 const val DEFAULT_FLOOR_IDLE_TIMEOUT_MS = 2_000L
@@ -32,6 +41,15 @@ data class Participant(
     val appVersion: String = "Desconhecida",
     var pingMs: Long = 0L,
 ) {
+    /**
+     * Per-listener audio queue. The broadcast only offers packets here, so a slow connection drops its own
+     * backlog instead of holding up everyone else's audio.
+     */
+    val outbound: Channel<ByteArray> =
+        Channel(capacity = OUTBOUND_BUFFER, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    var pump: Job? = null
+
     fun toDto() =
         ParticipantDto(
             userId = userId,
@@ -40,6 +58,7 @@ data class Participant(
         )
 }
 
+@Suppress("TooManyFunctions")
 class PttChannel(
     val id: String,
     private val floorIdleTimeoutMs: Long = DEFAULT_FLOOR_IDLE_TIMEOUT_MS,
@@ -52,6 +71,10 @@ class PttChannel(
     private val participants = mutableMapOf<String, Participant>()
     private val mutex = Mutex()
 
+    // Written by the per-listener pumps and drained by the broadcast, so they have to be atomic
+    private val bytesTransferred = AtomicLong()
+    private val slowSends = AtomicInteger()
+
     val participantCount: Int
         get() = participants.size
 
@@ -59,6 +82,7 @@ class PttChannel(
         mutex.withLock {
             participants[participant.userId] = participant
         }
+        participant.pump = startOutboundPump(participant)
         onLog(participant.nickname, "JOIN")
         broadcastParticipantList()
     }
@@ -66,13 +90,15 @@ class PttChannel(
     suspend fun removeParticipant(userId: String) {
         releaseFloorIfHeldBy(userId)
         val p = mutex.withLock { participants.remove(userId) }
+        p?.outbound?.close()
+        p?.pump?.cancel()
         p?.let { onLog(it.nickname, "LEAVE") }
         broadcastParticipantList()
     }
 
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
     suspend fun broadcast(message: ControlMessage) {
-        val json = Json.encodeToString(message)
+        val json = PttJson.encodeToString(message)
         val snapshot = mutex.withLock { participants.values.toList() }
 
         snapshot.forEach {
@@ -84,65 +110,78 @@ class PttChannel(
         }
     }
 
+    /** Drains one listener's queue, one packet at a time, and times the slow sends. */
     @Suppress("TooGenericExceptionCaught")
+    private fun startOutboundPump(participant: Participant): Job =
+        scope.launch {
+            for (data in participant.outbound) {
+                val startMs = System.currentTimeMillis()
+                try {
+                    participant.session.send(Frame.Binary(true, data))
+                    bytesTransferred.addAndGet(data.size.toLong())
+                    val elapsed = System.currentTimeMillis() - startMs
+                    if (elapsed > SLOW_CONNECTION_THRESHOLD_MS) {
+                        slowSends.incrementAndGet()
+                        logger.debug(
+                            "PttChannel[{}]: send to {} took {}ms (slow connection?)",
+                            id,
+                            participant.nickname,
+                            elapsed,
+                        )
+                    }
+                } catch (e: Exception) {
+                    logger.debug(
+                        "PttChannel[{}]: failed to send audio to {}: {}",
+                        id,
+                        participant.userId,
+                        e.message,
+                    )
+                }
+            }
+        }
+
+    /**
+     * Queues the packet for every listener and returns. The frame buffer is shared instead of copied per
+     * recipient — nothing writes to it after this point — and a listener that cannot keep up only loses
+     * its own oldest packets.
+     */
     suspend fun broadcastBinary(
         frame: Frame.Binary,
         senderUserId: String,
     ) {
-        val size = frame.data.size
         lastAudioAtMs = System.currentTimeMillis()
-        val snapshot =
+        val targets =
             mutex.withLock {
                 if (currentSpeakerId != senderUserId) {
-                    println(
-                        "PttChannel[$id]: Descartando áudio de $senderUserId. " +
-                            "O speaker atual é $currentSpeakerId",
+                    logger.debug(
+                        "PttChannel[{}]: dropping audio from {}, current speaker is {}",
+                        id,
+                        senderUserId,
+                        currentSpeakerId,
                     )
                     return
                 }
-                participants.values.toList()
+                participants.values.filter { it.userId != senderUserId }
             }
 
-        val targets = snapshot.filter { it.userId != senderUserId }
         if (targets.isEmpty()) {
             return
         }
 
-        println(
-            "PttChannel[$id]: Fazendo broadcast de áudio ($size bytes) " +
-                "de $senderUserId para ${targets.size} participantes.",
+        val data = frame.data
+        logger.debug(
+            "PttChannel[{}]: {} bytes of audio from {} to {} listeners",
+            id,
+            data.size,
+            senderUserId,
+            targets.size,
         )
+        targets.forEach { it.outbound.trySend(data) }
 
-        var slowCount = 0
-        var bytesCount = 0L
-
-        coroutineScope {
-            targets.forEach { participant ->
-                launch {
-                    val startMs = System.currentTimeMillis()
-                    try {
-                        participant.session.send(Frame.Binary(true, frame.data.copyOf()))
-                        bytesCount += size
-                        val elapsed = System.currentTimeMillis() - startMs
-                        if (elapsed > SLOW_CONNECTION_THRESHOLD_MS) {
-                            slowCount++
-                            println(
-                                "PttChannel[$id]: AVISO - Envio de áudio para " +
-                                    "${participant.nickname} demorou ${elapsed}ms (conexão lenta?)",
-                            )
-                        }
-                    } catch (e: Exception) {
-                        println(
-                            "PttChannel[$id]: Falha ao enviar áudio para " +
-                                "${participant.nickname} (${participant.userId}): ${e.message}",
-                        )
-                    }
-                }
-            }
-        }
-
-        if (bytesCount > 0 || slowCount > 0) {
-            onMetric(bytesCount, slowCount)
+        val bytes = bytesTransferred.getAndSet(0)
+        val slow = slowSends.getAndSet(0)
+        if (bytes > 0 || slow > 0) {
+            onMetric(bytes, slow)
         }
     }
 

@@ -1,6 +1,8 @@
 
 package com.pttlan.server.routing
 
+import com.pttlan.core.network.PROTOCOL_VERSION
+import com.pttlan.core.network.PttJson
 import com.pttlan.core.network.protocol.ControlMessage
 import com.pttlan.server.auth.JwtConfig
 import com.pttlan.server.channel.ChannelRegistry
@@ -12,9 +14,10 @@ import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
-import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import org.koin.ktor.ext.inject
+import org.slf4j.LoggerFactory
+
+private val logger = LoggerFactory.getLogger("com.pttlan.server.ptt")
 
 @Suppress("LongMethod", "CyclomaticComplexMethod", "TooGenericExceptionCaught", "MaxLineLength")
 fun Routing.pttRoutes() {
@@ -25,6 +28,19 @@ fun Routing.pttRoutes() {
         var currentChannelId: String? = null
 
         try {
+            val protocol = call.request.queryParameters["protocol"]?.toIntOrNull()
+            // A client from before 21.5 sends no protocol at all; it speaks version 1, so it is let through.
+            if (protocol != null && protocol != PROTOCOL_VERSION) {
+                logger.info("Refusing client with protocol {} (server speaks {})", protocol, PROTOCOL_VERSION)
+                close(
+                    CloseReason(
+                        CloseReason.Codes.VIOLATED_POLICY,
+                        "Versão do app incompatível com o servidor. Atualize o aplicativo.",
+                    ),
+                )
+                return@webSocket
+            }
+
             val token = call.request.queryParameters["token"]
             if (token.isNullOrBlank()) {
                 close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Token JWT ausente"))
@@ -35,7 +51,7 @@ fun Routing.pttRoutes() {
                 try {
                     JwtConfig.verifier.verify(token)
                 } catch (e: Exception) {
-                    println("PttRoutes: Falha na validacao do token JWT: ${e.message}")
+                    logger.info("JWT validation failed: {}", e.message)
                     close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Token JWT inválido ou expirado"))
                     return@webSocket
                 }
@@ -53,16 +69,16 @@ fun Routing.pttRoutes() {
                 close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Nome já em uso"))
                 return@webSocket
             }
-            println("Novo client conectado via WebSocket! ($nickname)")
+            logger.info("Client connected: {}", nickname)
             for (frame in incoming) {
                 when (frame) {
                     is Frame.Text -> {
                         val text = frame.readText()
                         try {
-                            when (val message = Json.decodeFromString<ControlMessage>(text)) {
+                            when (val message = PttJson.decodeFromString<ControlMessage>(text)) {
                                 is ControlMessage.JoinChannel -> {
                                     currentChannelId = message.channelId
-                                    println("Usuário $nickname ($userId) entrou no canal ${message.channelId}")
+                                    logger.info("User {} ({}) joined channel {}", nickname, userId, message.channelId)
 
                                     val appVersion = call.request.queryParameters["version"] ?: "Desconhecida"
                                     val ipAddress = call.request.origin.remoteHost
@@ -84,58 +100,52 @@ fun Routing.pttRoutes() {
 
                                 is ControlMessage.LeaveChannel -> {
                                     val channel = channelRegistry.getChannel(message.channelId)
-                                    println("Usuário $nickname ($userId) saiu do canal ${message.channelId}")
+                                    logger.info("User {} ({}) left channel {}", nickname, userId, message.channelId)
                                     channel?.removeParticipant(userId)
                                     channelRegistry.scheduleCleanupIfEmpty(message.channelId)
                                     channelRegistry.broadcastActiveChannels()
                                 }
 
                                 is ControlMessage.StartSpeaking -> {
-                                    println("PttRoutes: Usuário $userId solicitou falar no canal ${message.channelId}")
+                                    logger.debug("User {} requested the floor on channel {}", userId, message.channelId)
                                     val channel = channelRegistry.getChannel(message.channelId)
                                     if (channel != null) {
                                         val granted = channel.requestFloor(userId)
-                                        println("PttRoutes: Concessão da palavra para $userId: $granted")
+                                        logger.debug("Floor granted to {}: {}", userId, granted)
                                         if (!granted) {
                                             val json =
-                                                Json.encodeToString<ControlMessage>(
+                                                PttJson.encodeToString<ControlMessage>(
                                                     ControlMessage.FloorDenied(message.channelId, "Alguém já está falando"),
                                                 )
                                             send(Frame.Text(json))
                                         }
                                     } else {
-                                        println("PttRoutes: AVISO - Canal ${message.channelId} não encontrado ao solicitar fala")
+                                        logger.warn("Channel {} not found while requesting the floor", message.channelId)
                                     }
                                 }
 
                                 is ControlMessage.StopSpeaking -> {
-                                    println("PttRoutes: Usuário $userId liberou a fala no canal ${message.channelId}")
+                                    logger.debug("User {} released the floor on channel {}", userId, message.channelId)
                                     val channel = channelRegistry.getChannel(message.channelId)
                                     channel?.releaseFloor(userId)
-                                }
-
-                                is ControlMessage.Heartbeat -> {
-                                    // Could track last heartbeat for automatic cleanup
                                 }
 
                                 else -> {} // ParticipantList, SpeakerChanged, FloorDenied are Server -> Client
                             }
                         } catch (e: Exception) {
-                            println("Error in connection: ${e.message}")
+                            logger.warn("Invalid control message: {}", e.message)
                         }
                     }
 
                     is Frame.Binary -> {
                         if (currentChannelId != null && currentUserId != null) {
+                            // Handled in order on this session's own coroutine: the broadcast only queues the
+                            // packet per listener, so there is nothing slow left to hand to another coroutine.
                             val channel = channelRegistry.getChannel(currentChannelId)
-                            if (channel != null) {
-                                launch {
-                                    try {
-                                        channel.broadcastBinary(frame, currentUserId)
-                                    } catch (e: Exception) {
-                                        println("PttRoutes: Erro ao despachar broadcast de áudio: ${e.message}")
-                                    }
-                                }
+                            try {
+                                channel?.broadcastBinary(frame, currentUserId)
+                            } catch (e: Exception) {
+                                logger.warn("Failed to dispatch audio broadcast: {}", e.message)
                             }
                         }
                     }
@@ -146,7 +156,7 @@ fun Routing.pttRoutes() {
         } finally {
             val channel = currentChannelId?.let { channelRegistry.getChannel(it) }
             val nickname = currentUserId?.let { channel?.getParticipant(it)?.nickname } ?: "Desconhecido"
-            println("Client desconectado via WebSocket! (User: $nickname [$currentUserId])")
+            logger.info("Client disconnected: {} ({})", nickname, currentUserId)
             if (currentUserId != null && currentChannelId != null) {
                 channel?.removeParticipant(currentUserId)
                 channelRegistry.scheduleCleanupIfEmpty(currentChannelId)

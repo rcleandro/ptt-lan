@@ -1,5 +1,6 @@
 package com.pttlan.core.network
 
+import co.touchlab.kermit.Logger
 import com.pttlan.core.network.protocol.AudioEnvelope
 import com.pttlan.core.network.protocol.ControlMessage
 import com.pttlan.core.network.protocol.LoginRequest
@@ -27,7 +28,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.serialization.json.Json
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -44,6 +44,7 @@ class PttWebSocketClient(
     private val httpClient: HttpClient,
     private val maxReconnectAttempts: Int = DEFAULT_MAX_RECONNECT_ATTEMPTS,
 ) {
+    private val logger = Logger.withTag("network")
     private var session: DefaultClientWebSocketSession? = null
     private val sessionMutex = Mutex()
 
@@ -107,15 +108,18 @@ class PttWebSocketClient(
                 val cleanHost = normalizeHost(host)
                 sessionMutex.withLock {
                     if (session != null) return@withLock
-                    println("PttWebSocketClient: Tentando conectar a wss://$cleanHost:$port/ws com token")
+                    logger.d { "Connecting to wss://$cleanHost:$port/ws" }
                     val timeout = if (isLocal) 5.seconds else 15.seconds
                     session =
                         withTimeout(timeout) {
-                            httpClient.webSocketSession("wss://$cleanHost:$port/ws?token=$token&version=$APP_VERSION")
+                            httpClient.webSocketSession(
+                                "wss://$cleanHost:$port/ws" +
+                                    "?token=$token&version=$APP_VERSION&protocol=$PROTOCOL_VERSION",
+                            )
                         }
                 }
 
-                println("PttWebSocketClient: Conectado com sucesso!")
+                logger.i { "Connected" }
                 lastCloseReason = null
                 if (hadConnected) {
                     lastJoinChannel?.let { sendControlMessage(it) }
@@ -134,10 +138,10 @@ class PttWebSocketClient(
                         is Frame.Text -> {
                             val text = frame.readText()
                             try {
-                                val message = Json.decodeFromString<ControlMessage>(text)
+                                val message = PttJson.decodeFromString<ControlMessage>(text)
                                 _controlMessages.emit(message)
                             } catch (e: Exception) {
-                                e.printStackTrace()
+                                logger.w(e) { "Invalid control message" }
                             }
                         }
 
@@ -146,11 +150,11 @@ class PttWebSocketClient(
                                 val buffer = okio.Buffer().write(frame.data)
                                 val envLen = buffer.readInt()
                                 val envJson = buffer.readByteArray(envLen.toLong()).decodeToString()
-                                val envelope = Json.decodeFromString<AudioEnvelope>(envJson)
+                                val envelope = PttJson.decodeFromString<AudioEnvelope>(envJson)
                                 val chunk = buffer.readByteArray()
                                 _audioChunks.emit(Pair(envelope, chunk))
                             } catch (e: Exception) {
-                                e.printStackTrace()
+                                logger.w(e) { "Invalid audio envelope" }
                                 _audioChunks.emit(Pair(null, frame.data))
                             }
                         }
@@ -169,8 +173,7 @@ class PttWebSocketClient(
                     throw ServerRefusedException(reason)
                 }
             } catch (e: Exception) {
-                println("PttWebSocketClient: Falha ao conectar: ${e.message}")
-                e.printStackTrace()
+                logger.w(e) { "Connection lost" }
                 // A refusal is rethrown even mid-session: otherwise the reason dies here and the UI only ever
                 // learns that the connection dropped.
                 if (isFirstAttempt || e is ServerRefusedException) {
@@ -188,7 +191,7 @@ class PttWebSocketClient(
             if (shouldReconnect) {
                 failedAttempts++
                 if (failedAttempts >= maxReconnectAttempts) {
-                    println("PttWebSocketClient: $maxReconnectAttempts tentativas de reconexão sem sucesso, desistindo")
+                    logger.w { "Giving up after $maxReconnectAttempts failed reconnection attempts" }
                     shouldReconnect = false
                     break
                 }
@@ -222,10 +225,10 @@ class PttWebSocketClient(
             else -> {}
         }
         try {
-            val json = Json.encodeToString(message)
+            val json = PttJson.encodeToString(message)
             session?.send(Frame.Text(json))
         } catch (e: Exception) {
-            e.printStackTrace()
+            logger.w(e) { "Failed to send over the WebSocket" }
             _isConnected.value = false
             try {
                 sessionMutex.withLock {
@@ -243,7 +246,7 @@ class PttWebSocketClient(
         chunk: ByteArray,
     ) {
         try {
-            val envJson = Json.encodeToString(envelope).encodeToByteArray()
+            val envJson = PttJson.encodeToString(envelope).encodeToByteArray()
             val envLen = envJson.size
 
             val buffer = okio.Buffer()
@@ -253,7 +256,7 @@ class PttWebSocketClient(
 
             session?.send(Frame.Binary(true, buffer.readByteArray()))
         } catch (e: Exception) {
-            e.printStackTrace()
+            logger.w(e) { "Failed to send over the WebSocket" }
             _isConnected.value = false
             try {
                 sessionMutex.withLock {
