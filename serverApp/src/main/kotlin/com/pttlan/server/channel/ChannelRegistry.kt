@@ -50,6 +50,8 @@ private class MutableTimeSeriesPoint(
 @Suppress("TooManyFunctions")
 class ChannelRegistry(
     private val redisManager: RedisManager? = null,
+    private val floorIdleTimeoutMs: Long = DEFAULT_FLOOR_IDLE_TIMEOUT_MS,
+    private val maxSpeechDurationMs: Long = DEFAULT_MAX_SPEECH_DURATION_MS,
 ) {
     private val channels = ConcurrentHashMap<String, PttChannel>()
     private val globalConnections = ConcurrentHashMap<DefaultWebSocketServerSession, GlobalConnection>()
@@ -113,6 +115,9 @@ class ChannelRegistry(
             channels.getOrPut(channelId) {
                 PttChannel(
                     id = channelId,
+                    floorIdleTimeoutMs = floorIdleTimeoutMs,
+                    maxSpeechDurationMs = maxSpeechDurationMs,
+                    scope = scope,
                     onLog = { participantName, eventType ->
                         addLog(channelId, participantName, eventType)
                         if (eventType == "START_SPEAKING") {

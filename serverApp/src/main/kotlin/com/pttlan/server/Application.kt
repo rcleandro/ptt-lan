@@ -2,6 +2,8 @@ package com.pttlan.server
 
 import com.pttlan.server.auth.JwtConfig
 import com.pttlan.server.channel.ChannelRegistry
+import com.pttlan.server.channel.DEFAULT_FLOOR_IDLE_TIMEOUT_MS
+import com.pttlan.server.channel.DEFAULT_MAX_SPEECH_DURATION_MS
 import com.pttlan.server.redis.RedisManager
 import com.pttlan.server.routing.adminPassword
 import com.pttlan.server.routing.authRoutes
@@ -40,6 +42,15 @@ import kotlin.time.Duration.Companion.seconds
 
 private const val DEFAULT_PORT = 9443
 
+private fun Application.longConfig(
+    path: String,
+    default: Long,
+): Long =
+    environment.config
+        .propertyOrNull(path)
+        ?.getString()
+        ?.toLongOrNull() ?: default
+
 fun main(args: Array<String>) {
     val keyStoreFile = File("build/keystore.jks")
     if (!keyStoreFile.exists()) {
@@ -76,7 +87,11 @@ fun Application.module() {
                     redisManager
                 }
                 single {
-                    ChannelRegistry(get())
+                    ChannelRegistry(
+                        redisManager = get(),
+                        floorIdleTimeoutMs = longConfig("ptt.floorIdleTimeoutMs", DEFAULT_FLOOR_IDLE_TIMEOUT_MS),
+                        maxSpeechDurationMs = longConfig("ptt.maxSpeechDurationMs", DEFAULT_MAX_SPEECH_DURATION_MS),
+                    )
                 }
             },
         )
