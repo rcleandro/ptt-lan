@@ -38,6 +38,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.pttlan.core.designsystem.components.ConnectionStatus
+import com.pttlan.core.designsystem.components.ConnectionStatusBadge
 import com.pttlan.core.designsystem.components.GlassIconButton
 import com.pttlan.core.designsystem.components.ParticipantAvatar
 import com.pttlan.core.designsystem.components.PillButton
@@ -60,6 +62,7 @@ fun PttScreen(
     component: PttComponent,
     onBack: () -> Unit,
     showHistory: Boolean,
+    connectionStatus: ConnectionStatus = ConnectionStatus.Online,
 ) {
     val state by component.state.collectAsState()
 
@@ -81,6 +84,7 @@ fun PttScreen(
         onIntent = component::onIntent,
         onBack = onBack,
         showHistory = showHistory,
+        connectionStatus = connectionStatus,
     )
 }
 
@@ -99,6 +103,7 @@ fun PttScreenContent(
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
     showHistory: Boolean = false,
+    connectionStatus: ConnectionStatus = ConnectionStatus.Online,
 ) {
     val buttonState = state.buttonState()
 
@@ -112,6 +117,10 @@ fun PttScreenContent(
                 navigation = { GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, "Voltar para canais", onBack) },
                 center = { ChannelTitle(channelId = state.channelId, participantCount = state.participants.size) },
                 actions = {
+                    // Only while the connection is not healthy: the channel title owns the center slot
+                    if (connectionStatus != ConnectionStatus.Online) {
+                        ConnectionStatusBadge(status = connectionStatus)
+                    }
                     if (showHistory) {
                         GlassIconButton(Icons.Default.History, "Histórico", { onIntent(PttIntent.GoToHistory) })
                     }

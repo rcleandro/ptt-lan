@@ -60,6 +60,7 @@ fun ChannelListScreen(
     onBack: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenHistory: (() -> Unit)?,
+    connectionStatus: ConnectionStatus = ConnectionStatus.Online,
 ) {
     val state by component.state.collectAsState()
 
@@ -69,6 +70,7 @@ fun ChannelListScreen(
         onBack = onBack,
         onOpenSettings = onOpenSettings,
         onOpenHistory = onOpenHistory,
+        connectionStatus = connectionStatus,
     )
 }
 
@@ -80,6 +82,7 @@ fun ChannelListScreenContent(
     onBack: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
     onOpenHistory: (() -> Unit)? = null,
+    connectionStatus: ConnectionStatus = ConnectionStatus.Online,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         AmbientGlow(
@@ -97,7 +100,7 @@ fun ChannelListScreenContent(
 
         PttTopBar(
             navigation = { GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, "Desconectar", onBack) },
-            center = { ConnectionStatusBadge(status = ConnectionStatus.Online) },
+            center = { ConnectionStatusBadge(status = connectionStatus) },
             actions = { ToolbarGroup(onOpenSettings, onOpenHistory) },
         )
 

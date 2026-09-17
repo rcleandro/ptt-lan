@@ -31,8 +31,12 @@ import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
+/** Default from the technical plan: give up after 10 failed reconnection attempts. */
+const val DEFAULT_MAX_RECONNECT_ATTEMPTS = 10
+
 class PttWebSocketClient(
     private val httpClient: HttpClient,
+    private val maxReconnectAttempts: Int = DEFAULT_MAX_RECONNECT_ATTEMPTS,
 ) {
     private var session: DefaultClientWebSocketSession? = null
     private val sessionMutex = Mutex()
@@ -52,6 +56,9 @@ class PttWebSocketClient(
     val audioChunks: Flow<Pair<AudioEnvelope?, ByteArray>> = _audioChunks.asSharedFlow()
 
     private var shouldReconnect = false
+
+    /** Last channel joined, replayed after a reconnection so the user stays where they were. */
+    private var lastJoinChannel: ControlMessage.JoinChannel? = null
 
     private val _isConnected = MutableStateFlow(false)
     val isConnected = _isConnected.asStateFlow()
@@ -80,6 +87,8 @@ class PttWebSocketClient(
     ) {
         shouldReconnect = true
         var isFirstAttempt = true
+        var hadConnected = false
+        var failedAttempts = 0
         var backoffMs = 1000L
         val maxBackoffMs = 30000L
 
@@ -97,9 +106,14 @@ class PttWebSocketClient(
                 }
 
                 println("PttWebSocketClient: Conectado com sucesso!")
+                if (hadConnected) {
+                    lastJoinChannel?.let { sendControlMessage(it) }
+                }
                 isFirstAttempt = false
-                // Reset backoff on successful connection
+                hadConnected = true
+                // Reset backoff and the attempt budget on a successful connection
                 backoffMs = 1000L
+                failedAttempts = 0
                 _isConnected.value = true
 
                 // Handle incoming frames
@@ -155,6 +169,12 @@ class PttWebSocketClient(
             }
 
             if (shouldReconnect) {
+                failedAttempts++
+                if (failedAttempts >= maxReconnectAttempts) {
+                    println("PttWebSocketClient: $maxReconnectAttempts tentativas de reconexão sem sucesso, desistindo")
+                    shouldReconnect = false
+                    break
+                }
                 val jitter = (Random.nextDouble(0.8, 1.2) * backoffMs).toLong()
                 delay(jitter.milliseconds)
                 backoffMs = minOf(backoffMs * 2, maxBackoffMs)
@@ -164,6 +184,7 @@ class PttWebSocketClient(
 
     suspend fun disconnect() {
         shouldReconnect = false
+        lastJoinChannel = null
         sessionMutex.withLock {
             session?.close()
             session = null
@@ -171,6 +192,17 @@ class PttWebSocketClient(
     }
 
     suspend fun sendControlMessage(message: ControlMessage) {
+        when (message) {
+            is ControlMessage.JoinChannel -> {
+                lastJoinChannel = message
+            }
+
+            is ControlMessage.LeaveChannel -> {
+                if (lastJoinChannel?.channelId == message.channelId) lastJoinChannel = null
+            }
+
+            else -> {}
+        }
         try {
             val json = Json.encodeToString(message)
             session?.send(Frame.Text(json))

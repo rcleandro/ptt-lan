@@ -128,6 +128,11 @@ com testes de integração cobrindo cada caso.
   Adicionar ao `PttWebSocketClient` o limite de tentativas do plano (padrão 10), que hoje não existe.
   Depois de reconectar, reenviar `JoinChannel` para o canal ativo (`ChannelSessionRepository.activeSessionChannelId`).
 - **Testes:** `PttWebSocketClient` com `MockEngine` simulando queda → status `Reconnecting` → `Connected` com re-join.
+- **Implementado:** `RootComponent` só volta para a tela de conexão em `Disconnected`; em `Reconnecting` a tela atual
+  continua e o `ConnectionStatusBadge` (agora alimentado pelo status real, não mais fixo em `Online`) mostra "reconectando".
+  `PttWebSocketClient` ganhou `maxReconnectAttempts` (padrão 10) e reenvia sozinho o último `JoinChannel` ao reconectar.
+  `PttWebSocketClientReconnectTest` sobe um servidor WSS de verdade: derruba a primeira sessão e exige o re-join na segunda,
+  e verifica que o loop desiste depois do limite em vez de tentar para sempre.
 
 ### 20.2 Identidade estável do dispositivo ✅ — P
 - **Problema:** desde a 19.1 o `userId` é emitido pelo servidor a cada login, então muda a cada conexão; `deviceId = "device-${nickname.hashCode()}"`
