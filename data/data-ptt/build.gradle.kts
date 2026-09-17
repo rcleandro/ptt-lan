@@ -13,6 +13,7 @@ kotlin {
             implementation(projects.core.coreDatastore)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.koin.core)
+            implementation(libs.kermit)
             implementation(libs.kotlinx.datetime)
             implementation(libs.okio)
         }

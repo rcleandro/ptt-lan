@@ -2,6 +2,7 @@ package com.pttlan.data.ptt.repository
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
+import co.touchlab.kermit.Logger
 import com.pttlan.core.audio.AudioCodec
 import com.pttlan.core.audio.AudioPlayer
 import com.pttlan.core.audio.AudioRecorder
@@ -45,6 +46,7 @@ class VoiceRepositoryImpl(
     private val settings: Settings,
     private val storageInfoProvider: StorageInfoProvider,
 ) : VoiceRepository {
+    private val logger = Logger.withTag("audio")
     private val scope = CoroutineScope(Dispatchers.Default)
     private var transmissionJob: Job? = null
     private var receptionJob: Job? = null
@@ -227,9 +229,15 @@ class VoiceRepositoryImpl(
                         val encoded =
                             try {
                                 codec.encode(chunk)
-                            } catch (_: Exception) {
-                                chunk
+                            } catch (e: Exception) {
+                                logger.e(e) { "Falha ao codificar áudio com $codecType" }
+                                ByteArray(0)
                             }
+                        if (encoded.isEmpty()) {
+                            // Sending the raw chunk instead would label PCM as Opus and break every listener
+                            logger.w { "Frame de ${chunk.size} bytes descartado: codificação vazia" }
+                            return@collect
+                        }
                         val envelope =
                             AudioEnvelope(
                                 channelId = channelId,

@@ -1,5 +1,6 @@
 package com.pttlan.core.audio
 
+import co.touchlab.kermit.Logger
 import eu.buney.kopus.OpusApplication
 import eu.buney.kopus.OpusDecoder
 import eu.buney.kopus.OpusEncoder
@@ -10,6 +11,7 @@ class OpusAudioCodec(
 ) : AudioCodec {
     private val encoder = OpusEncoder(sampleRate, channels, OpusApplication.Voip)
     private val decoder = OpusDecoder(sampleRate, channels)
+    private val logger = Logger.withTag("audio")
 
     override fun encode(pcm: ByteArray): ByteArray {
         val shortArray = pcm.toShortArray()
@@ -25,7 +27,10 @@ class OpusAudioCodec(
                     outDataOffset = 0,
                     maxDataBytes = outData.size,
                 )
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                // Opus only accepts 120/240/480/960/1920/2880 samples per frame; silence here used to look
+                // exactly like a working encoder sending nothing.
+                logger.e(e) { "Falha ao codificar frame de ${shortArray.size} amostras em Opus" }
                 0
             }
         return if (encodedBytes > 0) outData.copyOfRange(0, encodedBytes) else ByteArray(0)
@@ -45,7 +50,8 @@ class OpusAudioCodec(
                     frameSize = frameSize,
                     decodeFec = false,
                 )
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                logger.e(e) { "Falha ao decodificar ${encoded.size} bytes de Opus" }
                 0
             }
         return if (decodedSamples > 0) {

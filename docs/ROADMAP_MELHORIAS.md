@@ -204,6 +204,9 @@ com testes de integração cobrindo cada caso.
 
 ### 21.2 Falhas silenciosas no codec ✅ — P
 - **Ação:** `OpusAudioCodec` deixa de engolir exceções e passa a logar. O repositório faz fallback explícito: não envia frame vazio.
+- **Implementado:** `OpusAudioCodec` loga a falha com Kermit (`tag=audio`) em vez de `catch (_: Exception)`.
+  `VoiceRepositoryImpl` descarta o frame quando a codificação vem vazia — o fallback anterior mandava o PCM cru
+  rotulado como OPUS, que nenhum receptor conseguia decodificar.
 
 ### 21.3 Hot path do servidor ✅ — M
 - **Problemas:**
