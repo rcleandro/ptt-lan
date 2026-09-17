@@ -26,6 +26,9 @@ class ConnectionRepositoryImpl(
     private val _connectionStatus = MutableStateFlow(ConnectionStatus.Disconnected)
     override val connectionStatus: StateFlow<ConnectionStatus> = _connectionStatus.asStateFlow()
 
+    override var sessionUserId: String? = null
+        private set
+
     private val scope = CoroutineScope(Dispatchers.Default)
     private var connectionJob: Job? = null
     private var monitorJob: Job? = null
@@ -63,10 +66,11 @@ class ConnectionRepositoryImpl(
                 try {
                     // Simula deviceId para fins de auth offline-first. Numa Fase futura pode vir do settings
                     val deviceId = "device-${nickname.hashCode()}"
-                    val token = webSocketClient.login(endpoint.host, endpoint.port, endpoint.isLocal, nickname, deviceId)
+                    val login = webSocketClient.login(endpoint.host, endpoint.port, endpoint.isLocal, nickname, deviceId)
+                    sessionUserId = login.userId
 
                     // We launch the infinite reconnect loop in the background
-                    webSocketClient.connect(endpoint.host, endpoint.port, endpoint.isLocal, token)
+                    webSocketClient.connect(endpoint.host, endpoint.port, endpoint.isLocal, login.token)
                 } catch (e: Exception) {
                     deferred.completeExceptionally(e)
                     e.printStackTrace()
@@ -98,6 +102,7 @@ class ConnectionRepositoryImpl(
 
     override fun disconnect() {
         _connectionStatus.value = ConnectionStatus.Disconnected
+        sessionUserId = null
         connectionJob?.cancel()
         monitorJob?.cancel()
         scope.launch {

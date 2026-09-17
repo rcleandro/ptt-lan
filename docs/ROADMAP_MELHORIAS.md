@@ -73,6 +73,9 @@ Cada fase segue a regra 22.4 do plano: testes novos ou atualizados, nenhuma regr
   **ignora** esses campos nas mensagens. No protocolo, os campos `userId` de `JoinChannel`/`LeaveChannel`/`StartSpeaking`/`StopSpeaking`/`Heartbeat`
   passam a ser opcionais e depois são removidos (ver 21.5 sobre compatibilidade).
 - **Testes:** em `ServerIntegrationTest`, um cliente B enviando `StopSpeaking(userId = A)` não libera a palavra de A.
+- **Implementado:** o servidor gera o `userId` no login, grava como `sub` do JWT e o devolve em `LoginResponse`;
+  `PttRoutes` usa só o `sub` e o `nickname` do token. O teste `serverUsesTokenIdentityAndIgnoresUserIdInMessages`
+  falha no código anterior e passa no novo.
 
 ### 19.2 Autenticar o painel admin ✅ — M
 - **Problema:** `DashboardRoutes.kt:85-87`: `/admin` e `/api/admin/*` estão abertos, inclusive `system/shutdown` (`exitProcess`, `:132`),
@@ -118,9 +121,10 @@ com testes de integração cobrindo cada caso.
 - **Testes:** `PttWebSocketClient` com `MockEngine` simulando queda → status `Reconnecting` → `Connected` com re-join.
 
 ### 20.2 Identidade estável do dispositivo ✅ — P
-- **Problema:** `userId` é um UUID novo a cada execução (`RootComponent.kt:61`); `deviceId = "device-${nickname.hashCode()}"`
+- **Problema:** desde a 19.1 o `userId` é emitido pelo servidor a cada login, então muda a cada conexão; `deviceId = "device-${nickname.hashCode()}"`
   (`ConnectionRepositoryImpl.kt:65`) muda se o nickname mudar e colide entre pessoas com o mesmo nome.
-- **Ação:** gerar o UUID uma vez e persistir em settings (`device_id`); usar o mesmo valor como `userId` e `deviceId`.
+- **Ação:** gerar um UUID de dispositivo uma vez e persistir em settings (`device_id`), enviado como `deviceId` no login.
+  O `userId` continua emitido pelo servidor (19.1); para a 20.3, o servidor pode reaproveitar o `userId` do mesmo `deviceId`.
 
 ### 20.3 "Nome já em uso" ao reconectar 🔎 — M
 - **Problema provável:** quando a rede cai sem close, o servidor só remove a sessão antiga no timeout de ping (~20s + timeout).
@@ -210,7 +214,7 @@ sem atraso para os demais; servidor sem log por pacote em `INFO`.
 | 22.2 Módulos vazios | ✅ | `core-testing`, `feature-admin-web` | Remover do `settings.gradle.kts` (o painel vive no `serverApp`). Recriar `core-testing` só quando houver fakes compartilhados de fato | P |
 | 22.3 HttpClient duplicado | ✅ | `HttpClient.android.kt` e `HttpClient.jvm.kt` idênticos | Source set intermediário `jvmAndAndroidMain` (hierarquia KMP) com uma única implementação | P |
 | 22.4 Jitter buffer duplicado | ✅ | `AudioPacket` + lógica de sequência em `AndroidAudioInterfaces.kt` e `jvmMain/AudioInterfaces.kt` | Extrair a lógica de ordenação/descarte para `commonMain` (classe pura, testável). Plataformas só escrevem no `AudioTrack`/`SourceDataLine` | M |
-| 22.5 DTO de login duplicado | ✅ | `LoginRequest`/`LoginResponse` em `AuthRoutes.kt:15` e `PttWebSocketClient.kt:34` | Servidor usa os de `core-network/protocol` | P |
+| 22.5 DTO de login duplicado | ✅ | `LoginRequest`/`LoginResponse` em `AuthRoutes.kt:15` e `PttWebSocketClient.kt:34` | Servidor usa os de `core-network/protocol` (**feito na 19.1**: `protocol/AuthDto.kt`) | P |
 | 22.6 Chaves de settings espalhadas | ✅ | `"allow_cache"` em 8 lugares, `"app_theme"` em 12 etc. | `object SettingsKeys` + defaults em `core-datastore` | P |
 | 22.7 `VoiceRepositoryImpl` faz tudo | ✅ | 398 linhas: transmissão, recepção, gravação cifrada, cache, replay. Estado mutável acessado por várias coroutines em `Dispatchers.Default` sem sincronização | Separar em duas classes: `VoiceRepositoryImpl` (TX/RX) e `HistoryRepositoryImpl` (gravação, cache, replay). Confinar o estado de gravação a um único coroutine/dispatcher (`limitedParallelism(1)`) | M |
 | 22.8 Regras de dependência | ✅ | `feature-ptt` depende de `core-network` só por `ParticipantDto` no `PttState` | Usar `ParticipantDomain` no estado e remover a dependência. Aceitar e documentar (ADR) que `core-di`/`core-navigation` agregam features, já que o grafo real é esse | P |

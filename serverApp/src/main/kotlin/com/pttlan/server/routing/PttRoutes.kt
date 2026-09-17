@@ -40,6 +40,13 @@ fun Routing.pttRoutes() {
                     return@webSocket
                 }
 
+            // Identity comes only from the signed token; userId/nickname inside messages are ignored.
+            val userId = decodedJwt.subject
+            if (userId.isNullOrBlank()) {
+                close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Token JWT sem identidade"))
+                return@webSocket
+            }
+            currentUserId = userId
             val nickname = decodedJwt.getClaim("nickname").asString() ?: "Desconhecido"
             if (!channelRegistry.addGlobalConnection(this, nickname)) {
                 close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Nome já em uso"))
@@ -53,9 +60,8 @@ fun Routing.pttRoutes() {
                         try {
                             when (val message = Json.decodeFromString<ControlMessage>(text)) {
                                 is ControlMessage.JoinChannel -> {
-                                    currentUserId = message.userId
                                     currentChannelId = message.channelId
-                                    println("Usuário ${message.nickname} (${message.userId}) entrou no canal ${message.channelId}")
+                                    println("Usuário $nickname ($userId) entrou no canal ${message.channelId}")
 
                                     val appVersion = call.request.queryParameters["version"] ?: "Desconhecida"
                                     val ipAddress = call.request.origin.remoteHost
@@ -63,8 +69,8 @@ fun Routing.pttRoutes() {
                                     val channel = channelRegistry.getOrCreateChannel(message.channelId)
                                     val participant =
                                         Participant(
-                                            userId = message.userId,
-                                            nickname = message.nickname,
+                                            userId = userId,
+                                            nickname = nickname,
                                             session = this,
                                             isSpeaking = false,
                                             ipAddress = ipAddress,
@@ -77,19 +83,18 @@ fun Routing.pttRoutes() {
 
                                 is ControlMessage.LeaveChannel -> {
                                     val channel = channelRegistry.getChannel(message.channelId)
-                                    val participantNickname = channel?.getParticipant(message.userId)?.nickname ?: "Desconhecido"
-                                    println("Usuário $participantNickname (${message.userId}) saiu do canal ${message.channelId}")
-                                    channel?.removeParticipant(message.userId)
+                                    println("Usuário $nickname ($userId) saiu do canal ${message.channelId}")
+                                    channel?.removeParticipant(userId)
                                     channelRegistry.scheduleCleanupIfEmpty(message.channelId)
                                     channelRegistry.broadcastActiveChannels()
                                 }
 
                                 is ControlMessage.StartSpeaking -> {
-                                    println("PttRoutes: Usuário ${message.userId} solicitou falar no canal ${message.channelId}")
+                                    println("PttRoutes: Usuário $userId solicitou falar no canal ${message.channelId}")
                                     val channel = channelRegistry.getChannel(message.channelId)
                                     if (channel != null) {
-                                        val granted = channel.requestFloor(message.userId)
-                                        println("PttRoutes: Concessão da palavra para ${message.userId}: $granted")
+                                        val granted = channel.requestFloor(userId)
+                                        println("PttRoutes: Concessão da palavra para $userId: $granted")
                                         if (!granted) {
                                             val json =
                                                 Json.encodeToString<ControlMessage>(
@@ -103,9 +108,9 @@ fun Routing.pttRoutes() {
                                 }
 
                                 is ControlMessage.StopSpeaking -> {
-                                    println("PttRoutes: Usuário ${message.userId} liberou a fala no canal ${message.channelId}")
+                                    println("PttRoutes: Usuário $userId liberou a fala no canal ${message.channelId}")
                                     val channel = channelRegistry.getChannel(message.channelId)
-                                    channel?.releaseFloor(message.userId)
+                                    channel?.releaseFloor(userId)
                                 }
 
                                 is ControlMessage.Heartbeat -> {

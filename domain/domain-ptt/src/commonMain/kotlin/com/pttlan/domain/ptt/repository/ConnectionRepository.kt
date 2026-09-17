@@ -24,6 +24,13 @@ data class ServerNode(
 interface ConnectionRepository {
     val connectionStatus: StateFlow<ConnectionStatus>
 
+    /**
+     * Identity issued by the server at login (JWT `sub`). The server ignores ids sent in messages and uses
+     * this one, so it is the only id that matches `SpeakerChanged`/`ParticipantList` for the local user.
+     * Null while not logged in.
+     */
+    val sessionUserId: String?
+
     fun discoverServers(): Flow<ServerNode>
 
     fun stopDiscovery()

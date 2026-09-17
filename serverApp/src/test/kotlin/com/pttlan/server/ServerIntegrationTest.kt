@@ -2,6 +2,7 @@ package com.pttlan.server
 
 import com.pttlan.core.network.protocol.ControlMessage
 import com.pttlan.server.auth.JwtConfig
+import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.server.testing.testApplication
@@ -13,10 +14,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 class ServerIntegrationTest {
     @Test
@@ -47,7 +50,7 @@ class ServerIntegrationTest {
                 testScope.launch {
                     val token1 =
                         JwtConfig
-                            .generateToken("Client1", "u1")
+                            .generateToken("u1", "Client1", "device-1")
                     client1.webSocket("/ws?token=$token1") {
                         // Client1 joins
                         val join1 = ControlMessage.JoinChannel("channel-1", "Client1", "u1")
@@ -75,7 +78,7 @@ class ServerIntegrationTest {
                 testScope.launch {
                     val token2 =
                         JwtConfig
-                            .generateToken("Client2", "u2")
+                            .generateToken("u2", "Client2", "device-2")
                     client2.webSocket("/ws?token=$token2") {
                         // Wait for Client1 to connect and join
                         client1Connected.await()
@@ -134,4 +137,81 @@ class ServerIntegrationTest {
             job2.join()
             testScope.cancel()
         }
+
+    @Test
+    fun serverUsesTokenIdentityAndIgnoresUserIdInMessages() =
+        testApplication {
+            application {
+                module()
+            }
+
+            val client = createClient { install(WebSockets) }
+            val testScope = CoroutineScope(Dispatchers.Default)
+            val ownerHasFloor = CompletableDeferred<Unit>()
+            val attackerDone = CompletableDeferred<Unit>()
+            var participants: Set<String>? = null
+            var attackerDenied = false
+
+            val ownerToken = JwtConfig.generateToken("owner", "Owner", "device-owner")
+            val attackerToken = JwtConfig.generateToken("attacker", "Attacker", "device-attacker")
+
+            val owner =
+                testScope.launch {
+                    client.webSocket("/ws?token=$ownerToken") {
+                        sendControl(ControlMessage.JoinChannel("room", "Owner", "owner"))
+                        sendControl(ControlMessage.StartSpeaking("room", "owner"))
+                        awaitMessage { it is ControlMessage.SpeakerChanged && it.userId == "owner" && it.isSpeaking }
+                        ownerHasFloor.complete(Unit)
+                        attackerDone.await()
+                        close()
+                    }
+                }
+
+            val attacker =
+                testScope.launch {
+                    ownerHasFloor.await()
+                    client.webSocket("/ws?token=$attackerToken") {
+                        // Every message claims to come from the owner
+                        sendControl(ControlMessage.JoinChannel("room", "Owner", "owner"))
+                        sendControl(ControlMessage.StopSpeaking("room", "owner"))
+                        sendControl(ControlMessage.StartSpeaking("room", "owner"))
+
+                        val list = awaitMessage { it is ControlMessage.ParticipantList && it.participants.size == 2 }
+                        participants =
+                            (list as? ControlMessage.ParticipantList)
+                                ?.participants
+                                ?.map { "${it.userId}:${it.nickname}" }
+                                ?.toSet()
+                        attackerDenied = awaitMessage { it is ControlMessage.FloorDenied } != null
+                        attackerDone.complete(Unit)
+                        close()
+                    }
+                }
+
+            owner.join()
+            attacker.join()
+            testScope.cancel()
+
+            assertEquals(setOf("owner:Owner", "attacker:Attacker"), participants, "Join must not replace the owner")
+            assertTrue(attackerDenied, "Spoofed StopSpeaking must not release the owner's floor")
+        }
+
+    private suspend fun DefaultClientWebSocketSession.sendControl(message: ControlMessage) {
+        send(Frame.Text(Json.encodeToString<ControlMessage>(message)))
+    }
+
+    private suspend fun DefaultClientWebSocketSession.awaitMessage(predicate: (ControlMessage) -> Boolean) =
+        withTimeoutOrNull(MESSAGE_TIMEOUT) {
+            for (frame in incoming) {
+                if (frame is Frame.Text) {
+                    val message = Json.decodeFromString<ControlMessage>(frame.readText())
+                    if (predicate(message)) return@withTimeoutOrNull message
+                }
+            }
+            null
+        }
+
+    private companion object {
+        val MESSAGE_TIMEOUT = 10.seconds
+    }
 }

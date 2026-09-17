@@ -25,8 +25,4 @@ kotlin {
             implementation(libs.koin.core)
         }
     }
-
-    sourceSets.all {
-        languageSettings.optIn("kotlin.uuid.ExperimentalUuidApi")
-    }
 }
