@@ -12,7 +12,6 @@ import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
-import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.koin.ktor.ext.inject
 
@@ -127,15 +126,13 @@ fun Routing.pttRoutes() {
 
                     is Frame.Binary -> {
                         if (currentChannelId != null && currentUserId != null) {
+                            // Handled in order on this session's own coroutine: the broadcast only queues the
+                            // packet per listener, so there is nothing slow left to hand to another coroutine.
                             val channel = channelRegistry.getChannel(currentChannelId)
-                            if (channel != null) {
-                                launch {
-                                    try {
-                                        channel.broadcastBinary(frame, currentUserId)
-                                    } catch (e: Exception) {
-                                        println("PttRoutes: Erro ao despachar broadcast de áudio: ${e.message}")
-                                    }
-                                }
+                            try {
+                                channel?.broadcastBinary(frame, currentUserId)
+                            } catch (e: Exception) {
+                                println("PttRoutes: Erro ao despachar broadcast de áudio: ${e.message}")
                             }
                         }
                     }

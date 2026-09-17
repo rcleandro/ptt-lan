@@ -161,7 +161,8 @@ Existe teste de round-trip em `ControlMessageTest`.
   Query param `version` (constante `APP_VERSION` do cliente, 20.5) aparece no painel.
 - `ChannelRegistry`: estado em memória (`ConcurrentHashMap`). Canal `Geral` sempre existe; canais vazios são removidos após 5 min.
   Guarda logs (últimos 100), tempo de fala por nickname e série temporal por minuto (30 min).
-- `PttChannel`: participantes + floor control com `Mutex`. Floor liberado por `StopSpeaking`, por desconexão ou pelo
+- `PttChannel`: participantes + floor control com `Mutex`; áudio sai por uma fila por ouvinte
+  (`Channel(50, DROP_OLDEST)` + coroutine de envio), então um cliente lento só perde os próprios pacotes. Floor liberado por `StopSpeaking`, por desconexão ou pelo
   watchdog da 20.4 (sem áudio por `ptt.floorIdleTimeoutMs`, padrão 2s, ou fala acima de `ptt.maxSpeechDurationMs`, padrão 60s).
 - Painel admin: `GET /admin` (HTML + Chart.js via CDN) consumindo `GET /api/admin/metrics`, `POST /api/admin/system/{restart|shutdown|broadcast}`,
   `GET /api/admin/logs/csv`, `POST /api/admin/channels/{id}/kick/{userId}`, `POST /api/admin/channels/{id}/delete`.

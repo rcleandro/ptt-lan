@@ -218,6 +218,11 @@ com testes de integração cobrindo cada caso.
 - **Ação:** processar o áudio em sequência no handler (sem `launch`). Cada `Participant` ganha um `Channel<ByteArray>(capacity = N, DROP_OLDEST)`
   consumido por uma coroutine própria, e o broadcast só faz `trySend`. Contadores com `AtomicLong`/`AtomicInteger`. Logs de pacote em `debug` (21.4).
 - **Resultado:** um cliente lento perde os próprios pacotes sem atrasar os demais.
+- **Implementado:** cada `Participant` tem um `Channel<ByteArray>(50, DROP_OLDEST)` drenado por uma coroutine própria;
+  `broadcastBinary` só faz `trySend` e compartilha o buffer do frame em vez de copiá-lo por destinatário.
+  O handler do WebSocket processa o áudio em sequência (sem `launch` por frame), os contadores viraram
+  `AtomicLong`/`AtomicInteger` e os logs de pacote foram para `debug` via SLF4J. `AudioBroadcastOrderTest` mostra o
+  problema antigo de forma direta: com o código anterior, 30 pacotes chegavam como `[0, 20, 18, 17, …]`.
 
 ### 21.4 Logging de verdade ✅ — M
 - **Problema:** 44 `println`/`printStackTrace` em servidor, core, data e features. Kermit está configurado no Koin, mas quase não é usado. O Logback do servidor fica sem uso.
