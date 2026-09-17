@@ -197,6 +197,10 @@ com testes de integração cobrindo cada caso.
 - **Ação:** converter com `AVAudioConverter` para 48 kHz Int16 mono e acumular em buffer circular, emitindo exatamente 960 amostras (20ms),
   igual ao Android e ao JVM.
 - **Testes:** teste comum do `OpusAudioCodec` garantindo que `encode` de 960 amostras não retorna vazio. Validação manual iOS ↔ Android com Opus.
+- **Implementado:** o tap do iOS agora passa por um `AVAudioConverter` para 48 kHz Int16 mono e acumula em `pending`,
+  emitindo blocos de exatamente 960 amostras (1920 bytes), como Android e JVM. Sai o decimador por passo inteiro, que
+  desafinava quando o hardware estava a 44,1 kHz. `OpusAudioCodecTest` (commonTest) cobre os 960 samples e o round-trip;
+  a validação iOS ↔ Android com Opus ligado continua sendo manual, em dispositivo.
 
 ### 21.2 Falhas silenciosas no codec ✅ — P
 - **Ação:** `OpusAudioCodec` deixa de engolir exceções e passa a logar. O repositório faz fallback explícito: não envia frame vazio.

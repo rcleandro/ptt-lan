@@ -8,6 +8,10 @@ kotlin {
             implementation(projects.core.coreCommon)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kopus)
+            implementation(libs.kermit)
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
         }
     }
 }
