@@ -18,6 +18,7 @@ data class SettingsState(
     val nickname: String = "",
     val useOpus: Boolean = false,
     val appTheme: AppTheme = AppTheme.SYSTEM,
+    val reduceTransparency: Boolean = false,
     val alwaysListening: Boolean = true,
     val allowCache: Boolean = false,
     val cacheLocation: String = "Interno",
@@ -38,6 +39,10 @@ sealed interface SettingsIntent {
 
     data class ChangeTheme(
         val theme: AppTheme,
+    ) : SettingsIntent
+
+    data class ToggleReduceTransparency(
+        val enabled: Boolean,
     ) : SettingsIntent
 
     data class ToggleAlwaysListening(
@@ -72,6 +77,7 @@ class SettingsComponent(
                 nickname = settings.getString("nickname", ""),
                 useOpus = settings.getBoolean("use_opus", false),
                 appTheme = AppTheme.entries.getOrElse(settings.getInt("app_theme", 0)) { AppTheme.SYSTEM },
+                reduceTransparency = settings.getBoolean("reduce_transparency", false),
                 alwaysListening = settings.getBoolean("always_listening", true),
                 allowCache = settings.getBoolean("allow_cache", false),
                 cacheLocation = settings.getString("cache_location", "Interno"),
@@ -100,6 +106,10 @@ class SettingsComponent(
             is SettingsIntent.ChangeTheme -> {
                 settings.putInt("app_theme", intent.theme.ordinal)
                 _state.update { it.copy(appTheme = intent.theme) }
+            }
+            is SettingsIntent.ToggleReduceTransparency -> {
+                settings.putBoolean("reduce_transparency", intent.enabled)
+                _state.update { it.copy(reduceTransparency = intent.enabled) }
             }
             is SettingsIntent.ToggleAlwaysListening -> {
                 settings.putBoolean("always_listening", intent.enabled)

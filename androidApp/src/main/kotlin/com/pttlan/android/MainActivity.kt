@@ -7,11 +7,7 @@ import com.arkivanov.decompose.retainedComponent
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
-import com.pttlan.core.designsystem.theme.PttTheme
-import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.domain.ptt.repository.ConnectionRepository
 import org.koin.android.ext.android.inject
 import com.pttlan.core.navigation.RootComponent
@@ -22,7 +18,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import com.pttlan.domain.ptt.repository.ChannelSessionRepository
 import com.russhwolf.settings.ObservableSettings
-import com.russhwolf.settings.coroutines.getIntFlow
 import com.russhwolf.settings.coroutines.getBooleanFlow
 import com.russhwolf.settings.ExperimentalSettingsApi
 import android.os.Build
@@ -81,12 +76,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            val appThemeInt by (settings as ObservableSettings).getIntFlow("app_theme", 0).collectAsState(initial = settings.getInt("app_theme", 0))
-            val appTheme = AppTheme.entries.getOrElse(appThemeInt) { AppTheme.SYSTEM }
-
-            PttTheme(appTheme = appTheme) {
-                RootScreen(component = rootComponent)
-            }
+            RootScreen(component = rootComponent)
         }
     }
 

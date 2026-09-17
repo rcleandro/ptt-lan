@@ -10,6 +10,7 @@ kotlin {
             implementation(projects.core.coreDesignsystem)
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
+            implementation(libs.material.icons.extended)
             implementation(projects.domain.domainPtt)
 
             api(libs.decompose)

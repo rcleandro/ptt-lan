@@ -1,7 +1,7 @@
 # ADR 0003: Design System Sóbrio e Moderno
 
 ## Status
-Aceito
+Substituído em parte pelo [ADR 0006](0006-liquid-glass.md) (paleta e componentes). A convenção de lint abaixo continua valendo.
 
 ## Contexto
 O PTT-LAN é uma ferramenta técnica de comunicação push-to-talk. Inicialmente, o aplicativo possuía estilos genéricos embutidos nas telas. Para conferir uma identidade visual moderna e sobria (Fase 8), é necessário implementar um Design System próprio. Este novo tema visa proporcionar clareza, alta legibilidade e redução da fadiga visual (focando primariamente no Dark Mode), evitando paletas genéricas. 

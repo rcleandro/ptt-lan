@@ -1,27 +1,13 @@
 package com.pttlan.core.navigation
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -31,7 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.slide
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
@@ -39,19 +24,34 @@ import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.pttlan.core.designsystem.components.snackbar.PttSnackbarHost
 import com.pttlan.core.designsystem.components.snackbar.PttSnackbarType
 import com.pttlan.core.designsystem.components.snackbar.SnackbarController
+import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.feature.channellist.ChannelListScreen
 import com.pttlan.feature.connection.ConnectionScreen
 import com.pttlan.feature.history.HistoryScreen
 import com.pttlan.feature.ptt.PttScreen
 import com.pttlan.feature.settings.SettingsScreen
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * App root: applies the theme and hosts the screens. Each screen draws its own floating glass
+ * controls (ADR 0006), so there is no Scaffold, top app bar or FAB here.
+ */
 @Composable
 fun RootScreen(component: RootComponent) {
+    val appTheme by component.appTheme.collectAsState()
+    val reduceTransparency by component.reduceTransparency.collectAsState()
+
+    PttTheme(appTheme = appTheme, reduceTransparency = reduceTransparency) {
+        RootContent(component)
+    }
+}
+
+@Composable
+private fun RootContent(component: RootComponent) {
     val childStack by component.childStack.subscribeAsState()
     val isCacheEnabled by component.isCacheEnabled.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var snackbarType by remember { mutableStateOf(PttSnackbarType.Generic) }
+    val openHistory = if (isCacheEnabled) component::navigateToHistory else null
 
     LaunchedEffect(Unit) {
         SnackbarController.events.collect { event ->
@@ -60,93 +60,40 @@ fun RootScreen(component: RootComponent) {
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(getScreenTitle(childStack.active.instance)) },
-                navigationIcon = {
-                    if (childStack.backStack.isNotEmpty()) {
-                        IconButton(onClick = component::goBack) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Voltar",
-                            )
-                        }
-                    }
-                },
-            )
-        },
-        floatingActionButton = {
-            val currentChild = childStack.active.instance
-
-            val showConfigFab =
-                currentChild is RootComponent.Child.ConnectionChild ||
-                    currentChild is RootComponent.Child.ChannelListChild
-
-            val showHistoryFab =
-                (
-                    currentChild is RootComponent.Child.ConnectionChild ||
-                        currentChild is RootComponent.Child.ChannelListChild
-                ) &&
-                    isCacheEnabled
-
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                AnimatedVisibility(
-                    visible = showHistoryFab,
-                    enter = scaleIn() + fadeIn(),
-                    exit = scaleOut() + fadeOut(),
-                ) {
-                    FloatingActionButton(
-                        onClick = component::navigateToHistory,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.History,
-                            contentDescription = "Histórico de Áudios",
-                        )
-                    }
-                }
-
-                AnimatedVisibility(
-                    visible = showConfigFab,
-                    enter = scaleIn() + fadeIn(),
-                    exit = scaleOut() + fadeOut(),
-                ) {
-                    FloatingActionButton(onClick = component::navigateToSettings) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Configurações",
-                        )
-                    }
-                }
-            }
-        },
-        snackbarHost = { PttSnackbarHost(snackbarHostState, snackbarType) },
-    ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            Children(
-                stack = childStack,
-                animation = stackAnimation(slide()),
-            ) { child ->
-                when (val instance = child.instance) {
-                    is RootComponent.Child.ConnectionChild -> ConnectionScreen(instance.component)
-                    is RootComponent.Child.ChannelListChild -> ChannelListScreen(instance.component)
-                    is RootComponent.Child.PttChild -> PttScreen(instance.component)
-                    is RootComponent.Child.HistoryChild -> HistoryScreen(instance.component)
-                    is RootComponent.Child.SettingsChild -> SettingsScreen(instance.component)
-                }
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Children(
+            stack = childStack,
+            animation = stackAnimation(slide()),
+        ) { child ->
+            when (val instance = child.instance) {
+                is RootComponent.Child.ConnectionChild ->
+                    ConnectionScreen(
+                        component = instance.component,
+                        onOpenSettings = component::navigateToSettings,
+                        onOpenHistory = openHistory,
+                    )
+                is RootComponent.Child.ChannelListChild ->
+                    ChannelListScreen(
+                        component = instance.component,
+                        onBack = component::goBack,
+                        onOpenSettings = component::navigateToSettings,
+                        onOpenHistory = openHistory,
+                    )
+                is RootComponent.Child.PttChild ->
+                    PttScreen(
+                        component = instance.component,
+                        onBack = component::goBack,
+                        showHistory = isCacheEnabled,
+                    )
+                is RootComponent.Child.HistoryChild -> HistoryScreen(instance.component)
+                is RootComponent.Child.SettingsChild -> SettingsScreen(instance.component, onBack = component::goBack)
             }
         }
+
+        PttSnackbarHost(
+            state = snackbarHostState,
+            type = snackbarType,
+            modifier = Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.safeDrawing),
+        )
     }
 }
-
-private fun getScreenTitle(child: RootComponent.Child): String =
-    when (child) {
-        is RootComponent.Child.ConnectionChild -> "Conectar"
-        is RootComponent.Child.ChannelListChild -> "Canais"
-        is RootComponent.Child.PttChild -> "Rádio (PTT)"
-        is RootComponent.Child.HistoryChild -> "Histórico"
-        is RootComponent.Child.SettingsChild -> "Configurações"
-    }

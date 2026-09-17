@@ -1,14 +1,12 @@
 package com.pttlan.core.designsystem.components
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -16,10 +14,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.pttlan.core.designsystem.theme.PttTheme
@@ -31,50 +40,76 @@ enum class PttButtonState {
     Receiving,
 }
 
+private const val PRESSED_SCALE = 0.97f
+private const val GLOW_RADIUS_FACTOR = 1.25f
+private const val IDLE_GLOW_ALPHA = 0.18f
+private const val TINT_GLOW_ALPHA = 0.5f
+private const val RING_COUNT = 3
+private const val RING_BASE_ALPHA = 0.4f
+private const val TINT_HIGHLIGHT_MIX = 0.6f
+private const val TINT_EDGE_DARKEN = 0.3f
+private const val TINT_ALPHA = 0.9f
+private const val BOTTOM_SHADE_ALPHA = 0.22f
+
+/**
+ * Push-to-talk lens (ADR 0006). Clear glass when the channel is free, amber-tinted while transmitting,
+ * blue-tinted while someone else speaks, and a dashed amber ring while waiting for the floor.
+ */
 @Composable
 fun PttButton(
     state: PttButtonState,
     onPressStart: () -> Unit,
     onPressEnd: () -> Unit,
     modifier: Modifier = Modifier,
-    buttonSize: Dp = 120.dp,
+    buttonSize: Dp = 208.dp,
     buttonMargin: Dp = 16.dp,
 ) {
-    val bgColor by animateColorAsState(
-        targetValue =
-            when (state) {
-                PttButtonState.Idle -> PttTheme.customColors.surface3
-                PttButtonState.Requesting -> PttTheme.customColors.accentTx
-                PttButtonState.Transmitting -> PttTheme.customColors.statusTransmitting
-                PttButtonState.Receiving -> MaterialTheme.colorScheme.primary
-            },
-    )
+    val colors = PttTheme.customColors
+    val primary = MaterialTheme.colorScheme.primary
+    val isTinted = state == PttButtonState.Transmitting || state == PttButtonState.Receiving
 
-    val shadowColor by animateColorAsState(
-        targetValue =
-            when (state) {
-                PttButtonState.Idle -> Color.Transparent
-                PttButtonState.Requesting -> PttTheme.customColors.accentTxGlow
-                PttButtonState.Transmitting -> PttTheme.customColors.statusTransmittingGlow
-                PttButtonState.Receiving -> PttTheme.customColors.primaryGlow
-            },
+    val tint by animateColorAsState(if (state == PttButtonState.Receiving) primary else colors.accentTx)
+    val tintProgress by animateFloatAsState(if (isTinted) 1f else 0f)
+    val requestProgress by animateFloatAsState(if (state == PttButtonState.Requesting) 1f else 0f)
+    val scale by animateFloatAsState(
+        if (state == PttButtonState.Transmitting || state == PttButtonState.Requesting) PRESSED_SCALE else 1f,
     )
-
     val iconColor by animateColorAsState(
-        targetValue =
-            when (state) {
-                PttButtonState.Idle -> MaterialTheme.colorScheme.onSurfaceVariant
-                PttButtonState.Requesting, PttButtonState.Transmitting -> PttTheme.customColors.iconOnAccentTx
-                PttButtonState.Receiving -> PttTheme.customColors.iconOnPrimary
-            },
+        when (state) {
+            PttButtonState.Idle -> MaterialTheme.colorScheme.onBackground
+            PttButtonState.Requesting -> colors.accentTx
+            PttButtonState.Transmitting -> colors.iconOnAccentTx
+            PttButtonState.Receiving -> colors.iconOnPrimary
+        },
     )
+    val label =
+        when (state) {
+            PttButtonState.Idle -> "Falar: segure para transmitir"
+            PttButtonState.Requesting -> "Pedindo a palavra: solte para cancelar"
+            PttButtonState.Transmitting -> "Transmitindo: solte para encerrar"
+            PttButtonState.Receiving -> "Canal ocupado: aguarde para falar"
+        }
+    val lens =
+        LensColors(
+            idleHighlight = colors.glassHighlight,
+            idleMid = colors.glassTop,
+            idleEdge = colors.glassBottom,
+            base = colors.glassBase,
+            idleBorder = colors.glassStroke,
+            idleGlow = primary,
+            accent = colors.accentTx,
+        )
 
     Box(
         contentAlignment = Alignment.Center,
         modifier =
             modifier
                 .size(buttonSize + buttonMargin)
-                .pointerInput(Unit) {
+                .drawBehind { drawHalo(buttonSize.toPx() / 2, tint, tintProgress, requestProgress, lens) }
+                .semantics {
+                    contentDescription = label
+                    role = Role.Button
+                }.pointerInput(Unit) {
                     detectTapGestures(
                         onPress = {
                             onPressStart()
@@ -92,31 +127,108 @@ fun PttButton(
             modifier =
                 Modifier
                     .size(buttonSize)
-                    .shadow(
-                        elevation = 8.dp,
-                        shape = CircleShape,
-                        ambientColor = shadowColor,
-                        spotColor = shadowColor,
-                    ).background(bgColor, CircleShape)
-                    .border(
-                        width = 1.dp,
-                        color =
-                            if (state ==
-                                PttButtonState.Idle
-                            ) {
-                                MaterialTheme.colorScheme.outline
-                            } else {
-                                Color.Transparent
-                            },
-                        shape = CircleShape,
-                    ).clip(CircleShape),
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                    }.drawBehind { drawLens(tint, tintProgress, lens) },
         ) {
             Icon(
-                imageVector = if (state == PttButtonState.Receiving) Icons.AutoMirrored.Filled.VolumeUp else Icons.Default.Mic,
+                imageVector = if (state == PttButtonState.Receiving) Icons.Default.GraphicEq else Icons.Default.Mic,
                 contentDescription = null,
                 tint = iconColor,
-                modifier = Modifier.size(buttonSize * 0.35f),
+                modifier = Modifier.size(buttonSize * 0.3f),
             )
         }
     }
+}
+
+private data class LensColors(
+    val idleHighlight: Color,
+    val idleMid: Color,
+    val idleEdge: Color,
+    val base: Color,
+    val idleBorder: Color,
+    val idleGlow: Color,
+    val accent: Color,
+)
+
+private fun DrawScope.drawHalo(
+    radius: Float,
+    tint: Color,
+    tintProgress: Float,
+    requestProgress: Float,
+    lens: LensColors,
+) {
+    val glow =
+        lerp(
+            lens.idleGlow.copy(alpha = IDLE_GLOW_ALPHA),
+            tint.copy(alpha = TINT_GLOW_ALPHA),
+            tintProgress,
+        )
+    val glowRadius = radius * 2 * GLOW_RADIUS_FACTOR
+    drawCircle(
+        brush = Brush.radialGradient(listOf(glow, Color.Transparent), center = center, radius = glowRadius),
+        radius = glowRadius,
+    )
+
+    if (tintProgress > 0f) {
+        for (ring in 1..RING_COUNT) {
+            drawCircle(
+                color = tint.copy(alpha = RING_BASE_ALPHA / ring * tintProgress),
+                radius = radius + (ring * 16).dp.toPx(),
+                style = Stroke(width = 1.dp.toPx()),
+            )
+        }
+    }
+
+    if (requestProgress > 0f) {
+        drawCircle(
+            color = lens.accent.copy(alpha = requestProgress),
+            radius = radius + 10.dp.toPx(),
+            style =
+                Stroke(
+                    width = 2.dp.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(10.dp.toPx(), 8.dp.toPx())),
+                ),
+        )
+    }
+}
+
+private fun DrawScope.drawLens(
+    tint: Color,
+    tintProgress: Float,
+    lens: LensColors,
+) {
+    val tinted = tint.copy(alpha = TINT_ALPHA)
+    val highlight = lerp(lens.idleHighlight, lerp(tint, Color.White, TINT_HIGHLIGHT_MIX), tintProgress)
+    val mid = lerp(lens.idleMid, tinted, tintProgress)
+    val edge = lerp(lens.idleEdge, lerp(tint, Color.Black, TINT_EDGE_DARKEN), tintProgress)
+
+    drawCircle(lens.base)
+    drawCircle(
+        brush =
+            Brush.radialGradient(
+                0f to highlight,
+                0.46f to mid,
+                0.8f to edge,
+                center = Offset(size.width * 0.3f, size.height * 0.18f),
+                radius = size.maxDimension * 1.2f,
+            ),
+    )
+    drawCircle(Brush.verticalGradient(0.55f to Color.Transparent, 1f to Color.Black.copy(alpha = BOTTOM_SHADE_ALPHA)))
+    drawOval(
+        brush =
+            Brush.verticalGradient(
+                listOf(Color.White.copy(alpha = 0.4f), Color.Transparent),
+                startY = size.height * 0.06f,
+                endY = size.height * 0.34f,
+            ),
+        topLeft = Offset(size.width * 0.19f, size.height * 0.06f),
+        size = Size(size.width * 0.62f, size.height * 0.28f),
+    )
+    drawCircle(
+        color = lerp(lens.idleBorder, lerp(tint, Color.White, TINT_HIGHLIGHT_MIX), tintProgress),
+        radius = size.minDimension / 2 - 0.5.dp.toPx(),
+        style = Stroke(width = 1.dp.toPx()),
+    )
 }

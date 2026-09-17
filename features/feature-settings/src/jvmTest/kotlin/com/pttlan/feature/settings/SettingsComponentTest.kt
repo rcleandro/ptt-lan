@@ -115,6 +115,17 @@ class SettingsComponentTest {
         }
 
     @Test
+    fun `ToggleReduceTransparency intent updates state and settings`() =
+        runTest(testDispatcher) {
+            val component = createComponent()
+
+            component.onIntent(SettingsIntent.ToggleReduceTransparency(true))
+
+            assertEquals(true, component.state.value.reduceTransparency)
+            verify(exactly = 1) { settings.putBoolean("reduce_transparency", true) }
+        }
+
+    @Test
     fun `ToggleAlwaysListening intent updates state and settings`() =
         runTest(testDispatcher) {
             val component = createComponent()

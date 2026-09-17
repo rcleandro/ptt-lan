@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#262D33"/>
+      <stop offset="1" stop-color="#0E1114"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#E0915A" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#E0915A" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="lens" cx="0.3" cy="0.18" r="1.2">
+      <stop offset="0" stop-color="#FFE6D2"/>
+      <stop offset="0.42" stop-color="#E0915A"/>
+      <stop offset="0.8" stop-color="#9C552A"/>
+    </radialGradient>
+    <linearGradient id="shade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.55" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.22"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="14"/>
+      <feOffset dy="10" result="blur"/>
+      <feFlood flood-color="#000000" flood-opacity="0.35"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <clipPath id="shape"><rect x="100" y="100" width="824" height="824" rx="185"/></clipPath>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)" filter="url(#shadow)"/>
+  <g clip-path="url(#shape)">
+  <circle cx="512" cy="512" r="501.4" fill="url(#glow)"/>
+  <circle cx="512" cy="512" r="274.68" fill="none" stroke="#E0915A" stroke-opacity="0.45" stroke-width="3.92"/>
+  <circle cx="512" cy="512" r="327" fill="none" stroke="#E0915A" stroke-opacity="0.22" stroke-width="3.92"/>
+  <circle cx="512" cy="512" r="218" fill="url(#lens)"/>
+  <circle cx="512" cy="512" r="218" fill="url(#shade)"/>
+  <linearGradient id="spec218" gradientUnits="userSpaceOnUse" x1="0" y1="328.88" x2="0" y2="450.96">
+    <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.55"/>
+    <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+  </linearGradient>
+  <ellipse cx="512" cy="389.92" rx="135.16" ry="61.04" fill="url(#spec218)"/>
+  <circle cx="512" cy="512" r="215.82" fill="none" stroke="#FFD6B4" stroke-opacity="0.55" stroke-width="4.36"/>
+  <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z" fill="#2A160A" transform="translate(370.3 370.3) scale(11.81)"/>
+  </g>
+  <rect x="100.5" y="100.5" width="823" height="823" rx="184.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.08"/>
+</svg>
