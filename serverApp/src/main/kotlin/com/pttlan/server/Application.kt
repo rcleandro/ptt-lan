@@ -3,6 +3,7 @@ package com.pttlan.server
 import com.pttlan.server.auth.JwtConfig
 import com.pttlan.server.channel.ChannelRegistry
 import com.pttlan.server.redis.RedisManager
+import com.pttlan.server.routing.adminPassword
 import com.pttlan.server.routing.authRoutes
 import com.pttlan.server.routing.dashboardRoutes
 import com.pttlan.server.routing.pttRoutes
@@ -12,6 +13,8 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
+import io.ktor.server.auth.UserIdPrincipal
+import io.ktor.server.auth.basic
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.netty.EngineMain
@@ -30,6 +33,7 @@ import java.io.File
 import java.net.Inet4Address
 import java.net.InetAddress
 import java.net.NetworkInterface
+import java.security.MessageDigest
 import javax.jmdns.JmDNS
 import javax.jmdns.ServiceInfo
 import kotlin.time.Duration.Companion.seconds
@@ -86,7 +90,21 @@ fun Application.module() {
         redisManager.stop()
     }
 
+    val adminPassword = adminPassword()
+
     install(Authentication) {
+        basic("auth-admin") {
+            realm = "PTT-LAN Admin"
+            validate { credentials ->
+                val password = adminPassword
+                val matches =
+                    password != null &&
+                        credentials.name == "admin" &&
+                        MessageDigest.isEqual(credentials.password.toByteArray(), password.toByteArray())
+                if (matches) UserIdPrincipal(credentials.name) else null
+            }
+        }
+
         jwt("auth-jwt") {
             realm = "PTT-LAN Server"
             verifier(JwtConfig.verifier)
@@ -116,7 +134,7 @@ fun Application.module() {
     routing {
         authRoutes()
         pttRoutes()
-        dashboardRoutes()
+        dashboardRoutes(adminEnabled = adminPassword != null)
     }
 }
 

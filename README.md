@@ -27,7 +27,8 @@ Nenhum desenvolvedor ou agente de IA deve introduzir novas tecnologias ou mudar 
 2. Tenha o **JDK 21** instalado (o mesmo usado pelo CI e pela imagem Docker).
 3. Abra o projeto no **Android Studio** ou **IntelliJ IDEA**.
 4. Compile e rode:
-   - Servidor: `./gradlew :serverApp:run` — HTTP na porta **9393**, HTTPS/WSS na **9443** (os clientes usam a 9443). Na primeira execução é gerado um certificado self-signed em `serverApp/build/keystore.jks`.
+   - Servidor: `./gradlew :serverApp:run` — HTTPS/WSS na porta **9443** (único conector; o HTTP em claro foi desligado). Na primeira execução é gerado um certificado self-signed em `serverApp/build/keystore.jks`.
+   - Painel admin: `https://localhost:9443/admin`. Defina `PTT_ADMIN_PASSWORD` para protegê-lo com Basic auth (usuário `admin`); sem a variável, as rotas de escrita (`restart`, `shutdown`, `broadcast`, `kick`, `delete`) ficam desligadas.
    - Android: `./gradlew :androidApp:installDebug`
    - Desktop: `./gradlew :desktopApp:run`
    - iOS: `cd iosApp && xcodegen`, depois abra `iosApp.xcodeproj` no Xcode.
@@ -37,7 +38,7 @@ Nenhum desenvolvedor ou agente de IA deve introduzir novas tecnologias ou mudar 
 
 ```bash
 docker build -t ptt-lan-server .
-docker run -p 9393:9393 -p 9443:9443 ptt-lan-server
+docker run -p 9443:9443 -e PTT_ADMIN_PASSWORD=troque-isto ptt-lan-server
 ```
 
 A cada push na `main`, o CI publica a imagem multi-arquitetura (amd64/arm64) em `ghcr.io/rcleandro/ptt-lan`.
