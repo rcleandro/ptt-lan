@@ -37,8 +37,12 @@ fun createHttpClient(): HttpClient =
         install(Logging) {
             logger =
                 object : Logger {
+                    private val kermit =
+                        co.touchlab.kermit.Logger
+                            .withTag("network")
+
                     override fun log(message: String) {
-                        println(message)
+                        kermit.d { message }
                     }
                 }
             level = LogLevel.INFO

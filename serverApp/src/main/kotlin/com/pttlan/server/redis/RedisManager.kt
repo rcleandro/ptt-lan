@@ -15,8 +15,11 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 
 @OptIn(ExperimentalLettuceCoroutinesApi::class)
+private val logger = LoggerFactory.getLogger(RedisManager::class.java)
+
 class RedisManager(
     private val redisUri: String = "redis://localhost:6379",
 ) {
@@ -34,9 +37,9 @@ class RedisManager(
         try {
             connection = client.connect()
             pubSubConnection = client.connectPubSub()
-            println("RedisManager: Connected to Redis successfully.")
+            logger.info("Connected to Redis")
         } catch (e: Exception) {
-            println("RedisManager: Failed to connect to Redis: ${e.message}")
+            logger.warn("Failed to connect to Redis: {}", e.message)
         }
 
         pubSubConnection?.addListener(

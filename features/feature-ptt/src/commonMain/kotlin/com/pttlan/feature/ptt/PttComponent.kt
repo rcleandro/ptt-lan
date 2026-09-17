@@ -1,5 +1,6 @@
 package com.pttlan.feature.ptt
 
+import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.Lifecycle
 import com.pttlan.core.network.protocol.ParticipantDto
@@ -73,6 +74,7 @@ class PttComponent(
 ) : ComponentContext by componentContext,
     KoinComponent {
     private val settings: Settings by inject()
+    private val logger = Logger.withTag("ptt")
 
     private val _state = MutableStateFlow(PttState(channelId = channelId, localUserId = userId))
     val state: StateFlow<PttState> = _state.asStateFlow()
@@ -131,7 +133,7 @@ class PttComponent(
                         try {
                             leaveChannelUseCase(channelId = channelId, userId = userId)
                         } catch (e: Exception) {
-                            e.printStackTrace()
+                            logger.w(e) { "Failed to leave channel $channelId" }
                         }
                     }
                     scope.cancel()

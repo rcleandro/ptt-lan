@@ -2,6 +2,7 @@
 
 package com.pttlan.core.audio
 
+import co.touchlab.kermit.Logger
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCObjectVar
 import kotlinx.cinterop.alloc
@@ -35,6 +36,8 @@ import platform.AVFoundation.AVMediaTypeAudio
 import platform.AVFoundation.authorizationStatusForMediaType
 import platform.AVFoundation.requestAccessForMediaType
 import platform.Foundation.NSError
+
+private val logger = Logger.withTag("audio")
 
 /** 20 ms at 48 kHz: the frame size Opus accepts and the same one Android and the JVM emit. */
 private const val FRAME_SAMPLES = 960
@@ -73,7 +76,7 @@ class IosAudioRecorder : AudioRecorder {
                     )
                 val converter = AVAudioConverter(fromFormat = inputFormat, toFormat = targetFormat)
                 if (converter == null) {
-                    close(IllegalStateException("Não foi possível converter ${inputFormat.sampleRate}Hz para $sampleRate Hz"))
+                    close(IllegalStateException("Cannot convert ${inputFormat.sampleRate}Hz to $sampleRate Hz"))
                     return@callbackFlow
                 }
 
@@ -96,9 +99,9 @@ class IosAudioRecorder : AudioRecorder {
                 engine.prepare()
                 engine.startAndReturnError(null)
                 isRecording = true
-                println("IosAudioRecorder: Captura de áudio iniciada com sucesso em ${inputFormat.sampleRate}Hz.")
+                logger.i { "Capture started at ${inputFormat.sampleRate}Hz" }
             } catch (e: Exception) {
-                println("IosAudioRecorder: Erro ao iniciar gravação: ${e.message}")
+                logger.e(e) { "Failed to start recording" }
                 close(e)
             }
 
@@ -115,9 +118,9 @@ class IosAudioRecorder : AudioRecorder {
             audioEngine?.stop()
             audioEngine = null
             isRecording = false
-            println("IosAudioRecorder: Gravação interrompida com sucesso.")
+            logger.i { "Recording stopped" }
         } catch (e: Exception) {
-            println("IosAudioRecorder: Erro ao parar gravação: ${e.message}")
+            logger.e(e) { "Failed to stop recording" }
         }
     }
 }
@@ -240,7 +243,7 @@ class IosAudioPlayer : AudioPlayer {
                 player.play()
             }
         } catch (e: Exception) {
-            println("IosAudioPlayer: Erro ao reproduzir áudio: ${e.message}")
+            logger.e(e) { "Failed to play audio" }
         }
     }
 
@@ -251,9 +254,9 @@ class IosAudioPlayer : AudioPlayer {
             playerNode = null
             audioEngine = null
             isPlaying = false
-            println("IosAudioPlayer: Reprodução parada com sucesso.")
+            logger.i { "Playback stopped" }
         } catch (e: Exception) {
-            println("IosAudioPlayer: Erro ao parar reprodução: ${e.message}")
+            logger.e(e) { "Failed to stop playback" }
         }
     }
 }

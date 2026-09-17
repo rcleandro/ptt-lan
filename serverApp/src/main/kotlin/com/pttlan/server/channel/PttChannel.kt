@@ -123,7 +123,7 @@ class PttChannel(
                     if (elapsed > SLOW_CONNECTION_THRESHOLD_MS) {
                         slowSends.incrementAndGet()
                         logger.debug(
-                            "PttChannel[{}]: envio para {} demorou {}ms (conexão lenta?)",
+                            "PttChannel[{}]: send to {} took {}ms (slow connection?)",
                             id,
                             participant.nickname,
                             elapsed,
@@ -131,7 +131,7 @@ class PttChannel(
                     }
                 } catch (e: Exception) {
                     logger.debug(
-                        "PttChannel[{}]: falha ao enviar áudio para {}: {}",
+                        "PttChannel[{}]: failed to send audio to {}: {}",
                         id,
                         participant.userId,
                         e.message,
@@ -154,7 +154,7 @@ class PttChannel(
             mutex.withLock {
                 if (currentSpeakerId != senderUserId) {
                     logger.debug(
-                        "PttChannel[{}]: descartando áudio de {}, o speaker atual é {}",
+                        "PttChannel[{}]: dropping audio from {}, current speaker is {}",
                         id,
                         senderUserId,
                         currentSpeakerId,
@@ -170,7 +170,7 @@ class PttChannel(
 
         val data = frame.data
         logger.debug(
-            "PttChannel[{}]: áudio de {} bytes de {} para {} ouvintes",
+            "PttChannel[{}]: {} bytes of audio from {} to {} listeners",
             id,
             data.size,
             senderUserId,

@@ -1,5 +1,6 @@
 package com.pttlan.core.network
 
+import co.touchlab.kermit.Logger
 import com.pttlan.core.network.protocol.AudioEnvelope
 import com.pttlan.core.network.protocol.ControlMessage
 import com.pttlan.core.network.protocol.LoginRequest
@@ -44,6 +45,7 @@ class PttWebSocketClient(
     private val httpClient: HttpClient,
     private val maxReconnectAttempts: Int = DEFAULT_MAX_RECONNECT_ATTEMPTS,
 ) {
+    private val logger = Logger.withTag("network")
     private var session: DefaultClientWebSocketSession? = null
     private val sessionMutex = Mutex()
 
@@ -107,7 +109,7 @@ class PttWebSocketClient(
                 val cleanHost = normalizeHost(host)
                 sessionMutex.withLock {
                     if (session != null) return@withLock
-                    println("PttWebSocketClient: Tentando conectar a wss://$cleanHost:$port/ws com token")
+                    logger.d { "Connecting to wss://$cleanHost:$port/ws" }
                     val timeout = if (isLocal) 5.seconds else 15.seconds
                     session =
                         withTimeout(timeout) {
@@ -115,7 +117,7 @@ class PttWebSocketClient(
                         }
                 }
 
-                println("PttWebSocketClient: Conectado com sucesso!")
+                logger.i { "Connected" }
                 lastCloseReason = null
                 if (hadConnected) {
                     lastJoinChannel?.let { sendControlMessage(it) }
@@ -137,7 +139,7 @@ class PttWebSocketClient(
                                 val message = Json.decodeFromString<ControlMessage>(text)
                                 _controlMessages.emit(message)
                             } catch (e: Exception) {
-                                e.printStackTrace()
+                                logger.w(e) { "Invalid control message" }
                             }
                         }
 
@@ -150,7 +152,7 @@ class PttWebSocketClient(
                                 val chunk = buffer.readByteArray()
                                 _audioChunks.emit(Pair(envelope, chunk))
                             } catch (e: Exception) {
-                                e.printStackTrace()
+                                logger.w(e) { "Invalid audio envelope" }
                                 _audioChunks.emit(Pair(null, frame.data))
                             }
                         }
@@ -169,8 +171,7 @@ class PttWebSocketClient(
                     throw ServerRefusedException(reason)
                 }
             } catch (e: Exception) {
-                println("PttWebSocketClient: Falha ao conectar: ${e.message}")
-                e.printStackTrace()
+                logger.w(e) { "Connection lost" }
                 // A refusal is rethrown even mid-session: otherwise the reason dies here and the UI only ever
                 // learns that the connection dropped.
                 if (isFirstAttempt || e is ServerRefusedException) {
@@ -188,7 +189,7 @@ class PttWebSocketClient(
             if (shouldReconnect) {
                 failedAttempts++
                 if (failedAttempts >= maxReconnectAttempts) {
-                    println("PttWebSocketClient: $maxReconnectAttempts tentativas de reconexão sem sucesso, desistindo")
+                    logger.w { "Giving up after $maxReconnectAttempts failed reconnection attempts" }
                     shouldReconnect = false
                     break
                 }
@@ -225,7 +226,7 @@ class PttWebSocketClient(
             val json = Json.encodeToString(message)
             session?.send(Frame.Text(json))
         } catch (e: Exception) {
-            e.printStackTrace()
+            logger.w(e) { "Failed to send over the WebSocket" }
             _isConnected.value = false
             try {
                 sessionMutex.withLock {
@@ -253,7 +254,7 @@ class PttWebSocketClient(
 
             session?.send(Frame.Binary(true, buffer.readByteArray()))
         } catch (e: Exception) {
-            e.printStackTrace()
+            logger.w(e) { "Failed to send over the WebSocket" }
             _isConnected.value = false
             try {
                 sessionMutex.withLock {

@@ -30,7 +30,7 @@ class OpusAudioCodec(
             } catch (e: Exception) {
                 // Opus only accepts 120/240/480/960/1920/2880 samples per frame; silence here used to look
                 // exactly like a working encoder sending nothing.
-                logger.e(e) { "Falha ao codificar frame de ${shortArray.size} amostras em Opus" }
+                logger.e(e) { "Failed to encode a ${shortArray.size} sample frame with Opus" }
                 0
             }
         return if (encodedBytes > 0) outData.copyOfRange(0, encodedBytes) else ByteArray(0)
@@ -51,7 +51,7 @@ class OpusAudioCodec(
                     decodeFec = false,
                 )
             } catch (e: Exception) {
-                logger.e(e) { "Falha ao decodificar ${encoded.size} bytes de Opus" }
+                logger.e(e) { "Failed to decode ${encoded.size} bytes of Opus" }
                 0
             }
         return if (decodedSamples > 0) {

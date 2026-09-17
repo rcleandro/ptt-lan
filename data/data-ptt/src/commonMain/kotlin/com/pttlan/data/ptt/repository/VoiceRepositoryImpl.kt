@@ -84,7 +84,7 @@ class VoiceRepositoryImpl(
                                     currentFileSink = FileSystem.SYSTEM.sink(path).buffer()
                                     currentAudioCrypto = AudioCrypto()
                                 } catch (e: Exception) {
-                                    e.printStackTrace()
+                                    logger.w(e) { "Failed to open the recording file" }
                                 }
                             }
                         }
@@ -159,7 +159,7 @@ class VoiceRepositoryImpl(
                             currentFileSink?.write(encrypted)
                         }
                     } catch (e: Exception) {
-                        e.printStackTrace()
+                        logger.w(e) { "Failed to store incoming audio" }
                     }
                 }.launchIn(scope)
     }
@@ -186,7 +186,7 @@ class VoiceRepositoryImpl(
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            logger.w(e) { "Failed to trim the history by size" }
         }
     }
 
@@ -230,12 +230,12 @@ class VoiceRepositoryImpl(
                             try {
                                 codec.encode(chunk)
                             } catch (e: Exception) {
-                                logger.e(e) { "Falha ao codificar áudio com $codecType" }
+                                logger.e(e) { "Failed to encode audio with $codecType" }
                                 ByteArray(0)
                             }
                         if (encoded.isEmpty()) {
                             // Sending the raw chunk instead would label PCM as Opus and break every listener
-                            logger.w { "Frame de ${chunk.size} bytes descartado: codificação vazia" }
+                            logger.w { "Dropped a ${chunk.size} byte frame: the encoder returned nothing" }
                             return@collect
                         }
                         val envelope =
@@ -254,7 +254,7 @@ class VoiceRepositoryImpl(
                                 currentFileSink?.write(encrypted)
                             }
                         } catch (e: Exception) {
-                            e.printStackTrace()
+                            logger.w(e) { "Failed to store outgoing audio" }
                         }
                     }
             }
@@ -328,7 +328,7 @@ class VoiceRepositoryImpl(
                     }
                     source.close()
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    logger.w(e) { "Failed to play a message from the history" }
                 } finally {
                     audioPlayer.stop()
                     currentPlaybackMessageId = null
@@ -371,7 +371,7 @@ class VoiceRepositoryImpl(
                 FileSystem.SYSTEM.delete(file)
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            logger.w(e) { "Failed to delete audio files" }
         }
     }
 
@@ -384,7 +384,7 @@ class VoiceRepositoryImpl(
             val path = message.filePath.toPath()
             FileSystem.SYSTEM.delete(path)
         } catch (e: Exception) {
-            e.printStackTrace()
+            logger.w(e) { "Failed to delete the message file" }
         }
     }
 
@@ -398,7 +398,7 @@ class VoiceRepositoryImpl(
                 val path = message.filePath.toPath()
                 FileSystem.SYSTEM.delete(path)
             } catch (e: Exception) {
-                e.printStackTrace()
+                logger.w(e) { "Failed to delete purged files" }
             }
         }
         database.voiceMessageQueries.deleteAllByChannel(channelId)

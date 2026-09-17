@@ -14,6 +14,7 @@ kotlin {
             implementation(projects.core.coreDatastore)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.koin.core)
+            implementation(libs.kermit)
             implementation(libs.koin.compose)
             implementation(libs.material.icons.extended)
             api(libs.decompose)

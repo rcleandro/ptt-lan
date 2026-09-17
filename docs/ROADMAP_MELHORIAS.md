@@ -228,6 +228,11 @@ com testes de integração cobrindo cada caso.
 - **Problema:** 44 `println`/`printStackTrace` em servidor, core, data e features. Kermit está configurado no Koin, mas quase não é usado. O Logback do servidor fica sem uso.
 - **Ação:** servidor usa SLF4J (`call.application.log` ou `LoggerFactory`), com nível configurável em `logback.xml`. Clientes usam `Logger.withTag("network"|"audio"|…)`.
   Regra do Detekt `ForbiddenMethodCall` para `println`/`printStackTrace` fora de testes.
+- **Implementado:** os 44 `println`/`printStackTrace` de produção viraram SLF4J no servidor (`logback.xml` novo, nível por
+  `PTT_LOG_LEVEL`, logs de pacote do `PttChannel` em `debug`) e Kermit nos clientes (`network`, `audio`, `ptt`).
+  Mensagens de log passaram a ser escritas em inglês. A regra `ForbiddenMethodCall` foi ativada no `detekt.yml`, mas ela só
+  roda com resolução de tipos (`detektMain`), que o build ainda não usa — então quem cobra hoje é a task `checkNoPrintln`
+  (raiz), da qual todo `detekt` depende. Trocar por `detektMain` fica para a 23.3, junto com o baseline.
 
 ### 21.5 Robustez do protocolo ✅ — M
 - **Problema:** as mensagens de controle usam o `Json` padrão (estrito) nos dois lados, então **adicionar um campo** quebra clientes antigos.

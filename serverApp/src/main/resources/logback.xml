@@ -1,0 +1,15 @@
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-5level %logger{28} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Per-packet audio logs live at DEBUG; raise this logger to see them while debugging a channel. -->
+    <logger name="com.pttlan.server.channel.PttChannel" level="INFO"/>
+    <logger name="io.netty" level="INFO"/>
+
+    <root level="${PTT_LOG_LEVEL:-INFO}">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>
