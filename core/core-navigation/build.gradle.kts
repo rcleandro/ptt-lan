@@ -1,7 +1,7 @@
 plugins {
     id("ptt.kmp.library")
     id("ptt.compose.library")
-    kotlin("plugin.serialization") version "2.0.21"
+    alias(libs.plugins.serialization)
 }
 
 kotlin {

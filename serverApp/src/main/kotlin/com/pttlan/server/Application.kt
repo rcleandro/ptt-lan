@@ -78,7 +78,7 @@ fun Application.module() {
         )
     }
 
-    environment.monitor.subscribe(ApplicationStopped) {
+    monitor.subscribe(ApplicationStopped) {
         val koin =
             org.koin.java.KoinJavaComponent
                 .getKoin()
