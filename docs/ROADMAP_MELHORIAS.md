@@ -243,6 +243,12 @@ com testes de integração cobrindo cada caso.
   2. `PROTOCOL_VERSION` enviado na query do handshake. O servidor recusa versões incompatíveis com um close reason legível.
   3. (Opcional, medir antes) Cabeçalho binário fixo: `seq:Int32, timestamp:Int64, codec:Byte` (13 bytes). `channelId` e `senderId` saem do pacote,
      porque o servidor já sabe de quem é a sessão. Se fizer, registrar em ADR, já que o plano previa ProtoBuf.
+- **Implementado:** itens 1 e 2. `PttJson` (`ignoreUnknownKeys`, `encodeDefaults = false`) em `core-network` é usado por
+  cliente e servidor; `PROTOCOL_VERSION` vai na query do handshake e o servidor recusa versão diferente com close reason
+  legível — cliente antigo, que não manda o parâmetro, continua entrando. O `Heartbeat` saiu do protocolo: ninguém enviava,
+  o ping do WebSocket cobre a conexão e o watchdog da 20.4 cobre o floor. Testes: `ProtocolVersionTest` (servidor) e
+  `ProtocolCompatibilityTest` (campo novo de um par mais recente é ignorado).
+  O item 3 (cabeçalho binário) fica de fora: o roadmap pede medir antes, e ainda não há medição.
 
 ### 21.6 Arquivos órfãos no histórico ✅ — P
 - **Problema:** o expurgo de 50 mensagens por canal apaga só as linhas do banco (`VoiceRepositoryImpl.kt:120-122`). Os `.pcm` ficam no disco

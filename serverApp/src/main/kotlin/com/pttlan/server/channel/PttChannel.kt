@@ -1,5 +1,6 @@
 package com.pttlan.server.channel
 
+import com.pttlan.core.network.PttJson
 import com.pttlan.core.network.protocol.ControlMessage
 import com.pttlan.core.network.protocol.ParticipantDto
 import io.ktor.server.websocket.DefaultWebSocketServerSession
@@ -14,7 +15,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
@@ -98,7 +98,7 @@ class PttChannel(
 
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
     suspend fun broadcast(message: ControlMessage) {
-        val json = Json.encodeToString(message)
+        val json = PttJson.encodeToString(message)
         val snapshot = mutex.withLock { participants.values.toList() }
 
         snapshot.forEach {

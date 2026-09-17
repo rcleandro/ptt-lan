@@ -131,7 +131,6 @@ Um WebSocket por cliente em `/ws`.
 | `join_channel` | C→S | channelId, nickname, userId |
 | `leave_channel` | C→S | channelId, userId |
 | `start_speaking` / `stop_speaking` | C→S | channelId, userId |
-| `heartbeat` | C→S | userId (servidor ignora) |
 | `participant_list` | S→C | channelId, participants[userId, nickname, isSpeaking] |
 | `speaker_changed` | S→C | channelId, userId, nickname, isSpeaking |
 | `floor_denied` | S→C | channelId, reason |
@@ -158,7 +157,8 @@ Existe teste de round-trip em `ControlMessageTest`.
   O login não tem senha: qualquer nickname/deviceId não vazio recebe token. O servidor gera o `userId` (claim `sub`)
   e o devolve em `LoginResponse`.
 - `/ws`: exige `?token=`; `userId` e `nickname` vêm só do token (os das mensagens são ignorados); nickname precisa ser único (case-insensitive) entre conexões — senão fecha com "Nome já em uso".
-  Query param `version` (constante `APP_VERSION` do cliente, 20.5) aparece no painel.
+  Query param `version` (constante `APP_VERSION` do cliente, 20.5) aparece no painel; `protocol` (`PROTOCOL_VERSION`, 21.5)
+  é recusado quando diverge do servidor. As duas pontas serializam com `PttJson` (`ignoreUnknownKeys`).
 - `ChannelRegistry`: estado em memória (`ConcurrentHashMap`). Canal `Geral` sempre existe; canais vazios são removidos após 5 min.
   Guarda logs (últimos 100), tempo de fala por nickname e série temporal por minuto (30 min).
 - `PttChannel`: participantes + floor control com `Mutex`; áudio sai por uma fila por ouvinte
@@ -196,7 +196,7 @@ O plano é o SSOT de intenção, mas estes pontos refletem o código atual:
 | "Criptografia do stream" | Sobre TLS | Só TLS. `AudioCrypto` (RC4, chave fixa no código) protege apenas os arquivos de cache |
 | Redis / multi-instância (Fase 17) | Estado e pub/sub no Redis | `RedisManager` conecta em `redis://localhost:6379` (falha tolerada), mas `ChannelRegistry` **não usa** o Redis; estado continua em memória e não há distribuição entre instâncias |
 | Admin | — | Basic auth com `PTT_ADMIN_PASSWORD`; sem a variável, leitura (`metrics`, `logs/csv`) segue aberta e as rotas de escrita ficam desligadas |
-| Floor control | Liberado também por timeout de heartbeat; regra replicada no domain | O `Heartbeat` continua ignorado, mas o watchdog de inatividade da 20.4 cobre o caso; regra só existe no servidor |
+| Floor control | Liberado também por timeout de heartbeat; regra replicada no domain | O `Heartbeat` saiu do protocolo (21.5); quem cobre é o watchdog de inatividade da 20.4, e a regra só existe no servidor |
 | Dependências entre módulos | `core-di` não conhece features; features não usam `core-network` | `core-di` e `core-navigation` dependem de todas as features; `feature-ptt` usa `ParticipantDto` de `core-network`. Não há regra automática (17.3) |
 | Engine do client | CIO | OkHttp (Android/JVM), Darwin (iOS) |
 | Limites Detekt | Classe 300 / função 40 linhas | `LargeClass` 600 / `LongMethod` 60 em `config/detekt/detekt.yml` |

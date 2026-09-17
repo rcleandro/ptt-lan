@@ -28,7 +28,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.serialization.json.Json
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -113,7 +112,10 @@ class PttWebSocketClient(
                     val timeout = if (isLocal) 5.seconds else 15.seconds
                     session =
                         withTimeout(timeout) {
-                            httpClient.webSocketSession("wss://$cleanHost:$port/ws?token=$token&version=$APP_VERSION")
+                            httpClient.webSocketSession(
+                                "wss://$cleanHost:$port/ws" +
+                                    "?token=$token&version=$APP_VERSION&protocol=$PROTOCOL_VERSION",
+                            )
                         }
                 }
 
@@ -136,7 +138,7 @@ class PttWebSocketClient(
                         is Frame.Text -> {
                             val text = frame.readText()
                             try {
-                                val message = Json.decodeFromString<ControlMessage>(text)
+                                val message = PttJson.decodeFromString<ControlMessage>(text)
                                 _controlMessages.emit(message)
                             } catch (e: Exception) {
                                 logger.w(e) { "Invalid control message" }
@@ -148,7 +150,7 @@ class PttWebSocketClient(
                                 val buffer = okio.Buffer().write(frame.data)
                                 val envLen = buffer.readInt()
                                 val envJson = buffer.readByteArray(envLen.toLong()).decodeToString()
-                                val envelope = Json.decodeFromString<AudioEnvelope>(envJson)
+                                val envelope = PttJson.decodeFromString<AudioEnvelope>(envJson)
                                 val chunk = buffer.readByteArray()
                                 _audioChunks.emit(Pair(envelope, chunk))
                             } catch (e: Exception) {
@@ -223,7 +225,7 @@ class PttWebSocketClient(
             else -> {}
         }
         try {
-            val json = Json.encodeToString(message)
+            val json = PttJson.encodeToString(message)
             session?.send(Frame.Text(json))
         } catch (e: Exception) {
             logger.w(e) { "Failed to send over the WebSocket" }
@@ -244,7 +246,7 @@ class PttWebSocketClient(
         chunk: ByteArray,
     ) {
         try {
-            val envJson = Json.encodeToString(envelope).encodeToByteArray()
+            val envJson = PttJson.encodeToString(envelope).encodeToByteArray()
             val envLen = envJson.size
 
             val buffer = okio.Buffer()

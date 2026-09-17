@@ -1,6 +1,8 @@
 
 package com.pttlan.server.routing
 
+import com.pttlan.core.network.PROTOCOL_VERSION
+import com.pttlan.core.network.PttJson
 import com.pttlan.core.network.protocol.ControlMessage
 import com.pttlan.server.auth.JwtConfig
 import com.pttlan.server.channel.ChannelRegistry
@@ -12,7 +14,6 @@ import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
-import kotlinx.serialization.json.Json
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 
@@ -27,6 +28,19 @@ fun Routing.pttRoutes() {
         var currentChannelId: String? = null
 
         try {
+            val protocol = call.request.queryParameters["protocol"]?.toIntOrNull()
+            // A client from before 21.5 sends no protocol at all; it speaks version 1, so it is let through.
+            if (protocol != null && protocol != PROTOCOL_VERSION) {
+                logger.info("Refusing client with protocol {} (server speaks {})", protocol, PROTOCOL_VERSION)
+                close(
+                    CloseReason(
+                        CloseReason.Codes.VIOLATED_POLICY,
+                        "Versão do app incompatível com o servidor. Atualize o aplicativo.",
+                    ),
+                )
+                return@webSocket
+            }
+
             val token = call.request.queryParameters["token"]
             if (token.isNullOrBlank()) {
                 close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Token JWT ausente"))
@@ -61,7 +75,7 @@ fun Routing.pttRoutes() {
                     is Frame.Text -> {
                         val text = frame.readText()
                         try {
-                            when (val message = Json.decodeFromString<ControlMessage>(text)) {
+                            when (val message = PttJson.decodeFromString<ControlMessage>(text)) {
                                 is ControlMessage.JoinChannel -> {
                                     currentChannelId = message.channelId
                                     logger.info("User {} ({}) joined channel {}", nickname, userId, message.channelId)
@@ -100,7 +114,7 @@ fun Routing.pttRoutes() {
                                         logger.debug("Floor granted to {}: {}", userId, granted)
                                         if (!granted) {
                                             val json =
-                                                Json.encodeToString<ControlMessage>(
+                                                PttJson.encodeToString<ControlMessage>(
                                                     ControlMessage.FloorDenied(message.channelId, "Alguém já está falando"),
                                                 )
                                             send(Frame.Text(json))
@@ -114,10 +128,6 @@ fun Routing.pttRoutes() {
                                     logger.debug("User {} released the floor on channel {}", userId, message.channelId)
                                     val channel = channelRegistry.getChannel(message.channelId)
                                     channel?.releaseFloor(userId)
-                                }
-
-                                is ControlMessage.Heartbeat -> {
-                                    // Could track last heartbeat for automatic cleanup
                                 }
 
                                 else -> {} // ParticipantList, SpeakerChanged, FloorDenied are Server -> Client
