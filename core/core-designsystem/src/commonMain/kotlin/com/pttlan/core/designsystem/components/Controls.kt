@@ -91,10 +91,17 @@ fun PillButton(
         }
     val container =
         when (style) {
-            PillButtonStyle.Primary -> Modifier.clip(CircleShape).background(MaterialTheme.colorScheme.primary)
-            PillButtonStyle.Glass, PillButtonStyle.GlassDestructive -> Modifier.glass(CircleShape)
-            PillButtonStyle.Destructive ->
+            PillButtonStyle.Primary -> {
+                Modifier.clip(CircleShape).background(MaterialTheme.colorScheme.primary)
+            }
+
+            PillButtonStyle.Glass, PillButtonStyle.GlassDestructive -> {
+                Modifier.glass(CircleShape)
+            }
+
+            PillButtonStyle.Destructive -> {
                 Modifier.clip(CircleShape).background(colors.statusOffline.copy(alpha = DESTRUCTIVE_FILL_ALPHA))
+            }
         }
 
     Row(

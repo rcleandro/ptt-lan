@@ -74,6 +74,7 @@ fun Routing.pttRoutes() {
                                     channel.addParticipant(participant)
                                     channelRegistry.broadcastActiveChannels()
                                 }
+
                                 is ControlMessage.LeaveChannel -> {
                                     val channel = channelRegistry.getChannel(message.channelId)
                                     val participantNickname = channel?.getParticipant(message.userId)?.nickname ?: "Desconhecido"
@@ -82,6 +83,7 @@ fun Routing.pttRoutes() {
                                     channelRegistry.scheduleCleanupIfEmpty(message.channelId)
                                     channelRegistry.broadcastActiveChannels()
                                 }
+
                                 is ControlMessage.StartSpeaking -> {
                                     println("PttRoutes: Usuário ${message.userId} solicitou falar no canal ${message.channelId}")
                                     val channel = channelRegistry.getChannel(message.channelId)
@@ -99,20 +101,24 @@ fun Routing.pttRoutes() {
                                         println("PttRoutes: AVISO - Canal ${message.channelId} não encontrado ao solicitar fala")
                                     }
                                 }
+
                                 is ControlMessage.StopSpeaking -> {
                                     println("PttRoutes: Usuário ${message.userId} liberou a fala no canal ${message.channelId}")
                                     val channel = channelRegistry.getChannel(message.channelId)
                                     channel?.releaseFloor(message.userId)
                                 }
+
                                 is ControlMessage.Heartbeat -> {
                                     // Could track last heartbeat for automatic cleanup
                                 }
+
                                 else -> {} // ParticipantList, SpeakerChanged, FloorDenied are Server -> Client
                             }
                         } catch (e: Exception) {
                             println("Error in connection: ${e.message}")
                         }
                     }
+
                     is Frame.Binary -> {
                         if (currentChannelId != null && currentUserId != null) {
                             val channel = channelRegistry.getChannel(currentChannelId)
@@ -127,6 +133,7 @@ fun Routing.pttRoutes() {
                             }
                         }
                     }
+
                     else -> {}
                 }
             }

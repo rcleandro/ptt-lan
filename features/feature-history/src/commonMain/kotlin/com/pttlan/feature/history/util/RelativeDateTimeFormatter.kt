@@ -36,10 +36,12 @@ fun Instant.toRelativeDisplay(
                 "há ${pluralize(seconds, "segundo", "segundos")}"
             }
         }
+
         duration < 1.hours -> {
             val minutes = duration.inWholeMinutes
             "há ${pluralize(minutes, "minuto", "minutos")}"
         }
+
         duration < recentThreshold -> {
             val hours = duration.inWholeHours
             val minutesPart = (duration - hours.hours).inWholeMinutes
@@ -50,7 +52,10 @@ fun Instant.toRelativeDisplay(
                 "há $horasTexto e ${pluralize(minutesPart, "minuto", "minutos")}"
             }
         }
-        else -> formatFullDateTime(timeZone)
+
+        else -> {
+            formatFullDateTime(timeZone)
+        }
     }
 }
 

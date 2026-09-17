@@ -99,26 +99,32 @@ class SettingsComponent(
                 settings.putString("nickname", intent.nickname)
                 _state.update { it.copy(nickname = intent.nickname) }
             }
+
             is SettingsIntent.ToggleOpus -> {
                 settings.putBoolean("use_opus", intent.enabled)
                 _state.update { it.copy(useOpus = intent.enabled) }
             }
+
             is SettingsIntent.ChangeTheme -> {
                 settings.putInt("app_theme", intent.theme.ordinal)
                 _state.update { it.copy(appTheme = intent.theme) }
             }
+
             is SettingsIntent.ToggleReduceTransparency -> {
                 settings.putBoolean("reduce_transparency", intent.enabled)
                 _state.update { it.copy(reduceTransparency = intent.enabled) }
             }
+
             is SettingsIntent.ToggleAlwaysListening -> {
                 settings.putBoolean("always_listening", intent.enabled)
                 _state.update { it.copy(alwaysListening = intent.enabled) }
             }
+
             is SettingsIntent.ToggleAllowCache -> {
                 settings.putBoolean("allow_cache", intent.enabled)
                 _state.update { it.copy(allowCache = intent.enabled) }
             }
+
             is SettingsIntent.ChangeCacheLocation -> {
                 settings.putString("cache_location", intent.location)
                 _state.update {
@@ -128,10 +134,12 @@ class SettingsComponent(
                     )
                 }
             }
+
             is SettingsIntent.ChangeMaxCacheSize -> {
                 settings.putInt("max_cache_size_mb", intent.sizeMb)
                 _state.update { it.copy(maxCacheSizeMb = intent.sizeMb) }
             }
+
             is SettingsIntent.ClearCache -> {
                 scope.launch {
                     voiceRepository.clearAllMessages()

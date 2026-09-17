@@ -127,6 +127,7 @@ class PttWebSocketClient(
                                 e.printStackTrace()
                             }
                         }
+
                         is Frame.Binary -> {
                             try {
                                 val buffer = okio.Buffer().write(frame.data)
@@ -140,6 +141,7 @@ class PttWebSocketClient(
                                 _audioChunks.emit(Pair(null, frame.data))
                             }
                         }
+
                         else -> {}
                     }
                 }

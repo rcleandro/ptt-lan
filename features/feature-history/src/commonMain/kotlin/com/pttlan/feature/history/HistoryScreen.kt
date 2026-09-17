@@ -317,11 +317,18 @@ fun VoiceMessageItem(
             Text(
                 text =
                     when {
-                        isPlaying && isPaused -> "pausado · ${formatDuration(message.durationMs)}"
-                        isPlaying -> "tocando · ${formatDuration(message.durationMs)}"
-                        else ->
+                        isPlaying && isPaused -> {
+                            "pausado · ${formatDuration(message.durationMs)}"
+                        }
+
+                        isPlaying -> {
+                            "tocando · ${formatDuration(message.durationMs)}"
+                        }
+
+                        else -> {
                             "${Instant.fromEpochMilliseconds(message.recordedAt).toRelativeDisplay()} · " +
                                 formatDuration(message.durationMs)
+                        }
                     },
                 style = MaterialTheme.typography.labelSmall,
                 color = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,

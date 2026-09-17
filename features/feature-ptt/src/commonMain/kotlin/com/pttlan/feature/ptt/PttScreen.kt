@@ -212,11 +212,21 @@ private fun StatusBlock(
     val colors = PttTheme.customColors
     val (eyebrow, color: Color, headline) =
         when (buttonState) {
-            PttButtonState.Idle -> Triple("Canal livre", colors.statusOnline, "Segure para falar")
-            PttButtonState.Requesting -> Triple("Pedindo a palavra", colors.accentTx, "Aguardando…")
-            PttButtonState.Transmitting -> Triple("Transmitindo", colors.accentTx, "Você está no ar")
-            PttButtonState.Receiving ->
+            PttButtonState.Idle -> {
+                Triple("Canal livre", colors.statusOnline, "Segure para falar")
+            }
+
+            PttButtonState.Requesting -> {
+                Triple("Pedindo a palavra", colors.accentTx, "Aguardando…")
+            }
+
+            PttButtonState.Transmitting -> {
+                Triple("Transmitindo", colors.accentTx, "Você está no ar")
+            }
+
+            PttButtonState.Receiving -> {
                 Triple("Recebendo", MaterialTheme.colorScheme.primary, "${speakerName ?: "Alguém"} está falando")
+            }
         }
 
     Column(
