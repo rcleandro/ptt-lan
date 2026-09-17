@@ -105,11 +105,16 @@ Cada fase segue a regra 22.4 do plano: testes novos ou atualizados, nenhuma regr
   (`JwtConfig.kt:13`), então qualquer reinício ou deploy desloga todos e impede ter mais de uma instância.
 - **Ação:** ler `PTT_JWT_SECRET` e `PTT_KEYSTORE_PASSWORD` do ambiente, com o valor aleatório atual como fallback para LAN.
   Documentar no README e no Dockerfile.
+- **Implementado:** `JwtConfig` lê `PTT_JWT_SECRET` (fallback: UUID por boot); `main()` gera o keystore com `PTT_KEYSTORE_PASSWORD`
+  e o `application.conf` sobrescreve `keyStorePassword`/`privateKeyPassword` com a mesma variável (fallback `password`).
+  README ganhou a tabela de variáveis e o Dockerfile as declara.
 
 ### 19.5 Rate limit atrás de proxy reverso ✅ — P
 - **Problema:** `requestKey { origin.remoteHost }` (`Application.kt:106,112`) sem o plugin `XForwardedHeaders`. Atrás do proxy
   da Fase 15, todos os usuários dividem o mesmo IP e o mesmo limite de 5 logins/min.
 - **Ação:** instalar `XForwardedHeaders` só quando `PTT_TRUST_PROXY=true`, para não permitir spoofing de IP em LAN.
+- **Implementado:** o plugin é instalado sob `ptt.trustProxy` (env `PTT_TRUST_PROXY`). `ProxyRateLimitTest` cobre os dois lados:
+  com a flag ligada, seis logins de `X-Forwarded-For` diferentes passam; desligada, o sexto leva `429` porque todos dividem o mesmo IP.
 
 **Critério de conclusão:** nenhuma ação de controle ou admin funciona com identidade forjada ou sem credencial,
 com testes de integração cobrindo cada caso.

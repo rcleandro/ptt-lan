@@ -32,13 +32,26 @@ Nenhum desenvolvedor ou agente de IA deve introduzir novas tecnologias ou mudar 
    - Android: `./gradlew :androidApp:installDebug`
    - Desktop: `./gradlew :desktopApp:run`
    - iOS: `cd iosApp && xcodegen`, depois abra `iosApp.xcodeproj` no Xcode.
-5. Testes e qualidade: `./gradlew jvmTest :serverApp:test detekt ktlintCheck`. (Nos módulos KMP, `./gradlew test` não executa os testes `jvmTest`.)
+5. Variáveis de ambiente do servidor (todas opcionais; os padrões servem para LAN):
+
+   | Variável | Padrão | Para que serve |
+   | --- | --- | --- |
+   | `PTT_ADMIN_PASSWORD` | — | Senha do painel `/admin` (usuário `admin`). Sem ela, as rotas de escrita do painel ficam desligadas. |
+   | `PTT_JWT_SECRET` | chave aleatória por boot | Mantém os tokens válidos entre reinícios e entre instâncias. Sem ela, todo restart desloga os clientes. |
+   | `PTT_KEYSTORE_PASSWORD` | `password` | Senha do keystore TLS, usada tanto para gerar `build/keystore.jks` quanto para lê-lo. |
+   | `PTT_TRUST_PROXY` | `false` | Ligue **apenas** atrás de um proxy reverso: faz o servidor usar `X-Forwarded-For` como IP do cliente no rate limit. Em LAN, ligada, permitiria a qualquer cliente forjar o próprio IP. |
+
+6. Testes e qualidade: `./gradlew jvmTest :serverApp:test detekt ktlintCheck`. (Nos módulos KMP, `./gradlew test` não executa os testes `jvmTest`.)
 
 ### Servidor via Docker
 
 ```bash
 docker build -t ptt-lan-server .
-docker run -p 9443:9443 -e PTT_ADMIN_PASSWORD=troque-isto ptt-lan-server
+docker run -p 9443:9443 \
+  -e PTT_ADMIN_PASSWORD=troque-isto \
+  -e PTT_JWT_SECRET=troque-isto \
+  -e PTT_KEYSTORE_PASSWORD=troque-isto \
+  ptt-lan-server
 ```
 
 A cada push na `main`, o CI publica a imagem multi-arquitetura (amd64/arm64) em `ghcr.io/rcleandro/ptt-lan`.
