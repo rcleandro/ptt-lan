@@ -15,15 +15,13 @@ COPY --from=builder /app/serverApp/build/install/serverApp ./
 # Expõe a porta HTTPS configurada no Ktor (o conector HTTP em claro foi desligado)
 EXPOSE 9443
 
-# Configuração por ambiente (todas opcionais; ver README):
+# Configuração por ambiente, passada no `docker run -e` (todas opcionais; ver README).
+# Não são declaradas com ENV: isso as gravaria na imagem e, por serem definidas com valor vazio,
+# o `${?VAR}` do application.conf sobrescreveria o padrão do keystore com uma senha em branco.
 # PTT_ADMIN_PASSWORD     senha do painel /admin; sem ela as rotas de escrita ficam desligadas
 # PTT_JWT_SECRET         segredo dos tokens; sem ele cada restart invalida as sessões
 # PTT_KEYSTORE_PASSWORD  senha do keystore TLS (padrão "password")
 # PTT_TRUST_PROXY        "true" só atrás de proxy reverso, para o rate limit usar X-Forwarded-For
-ENV PTT_ADMIN_PASSWORD= \
-    PTT_JWT_SECRET= \
-    PTT_KEYSTORE_PASSWORD= \
-    PTT_TRUST_PROXY=
 
 # Comando para iniciar o servidor
 ENTRYPOINT ["./bin/serverApp"]

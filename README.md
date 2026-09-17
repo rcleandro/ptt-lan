@@ -54,6 +54,10 @@ docker run -p 9443:9443 \
   ptt-lan-server
 ```
 
+As variáveis são passadas no `docker run`; a imagem não as declara com `ENV`. Além do aviso do linter do
+BuildKit (`SecretsUsedInArgOrEnv`), uma `ENV` com valor vazio é uma variável **definida**, e o
+`${?PTT_KEYSTORE_PASSWORD}` do `application.conf` trocaria a senha padrão do keystore por uma senha em branco.
+
 A cada push na `main`, o CI publica a imagem multi-arquitetura (amd64/arm64) em `ghcr.io/rcleandro/ptt-lan`.
 
 Consulte a seção `19. Guias Rápidos de Onboarding` no [Plano Técnico](docs/PTT_KMP_PLANO_TECNICO.md) para detalhes sobre as regras de arquitetura em KMP (como lidar com dependências inversas) e o padrão MVI utilizado.
