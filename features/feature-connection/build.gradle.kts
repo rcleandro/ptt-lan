@@ -13,6 +13,7 @@ kotlin {
             implementation(libs.decompose.extensions.compose)
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
+            implementation(libs.material.icons.extended)
             implementation(projects.core.coreDatastore)
         }
         jvmTest.dependencies {

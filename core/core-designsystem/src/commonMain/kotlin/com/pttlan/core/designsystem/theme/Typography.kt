@@ -41,6 +41,13 @@ val PttTypography
                     fontSize = 34.sp,
                     letterSpacing = (-0.01).sp,
                 ),
+            headlineLarge =
+                TextStyle(
+                    fontFamily = IbmPlexSans,
+                    fontWeight = FontWeight.SemiBold, // 600
+                    fontSize = 28.sp,
+                    letterSpacing = (-0.01).sp,
+                ),
             headlineMedium =
                 TextStyle(
                     fontFamily = IbmPlexSans,
@@ -88,5 +95,6 @@ val PttTypography
                     fontFamily = IbmPlexMono,
                     fontWeight = FontWeight.Medium, // 500
                     fontSize = 11.sp,
+                    letterSpacing = 0.6.sp,
                 ),
         )

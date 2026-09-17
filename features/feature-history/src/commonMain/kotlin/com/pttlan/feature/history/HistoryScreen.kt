@@ -1,25 +1,28 @@
 package com.pttlan.feature.history
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -27,12 +30,10 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -44,19 +45,28 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.pttlan.core.designsystem.components.AmbientGlow
+import com.pttlan.core.designsystem.components.GlassIconButton
+import com.pttlan.core.designsystem.components.PttTopBar
+import com.pttlan.core.designsystem.components.SectionLabel
+import com.pttlan.core.designsystem.components.contentCard
+import com.pttlan.core.designsystem.components.glass
 import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.domain.ptt.model.VoiceMessage
 import com.pttlan.feature.history.util.toRelativeDisplay
-import kotlin.time.Clock
-import kotlin.time.Duration
 import kotlin.time.Instant
 
-@OptIn(ExperimentalMaterial3Api::class)
+private val TopBarClearance = 72.dp
+private val PlayerClearance = 110.dp
+private const val MS_PER_SECOND = 1000L
+private const val SECONDS_PER_MINUTE = 60L
+
 @Composable
 fun HistoryScreen(component: HistoryComponent) {
     val messages by component.messages.collectAsState()
@@ -67,22 +77,14 @@ fun HistoryScreen(component: HistoryComponent) {
         messages = messages,
         playingMessageId = playingMessageId,
         isPaused = isPaused,
-        onPlayClick = {
-            component.playMessage(it)
-        },
-        onClearCacheClick = {
-            component.clearAllMessages()
-        },
-        onDeleteMessage = {
-            component.deleteMessage(it)
-        },
-        onDeleteChannelClick = {
-            component.deleteChannelMessages(it)
-        },
+        onPlayClick = component::playMessage,
+        onClearCacheClick = component::clearAllMessages,
+        onDeleteMessage = component::deleteMessage,
+        onDeleteChannelClick = component::deleteChannelMessages,
+        onBack = component::onBack,
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreenContent(
     messages: List<VoiceMessage>,
@@ -93,275 +95,371 @@ fun HistoryScreenContent(
     onDeleteMessage: (VoiceMessage) -> Unit,
     onDeleteChannelClick: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onBack: () -> Unit = {},
 ) {
-    Box(modifier = Modifier.fillMaxSize().then(modifier)) {
-        var showClearDialog by remember { mutableStateOf(false) }
-        var messageToDelete by remember { mutableStateOf<VoiceMessage?>(null) }
-        var channelToDelete by remember { mutableStateOf<String?>(null) }
+    var showClearDialog by remember { mutableStateOf(false) }
+    var messageToDelete by remember { mutableStateOf<VoiceMessage?>(null) }
+    var channelToDelete by remember { mutableStateOf<String?>(null) }
+    val playingMessage = messages.find { it.id == playingMessageId }
 
-        AnimatedContent(
-            targetState = messages.isEmpty(),
-            label = "empty_state_animation",
-            modifier = Modifier.fillMaxSize(),
-        ) { isEmpty ->
-            if (isEmpty) {
-                Column(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.History,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Nenhum áudio salvo ainda.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-            } else {
-                var collapsedChannels by remember { mutableStateOf(setOf<String>()) }
+    Box(modifier = modifier.fillMaxSize()) {
+        AmbientGlow(
+            color = MaterialTheme.colorScheme.primary,
+            intensity = 0.26f,
+            modifier = Modifier.size(460.dp).align(Alignment.BottomStart).offset((-160).dp, 120.dp),
+        )
 
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    val groupedMessages = messages.groupBy { it.channelId }
-                    groupedMessages.forEach { (channelId, channelMessages) ->
-                        val isCollapsed = collapsedChannels.contains(channelId)
-                        item(key = "header_$channelId") {
-                            Row(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .clip(MaterialTheme.shapes.medium)
-                                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
-                                        .combinedClickable(
-                                            onClick = {
-                                                collapsedChannels =
-                                                    if (isCollapsed) {
-                                                        collapsedChannels - channelId
-                                                    } else {
-                                                        collapsedChannels + channelId
-                                                    }
-                                            },
-                                            onLongClick = {
-                                                channelToDelete = channelId
-                                            },
-                                        ).padding(horizontal = 16.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                            ) {
-                                Text(
-                                    text = "Canal: #$channelId",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                                Icon(
-                                    imageVector = if (isCollapsed) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
-                                    contentDescription = if (isCollapsed) "Expandir" else "Recolher",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                )
-                            }
-                        }
-                        if (!isCollapsed) {
-                            items(channelMessages, key = { it.id }) { message ->
-                                VoiceMessageItem(
-                                    message = message,
-                                    isPlaying = message.id == playingMessageId,
-                                    isPaused = message.id == playingMessageId && isPaused,
-                                    onPlayClick = { onPlayClick(message) },
-                                    onLongClick = {
-                                        messageToDelete = message
-                                    },
-                                    modifier = Modifier.animateItem(),
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (messageToDelete != null) {
-            AlertDialog(
-                onDismissRequest = { messageToDelete = null },
-                title = { Text("Apagar Áudio") },
-                text = { Text("Tem certeza que deseja apagar este áudio?") },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            messageToDelete?.let { onDeleteMessage(it) }
-                            messageToDelete = null
-                        },
-                    ) {
-                        Text("Apagar", color = MaterialTheme.colorScheme.error)
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { messageToDelete = null }) {
-                        Text("Cancelar")
-                    }
-                },
+        if (messages.isEmpty()) {
+            EmptyHistory(modifier = Modifier.align(Alignment.Center))
+        } else {
+            MessageList(
+                messages = messages,
+                playingMessageId = playingMessageId,
+                isPaused = isPaused,
+                onPlayClick = onPlayClick,
+                onDeleteMessage = { messageToDelete = it },
+                onDeleteChannel = { channelToDelete = it },
             )
         }
 
-        if (channelToDelete != null) {
-            AlertDialog(
-                onDismissRequest = { channelToDelete = null },
-                title = { Text("Apagar Canal") },
-                text = { Text("Tem certeza que deseja apagar todos os áudios do canal #$channelToDelete?") },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            channelToDelete?.let { onDeleteChannelClick(it) }
-                            channelToDelete = null
-                        },
-                    ) {
-                        Text("Apagar", color = MaterialTheme.colorScheme.error)
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { channelToDelete = null }) {
-                        Text("Cancelar")
-                    }
-                },
+        PttTopBar(
+            navigation = { GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, "Voltar", onBack) },
+            actions = {
+                if (messages.isNotEmpty()) {
+                    GlassIconButton(
+                        icon = Icons.Default.Delete,
+                        contentDescription = "Limpar histórico",
+                        onClick = { showClearDialog = true },
+                        tint = PttTheme.customColors.statusOffline,
+                    )
+                }
+            },
+        )
+
+        if (playingMessage != null) {
+            MiniPlayer(
+                message = playingMessage,
+                isPaused = isPaused,
+                onPlayPause = { onPlayClick(playingMessage) },
+                modifier = Modifier.align(Alignment.BottomCenter),
             )
         }
+    }
 
-        if (messages.isNotEmpty()) {
-            FloatingActionButton(
-                onClick = { showClearDialog = true },
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(16.dp),
-                containerColor = MaterialTheme.colorScheme.errorContainer,
-                contentColor = MaterialTheme.colorScheme.onErrorContainer,
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Limpar Histórico",
+    messageToDelete?.let { message ->
+        ConfirmDialog(
+            title = "Apagar áudio",
+            text = "Tem certeza que deseja apagar este áudio?",
+            confirmLabel = "Apagar",
+            onConfirm = { onDeleteMessage(message) },
+            onDismiss = { messageToDelete = null },
+        )
+    }
+    channelToDelete?.let { channelId ->
+        ConfirmDialog(
+            title = "Apagar canal",
+            text = "Tem certeza que deseja apagar todos os áudios do canal #$channelId?",
+            confirmLabel = "Apagar",
+            onConfirm = { onDeleteChannelClick(channelId) },
+            onDismiss = { channelToDelete = null },
+        )
+    }
+    if (showClearDialog) {
+        ConfirmDialog(
+            title = "Limpar histórico",
+            text = "Tem certeza que deseja apagar todos os áudios gravados? Esta ação não pode ser desfeita.",
+            confirmLabel = "Limpar",
+            onConfirm = onClearCacheClick,
+            onDismiss = { showClearDialog = false },
+        )
+    }
+}
+
+@Composable
+private fun EmptyHistory(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Default.History,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = PttTheme.customColors.textTertiary,
+        )
+        Text(
+            text = "Nenhum áudio salvo ainda.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun MessageList(
+    messages: List<VoiceMessage>,
+    playingMessageId: String?,
+    isPaused: Boolean,
+    onPlayClick: (VoiceMessage) -> Unit,
+    onDeleteMessage: (VoiceMessage) -> Unit,
+    onDeleteChannel: (String) -> Unit,
+) {
+    var collapsedChannels by remember { mutableStateOf(setOf<String>()) }
+    val topInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding =
+            PaddingValues(start = 20.dp, end = 20.dp, top = topInset + TopBarClearance, bottom = PlayerClearance),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        item {
+            Column(modifier = Modifier.padding(bottom = 8.dp)) {
+                Text(
+                    text = "Histórico",
+                    style = MaterialTheme.typography.displayLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                Text(
+                    text = "Áudios recebidos, salvos só neste aparelho",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
-
-        if (showClearDialog) {
-            AlertDialog(
-                onDismissRequest = { showClearDialog = false },
-                title = { Text("Limpar Histórico") },
-                text = { Text("Tem certeza que deseja apagar todos os áudios gravados? Esta ação não pode ser desfeita.") },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            showClearDialog = false
-                            onClearCacheClick()
-                        },
-                    ) {
-                        Text("Limpar", color = MaterialTheme.colorScheme.error)
+        messages.groupBy { it.channelId }.forEach { (channelId, channelMessages) ->
+            val isCollapsed = channelId in collapsedChannels
+            item(key = "header_$channelId") {
+                ChannelHeader(
+                    channelId = channelId,
+                    isCollapsed = isCollapsed,
+                    onToggle = {
+                        collapsedChannels = if (isCollapsed) collapsedChannels - channelId else collapsedChannels + channelId
+                    },
+                    onLongClick = { onDeleteChannel(channelId) },
+                )
+            }
+            if (!isCollapsed) {
+                item(key = "group_$channelId") {
+                    Column(modifier = Modifier.fillMaxWidth().contentCard()) {
+                        channelMessages.forEachIndexed { index, message ->
+                            if (index > 0) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(start = 64.dp),
+                                    color = MaterialTheme.colorScheme.outline,
+                                )
+                            }
+                            VoiceMessageItem(
+                                message = message,
+                                isPlaying = message.id == playingMessageId,
+                                isPaused = message.id == playingMessageId && isPaused,
+                                onPlayClick = { onPlayClick(message) },
+                                onDeleteClick = { onDeleteMessage(message) },
+                            )
+                        }
                     }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showClearDialog = false }) {
-                        Text("Cancelar")
-                    }
-                },
-            )
+                }
+            }
         }
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun ChannelHeader(
+    channelId: String,
+    isCollapsed: Boolean,
+    onToggle: () -> Unit,
+    onLongClick: () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(CircleShape)
+                .combinedClickable(onClick = onToggle, onLongClick = onLongClick)
+                .padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SectionLabel(text = "# $channelId", modifier = Modifier.weight(1f))
+        Icon(
+            imageVector = if (isCollapsed) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+            contentDescription = if (isCollapsed) "Expandir" else "Recolher",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
 @Composable
 fun VoiceMessageItem(
     message: VoiceMessage,
     isPlaying: Boolean,
     isPaused: Boolean,
     onPlayClick: () -> Unit,
-    onLongClick: () -> Unit,
+    onDeleteClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        PlayButton(isPlaying = isPlaying && !isPaused, isActive = isPlaying, onClick = onPlayClick, size = 40)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = message.senderNickname,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text =
+                    when {
+                        isPlaying && isPaused -> "pausado · ${formatDuration(message.durationMs)}"
+                        isPlaying -> "tocando · ${formatDuration(message.durationMs)}"
+                        else ->
+                            "${Instant.fromEpochMilliseconds(message.recordedAt).toRelativeDisplay()} · " +
+                                formatDuration(message.durationMs)
+                    },
+                style = MaterialTheme.typography.labelSmall,
+                color = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        IconButton(onClick = onDeleteClick) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = "Apagar áudio",
+                tint = PttTheme.customColors.textTertiary,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun PlayButton(
+    isPlaying: Boolean,
+    isActive: Boolean,
+    onClick: () -> Unit,
+    size: Int,
+) {
+    val background = if (isActive) MaterialTheme.colorScheme.primary else PttTheme.customColors.surface3
+    val tint = if (isActive) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground
+    Box(
+        modifier =
+            Modifier
+                .size(size.dp)
+                .clip(CircleShape)
+                .background(background)
+                .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                .clickable(role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+            contentDescription = if (isPlaying) "Pausar" else "Ouvir",
+            tint = tint,
+        )
+    }
+}
+
+@Composable
+private fun MiniPlayer(
+    message: VoiceMessage,
+    isPaused: Boolean,
+    onPlayPause: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
-                .clip(MaterialTheme.shapes.medium)
-                .background(
-                    if (isPlaying) {
-                        PttTheme.customColors.primaryGlow
-                    } else {
-                        PttTheme.customColors.surface2
-                    },
-                ).border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.medium)
-                .combinedClickable(
-                    onClick = onPlayClick,
-                    onLongClick = onLongClick,
-                ).padding(16.dp),
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(horizontal = 12.dp, vertical = 16.dp)
+                .glass(MaterialTheme.shapes.extraLarge)
+                .padding(10.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        Box(
+            modifier =
+                Modifier
+                    .size(52.dp)
+                    .clip(CircleShape)
+                    .background(PttTheme.customColors.primaryGlow),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = message.senderNickname.firstOrNull()?.uppercase() ?: "?",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+        }
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = message.senderNickname,
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onBackground,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            val recordedAt = Instant.fromEpochMilliseconds(message.recordedAt)
-            val durationSec = (message.durationMs / 1000).coerceAtLeast(1)
-
-            Text(
-                text = "${recordedAt.toRelativeDisplay()} • $durationSec sec",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            SectionLabel(text = "# ${message.channelId} · ${if (isPaused) "pausado" else "tocando"}")
         }
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        IconButton(
-            onClick = onPlayClick,
-            modifier = Modifier.size(48.dp),
-        ) {
-            Icon(
-                imageVector = if (isPlaying && !isPaused) Icons.Default.Pause else Icons.Default.PlayArrow,
-                contentDescription = if (isPlaying && !isPaused) "Pause" else "Play",
-                tint = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        PlayButton(isPlaying = !isPaused, isActive = true, onClick = onPlayPause, size = 52)
     }
 }
+
+@Composable
+private fun ConfirmDialog(
+    title: String,
+    text: String,
+    confirmLabel: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = { Text(text) },
+        shape = MaterialTheme.shapes.large,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onConfirm()
+                    onDismiss()
+                },
+            ) {
+                Text(confirmLabel, color = PttTheme.customColors.statusOffline)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancelar") }
+        },
+    )
+}
+
+private fun formatDuration(durationMs: Long): String {
+    val totalSeconds = (durationMs / MS_PER_SECOND).coerceAtLeast(1)
+    val seconds = (totalSeconds % SECONDS_PER_MINUTE).toString().padStart(2, '0')
+    return "${totalSeconds / SECONDS_PER_MINUTE}:$seconds"
+}
+
+private val previewMessages =
+    listOf(
+        VoiceMessage("1", "Geral", "Marcos", "/path1", 12_000, 1721151600000L),
+        VoiceMessage("2", "Geral", "Júlia", "/path2", 6_000, 1721151660000L),
+        VoiceMessage("3", "Obra Alameda", "Rafael", "/path3", 9_000, 1721151700000L),
+    )
 
 @Preview
 @Composable
 private fun HistoryScreenPreviewDark() {
     PttTheme(appTheme = AppTheme.DARK) {
-        Surface {
+        Box(Modifier.background(MaterialTheme.colorScheme.background)) {
             HistoryScreenContent(
-                messages =
-                    listOf(
-                        VoiceMessage("1", "channel1", "Leandro", "/path1", 2500, 1721151600000L),
-                        VoiceMessage("2", "channel1", "João", "/path2", 5000, 1721151660000L),
-                        VoiceMessage(
-                            "3",
-                            "channel1",
-                            "Maria",
-                            "/path3",
-                            3000,
-                            (Clock.System.now() - Duration.parse("PT2H15M")).toEpochMilliseconds(),
-                        ),
-                    ),
+                messages = previewMessages,
                 playingMessageId = "1",
                 isPaused = false,
                 onPlayClick = {},
@@ -377,14 +475,10 @@ private fun HistoryScreenPreviewDark() {
 @Composable
 private fun HistoryScreenPreviewLight() {
     PttTheme(appTheme = AppTheme.LIGHT) {
-        Surface {
+        Box(Modifier.background(MaterialTheme.colorScheme.background)) {
             HistoryScreenContent(
-                messages =
-                    listOf(
-                        VoiceMessage("1", "channel1", "Leandro", "/path1", 2500, 1721151600000L),
-                        VoiceMessage("2", "channel1", "João", "/path2", 5000, 1721151660000L),
-                    ),
-                playingMessageId = "1",
+                messages = previewMessages,
+                playingMessageId = null,
                 isPaused = false,
                 onPlayClick = {},
                 onClearCacheClick = {},

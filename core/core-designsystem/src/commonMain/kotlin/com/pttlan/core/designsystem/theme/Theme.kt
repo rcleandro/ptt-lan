@@ -27,11 +27,14 @@ data class PttCustomColors(
     val primaryGlow: Color,
     val surface2: Color,
     val surface3: Color,
-    val statusTransmitting: Color,
-    val statusTransmittingGlow: Color,
     val iconOnAccentTx: Color,
     val iconOnPrimary: Color,
     val textTertiary: Color,
+    val glassBase: Color,
+    val glassTop: Color,
+    val glassBottom: Color,
+    val glassStroke: Color,
+    val glassHighlight: Color,
 )
 
 val LocalPttCustomColors =
@@ -46,13 +49,18 @@ val LocalPttCustomColors =
             primaryGlow = Color.Unspecified,
             surface2 = Color.Unspecified,
             surface3 = Color.Unspecified,
-            statusTransmitting = Color.Unspecified,
-            statusTransmittingGlow = Color.Unspecified,
             iconOnAccentTx = Color.Unspecified,
             iconOnPrimary = Color.Unspecified,
             textTertiary = Color.Unspecified,
+            glassBase = Color.Unspecified,
+            glassTop = Color.Unspecified,
+            glassBottom = Color.Unspecified,
+            glassStroke = Color.Unspecified,
+            glassHighlight = Color.Unspecified,
         )
     }
+
+val LocalReduceTransparency = staticCompositionLocalOf { false }
 
 private val DarkPttCustomColors =
     PttCustomColors(
@@ -65,11 +73,14 @@ private val DarkPttCustomColors =
         primaryGlow = PrimaryGlowDark,
         surface2 = Surface2Dark,
         surface3 = Surface3Dark,
-        statusTransmitting = StatusTransmittingDark,
-        statusTransmittingGlow = StatusTransmittingGlowDark,
         iconOnAccentTx = IconOnAccentTxDark,
         iconOnPrimary = IconOnPrimaryDark,
         textTertiary = TextTertiaryDark,
+        glassBase = GlassBaseDark,
+        glassTop = GlassTopDark,
+        glassBottom = GlassBottomDark,
+        glassStroke = GlassStrokeDark,
+        glassHighlight = GlassHighlightDark,
     )
 
 private val LightPttCustomColors =
@@ -83,52 +94,67 @@ private val LightPttCustomColors =
         primaryGlow = PrimaryGlowLight,
         surface2 = Surface2Light,
         surface3 = Surface3Light,
-        statusTransmitting = StatusTransmittingLight,
-        statusTransmittingGlow = StatusTransmittingGlowLight,
         iconOnAccentTx = IconOnAccentTxLight,
         iconOnPrimary = IconOnPrimaryLight,
         textTertiary = TextTertiaryLight,
+        glassBase = GlassBaseLight,
+        glassTop = GlassTopLight,
+        glassBottom = GlassBottomLight,
+        glassStroke = GlassStrokeLight,
+        glassHighlight = GlassHighlightLight,
     )
 
 private val DarkColorScheme =
     darkColorScheme(
         primary = PrimaryDark,
-        onPrimary = Color.White,
+        onPrimary = IconOnPrimaryDark,
         primaryContainer = PrimaryDimDark,
-        onPrimaryContainer = Color.White,
+        onPrimaryContainer = TextPrimaryDark,
         background = BgDark,
         onBackground = TextPrimaryDark,
         surface = SurfaceDark,
         onSurface = TextPrimaryDark,
         surfaceVariant = Surface2Dark,
         onSurfaceVariant = TextSecondaryDark,
+        surfaceContainerHigh = Surface2Dark,
         outline = BorderDark,
+        outlineVariant = BorderDark,
+        error = StatusOfflineDark,
     )
 
 private val LightColorScheme =
     lightColorScheme(
         primary = PrimaryLight,
-        onPrimary = Color.White,
+        onPrimary = IconOnPrimaryLight,
         primaryContainer = PrimaryDimLight,
-        onPrimaryContainer = Color.White,
+        onPrimaryContainer = IconOnPrimaryLight,
         background = BgLight,
         onBackground = TextPrimaryLight,
         surface = SurfaceLight,
         onSurface = TextPrimaryLight,
         surfaceVariant = Surface2Light,
         onSurfaceVariant = TextSecondaryLight,
+        surfaceContainerHigh = SurfaceLight,
         outline = BorderLight,
+        outlineVariant = BorderLight,
+        error = StatusOfflineLight,
     )
 
 object PttTheme {
     val customColors: PttCustomColors
         @Composable
         get() = LocalPttCustomColors.current
+
+    /** When true, glass surfaces render as solid (user setting "Reduzir transparência"). */
+    val reduceTransparency: Boolean
+        @Composable
+        get() = LocalReduceTransparency.current
 }
 
 @Composable
 fun PttTheme(
     appTheme: AppTheme = AppTheme.SYSTEM,
+    reduceTransparency: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val isDark =
@@ -142,6 +168,7 @@ fun PttTheme(
 
     CompositionLocalProvider(
         LocalPttCustomColors provides customColors,
+        LocalReduceTransparency provides reduceTransparency,
     ) {
         MaterialTheme(
             colorScheme = if (isDark) DarkColorScheme else LightColorScheme,

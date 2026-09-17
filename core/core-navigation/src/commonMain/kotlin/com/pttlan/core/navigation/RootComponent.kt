@@ -8,6 +8,7 @@ import com.arkivanov.decompose.router.stack.navigate
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.lifecycle.Lifecycle
+import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.domain.ptt.repository.ConnectionRepository
 import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.feature.channellist.ChannelListComponent
@@ -24,12 +25,14 @@ import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.coroutines.getBooleanFlow
+import com.russhwolf.settings.coroutines.getIntFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -63,15 +66,35 @@ class RootComponent(
     private val connectionRepository: ConnectionRepository = get()
     private val settings: Settings = get()
 
+    val isCacheEnabled: StateFlow<Boolean> = observeBoolean("allow_cache", false)
+
+    val reduceTransparency: StateFlow<Boolean> = observeBoolean("reduce_transparency", false)
+
     @OptIn(ExperimentalSettingsApi::class)
-    val isCacheEnabled: StateFlow<Boolean> =
+    val appTheme: StateFlow<AppTheme> =
         (settings as? ObservableSettings)
-            ?.getBooleanFlow("allow_cache", false)
+            ?.getIntFlow("app_theme", 0)
+            ?.map(::toAppTheme)
             ?.stateIn(
                 scope = lifecycle.coroutineScope(),
                 started = SharingStarted.WhileSubscribed(),
-                initialValue = settings.getBoolean("allow_cache", false),
-            ) ?: MutableStateFlow(settings.getBoolean("allow_cache", false))
+                initialValue = toAppTheme(settings.getInt("app_theme", 0)),
+            ) ?: MutableStateFlow(toAppTheme(settings.getInt("app_theme", 0)))
+
+    @OptIn(ExperimentalSettingsApi::class)
+    private fun observeBoolean(
+        key: String,
+        default: Boolean,
+    ): StateFlow<Boolean> =
+        (settings as? ObservableSettings)
+            ?.getBooleanFlow(key, default)
+            ?.stateIn(
+                scope = lifecycle.coroutineScope(),
+                started = SharingStarted.WhileSubscribed(),
+                initialValue = settings.getBoolean(key, default),
+            ) ?: MutableStateFlow(settings.getBoolean(key, default))
+
+    private fun toAppTheme(index: Int): AppTheme = AppTheme.entries.getOrElse(index) { AppTheme.SYSTEM }
 
     val childStack: Value<ChildStack<*, Child>> =
         childStack(

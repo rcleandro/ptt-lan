@@ -2,6 +2,7 @@ package com.pttlan.core.designsystem.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -11,212 +12,63 @@ import androidx.compose.ui.unit.dp
 import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.core.designsystem.theme.PttTheme
 
-@Preview
 @Composable
-fun PttButtonIdlePreviewDark() {
-    PttTheme(appTheme = AppTheme.DARK) {
-        Surface {
-            PttButton(state = PttButtonState.Idle, onPressStart = {}, onPressEnd = {})
+private fun PttButtonStatesSample() {
+    Row(horizontalArrangement = Arrangement.spacedBy(24.dp), modifier = Modifier.padding(48.dp)) {
+        PttButtonState.entries.forEach { state ->
+            PttButton(state = state, onPressStart = {}, onPressEnd = {}, buttonSize = 120.dp)
+        }
+    }
+}
+
+@Composable
+private fun ControlsSample() {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(24.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ConnectionStatus.entries.forEach { ConnectionStatusBadge(status = it) }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            PillButton(text = "Conectar", onClick = {})
+            PillButton(text = "Cancelar", onClick = {}, style = PillButtonStyle.Glass)
+            PillButton(text = "Limpar", onClick = {}, style = PillButtonStyle.Destructive)
+        }
+        ChannelCard(name = "Geral", participantCount = 3, onClick = {})
+        ChannelCard(name = "Equipe Evento", participantCount = 0, onClick = {})
+        Row {
+            ParticipantAvatar(name = "Júlia", isSpeaking = false)
+            ParticipantAvatar(name = "Marcos", isSpeaking = true)
+            ParticipantAvatar(name = "Leandro", isSpeaking = true, isSelf = true)
+            ParticipantAvatar(name = "Leandro", isSpeaking = false, isRequesting = true, isSelf = true)
         }
     }
 }
 
 @Preview
 @Composable
-fun PttButtonIdlePreviewLight() {
-    PttTheme(appTheme = AppTheme.LIGHT) {
-        Surface {
-            PttButton(state = PttButtonState.Idle, onPressStart = {}, onPressEnd = {})
-        }
-    }
+fun PttButtonPreviewDark() {
+    PttTheme(appTheme = AppTheme.DARK) { Surface { PttButtonStatesSample() } }
 }
 
 @Preview
 @Composable
-fun PttButtonTransmittingPreviewDark() {
-    PttTheme(appTheme = AppTheme.DARK) {
-        Surface {
-            PttButton(state = PttButtonState.Transmitting, onPressStart = {}, onPressEnd = {})
-        }
-    }
+fun PttButtonPreviewLight() {
+    PttTheme(appTheme = AppTheme.LIGHT) { Surface { PttButtonStatesSample() } }
 }
 
 @Preview
 @Composable
-fun PttButtonTransmittingPreviewLight() {
-    PttTheme(appTheme = AppTheme.LIGHT) {
-        Surface {
-            PttButton(state = PttButtonState.Transmitting, onPressStart = {}, onPressEnd = {})
-        }
-    }
+fun ControlsPreviewDark() {
+    PttTheme(appTheme = AppTheme.DARK) { Surface { ControlsSample() } }
 }
 
 @Preview
 @Composable
-fun PttButtonReceivingPreviewDark() {
-    PttTheme(appTheme = AppTheme.DARK) {
-        Surface {
-            PttButton(state = PttButtonState.Receiving, onPressStart = {}, onPressEnd = {})
-        }
-    }
+fun ControlsPreviewLight() {
+    PttTheme(appTheme = AppTheme.LIGHT) { Surface { ControlsSample() } }
 }
 
 @Preview
 @Composable
-fun PttButtonReceivingPreviewLight() {
-    PttTheme(appTheme = AppTheme.LIGHT) {
-        Surface {
-            PttButton(state = PttButtonState.Receiving, onPressStart = {}, onPressEnd = {})
-        }
-    }
-}
-
-@Preview
-@Composable
-fun ConnectionStatusBadgeOnlinePreviewDark() {
-    PttTheme(appTheme = AppTheme.DARK) {
-        Surface {
-            Column(modifier = Modifier.padding(16.dp)) {
-                ConnectionStatusBadge(status = ConnectionStatus.Online)
-            }
-        }
-    }
-}
-
-@Preview
-@Composable
-fun ConnectionStatusBadgeOnlinePreviewLight() {
-    PttTheme(appTheme = AppTheme.LIGHT) {
-        Surface {
-            Column(modifier = Modifier.padding(16.dp)) {
-                ConnectionStatusBadge(status = ConnectionStatus.Online)
-            }
-        }
-    }
-}
-
-@Preview
-@Composable
-fun ConnectionStatusBadgeReconnectingPreviewDark() {
-    PttTheme(appTheme = AppTheme.DARK) {
-        Surface {
-            Column(modifier = Modifier.padding(16.dp)) {
-                ConnectionStatusBadge(status = ConnectionStatus.Reconnecting)
-            }
-        }
-    }
-}
-
-@Preview
-@Composable
-fun ConnectionStatusBadgeReconnectingPreviewLight() {
-    PttTheme(appTheme = AppTheme.LIGHT) {
-        Surface {
-            Column(modifier = Modifier.padding(16.dp)) {
-                ConnectionStatusBadge(status = ConnectionStatus.Reconnecting)
-            }
-        }
-    }
-}
-
-@Preview
-@Composable
-fun ConnectionStatusBadgeOfflinePreviewDark() {
-    PttTheme(appTheme = AppTheme.DARK) {
-        Surface {
-            Column(modifier = Modifier.padding(16.dp)) {
-                ConnectionStatusBadge(status = ConnectionStatus.Offline)
-            }
-        }
-    }
-}
-
-@Preview
-@Composable
-fun ConnectionStatusBadgeOfflinePreviewLight() {
-    PttTheme(appTheme = AppTheme.LIGHT) {
-        Surface {
-            Column(modifier = Modifier.padding(16.dp)) {
-                ConnectionStatusBadge(status = ConnectionStatus.Offline)
-            }
-        }
-    }
-}
-
-@Preview
-@Composable
-fun ChannelCardPreviewDark() {
-    PttTheme(appTheme = AppTheme.DARK) {
-        Surface {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ChannelCard(
-                    name = "Geral",
-                    id = "geral-xyz",
-                    participantCount = 42,
-                    isActive = true,
-                    onClick = {},
-                )
-                ChannelCard(
-                    name = "Inativo",
-                    id = "inativo-abc",
-                    participantCount = 0,
-                    isActive = false,
-                    onClick = {},
-                )
-            }
-        }
-    }
-}
-
-@Preview
-@Composable
-fun ChannelCardPreviewLight() {
-    PttTheme(appTheme = AppTheme.LIGHT) {
-        Surface {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ChannelCard(
-                    name = "Geral",
-                    id = "geral-xyz",
-                    participantCount = 42,
-                    isActive = true,
-                    onClick = {},
-                )
-                ChannelCard(
-                    name = "Inativo",
-                    id = "inativo-abc",
-                    participantCount = 0,
-                    isActive = false,
-                    onClick = {},
-                )
-            }
-        }
-    }
-}
-
-@Preview
-@Composable
-fun ParticipantAvatarPreviewDark() {
-    PttTheme(appTheme = AppTheme.DARK) {
-        Surface {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ParticipantAvatar(name = "João Silva", isSpeaking = false)
-                ParticipantAvatar(name = "Maria Souza", isSpeaking = true)
-                ParticipantAvatar(name = "Admin", isSpeaking = false, showDetails = false)
-            }
-        }
-    }
-}
-
-@Preview
-@Composable
-fun ParticipantAvatarPreviewLight() {
-    PttTheme(appTheme = AppTheme.LIGHT) {
-        Surface {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ParticipantAvatar(name = "João Silva", isSpeaking = false)
-                ParticipantAvatar(name = "Maria Souza", isSpeaking = true)
-                ParticipantAvatar(name = "Admin", isSpeaking = false, showDetails = false)
-            }
-        }
-    }
+fun ControlsPreviewReducedTransparency() {
+    PttTheme(appTheme = AppTheme.DARK, reduceTransparency = true) { Surface { ControlsSample() } }
 }
