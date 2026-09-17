@@ -232,6 +232,11 @@ Run configurations do IntelliJ/Android Studio: `.run/Run_Desktop__JVM_.run.xml` 
 **CI** (`.github/workflows/ci.yml`, push/PR em `main` e `develop`): lint → unit-test → builds Android, Desktop (Linux/macOS/Windows),
 Server (`distZip`), iOS (XcodeGen + testes no simulador + `xcodebuild`) → Docker multi-arch (publica no GHCR só em push, não em PR).
 Usa JDK 21 e cache do Gradle (`setup-gradle`).
+Em **pull request** tudo que pode falhar continua rodando (lint, testes e compilação de todos os alvos), mas o empacotamento é reduzido:
+Desktop só no runner Linux, imagem Docker só `linux/amd64` (o arm64 emulado por QEMU é o passo mais lento) e os artefatos de Desktop,
+Server e iOS não são publicados — só o APK continua disponível para baixar do PR.
+Cache: `setup-gradle` (Gradle), `actions/cache` do `~/.konan` (toolchain Kotlin/Native) e `type=gha` para as camadas da imagem Docker.
+`.github/dependabot.yml` abre PRs semanais agrupados para GitHub Actions e dependências Gradle.
 
 ## 11. Convenções
 
