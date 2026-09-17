@@ -1,6 +1,6 @@
 # PTT-LAN — Contexto do Projeto
 
-> Retrato do **código como ele está hoje** (branch `main`, commit `513c812`).
+> Retrato do **código como ele está hoje** (atualizado com o design Liquid Glass, a fase 18 e a fase 19.1).
 > O plano/roadmap oficial continua em [`PTT_KMP_PLANO_TECNICO.md`](PTT_KMP_PLANO_TECNICO.md) (SSOT)
 > e as decisões em [`adr/`](adr/). Onde o código diverge do plano, a seção
 > [Divergências](#8-divergências-entre-plano-e-código) registra o que vale na prática.
@@ -23,19 +23,19 @@ Todas as 17 fases do roadmap estão marcadas como concluídas no plano.
 
 | Área | Tecnologia (versão em `gradle/libs.versions.toml`) |
 |---|---|
-| Linguagem / build | Kotlin 2.4.10, Gradle 9.6.1, AGP 9.3.0, JVM target 17, daemon toolchain JDK 21 |
+| Linguagem / build | Kotlin 2.4.20, Gradle 9.7.1, AGP 9.4.0, JVM target 17, daemon toolchain JDK 21 |
 | Android | `compileSdk`/`targetSdk` 37, `minSdk` 26 |
 | Targets KMP | `android`, `jvm`, `iosArm64`, `iosSimulatorArm64` |
-| UI | Compose Multiplatform 1.11.1 + Material 3, fontes IBM Plex Sans/Mono |
+| UI | Compose Multiplatform 1.12.0 + Material 3, fontes IBM Plex Sans/Mono |
 | Navegação / estado | Decompose 3.5.0 (child stack) + MVI manual por tela |
 | DI | Koin 4.2.2 |
-| Rede | Ktor 3.5.1 — client OkHttp (Android/JVM) e Darwin (iOS); server Netty |
+| Rede | Ktor 3.6.0 — client OkHttp (Android/JVM) e Darwin (iOS); server Netty |
 | Serialização | kotlinx.serialization (JSON) |
 | Persistência | SQLDelight 2.3.2, multiplatform-settings 1.3.0, Okio (arquivos) |
 | Áudio | APIs nativas por plataforma + Opus via `kopus` 1.6.1.3 |
 | Descoberta | NSD (Android), Bonjour (iOS), JmDNS (JVM/servidor) |
 | Servidor extra | ktor-server-auth-jwt, ktor-server-rate-limit, Lettuce (Redis), Logback |
-| Qualidade | Detekt 2.0.0-alpha.5, ktlint-gradle, Kover, Dokka, MockK, Turbine |
+| Qualidade | Detekt 2.0.0-alpha.6, ktlint-gradle (motor 1.8.0), Kover, Dokka, MockK, Turbine |
 
 ## 3. Mapa de módulos
 
@@ -84,7 +84,8 @@ accessors (`projects.core.coreNetwork`).
 1. `ConnectionComponent` lista servidores via `DiscoverServersUseCase` (mDNS `_pttlan._tcp`) ou
    aceita IP/host manual (porta fixa **9443**). Salva `nickname` e `manualIp` nas settings.
 2. `ConnectionRepositoryImpl.connect` → `PttWebSocketClient.login` (`POST https://host:9443/api/auth/login`
-   com `nickname` + `deviceId = "device-${nickname.hashCode()}"`) → recebe JWT.
+   com `nickname` + `deviceId = "device-${nickname.hashCode()}"`) → recebe `token` + `userId`. O `userId` é gerado
+   pelo servidor, vai no `sub` do JWT e fica em `ConnectionRepository.sessionUserId`.
 3. `PttWebSocketClient.connect` abre `wss://host:9443/ws?token=…` e fica em loop de reconexão
    (backoff 1s→30s, jitter ±20%). Falha na **primeira** tentativa é propagada; depois disso reconecta sozinho.
    Timeout: 5s em rede local, 15s fora.
@@ -94,7 +95,7 @@ accessors (`projects.core.coreNetwork`).
 ### 4.2 Canal e PTT
 - `ChannelListComponent` mostra canais ativos (mensagem `active_channels_list` do servidor) e recentes (SQLDelight).
 - Ao abrir `PttScreen(channelId)`, `PttComponent` envia `JoinChannel` e observa participantes, speaker e floor denied.
-  `userId` é um UUID aleatório gerado **por execução** no `RootComponent`.
+  O `userId` local é o `sessionUserId` emitido no login (o mesmo token é reutilizado nas reconexões).
 - **Apertar PTT** → `StartTransmittingUseCase` envia só `StartSpeaking`. A captura começa **quando chega
   `SpeakerChanged(isSpeaking=true)` para o próprio usuário** (`PttComponent` chama `voiceRepository.startTransmitting`).
 - **Soltar** → `StopTransmittingUseCase`: para captura e envia `StopSpeaking`.
@@ -122,7 +123,8 @@ accessors (`projects.core.coreNetwork`).
 
 Um WebSocket por cliente em `/ws`.
 
-**Frames de texto** — `ControlMessage` (JSON polimórfico, discriminador `type`):
+**Frames de texto** — `ControlMessage` (JSON polimórfico, discriminador `type`). Nas mensagens C→S, os campos
+`userId`/`nickname` são **ignorados pelo servidor**: a identidade vem do JWT validado no handshake.
 
 | `type` | Direção | Campos |
 |---|---|---|
@@ -151,8 +153,9 @@ Existe teste de round-trip em `ControlMessageTest`.
 - `module()`: WebSockets (ping 20s), ContentNegotiation, anúncio mDNS (porta 9443, ignora interfaces docker/utun/tailscale/vbox…),
   Koin (`RedisManager`, `ChannelRegistry`), autenticação JWT, RateLimit (global 100/min por IP; login 5/min).
 - **Auth** (`JwtConfig`): HMAC256 com segredo aleatório gerado no boot → reiniciar o servidor invalida todos os tokens. Validade 1 dia.
-  O login não tem senha: qualquer nickname/deviceId não vazio recebe token.
-- `/ws`: exige `?token=`; nickname precisa ser único (case-insensitive) entre conexões — senão fecha com "Nome já em uso".
+  O login não tem senha: qualquer nickname/deviceId não vazio recebe token. O servidor gera o `userId` (claim `sub`)
+  e o devolve em `LoginResponse`.
+- `/ws`: exige `?token=`; `userId` e `nickname` vêm só do token (os das mensagens são ignorados); nickname precisa ser único (case-insensitive) entre conexões — senão fecha com "Nome já em uso".
   Query param opcional `version` aparece no painel.
 - `ChannelRegistry`: estado em memória (`ConcurrentHashMap`). Canal `Geral` sempre existe; canais vazios são removidos após 5 min.
   Guarda logs (últimos 100), tempo de fala por nickname e série temporal por minuto (30 min).
@@ -202,7 +205,7 @@ O plano é o SSOT de intenção, mas estes pontos refletem o código atual:
 | `core-network` (commonTest) | `ControlMessageTest` |
 | `domain-ptt` (jvmTest) | `ConnectToServerUseCaseTest` |
 | `feature-*` (jvmTest, MockK) | `ConnectionComponentTest`, `ChannelListComponentTest`, `PttComponentTest`, `HistoryComponentTest`, `SettingsComponentTest` |
-| `serverApp` (test, `testApplication`) | `ServerIntegrationTest` (floor control), `AuthIntegrationTest` (login + rate limit) |
+| `serverApp` (test, `testApplication`) | `ServerIntegrationTest` (floor control; identidade do token não pode ser forjada por mensagem), `AuthIntegrationTest` (login, `userId` = `sub` e rate limit) |
 
 Os testes de Component rodam em `jvmTest` porque MockK não suporta Native.
 
@@ -214,7 +217,7 @@ Os testes de Component rodam em `jvmTest` porque MockK não suporta Native.
 ./gradlew :androidApp:installDebug             # cliente Android
 cd iosApp && xcodegen && open iosApp.xcodeproj # cliente iOS (framework gerado pelo :shared)
 
-./gradlew test                                 # testes JVM de todos os módulos
+./gradlew jvmTest :serverApp:test              # testes JVM (`test` sozinho não roda os jvmTest das KMP)
 ./gradlew :features:feature-ptt:jvmTest        # um módulo
 ./gradlew :serverApp:test --tests "*ServerIntegrationTest"
 ./gradlew iosSimulatorArm64Test                # testes no simulador iOS
@@ -227,7 +230,8 @@ docker build -t ptt-server .                   # imagem do servidor (portas 9393
 Run configurations do IntelliJ/Android Studio: `.run/Run_Desktop__JVM_.run.xml` e `.run/Run_Server__Ktor_.run.xml`.
 
 **CI** (`.github/workflows/ci.yml`, push/PR em `main` e `develop`): lint → unit-test → builds Android, Desktop (Linux/macOS/Windows),
-Server (`distZip`), iOS (XcodeGen + testes no simulador + `xcodebuild`) → Docker multi-arch no GHCR. Usa JDK 17.
+Server (`distZip`), iOS (XcodeGen + testes no simulador + `xcodebuild`) → Docker multi-arch (publica no GHCR só em push, não em PR).
+Usa JDK 21 e cache do Gradle (`setup-gradle`).
 
 ## 11. Convenções
 
@@ -243,10 +247,6 @@ Server (`distZip`), iOS (XcodeGen + testes no simulador + `xcodebuild`) → Dock
 
 ## 12. Pontos de atenção
 
-- `core-navigation` fixa `kotlin("plugin.serialization") version "2.0.21"`, diferente do Kotlin 2.4.10 do resto do projeto.
-- `serverApp/build.gradle.kts` declara várias dependências Ktor/Koin como string em vez de usar o version catalog.
-- `userId` muda a cada execução do app e `deviceId` deriva do hash do nickname — não há identidade persistente de dispositivo.
-- Arquivos de máquina versionados: `local.properties`, `hs_err_pid4676.log`, `.DS_Store`, `xcuserdata/` do Xcode.
-  `ptt.zip` (13 bytes) e `scratch/` estão vazios.
-- `generate_modules.py`, `setup_apps.py` e `fetch_versions.py` foram scripts de bootstrap da Fase 1; não fazem parte do build.
+- O `userId` vale por login (novo a cada conexão) e o `deviceId` deriva do hash do nickname: ainda não há identidade
+  persistente de dispositivo (roadmap 20.2).
 - `docs/ptt-lan-design-system.html` é a referência visual do design system (Fase 8).
