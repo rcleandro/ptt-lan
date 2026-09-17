@@ -8,6 +8,7 @@ import com.pttlan.domain.ptt.repository.ConnectionRepository
 import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.domain.ptt.repository.ServerEndpoint
 import com.pttlan.domain.ptt.repository.ServerNode
+import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,10 +19,24 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+
+internal const val DEVICE_ID_KEY = "device_id"
+
+/**
+ * Stable per-install identity. It must not derive from the nickname: that one changes and collides between
+ * people with the same name, while the server uses `deviceId` to recognise a returning device (20.3).
+ */
+@OptIn(ExperimentalUuidApi::class)
+internal fun deviceId(settings: Settings): String =
+    settings.getStringOrNull(DEVICE_ID_KEY)
+        ?: Uuid.random().toString().also { settings.putString(DEVICE_ID_KEY, it) }
 
 class ConnectionRepositoryImpl(
     private val discoveryService: ServerDiscoveryService,
     private val webSocketClient: PttWebSocketClient,
+    private val settings: Settings,
 ) : ConnectionRepository {
     private val _connectionStatus = MutableStateFlow(ConnectionStatus.Disconnected)
     override val connectionStatus: StateFlow<ConnectionStatus> = _connectionStatus.asStateFlow()
@@ -64,9 +79,14 @@ class ConnectionRepositoryImpl(
         connectionJob =
             scope.launch {
                 try {
-                    // Simula deviceId para fins de auth offline-first. Numa Fase futura pode vir do settings
-                    val deviceId = "device-${nickname.hashCode()}"
-                    val login = webSocketClient.login(endpoint.host, endpoint.port, endpoint.isLocal, nickname, deviceId)
+                    val login =
+                        webSocketClient.login(
+                            endpoint.host,
+                            endpoint.port,
+                            endpoint.isLocal,
+                            nickname,
+                            deviceId(settings),
+                        )
                     sessionUserId = login.userId
 
                     // We launch the infinite reconnect loop in the background

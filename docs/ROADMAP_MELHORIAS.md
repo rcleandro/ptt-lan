@@ -139,6 +139,9 @@ com testes de integração cobrindo cada caso.
   (`ConnectionRepositoryImpl.kt:65`) muda se o nickname mudar e colide entre pessoas com o mesmo nome.
 - **Ação:** gerar um UUID de dispositivo uma vez e persistir em settings (`device_id`), enviado como `deviceId` no login.
   O `userId` continua emitido pelo servidor (19.1); para a 20.3, o servidor pode reaproveitar o `userId` do mesmo `deviceId`.
+- **Implementado:** `deviceId(settings)` em `ConnectionRepositoryImpl.kt` grava um `Uuid.random()` (stdlib do Kotlin) na chave
+  `device_id` na primeira vez e reusa depois; o login passou a enviá-lo. `DeviceIdTest` cobre a estabilidade entre chamadas
+  e a diferença entre instalações.
 
 ### 20.3 "Nome já em uso" ao reconectar 🔎 — M
 - **Problema provável:** quando a rede cai sem close, o servidor só remove a sessão antiga no timeout de ping (~20s + timeout).

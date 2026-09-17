@@ -16,5 +16,9 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.okio)
         }
+        jvmTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.multiplatform.settings.test)
+        }
     }
 }
