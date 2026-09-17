@@ -15,6 +15,8 @@ class NetworkCommonUtilsTest {
     fun testIsLocalNetworkWithMdns() {
         assertTrue(isLocalNetwork("ptt-server.local"))
         assertTrue(isLocalNetwork("MACBOOK.LOCAL"))
+        // Bonjour resolves to a fully qualified name, with the root dot
+        assertTrue(isLocalNetwork("ptt-server.local."))
     }
 
     @Test
