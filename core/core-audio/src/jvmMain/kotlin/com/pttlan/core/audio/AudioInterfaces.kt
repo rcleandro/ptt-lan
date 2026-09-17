@@ -12,6 +12,9 @@ import javax.sound.sampled.DataLine
 import javax.sound.sampled.SourceDataLine
 import javax.sound.sampled.TargetDataLine
 
+private const val BUFFERING_POLL_MS = 10L
+private const val PACKET_TIMEOUT_MS = 500L
+
 class JvmAudioRecorder : AudioRecorder {
     private var line: TargetDataLine? = null
     private var isRecording = false
@@ -56,20 +59,12 @@ class JvmAudioRecorder : AudioRecorder {
     }
 }
 
-private data class AudioPacket(
-    val chunk: ByteArray,
-    val sequenceNumber: Int,
-    val timestampMs: Long,
-) : Comparable<AudioPacket> {
-    override fun compareTo(other: AudioPacket): Int = this.sequenceNumber.compareTo(other.sequenceNumber)
-}
-
 class JvmAudioPlayer : AudioPlayer {
     private var line: SourceDataLine? = null
     private val queue = PriorityBlockingQueue<AudioPacket>()
+    private val policy = JitterBufferPolicy()
     private var isPlaying = false
     private var playThread: Thread? = null
-    private var expectedSequenceNumber = -1
 
     override fun play(
         chunk: ByteArray,
@@ -87,30 +82,19 @@ class JvmAudioPlayer : AudioPlayer {
             isPlaying = true
             playThread =
                 Thread {
-                    var isBuffering = true
-
                     while (isPlaying) {
-                        if (isBuffering) {
-                            if (queue.size < 5) {
-                                Thread.sleep(10)
-                                continue
-                            } else {
-                                isBuffering = false
-                            }
+                        if (policy.shouldWaitForMore(queue.size)) {
+                            Thread.sleep(BUFFERING_POLL_MS)
+                            continue
                         }
 
-                        val packet = queue.poll(500, TimeUnit.MILLISECONDS)
+                        val packet = queue.poll(PACKET_TIMEOUT_MS, TimeUnit.MILLISECONDS)
                         if (packet != null && line != null) {
-                            if (expectedSequenceNumber == -1 || packet.sequenceNumber < expectedSequenceNumber - 20) {
-                                expectedSequenceNumber = packet.sequenceNumber
-                            }
-                            if (packet.sequenceNumber >= expectedSequenceNumber) {
+                            if (policy.shouldPlay(packet.sequenceNumber)) {
                                 line?.write(packet.chunk, 0, packet.chunk.size)
-                                expectedSequenceNumber = packet.sequenceNumber + 1
                             }
                         } else {
-                            isBuffering = true
-                            expectedSequenceNumber = -1
+                            policy.onStarved()
                         }
                     }
                 }
@@ -135,7 +119,7 @@ class JvmAudioPlayer : AudioPlayer {
         line?.close()
         line = null
         queue.clear()
-        expectedSequenceNumber = -1
+        policy.onStarved()
     }
 }
 
