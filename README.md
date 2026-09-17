@@ -24,15 +24,28 @@ Nenhum desenvolvedor ou agente de IA deve introduzir novas tecnologias ou mudar 
 ## 🚀 Como iniciar
 
 1. Clone o repositório.
-2. Certifique-se de ter o **JDK 17+** instalado.
+2. Tenha o **JDK 21** instalado (o mesmo usado pelo CI e pela imagem Docker).
 3. Abra o projeto no **Android Studio** ou **IntelliJ IDEA**.
-4. Compile o servidor e as plataformas:
-   - Para rodar o servidor: `./gradlew :serverApp:run`
-   - Para rodar o app Android: `./gradlew :androidApp:installDebug`
-   - Para rodar o app Desktop: `./gradlew :desktopApp:run`
+4. Compile e rode:
+   - Servidor: `./gradlew :serverApp:run` — HTTP na porta **9393**, HTTPS/WSS na **9443** (os clientes usam a 9443). Na primeira execução é gerado um certificado self-signed em `serverApp/build/keystore.jks`.
+   - Android: `./gradlew :androidApp:installDebug`
+   - Desktop: `./gradlew :desktopApp:run`
+   - iOS: `cd iosApp && xcodegen`, depois abra `iosApp.xcodeproj` no Xcode.
+5. Testes e qualidade: `./gradlew jvmTest :serverApp:test detekt ktlintCheck`. (Nos módulos KMP, `./gradlew test` não executa os testes `jvmTest`.)
+
+### Servidor via Docker
+
+```bash
+docker build -t ptt-lan-server .
+docker run -p 9393:9393 -p 9443:9443 ptt-lan-server
+```
+
+A cada push na `main`, o CI publica a imagem multi-arquitetura (amd64/arm64) em `ghcr.io/rcleandro/ptt-lan`.
 
 Consulte a seção `19. Guias Rápidos de Onboarding` no [Plano Técnico](docs/PTT_KMP_PLANO_TECNICO.md) para detalhes sobre as regras de arquitetura em KMP (como lidar com dependências inversas) e o padrão MVI utilizado.
 
 ## 📖 Documentação Adicional
+- **Contexto do projeto**: [docs/CONTEXTO.md](docs/CONTEXTO.md) descreve o código como ele está hoje e onde diverge do plano.
+- **Roadmap de melhorias**: [docs/ROADMAP_MELHORIAS.md](docs/ROADMAP_MELHORIAS.md) (fases 18 em diante).
 - **ADRs**: As decisões tomadas ao longo do projeto estão documentadas em `docs/adr/`.
 - **API Reference**: Acesse a documentação Dokka gerada executando `./gradlew dokkaHtmlMultiModule`. Os arquivos estarão em `build/dokka/htmlMultiModule`.

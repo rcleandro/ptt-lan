@@ -66,27 +66,38 @@ private fun RootContent(component: RootComponent) {
             animation = stackAnimation(slide()),
         ) { child ->
             when (val instance = child.instance) {
-                is RootComponent.Child.ConnectionChild ->
+                is RootComponent.Child.ConnectionChild -> {
                     ConnectionScreen(
                         component = instance.component,
                         onOpenSettings = component::navigateToSettings,
                         onOpenHistory = openHistory,
                     )
-                is RootComponent.Child.ChannelListChild ->
+                }
+
+                is RootComponent.Child.ChannelListChild -> {
                     ChannelListScreen(
                         component = instance.component,
                         onBack = component::goBack,
                         onOpenSettings = component::navigateToSettings,
                         onOpenHistory = openHistory,
                     )
-                is RootComponent.Child.PttChild ->
+                }
+
+                is RootComponent.Child.PttChild -> {
                     PttScreen(
                         component = instance.component,
                         onBack = component::goBack,
                         showHistory = isCacheEnabled,
                     )
-                is RootComponent.Child.HistoryChild -> HistoryScreen(instance.component)
-                is RootComponent.Child.SettingsChild -> SettingsScreen(instance.component, onBack = component::goBack)
+                }
+
+                is RootComponent.Child.HistoryChild -> {
+                    HistoryScreen(instance.component)
+                }
+
+                is RootComponent.Child.SettingsChild -> {
+                    SettingsScreen(instance.component, onBack = component::goBack)
+                }
             }
         }
 

@@ -143,6 +143,7 @@ class RootComponent(
                 }
                 Child.ConnectionChild(component)
             }
+
             is Config.ChannelList -> {
                 val component: ChannelListComponent = get(parameters = { parametersOf(context) })
                 context.lifecycle.coroutineScope().launch {
@@ -157,6 +158,7 @@ class RootComponent(
                 }
                 Child.ChannelListChild(component)
             }
+
             is Config.PttScreen -> {
                 val component: PttComponent =
                     get(
@@ -177,6 +179,7 @@ class RootComponent(
                 }
                 Child.PttChild(component)
             }
+
             is Config.HistoryScreen -> {
                 val component: HistoryComponent =
                     get(
@@ -186,6 +189,7 @@ class RootComponent(
                     )
                 Child.HistoryChild(component)
             }
+
             is Config.Settings -> {
                 val component: SettingsComponent = get(parameters = { parametersOf(context) })
                 Child.SettingsChild(component)

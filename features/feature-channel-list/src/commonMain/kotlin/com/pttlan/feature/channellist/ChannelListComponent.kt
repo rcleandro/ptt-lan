@@ -84,12 +84,14 @@ class ChannelListComponent(
             is ChannelListIntent.UpdateNewChannelName -> {
                 _state.update { it.copy(newChannelName = intent.name) }
             }
+
             is ChannelListIntent.JoinChannel -> {
                 scope.launch {
                     joinChannelUseCase(intent.channelId, intent.name)
                     _effects.emit(ChannelListEffect.NavigateToChannel(intent.channelId))
                 }
             }
+
             is ChannelListIntent.CreateChannel -> {
                 val name = _state.value.newChannelName
                 if (name.isNotBlank()) {

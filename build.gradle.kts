@@ -6,6 +6,8 @@ plugins {
     alias(libs.plugins.roborazzi) apply false
     alias(libs.plugins.kover)
 }
+val ktlintEngineVersion = libs.versions.ktlintEngine.get()
+
 subprojects {
     pluginManager.apply("org.jetbrains.dokka")
     
@@ -14,6 +16,7 @@ subprojects {
         pluginManager.apply("dev.detekt")
         
         extensions.configure<KtlintExtension> {
+            version.set(ktlintEngineVersion)
             filter {
                 exclude { it.file.path.contains("build") }
             }

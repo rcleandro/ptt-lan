@@ -33,7 +33,8 @@ out/
 bin/
 gen/
 
-# Heap dumps / profiling
+# Heap dumps / profiling / JVM crash logs
+hs_err_pid*.log
 *.hprof
 *.heaps
 *.alloc
@@ -48,9 +49,7 @@ Thumbs.db
 iosApp/build/
 iosApp/Pods/
 iosApp/DerivedData/
-iosApp/xcuserdata/
-iosApp/project.xcworkspace/xcuserdata/
-iosApp/*.xcworkspace/xcuserdata/
+xcuserdata/
 *.pbxuser
 *.mode1v3
 *.mode2v3

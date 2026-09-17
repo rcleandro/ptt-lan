@@ -125,6 +125,7 @@ class ConnectionComponent(
                     }
                 }
             }
+
             is ConnectionIntent.ConnectToManualIp -> {
                 if (_state.value.nickname.isBlank()) {
                     scope.launch { _effects.send(ConnectionEffect.ShowError("Por favor, preencha o seu Nome")) }
@@ -150,9 +151,11 @@ class ConnectionComponent(
                     }
                 }
             }
+
             is ConnectionIntent.UpdateManualIp -> {
                 _state.update { it.copy(manualIp = intent.ip.trim()) }
             }
+
             is ConnectionIntent.UpdateNickname -> {
                 _state.update { it.copy(nickname = intent.nickname) }
             }

@@ -14,11 +14,11 @@ dependencies {
     implementation(libs.jmdns)
 
     // Server dependencies
-    implementation("io.ktor:ktor-server-core:${libs.versions.ktor.get()}")
-    implementation("io.ktor:ktor-server-host-common:${libs.versions.ktor.get()}")
-    implementation("io.ktor:ktor-server-netty:${libs.versions.ktor.get()}")
-    implementation("io.ktor:ktor-server-websockets:${libs.versions.ktor.get()}")
-    implementation("io.ktor:ktor-server-content-negotiation:${libs.versions.ktor.get()}")
+    implementation(libs.ktor.server.core)
+    implementation(libs.ktor.server.host.common)
+    implementation(libs.ktor.server.netty)
+    implementation(libs.ktor.server.websockets)
+    implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.ktor.server.auth)
     implementation(libs.ktor.server.auth.jwt)
@@ -26,8 +26,8 @@ dependencies {
     implementation(libs.lettuce.core)
 
     implementation(libs.koin.core)
-    implementation("io.insert-koin:koin-ktor:${libs.versions.koin.get()}")
-    implementation("io.ktor:ktor-network-tls-certificates:${libs.versions.ktor.get()}")
+    implementation(libs.koin.ktor)
+    implementation(libs.ktor.network.tls.certificates)
     implementation(libs.logback.classic)
 
     testImplementation(libs.ktor.server.test.host)

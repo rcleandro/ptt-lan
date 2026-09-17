@@ -152,18 +152,21 @@ class PttComponent(
                     startTransmittingUseCase(channelId, userId)
                 }
             }
+
             is PttIntent.ReleasePtt -> {
                 scope.launch {
                     _state.update { it.copy(isTransmitting = false, isFloorGranted = false) }
                     stopTransmittingUseCase(channelId, userId)
                 }
             }
+
             is PttIntent.LeaveChannel -> {
                 scope.launch {
                     leaveChannelUseCase(channelId, userId)
                     _effects.emit(PttEffect.NavigateBack)
                 }
             }
+
             is PttIntent.GoToHistory -> {
                 scope.launch {
                     _effects.emit(PttEffect.NavigateToHistory)
