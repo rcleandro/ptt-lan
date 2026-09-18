@@ -55,11 +55,12 @@ androidApp/  desktopApp/  iosApp/ (Xcode + shared.framework)   serverApp/ (Ktor 
 
 | Módulo | Conteúdo real |
 |---|---|
-| `androidApp` | `MainActivity` (permissões, teclas do volante/mídia → PTT, liga/desliga o foreground service), `PttApplication` (startKoin), `PttForegroundService`, metadados Android Automotive |
-| `desktopApp` | `Main.kt`: startKoin + `RootComponent` + janela Compose; empacota DMG/MSI/DEB |
+| `androidApp` | `MainActivity` (permissões, teclas do volante/mídia → PTT, liga/desliga o foreground service), `PttApplication` (startKoin), `PttForegroundService`, `AndroidServerHost` + `announceWithNsd` (modo host, 24.5), metadados Android Automotive |
+| `desktopApp` | `Main.kt`: startKoin + `RootComponent` + janela Compose; empacota DMG/MSI/DEB. `DesktopServerHost` liga o modo host (24.2) |
 | `iosApp` | Shell SwiftUI (`ContentView` → `MainViewControllerKt.MainViewController()`); `project.yml` para XcodeGen |
 | `shared` | Só `iosMain`: gera `shared.framework` estático e expõe `MainViewController` |
-| `serverApp` | Servidor Ktor: `/ws`, `/api/auth/login`, painel `/admin` + `/api/admin/*`, mDNS |
+| `serverApp` | Executável do servidor: `main`, keystore, Netty, anúncio mDNS e `application.conf` |
+| `server-core` | Núcleo do servidor (24.1, [ADR 0010](adr/0010-modo-host-no-app.md)): `module()` com `/ws`, `/api/auth/login`, painel `/admin` + `/api/admin/*`, `ChannelRegistry`/`PttChannel`, anúncio mDNS (`announceOnLan`), `PttHostServer` (modo host, 24.2) e os testes |
 | `core-common` | `isLocalNetwork()`, `StorageInfoProvider` expect/actual |
 | `core-network` | `HttpClient` + `createPlatformHttpClient` (expect/actual), `PttWebSocketClient`, protocolo (`ControlMessage`, `AudioEnvelope`), `ServerDiscoveryService` |
 | `core-audio` | Interfaces `AudioRecorder`/`AudioPlayer`/`AudioCodec`, `PcmPassthroughCodec`, `OpusAudioCodec`, implementações por plataforma com jitter buffer, `MicrophonePermissionManager` |
@@ -84,7 +85,7 @@ accessors (`projects.core.coreNetwork`).
 1. `ConnectionComponent` lista servidores via `DiscoverServersUseCase` (mDNS `_pttlan._tcp`) ou
    aceita IP/host manual (porta fixa **9443**). Salva `nickname` e `manualIp` nas settings.
 2. `ConnectionRepositoryImpl.connect` → `PttWebSocketClient.login` (`POST https://host:9443/api/auth/login`
-   com `nickname` + `deviceId = "device-${nickname.hashCode()}"`) → recebe `token` + `userId`. O `userId` é gerado
+   com `nickname` + `deviceId = "device-${nickname.hashCode()}"` e, se preenchido, o `pin` da sala) → recebe `token` + `userId`. O `userId` é gerado
    pelo servidor, vai no `sub` do JWT e fica em `ConnectionRepository.sessionUserId`.
 3. `PttWebSocketClient.connect` abre `wss://host:9443/ws?token=…` e fica em loop de reconexão
    (backoff 1s→30s, jitter ±20%). Falha na **primeira** tentativa é propagada; depois disso reconecta sozinho.
@@ -154,7 +155,8 @@ Existe teste de round-trip em `ControlMessageTest`.
   `XForwardedHeaders` só é instalado com `PTT_TRUST_PROXY=true`, para o rate limit enxergar o IP real atrás do proxy sem permitir spoofing em LAN.
   Senhas e segredos vêm do ambiente (`PTT_ADMIN_PASSWORD`, `PTT_JWT_SECRET`, `PTT_KEYSTORE_PASSWORD`), com fallback de LAN — ver README.
 - **Auth** (`JwtConfig`): HMAC256 com segredo de `PTT_JWT_SECRET`; sem a variável, um aleatório por boot → reiniciar invalida todos os tokens. Validade 1 dia.
-  O login não tem senha: qualquer nickname/deviceId não vazio recebe token. O servidor gera o `userId` (claim `sub`)
+  O login não tem senha: qualquer nickname/deviceId não vazio recebe token, exceto quando `ptt.roomPin` está definido
+  (só no modo host, 24.3) — aí o `pin` do `LoginRequest` precisa bater, senão 401. O servidor gera o `userId` (claim `sub`)
   e o devolve em `LoginResponse`.
 - `/ws`: exige `?token=`; `userId` e `nickname` vêm só do token (os das mensagens são ignorados); nickname precisa ser único (case-insensitive) entre conexões — senão fecha com "Nome já em uso".
   Query param `version` (constante `APP_VERSION` do cliente, 20.5) aparece no painel; `protocol` (`PROTOCOL_VERSION`, 21.5)
@@ -200,7 +202,7 @@ O plano é o SSOT de intenção, mas estes pontos refletem o código atual:
 | Dependências entre módulos | `core-di` não conhece features; features não usam `core-network` | `feature-ptt` deixou de usar `core-network` (22.8); `core-di` e `core-navigation` seguem agregando todas as features, agora documentado na [ADR 0008](adr/0008-grafo-de-dependencias-entre-modulos.md). A regra automática fica para a 23.4 |
 | Engine do client | CIO | OkHttp (Android/JVM), Darwin (iOS) |
 | Limites Detekt | Classe 300 / função 40 linhas | `LargeClass` 600 / `LongMethod` 60 em `config/detekt/detekt.yml` |
-| Testes | Fakes em `core-testing`, snapshot tests, Kover no CI | `core-testing` foi removido (22.2); snapshot tests ainda não existem (23.5); o CI roda `jvmTest`, `:serverApp:test` e `koverVerify` com piso por módulo (23.2) |
+| Testes | Fakes em `core-testing`, snapshot tests, Kover no CI | `core-testing` foi removido (22.2); snapshot tests ainda não existem (23.5); o CI roda `jvmTest`, `:server-core:test` e `koverVerify` com piso por módulo (23.2) |
 | Targets iOS | Inclui `iosX64` | Só `iosArm64` e `iosSimulatorArm64` |
 
 ## 9. Testes existentes
@@ -223,9 +225,9 @@ Os testes de Component rodam em `jvmTest` porque MockK não suporta Native.
 ./gradlew :androidApp:installDebug             # cliente Android
 cd iosApp && xcodegen && open iosApp.xcodeproj # cliente iOS (framework gerado pelo :shared)
 
-./gradlew jvmTest :serverApp:test              # testes JVM (`test` sozinho não roda os jvmTest das KMP)
+./gradlew jvmTest :server-core:test            # testes JVM (`test` sozinho não roda os jvmTest das KMP)
 ./gradlew :features:feature-ptt:jvmTest        # um módulo
-./gradlew :serverApp:test --tests "*ServerIntegrationTest"
+./gradlew :server-core:test --tests "*ServerIntegrationTest"
 ./gradlew iosSimulatorArm64Test                # testes no simulador iOS
 ./gradlew detekt ktlintCheck                   # lint (ktlintFormat para corrigir)
 ./gradlew dokkaHtmlMultiModule                 # docs em build/dokka/htmlMultiModule
