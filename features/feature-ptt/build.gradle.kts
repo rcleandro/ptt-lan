@@ -10,7 +10,6 @@ kotlin {
             implementation(projects.core.coreDesignsystem)
             implementation(projects.core.coreAudio)
             implementation(projects.domain.domainPtt)
-            implementation(projects.core.coreNetwork)
             implementation(projects.core.coreDatastore)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.koin.core)

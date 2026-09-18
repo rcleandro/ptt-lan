@@ -4,7 +4,7 @@ import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.Lifecycle
 import com.pttlan.core.datastore.SettingsKeys
-import com.pttlan.core.network.protocol.ParticipantDto
+import com.pttlan.domain.ptt.model.ParticipantDomain
 import com.pttlan.domain.ptt.repository.VoiceRepository
 import com.pttlan.domain.ptt.usecase.JoinChannelUseCase
 import com.pttlan.domain.ptt.usecase.LeaveChannelUseCase
@@ -37,7 +37,7 @@ data class PttState(
     val currentSpeakerName: String? = null,
     val floorBlocked: Boolean = false,
     val isFloorGranted: Boolean = false,
-    val participants: List<ParticipantDto> = emptyList(),
+    val participants: List<ParticipantDomain> = emptyList(),
 )
 
 sealed interface PttIntent {
@@ -119,11 +119,7 @@ class PttComponent(
 
         scope.launch {
             observeParticipantsUseCase(channelId).collect { participants ->
-                val dtos =
-                    participants.map {
-                        ParticipantDto(it.userId, it.nickname, it.isSpeaking)
-                    }
-                _state.update { it.copy(participants = dtos) }
+                _state.update { it.copy(participants = participants) }
             }
         }
 

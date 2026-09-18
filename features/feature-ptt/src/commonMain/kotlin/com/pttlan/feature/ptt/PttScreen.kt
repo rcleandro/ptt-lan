@@ -55,7 +55,7 @@ import com.pttlan.core.designsystem.components.snackbar.SnackbarController
 import com.pttlan.core.designsystem.components.snackbar.SnackbarEvent
 import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.core.designsystem.theme.PttTheme
-import com.pttlan.core.network.protocol.ParticipantDto
+import com.pttlan.domain.ptt.model.ParticipantDomain
 
 @Composable
 fun PttScreen(
@@ -303,10 +303,10 @@ private fun ParticipantsPanel(
 
 private val previewParticipants =
     listOf(
-        ParticipantDto("u1", "Leandro", false),
-        ParticipantDto("u2", "Marcos", true),
-        ParticipantDto("u3", "Júlia", false),
-        ParticipantDto("u4", "Rafael", false),
+        ParticipantDomain("u1", "Leandro", false),
+        ParticipantDomain("u2", "Marcos", true),
+        ParticipantDomain("u3", "Júlia", false),
+        ParticipantDomain("u4", "Rafael", false),
     )
 
 @Preview

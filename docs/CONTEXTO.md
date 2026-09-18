@@ -197,7 +197,7 @@ O plano é o SSOT de intenção, mas estes pontos refletem o código atual:
 | Redis / multi-instância (Fase 17) | Estado e pub/sub no Redis | Removido na 22.1 ([ADR 0007](adr/0007-remover-redis.md)): o estado é em memória e o servidor roda em uma instância só |
 | Admin | — | Basic auth com `PTT_ADMIN_PASSWORD`; sem a variável, leitura (`metrics`, `logs/csv`) segue aberta e as rotas de escrita ficam desligadas |
 | Floor control | Liberado também por timeout de heartbeat; regra replicada no domain | O `Heartbeat` saiu do protocolo (21.5); quem cobre é o watchdog de inatividade da 20.4, e a regra só existe no servidor |
-| Dependências entre módulos | `core-di` não conhece features; features não usam `core-network` | `core-di` e `core-navigation` dependem de todas as features; `feature-ptt` usa `ParticipantDto` de `core-network`. Não há regra automática (17.3) |
+| Dependências entre módulos | `core-di` não conhece features; features não usam `core-network` | `feature-ptt` deixou de usar `core-network` (22.8); `core-di` e `core-navigation` seguem agregando todas as features, agora documentado na [ADR 0008](adr/0008-grafo-de-dependencias-entre-modulos.md). A regra automática fica para a 23.4 |
 | Engine do client | CIO | OkHttp (Android/JVM), Darwin (iOS) |
 | Limites Detekt | Classe 300 / função 40 linhas | `LargeClass` 600 / `LongMethod` 60 em `config/detekt/detekt.yml` |
 | Testes | Fakes em `core-testing`, snapshot tests, Kover no CI | `core-testing` vazio; nenhum teste de snapshot/Roborazzi no repositório; CI roda `./gradlew test` sem `koverVerify` |
