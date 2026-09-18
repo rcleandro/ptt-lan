@@ -200,7 +200,7 @@ O plano é o SSOT de intenção, mas estes pontos refletem o código atual:
 | Dependências entre módulos | `core-di` não conhece features; features não usam `core-network` | `feature-ptt` deixou de usar `core-network` (22.8); `core-di` e `core-navigation` seguem agregando todas as features, agora documentado na [ADR 0008](adr/0008-grafo-de-dependencias-entre-modulos.md). A regra automática fica para a 23.4 |
 | Engine do client | CIO | OkHttp (Android/JVM), Darwin (iOS) |
 | Limites Detekt | Classe 300 / função 40 linhas | `LargeClass` 600 / `LongMethod` 60 em `config/detekt/detekt.yml` |
-| Testes | Fakes em `core-testing`, snapshot tests, Kover no CI | `core-testing` vazio; nenhum teste de snapshot/Roborazzi no repositório; CI roda `./gradlew test` sem `koverVerify` |
+| Testes | Fakes em `core-testing`, snapshot tests, Kover no CI | `core-testing` foi removido (22.2); snapshot tests ainda não existem (23.5); o CI roda `jvmTest`, `:serverApp:test` e `koverVerify` com piso por módulo (23.2) |
 | Targets iOS | Inclui `iosX64` | Só `iosArm64` e `iosSimulatorArm64` |
 
 ## 9. Testes existentes
