@@ -1,6 +1,7 @@
 package com.pttlan.android
 
 import android.os.Bundle
+import co.touchlab.kermit.Logger
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.arkivanov.decompose.retainedComponent
@@ -13,7 +14,9 @@ import org.koin.android.ext.android.inject
 import com.pttlan.core.navigation.RootComponent
 import com.pttlan.core.navigation.RootScreen
 import com.pttlan.domain.ptt.repository.ConnectionStatus
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import com.pttlan.domain.ptt.repository.ChannelSessionRepository
@@ -61,24 +64,45 @@ class MainActivity : ComponentActivity() {
         val channelSessionRepository: ChannelSessionRepository by inject()
 
         lifecycleScope.launch {
-            combine(
-                connectionRepository.connectionStatus,
-                channelSessionRepository.activeSessionChannelId,
-                (settings as ObservableSettings).getBooleanFlow(SettingsKeys.ALWAYS_LISTENING, SettingsDefaults.ALWAYS_LISTENING)
-            ) { status, activeChannel, alwaysListening ->
-                Triple(status, activeChannel, alwaysListening)
-            }.collect { (status, activeChannel, alwaysListening) ->
-                val intent = android.content.Intent(this@MainActivity, PttForegroundService::class.java)
-                if (status == ConnectionStatus.Connected && activeChannel != null && alwaysListening) {
-                    startForegroundService(intent)
-                } else if (status == ConnectionStatus.Disconnected || activeChannel == null || !alwaysListening) {
-                    stopService(intent)
+            // Only while the activity is at least STARTED: since phase 20.1 the client reconnects on its own,
+            // so this used to fire `startForegroundService` with the app in the background, which Android 12+
+            // rejects with ForegroundServiceStartNotAllowedException — and a `microphone` service is refused
+            // outright on 14+. `repeatOnLifecycle` re-emits the current values when the app comes back.
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                combine(
+                    connectionRepository.connectionStatus,
+                    channelSessionRepository.activeSessionChannelId,
+                    (settings as ObservableSettings).getBooleanFlow(SettingsKeys.ALWAYS_LISTENING, SettingsDefaults.ALWAYS_LISTENING)
+                ) { status, activeChannel, alwaysListening ->
+                    Triple(status, activeChannel, alwaysListening)
+                }.collect { (status, activeChannel, alwaysListening) ->
+                    val intent = android.content.Intent(this@MainActivity, PttForegroundService::class.java)
+                    if (status == ConnectionStatus.Connected && activeChannel != null && alwaysListening) {
+                        startListeningService(intent)
+                    } else if (status == ConnectionStatus.Disconnected || activeChannel == null || !alwaysListening) {
+                        stopService(intent)
+                    }
                 }
             }
         }
 
         setContent {
             RootScreen(component = rootComponent)
+        }
+    }
+
+    /**
+     * Starting the service can still lose a race with the activity going to the background, and the system
+     * answers that with an exception instead of ignoring it. Losing background audio is bad; crashing the app
+     * because of it is worse.
+     */
+    private fun startListeningService(intent: android.content.Intent) {
+        try {
+            startForegroundService(intent)
+        } catch (e: IllegalStateException) {
+            Logger.withTag("android").w(e) { "Could not start the listening service from the background" }
+        } catch (e: SecurityException) {
+            Logger.withTag("android").w(e) { "Not allowed to start the microphone service right now" }
         }
     }
 
