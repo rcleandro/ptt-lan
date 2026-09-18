@@ -4,6 +4,10 @@ plugins {
 }
 
 kotlin {
+    // Creating a source set with a manual `dependsOn` turns the default hierarchy off, which orphaned the iOS
+    // `actual` declarations. Applying the template explicitly keeps it and lets the extra group coexist.
+    applyDefaultHierarchyTemplate()
+
     sourceSets {
         commonMain.dependencies {
             implementation(projects.core.coreCommon)
