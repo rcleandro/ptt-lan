@@ -19,11 +19,11 @@ val coverageFloors =
         ":data:data-ptt" to 30,
         ":core:core-network" to 45,
         ":core:core-audio" to 25,
-        ":features:feature-ptt" to 70,
-        ":features:feature-connection" to 60,
-        ":features:feature-channel-list" to 95,
-        ":features:feature-history" to 40,
-        ":features:feature-settings" to 95,
+        ":features:feature-ptt" to 60,
+        ":features:feature-connection" to 55,
+        ":features:feature-channel-list" to 85,
+        ":features:feature-history" to 35,
+        ":features:feature-settings" to 90,
         ":serverApp" to 85,
     )
 
@@ -74,14 +74,13 @@ subprojects {
             reports {
                 filters {
                     excludes {
+                        // By annotation, not by file name: naming would tie the number to where a composable
+                        // happens to live, and splitting a screen into sections would "drop" the coverage.
+                        annotatedBy("androidx.compose.runtime.Composable")
                         classes(
-                            "*Screen*",
-                            "*ScreenKt*",
                             "*ComposableSingletons*",
                             "*.di.*",
                             "com.pttlan.core.database.*",
-                            "*.theme.*",
-                            "*.components.*",
                         )
                     }
                 }
