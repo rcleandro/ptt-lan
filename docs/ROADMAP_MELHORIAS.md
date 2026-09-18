@@ -33,6 +33,7 @@ graph LR
     F18 --> F22[22 Simplificação e arquitetura]
     F21 --> F23[23 Gates de qualidade]
     F22 --> F23
+    F23 --> F24[24 Modo host]
 ```
 
 A fase 18 vem primeiro porque é barata e deixa o CI confiável para as próximas. A 19 vem antes da 20 porque
@@ -299,6 +300,24 @@ sem atraso para os demais; servidor sem log por pacote em `INFO`.
 | 23.5 Snapshot tests | ✔ feito | Plano marca como feito, mas não existem. Roborazzi já está no catalog | `DesignSystemSnapshotTest` em `core-designsystem/src/androidHostTest`: 5 imagens (`PttButton` transmitindo e recebendo, `ConnectionStatusBadge`, `ChannelCard`, `ParticipantAvatar`), todas no tema escuro. `verifyRoborazziAndroidHostTest` roda no CI e os diffs sobem como artefato quando falha. O Robolectric precisou de `@Config(sdk = [34])`: no SDK do `compileSdk` ele quebra com "Failed to interact with raw FileDescriptor internals". **As imagens são gravadas no Linux**, pelo workflow manual `record-snapshots.yml`, porque o Robolectric renderiza gradiente e canto arredondado de forma diferente no macOS — imagem gravada no Mac nunca bate no runner | M |
 
 **Critério de conclusão:** CI falha com cobertura abaixo da meta, nova issue de Detekt ou dependência proibida entre features.
+
+---
+
+## Fase 24 — Modo host
+
+**Objetivo:** um dos aparelhos hospeda o canal, sem máquina à parte, como decidido na
+[ADR 0010](adr/0010-modo-host-no-app.md). O `serverApp` e a imagem Docker continuam como estão.
+
+| Item | Status | Ação | Esforço |
+|---|---|---|---|
+| 24.1 Núcleo do servidor em módulo próprio | ⏳ | Extrair `ChannelRegistry`, `PttChannel`, rotas, `JwtConfig` e `Application.module()` para `server-core` (JVM), junto com os testes. Em `serverApp` ficam só `main`, keystore, Netty e JmDNS. Sem mudança de comportamento | M |
+| 24.2 Hospedar no Desktop | ⏳ | Ação "Hospedar" na tela de conexão do `desktopApp`: sobe o servidor no próprio processo, anuncia por mDNS e conecta nele como cliente comum | M |
+| 24.3 PIN de sala | ⏳ | No modo host, `/api/auth/login` exige o PIN definido por quem hospeda. O `serverApp` segue sem PIN | P |
+| 24.4 Spike Android | ⏳ | Validar engine (Netty × CIO) com TLS, keystore PKCS12 gerado no aparelho, `NsdManager.registerService` e foreground service. Passa se um celular hospedar e outros dois falarem por 10 min com a tela bloqueada | M (prazo de 1–2 dias) |
+| 24.5 Hospedar no Android | ⏳ | Só se a 24.4 passar. Opus como padrão no host; painel admin não é exposto | G |
+
+**Critério de conclusão:** Desktop (e Android, se o spike passar) hospeda um canal descoberto pelos outros
+clientes via mDNS, sem `serverApp` rodando na rede.
 
 ---
 
