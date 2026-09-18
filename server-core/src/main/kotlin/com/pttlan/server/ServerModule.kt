@@ -123,6 +123,9 @@ fun Application.module() {
     routing {
         authRoutes(roomPin())
         pttRoutes()
-        dashboardRoutes(adminEnabled = adminPassword != null)
+        // Off in host mode (ADR 0010): the metrics need JVM management beans that Android lacks
+        if (environment.config.propertyOrNull("ptt.adminPanel")?.getString() != "false") {
+            dashboardRoutes(adminEnabled = adminPassword != null)
+        }
     }
 }

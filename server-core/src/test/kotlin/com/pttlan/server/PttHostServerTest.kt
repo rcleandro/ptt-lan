@@ -65,6 +65,12 @@ class PttHostServerTest {
             outputStream.use { it.write(body.toByteArray()) }
         }
 
+    private fun get(path: String): HttpURLConnection =
+        (URI("https://localhost:$port$path").toURL().openConnection() as HttpsURLConnection).apply {
+            sslSocketFactory = trustAll.socketFactory
+            hostnameVerifier = HostnameVerifier { _, _ -> true }
+        }
+
     @Test
     fun `serves login over tls and announces itself`() {
         server.start("PTT-LAN-host")
@@ -101,10 +107,12 @@ class PttHostServerTest {
         }
 
     @Test
-    fun `admin write routes stay off, so the panel cannot kill the hosting app`() {
+    fun `the admin panel is not served, so it cannot kill the hosting app nor touch JVM-only metrics`() {
         server.start("PTT-LAN-host")
 
         assertEquals(404, post("/api/admin/system/shutdown").responseCode)
+        assertEquals(404, get("/api/admin/metrics").responseCode)
+        assertEquals(404, get("/admin/index.html").responseCode)
     }
 
     @Test

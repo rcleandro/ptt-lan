@@ -16,8 +16,8 @@ private const val KEY_ALIAS = "pttlan"
 
 /**
  * The server running inside a client app (host mode, ADR 0010). Same module as `serverApp`, but with no
- * `application.conf`: apart from the room PIN, every `ptt.*` setting takes its default, so the admin write
- * routes (and the `exitProcess` behind shutdown) stay off. The certificate is generated in memory on each start —
+ * `application.conf` and no admin panel: the panel's metrics need JVM management beans that Android lacks, and its
+ * shutdown would `exitProcess` the app that hosts the room. The certificate is generated in memory on each start —
  * clients accept any certificate on the LAN, so there is nothing to persist.
  */
 class PttHostServer(
@@ -51,7 +51,9 @@ class PttHostServer(
         server =
             embeddedServer(
                 Netty,
-                applicationEnvironment { config = MapApplicationConfig("ptt.roomPin" to pin.orEmpty()) },
+                applicationEnvironment {
+                    config = MapApplicationConfig("ptt.roomPin" to pin.orEmpty(), "ptt.adminPanel" to "false")
+                },
                 configure = {
                     sslConnector(
                         keyStore = keyStore,

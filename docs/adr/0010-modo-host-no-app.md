@@ -64,11 +64,11 @@ O modo host mantém o protocolo, o cliente e as regras do servidor. Plataformas:
   complexo e não entra agora. Quando o host sai, os clientes caem na tela de conexão com "Servidor
   desconectado", como já acontece hoje.
 - **Carga no host.** Ele recebe e retransmite o áudio de todos: em PCM 48 kHz são ~768 kbps por ouvinte.
-  No modo host o Opus passa a ser o padrão.
+  O codec é escolhido por quem fala, então ligar Opus só no host não reduz essa carga; o ganho pede Opus como
+  padrão em todos os clientes, o que ficou como decisão à parte (ver 24.5 no roadmap).
 - **Acesso.** O login não tem senha, então qualquer um na rede entra no canal hospedado. No modo host entra
   um PIN de sala, verificado em `/api/auth/login`.
-- **Painel admin.** Fica restrito ao `serverApp`; no host Android as métricas de JVM somem e o painel não é
-  exposto.
+- **Painel admin.** Fica restrito ao `serverApp`: no modo host (Desktop e Android) o painel não é servido.
 - **Redes com isolamento de clientes** (Wi-Fi de visitantes e corporativo) continuam impedindo mDNS e
   conexão direta, assim como já impedem com o servidor dedicado. O hotspot do próprio host contorna.
 - O `serverApp` e a imagem Docker continuam sendo o caminho para servidor fixo (Raspberry, nuvem).

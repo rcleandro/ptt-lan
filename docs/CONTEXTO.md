@@ -55,7 +55,7 @@ androidApp/  desktopApp/  iosApp/ (Xcode + shared.framework)   serverApp/ (Ktor 
 
 | Módulo | Conteúdo real |
 |---|---|
-| `androidApp` | `MainActivity` (permissões, teclas do volante/mídia → PTT, liga/desliga o foreground service), `PttApplication` (startKoin), `PttForegroundService`, metadados Android Automotive |
+| `androidApp` | `MainActivity` (permissões, teclas do volante/mídia → PTT, liga/desliga o foreground service), `PttApplication` (startKoin), `PttForegroundService`, `AndroidServerHost` + `announceWithNsd` (modo host, 24.5), metadados Android Automotive |
 | `desktopApp` | `Main.kt`: startKoin + `RootComponent` + janela Compose; empacota DMG/MSI/DEB. `DesktopServerHost` liga o modo host (24.2) |
 | `iosApp` | Shell SwiftUI (`ContentView` → `MainViewControllerKt.MainViewController()`); `project.yml` para XcodeGen |
 | `shared` | Só `iosMain`: gera `shared.framework` estático e expõe `MainViewController` |

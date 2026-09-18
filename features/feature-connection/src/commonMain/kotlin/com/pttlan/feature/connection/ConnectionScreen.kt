@@ -207,7 +207,7 @@ private fun HostCard(onHost: () -> Unit) {
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "Hospedar nesta máquina",
+                text = "Hospedar neste aparelho",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onBackground,
             )

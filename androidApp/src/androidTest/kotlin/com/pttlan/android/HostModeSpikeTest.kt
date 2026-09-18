@@ -35,17 +35,22 @@ import kotlin.time.Duration.Companion.seconds
 class HostModeSpikeTest {
     private val context: Context = InstrumentationRegistry.getInstrumentation().targetContext
     private val server = PttHostServer(announce = { port, name -> announceWithNsd(context, port, name) })
+    private val host = AndroidServerHost(context)
 
     @After
-    fun tearDown() = server.stop()
+    fun tearDown() {
+        server.stop()
+        host.stop()
+    }
 
     @Test
     fun serverRunsOnTheDeviceAndTheAppClientTalksToIt() =
         runBlocking {
-            server.start("PTT-LAN-spike", pin = "4821")
+            val endpoint = host.start("PTT-LAN-spike", pin = "4821").getOrThrow()
+            assertTrue(host.isHosting.value)
             val client = PttWebSocketClient(createHttpClient())
 
-            val login = client.login("localhost", 9443, true, "spike", "device-spike", "4821")
+            val login = client.login(endpoint.host, endpoint.port, true, "spike", "device-spike", "4821")
             assertTrue(login.token.isNotBlank())
 
             launch(Dispatchers.IO) { client.connect("localhost", 9443, true, login.token) }

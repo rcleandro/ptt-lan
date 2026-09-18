@@ -42,12 +42,14 @@ dependencies {
     implementation(libs.ui.tooling.preview)
     implementation(libs.decompose)
     implementation(libs.decompose.extensions.compose)
-
-    // Spike 24.4: the server only reaches the test APK until 24.5 wires host mode into the app (+5 MB)
-    androidTestImplementation(projects.serverCore) {
+    implementation(projects.domain.domainPtt)
+    implementation(projects.serverCore) {
         // HTTP/3 natives for desktop OSes: the host serves HTTPS/WSS over TCP only, and they add megabytes
         exclude(group = "io.netty", module = "netty-codec-native-quic")
     }
+
+    testImplementation(kotlin("test-junit"))
+
     androidTestImplementation(projects.core.coreNetwork)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.test.runner)
