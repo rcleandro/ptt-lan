@@ -11,10 +11,13 @@ import kotlinx.coroutines.withContext
 class DesktopServerHost(
     private val server: PttHostServer = PttHostServer(),
 ) : LocalServerHost {
-    override suspend fun start(serviceName: String): Result<ServerEndpoint> =
+    override suspend fun start(
+        serviceName: String,
+        pin: String?,
+    ): Result<ServerEndpoint> =
         withContext(Dispatchers.IO) {
             runCatching {
-                server.start(serviceName)
+                server.start(serviceName, pin)
                 ServerEndpoint(host = "localhost", port = PTT_PORT, isLocal = true)
             }
         }

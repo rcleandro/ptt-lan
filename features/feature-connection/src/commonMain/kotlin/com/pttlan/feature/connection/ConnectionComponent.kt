@@ -31,6 +31,8 @@ data class ConnectionState(
     val discoveredServers: List<ServerNode> = emptyList(),
     val manualIp: String = "",
     val nickname: String = "",
+    /** Room PIN: sent when joining, and set on the room when hosting. Blank means none. */
+    val pin: String = "",
     /** Whether this platform can host the channel itself (host mode). */
     val canHost: Boolean = false,
 )
@@ -50,6 +52,10 @@ sealed interface ConnectionIntent {
 
     data class UpdateNickname(
         val nickname: String,
+    ) : ConnectionIntent
+
+    data class UpdatePin(
+        val pin: String,
     ) : ConnectionIntent
 
     data object HostServer : ConnectionIntent
@@ -136,7 +142,7 @@ class ConnectionComponent(
                 if (!saveNickname()) return
                 scope.launch {
                     host
-                        .start(serviceName = "PTT-LAN-${_state.value.nickname}")
+                        .start(serviceName = "PTT-LAN-${_state.value.nickname}", pin = pinOrNull())
                         .onSuccess { endpoint -> connect(endpoint, "Tempo de conexão excedido ao entrar no próprio canal.") }
                         .onFailure { _effects.send(ConnectionEffect.ShowError("Não foi possível hospedar: ${it.message}")) }
                 }
@@ -148,6 +154,10 @@ class ConnectionComponent(
 
             is ConnectionIntent.UpdateNickname -> {
                 _state.update { it.copy(nickname = intent.nickname) }
+            }
+
+            is ConnectionIntent.UpdatePin -> {
+                _state.update { it.copy(pin = intent.pin.trim()) }
             }
         }
     }
@@ -162,12 +172,14 @@ class ConnectionComponent(
         return true
     }
 
+    private fun pinOrNull(): String? = _state.value.pin.ifBlank { null }
+
     private fun connect(
         endpoint: ServerEndpoint,
         timeoutMessage: String,
     ) {
         scope.launch {
-            val exception = connectToServerUseCase(endpoint, _state.value.nickname).exceptionOrNull() ?: return@launch
+            val exception = connectToServerUseCase(endpoint, _state.value.nickname, pinOrNull()).exceptionOrNull() ?: return@launch
             if (exception is TimeoutCancellationException) {
                 _effects.send(ConnectionEffect.ShowError(timeoutMessage))
             } else if (exception !is CancellationException) {

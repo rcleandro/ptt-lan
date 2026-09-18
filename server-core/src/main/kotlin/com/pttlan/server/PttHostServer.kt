@@ -2,7 +2,9 @@ package com.pttlan.server
 
 import io.ktor.network.tls.certificates.buildKeyStore
 import io.ktor.server.application.Application
+import io.ktor.server.config.MapApplicationConfig
 import io.ktor.server.engine.EmbeddedServer
+import io.ktor.server.engine.applicationEnvironment
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.engine.sslConnector
 import io.ktor.server.netty.Netty
@@ -14,8 +16,8 @@ private const val KEY_ALIAS = "pttlan"
 
 /**
  * The server running inside a client app (host mode, ADR 0010). Same module as `serverApp`, but with no
- * `application.conf`: every `ptt.*` setting takes its default, so the admin write routes (and the
- * `exitProcess` behind shutdown) stay off. The certificate is generated in memory on each start —
+ * `application.conf`: apart from the room PIN, every `ptt.*` setting takes its default, so the admin write
+ * routes (and the `exitProcess` behind shutdown) stay off. The certificate is generated in memory on each start —
  * clients accept any certificate on the LAN, so there is nothing to persist.
  */
 class PttHostServer(
@@ -27,9 +29,15 @@ class PttHostServer(
 
     val isRunning: Boolean get() = server != null
 
-    /** Starts the server and announces it on the LAN. Does nothing when it is already running. */
+    /**
+     * Starts the server and announces it on the LAN. Does nothing when it is already running — the PIN of
+     * the running room stays. A blank [pin] makes an open room.
+     */
     @Synchronized
-    fun start(serviceName: String) {
+    fun start(
+        serviceName: String,
+        pin: String? = null,
+    ) {
         if (server != null) return
 
         val password = UUID.randomUUID().toString()
@@ -43,6 +51,7 @@ class PttHostServer(
         server =
             embeddedServer(
                 Netty,
+                applicationEnvironment { config = MapApplicationConfig("ptt.roomPin" to pin.orEmpty()) },
                 configure = {
                     sslConnector(
                         keyStore = keyStore,

@@ -155,6 +155,13 @@ private fun ServerList(
                 onValueChange = { onIntent(ConnectionIntent.UpdateNickname(it)) },
             )
         }
+        item {
+            LabeledTextField(
+                label = "PIN da sala (opcional)",
+                value = state.pin,
+                onValueChange = { onIntent(ConnectionIntent.UpdatePin(it)) },
+            )
+        }
         if (state.canHost) {
             item { HostCard(onHost = { onIntent(ConnectionIntent.HostServer) }) }
         }
@@ -205,7 +212,7 @@ private fun HostCard(onHost: () -> Unit) {
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Text(
-                text = "Os outros encontram o canal na rede, sem servidor à parte.",
+                text = "Os outros encontram o canal na rede. Com PIN, só entra quem souber.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

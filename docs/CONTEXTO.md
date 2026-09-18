@@ -85,7 +85,7 @@ accessors (`projects.core.coreNetwork`).
 1. `ConnectionComponent` lista servidores via `DiscoverServersUseCase` (mDNS `_pttlan._tcp`) ou
    aceita IP/host manual (porta fixa **9443**). Salva `nickname` e `manualIp` nas settings.
 2. `ConnectionRepositoryImpl.connect` → `PttWebSocketClient.login` (`POST https://host:9443/api/auth/login`
-   com `nickname` + `deviceId = "device-${nickname.hashCode()}"`) → recebe `token` + `userId`. O `userId` é gerado
+   com `nickname` + `deviceId = "device-${nickname.hashCode()}"` e, se preenchido, o `pin` da sala) → recebe `token` + `userId`. O `userId` é gerado
    pelo servidor, vai no `sub` do JWT e fica em `ConnectionRepository.sessionUserId`.
 3. `PttWebSocketClient.connect` abre `wss://host:9443/ws?token=…` e fica em loop de reconexão
    (backoff 1s→30s, jitter ±20%). Falha na **primeira** tentativa é propagada; depois disso reconecta sozinho.
@@ -155,7 +155,8 @@ Existe teste de round-trip em `ControlMessageTest`.
   `XForwardedHeaders` só é instalado com `PTT_TRUST_PROXY=true`, para o rate limit enxergar o IP real atrás do proxy sem permitir spoofing em LAN.
   Senhas e segredos vêm do ambiente (`PTT_ADMIN_PASSWORD`, `PTT_JWT_SECRET`, `PTT_KEYSTORE_PASSWORD`), com fallback de LAN — ver README.
 - **Auth** (`JwtConfig`): HMAC256 com segredo de `PTT_JWT_SECRET`; sem a variável, um aleatório por boot → reiniciar invalida todos os tokens. Validade 1 dia.
-  O login não tem senha: qualquer nickname/deviceId não vazio recebe token. O servidor gera o `userId` (claim `sub`)
+  O login não tem senha: qualquer nickname/deviceId não vazio recebe token, exceto quando `ptt.roomPin` está definido
+  (só no modo host, 24.3) — aí o `pin` do `LoginRequest` precisa bater, senão 401. O servidor gera o `userId` (claim `sub`)
   e o devolve em `LoginResponse`.
 - `/ws`: exige `?token=`; `userId` e `nickname` vêm só do token (os das mensagens são ignorados); nickname precisa ser único (case-insensitive) entre conexões — senão fecha com "Nome já em uso".
   Query param `version` (constante `APP_VERSION` do cliente, 20.5) aparece no painel; `protocol` (`PROTOCOL_VERSION`, 21.5)

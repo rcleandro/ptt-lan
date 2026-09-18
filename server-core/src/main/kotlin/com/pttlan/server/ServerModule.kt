@@ -8,6 +8,7 @@ import com.pttlan.server.routing.adminPassword
 import com.pttlan.server.routing.authRoutes
 import com.pttlan.server.routing.dashboardRoutes
 import com.pttlan.server.routing.pttRoutes
+import com.pttlan.server.routing.roomPin
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -120,7 +121,7 @@ fun Application.module() {
     }
 
     routing {
-        authRoutes()
+        authRoutes(roomPin())
         pttRoutes()
         dashboardRoutes(adminEnabled = adminPassword != null)
     }

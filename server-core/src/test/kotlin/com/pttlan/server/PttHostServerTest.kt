@@ -1,5 +1,8 @@
 package com.pttlan.server
 
+import com.pttlan.core.network.PttWebSocketClient
+import com.pttlan.core.network.createHttpClient
+import kotlinx.coroutines.runBlocking
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
@@ -49,14 +52,17 @@ class PttHostServerTest {
     @AfterTest
     fun tearDown() = server.stop()
 
-    private fun post(path: String): HttpURLConnection =
+    private fun post(
+        path: String,
+        body: String = """{"nickname":"host","deviceId":"d1"}""",
+    ): HttpURLConnection =
         (URI("https://localhost:$port$path").toURL().openConnection() as HttpsURLConnection).apply {
             sslSocketFactory = trustAll.socketFactory
             hostnameVerifier = HostnameVerifier { _, _ -> true }
             requestMethod = "POST"
             doOutput = true
             setRequestProperty("Content-Type", "application/json")
-            outputStream.use { it.write("""{"nickname":"host","deviceId":"d1"}""".toByteArray()) }
+            outputStream.use { it.write(body.toByteArray()) }
         }
 
     @Test
@@ -73,6 +79,26 @@ class PttHostServerTest {
         )
         assertEquals(listOf("PTT-LAN-host"), announced)
     }
+
+    @Test
+    fun `a room with a pin only lets in who knows it`() {
+        server.start("PTT-LAN-host", pin = "4821")
+
+        assertEquals(401, post("/api/auth/login").responseCode)
+        assertEquals(200, post("/api/auth/login", """{"nickname":"host","deviceId":"d1","pin":"4821"}""").responseCode)
+    }
+
+    @Test
+    fun `the app client sends the pin and reads a wrong one as a clear error`() =
+        runBlocking {
+            server.start("PTT-LAN-host", pin = "4821")
+            val client = PttWebSocketClient(createHttpClient())
+
+            val wrongPin =
+                assertFailsWith<IllegalStateException> { client.login("localhost", port, true, "guest", "d2", "0000") }
+            assertEquals("PIN da sala incorreto", wrongPin.message)
+            assertTrue(client.login("localhost", port, true, "guest", "d2", "4821").token.isNotBlank())
+        }
 
     @Test
     fun `admin write routes stay off, so the panel cannot kill the hosting app`() {

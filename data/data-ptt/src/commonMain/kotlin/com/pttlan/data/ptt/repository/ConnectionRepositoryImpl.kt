@@ -73,6 +73,7 @@ class ConnectionRepositoryImpl(
     override suspend fun connect(
         endpoint: ServerEndpoint,
         nickname: String,
+        pin: String?,
     ): Result<Unit> {
         _connectionStatus.value = ConnectionStatus.Connecting
 
@@ -90,6 +91,7 @@ class ConnectionRepositoryImpl(
                             endpoint.isLocal,
                             nickname,
                             deviceId(settings),
+                            pin,
                         )
                     sessionUserId = login.userId
 

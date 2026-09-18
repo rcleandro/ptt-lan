@@ -4,6 +4,7 @@ import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.pttlan.domain.ptt.repository.LocalServerHost
 import com.pttlan.domain.ptt.repository.ServerEndpoint
+import com.pttlan.domain.ptt.repository.ServerNode
 import com.pttlan.domain.ptt.usecase.ConnectToServerUseCase
 import com.pttlan.domain.ptt.usecase.DiscoverServersUseCase
 import com.pttlan.domain.ptt.usecase.ObserveConnectionStatusUseCase
@@ -154,7 +155,7 @@ class ConnectionComponentTest {
         runTest {
             val host: LocalServerHost = mockk()
             val hostEndpoint = ServerEndpoint("localhost", 9443, isLocal = true)
-            coEvery { host.start("PTT-LAN-User1") } returns Result.success(hostEndpoint)
+            coEvery { host.start("PTT-LAN-User1", null) } returns Result.success(hostEndpoint)
             coEvery { connectToServerUseCase(hostEndpoint, "User1") } returns Result.success(Unit)
             val component = createComponent(host)
             assertTrue(component.state.value.canHost)
@@ -170,7 +171,7 @@ class ConnectionComponentTest {
     fun `when HostServer fails to start, should emit ShowError and not connect`() =
         runTest {
             val host: LocalServerHost = mockk()
-            coEvery { host.start(any()) } returns Result.failure(IllegalStateException("Address already in use"))
+            coEvery { host.start(any(), any()) } returns Result.failure(IllegalStateException("Address already in use"))
             val component = createComponent(host)
 
             component.onIntent(ConnectionIntent.UpdateNickname("User1"))
@@ -181,5 +182,37 @@ class ConnectionComponentTest {
             assertTrue(effect is ConnectionEffect.ShowError)
             assertTrue(effect.message.contains("Address already in use"))
             coVerify(exactly = 0) { connectToServerUseCase(any(), any()) }
+        }
+
+    @Test
+    fun `with a pin, hosting closes the room with it and joins with it`() =
+        runTest {
+            val host: LocalServerHost = mockk()
+            val hostEndpoint = ServerEndpoint("localhost", 9443, isLocal = true)
+            coEvery { host.start("PTT-LAN-User1", "4821") } returns Result.success(hostEndpoint)
+            coEvery { connectToServerUseCase(hostEndpoint, "User1", "4821") } returns Result.success(Unit)
+            val component = createComponent(host)
+
+            component.onIntent(ConnectionIntent.UpdateNickname("User1"))
+            component.onIntent(ConnectionIntent.UpdatePin(" 4821 "))
+            component.onIntent(ConnectionIntent.HostServer)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { connectToServerUseCase(hostEndpoint, "User1", "4821") }
+        }
+
+    @Test
+    fun `joining a server sends the pin typed on the screen`() =
+        runTest {
+            val endpoint = ServerEndpoint("192.168.0.20", 9443, isLocal = true)
+            coEvery { connectToServerUseCase(endpoint, "User1", "4821") } returns Result.success(Unit)
+            val component = createComponent()
+
+            component.onIntent(ConnectionIntent.UpdateNickname("User1"))
+            component.onIntent(ConnectionIntent.UpdatePin("4821"))
+            component.onIntent(ConnectionIntent.ConnectToDiscovered(ServerNode("PTT-LAN-Host", endpoint)))
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { connectToServerUseCase(endpoint, "User1", "4821") }
         }
 }
