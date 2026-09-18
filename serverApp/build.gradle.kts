@@ -9,7 +9,6 @@ application {
 
 dependencies {
     implementation(projects.serverCore)
-    implementation(libs.jmdns)
 
     implementation(libs.ktor.server.netty)
     implementation(libs.ktor.network.tls.certificates)

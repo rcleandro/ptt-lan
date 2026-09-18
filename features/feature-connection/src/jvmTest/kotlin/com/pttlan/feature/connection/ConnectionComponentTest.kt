@@ -2,6 +2,7 @@ package com.pttlan.feature.connection
 
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
+import com.pttlan.domain.ptt.repository.LocalServerHost
 import com.pttlan.domain.ptt.repository.ServerEndpoint
 import com.pttlan.domain.ptt.usecase.ConnectToServerUseCase
 import com.pttlan.domain.ptt.usecase.DiscoverServersUseCase
@@ -29,6 +30,7 @@ import org.koin.dsl.module
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -63,13 +65,14 @@ class ConnectionComponentTest {
         stopKoin()
     }
 
-    private fun createComponent(): ConnectionComponent {
+    private fun createComponent(localServerHost: LocalServerHost? = null): ConnectionComponent {
         val lifecycle = LifecycleRegistry()
         return ConnectionComponent(
             componentContext = DefaultComponentContext(lifecycle),
             observeConnectionStatusUseCase = observeConnectionStatusUseCase,
             discoverServersUseCase = discoverServersUseCase,
             connectToServerUseCase = connectToServerUseCase,
+            localServerHost = localServerHost,
         )
     }
 
@@ -139,5 +142,44 @@ class ConnectionComponentTest {
             val effect = component.effects.first()
             assertTrue(effect is ConnectionEffect.ShowError)
             assertTrue(effect.message.contains("Tempo de conexão excedido"))
+        }
+
+    @Test
+    fun `without a local server host, hosting is not offered`() {
+        assertFalse(createComponent().state.value.canHost)
+    }
+
+    @Test
+    fun `when HostServer succeeds, should connect to the endpoint the host returned`() =
+        runTest {
+            val host: LocalServerHost = mockk()
+            val hostEndpoint = ServerEndpoint("localhost", 9443, isLocal = true)
+            coEvery { host.start("PTT-LAN-User1") } returns Result.success(hostEndpoint)
+            coEvery { connectToServerUseCase(hostEndpoint, "User1") } returns Result.success(Unit)
+            val component = createComponent(host)
+            assertTrue(component.state.value.canHost)
+
+            component.onIntent(ConnectionIntent.UpdateNickname("User1"))
+            component.onIntent(ConnectionIntent.HostServer)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { connectToServerUseCase(hostEndpoint, "User1") }
+        }
+
+    @Test
+    fun `when HostServer fails to start, should emit ShowError and not connect`() =
+        runTest {
+            val host: LocalServerHost = mockk()
+            coEvery { host.start(any()) } returns Result.failure(IllegalStateException("Address already in use"))
+            val component = createComponent(host)
+
+            component.onIntent(ConnectionIntent.UpdateNickname("User1"))
+            component.onIntent(ConnectionIntent.HostServer)
+            advanceUntilIdle()
+
+            val effect = component.effects.first()
+            assertTrue(effect is ConnectionEffect.ShowError)
+            assertTrue(effect.message.contains("Address already in use"))
+            coVerify(exactly = 0) { connectToServerUseCase(any(), any()) }
         }
 }

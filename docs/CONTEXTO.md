@@ -56,11 +56,11 @@ androidApp/  desktopApp/  iosApp/ (Xcode + shared.framework)   serverApp/ (Ktor 
 | Módulo | Conteúdo real |
 |---|---|
 | `androidApp` | `MainActivity` (permissões, teclas do volante/mídia → PTT, liga/desliga o foreground service), `PttApplication` (startKoin), `PttForegroundService`, metadados Android Automotive |
-| `desktopApp` | `Main.kt`: startKoin + `RootComponent` + janela Compose; empacota DMG/MSI/DEB |
+| `desktopApp` | `Main.kt`: startKoin + `RootComponent` + janela Compose; empacota DMG/MSI/DEB. `DesktopServerHost` liga o modo host (24.2) |
 | `iosApp` | Shell SwiftUI (`ContentView` → `MainViewControllerKt.MainViewController()`); `project.yml` para XcodeGen |
 | `shared` | Só `iosMain`: gera `shared.framework` estático e expõe `MainViewController` |
 | `serverApp` | Executável do servidor: `main`, keystore, Netty, anúncio mDNS e `application.conf` |
-| `server-core` | Núcleo do servidor (24.1, [ADR 0010](adr/0010-modo-host-no-app.md)): `module()` com `/ws`, `/api/auth/login`, painel `/admin` + `/api/admin/*`, `ChannelRegistry`/`PttChannel` e os testes |
+| `server-core` | Núcleo do servidor (24.1, [ADR 0010](adr/0010-modo-host-no-app.md)): `module()` com `/ws`, `/api/auth/login`, painel `/admin` + `/api/admin/*`, `ChannelRegistry`/`PttChannel`, anúncio mDNS (`announceOnLan`), `PttHostServer` (modo host, 24.2) e os testes |
 | `core-common` | `isLocalNetwork()`, `StorageInfoProvider` expect/actual |
 | `core-network` | `HttpClient` + `createPlatformHttpClient` (expect/actual), `PttWebSocketClient`, protocolo (`ControlMessage`, `AudioEnvelope`), `ServerDiscoveryService` |
 | `core-audio` | Interfaces `AudioRecorder`/`AudioPlayer`/`AudioCodec`, `PcmPassthroughCodec`, `OpusAudioCodec`, implementações por plataforma com jitter buffer, `MicrophonePermissionManager` |

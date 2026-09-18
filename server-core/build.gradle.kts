@@ -16,6 +16,9 @@ dependencies {
     implementation(libs.ktor.server.auth.jwt)
     implementation(libs.ktor.server.rate.limit)
     implementation(libs.ktor.server.forwarded.header)
+    implementation(libs.ktor.server.netty)
+    implementation(libs.ktor.network.tls.certificates)
+    implementation(libs.jmdns)
 
     implementation(libs.koin.core)
     implementation(libs.koin.ktor)

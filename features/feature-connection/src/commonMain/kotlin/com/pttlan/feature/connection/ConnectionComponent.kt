@@ -4,6 +4,7 @@ import com.arkivanov.decompose.ComponentContext
 import com.pttlan.core.common.network.isLocalNetwork
 import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.domain.ptt.repository.ConnectionStatus
+import com.pttlan.domain.ptt.repository.LocalServerHost
 import com.pttlan.domain.ptt.repository.ServerEndpoint
 import com.pttlan.domain.ptt.repository.ServerNode
 import com.pttlan.domain.ptt.usecase.ConnectToServerUseCase
@@ -30,6 +31,8 @@ data class ConnectionState(
     val discoveredServers: List<ServerNode> = emptyList(),
     val manualIp: String = "",
     val nickname: String = "",
+    /** Whether this platform can host the channel itself (host mode). */
+    val canHost: Boolean = false,
 )
 
 sealed interface ConnectionIntent {
@@ -48,6 +51,8 @@ sealed interface ConnectionIntent {
     data class UpdateNickname(
         val nickname: String,
     ) : ConnectionIntent
+
+    data object HostServer : ConnectionIntent
 }
 
 sealed interface ConnectionEffect {
@@ -63,6 +68,7 @@ class ConnectionComponent(
     private val observeConnectionStatusUseCase: ObserveConnectionStatusUseCase,
     private val discoverServersUseCase: DiscoverServersUseCase,
     private val connectToServerUseCase: ConnectToServerUseCase,
+    private val localServerHost: LocalServerHost? = null,
 ) : ComponentContext by componentContext,
     KoinComponent {
     private val settings: Settings by inject()
@@ -72,6 +78,7 @@ class ConnectionComponent(
             ConnectionState(
                 nickname = settings.getString(SettingsKeys.NICKNAME, ""),
                 manualIp = settings.getString(SettingsKeys.MANUAL_IP, ""),
+                canHost = localServerHost != null,
             ),
         )
     val state: StateFlow<ConnectionState> = _state.asStateFlow()
@@ -108,48 +115,30 @@ class ConnectionComponent(
     fun onIntent(intent: ConnectionIntent) {
         when (intent) {
             is ConnectionIntent.ConnectToDiscovered -> {
-                if (_state.value.nickname.isBlank()) {
-                    scope.launch { _effects.send(ConnectionEffect.ShowError("Por favor, preencha o seu Nome")) }
-                    return
-                }
-                settings.putString(SettingsKeys.NICKNAME, _state.value.nickname)
-
-                scope.launch {
-                    val result = connectToServerUseCase(intent.server.endpoint, _state.value.nickname)
-                    if (result.isFailure) {
-                        val exception = result.exceptionOrNull()
-                        if (exception is TimeoutCancellationException) {
-                            _effects.send(ConnectionEffect.ShowError("Tempo de conexão excedido. O servidor está offline?"))
-                        } else if (exception !is CancellationException) {
-                            _effects.send(ConnectionEffect.ShowError("Falha ao conectar: ${exception?.message}"))
-                        }
-                    }
-                }
+                if (!saveNickname()) return
+                connect(intent.server.endpoint, "Tempo de conexão excedido. O servidor está offline?")
             }
 
             is ConnectionIntent.ConnectToManualIp -> {
-                if (_state.value.nickname.isBlank()) {
-                    scope.launch { _effects.send(ConnectionEffect.ShowError("Por favor, preencha o seu Nome")) }
-                    return
-                }
-                settings.putString(SettingsKeys.NICKNAME, _state.value.nickname)
+                if (!saveNickname()) return
                 settings.putString(SettingsKeys.MANUAL_IP, _state.value.manualIp)
+                val endpoint =
+                    ServerEndpoint(
+                        host = intent.ip,
+                        port = 9443,
+                        isLocal = isLocalNetwork(intent.ip),
+                    )
+                connect(endpoint, "Tempo de conexão excedido. Verifique o IP e tente novamente.")
+            }
+
+            is ConnectionIntent.HostServer -> {
+                val host = localServerHost ?: return
+                if (!saveNickname()) return
                 scope.launch {
-                    val endpoint =
-                        ServerEndpoint(
-                            host = intent.ip,
-                            port = 9443,
-                            isLocal = isLocalNetwork(intent.ip),
-                        )
-                    val result = connectToServerUseCase(endpoint, _state.value.nickname)
-                    if (result.isFailure) {
-                        val exception = result.exceptionOrNull()
-                        if (exception is TimeoutCancellationException) {
-                            _effects.send(ConnectionEffect.ShowError("Tempo de conexão excedido. Verifique o IP e tente novamente."))
-                        } else if (exception !is CancellationException) {
-                            _effects.send(ConnectionEffect.ShowError("Falha ao conectar: ${exception?.message}"))
-                        }
-                    }
+                    host
+                        .start(serviceName = "PTT-LAN-${_state.value.nickname}")
+                        .onSuccess { endpoint -> connect(endpoint, "Tempo de conexão excedido ao entrar no próprio canal.") }
+                        .onFailure { _effects.send(ConnectionEffect.ShowError("Não foi possível hospedar: ${it.message}")) }
                 }
             }
 
@@ -159,6 +148,30 @@ class ConnectionComponent(
 
             is ConnectionIntent.UpdateNickname -> {
                 _state.update { it.copy(nickname = intent.nickname) }
+            }
+        }
+    }
+
+    /** Persists the nickname, or reports that it is missing and returns false. */
+    private fun saveNickname(): Boolean {
+        if (_state.value.nickname.isBlank()) {
+            scope.launch { _effects.send(ConnectionEffect.ShowError("Por favor, preencha o seu Nome")) }
+            return false
+        }
+        settings.putString(SettingsKeys.NICKNAME, _state.value.nickname)
+        return true
+    }
+
+    private fun connect(
+        endpoint: ServerEndpoint,
+        timeoutMessage: String,
+    ) {
+        scope.launch {
+            val exception = connectToServerUseCase(endpoint, _state.value.nickname).exceptionOrNull() ?: return@launch
+            if (exception is TimeoutCancellationException) {
+                _effects.send(ConnectionEffect.ShowError(timeoutMessage))
+            } else if (exception !is CancellationException) {
+                _effects.send(ConnectionEffect.ShowError("Falha ao conectar: ${exception.message}"))
             }
         }
     }

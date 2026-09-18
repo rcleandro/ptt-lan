@@ -155,6 +155,9 @@ private fun ServerList(
                 onValueChange = { onIntent(ConnectionIntent.UpdateNickname(it)) },
             )
         }
+        if (state.canHost) {
+            item { HostCard(onHost = { onIntent(ConnectionIntent.HostServer) }) }
+        }
         item { DiscoveryHeader(isSearching = state.discoveredServers.isEmpty()) }
         items(state.discoveredServers) { server ->
             ServerCard(server = server) { onIntent(ConnectionIntent.ConnectToDiscovered(server)) }
@@ -185,6 +188,29 @@ private fun Header(
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+@Composable
+private fun HostCard(onHost: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().contentCard().padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = "Hospedar nesta máquina",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+            Text(
+                text = "Os outros encontram o canal na rede, sem servidor à parte.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        PillButton(text = "Hospedar", onClick = onHost)
     }
 }
 
@@ -309,6 +335,7 @@ private val previewState =
         status = ConnectionStatus.Disconnected,
         nickname = "Leandro",
         manualIp = "",
+        canHost = true,
         discoveredServers =
             listOf(
                 ServerNode("PTT-LAN-Server-4821", ServerEndpoint("192.168.0.12", 9443, true)),

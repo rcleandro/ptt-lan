@@ -16,6 +16,8 @@ kotlin {
             implementation(projects.features.featurePtt)
             implementation(projects.features.featureHistory)
             implementation(projects.features.featureSettings)
+            implementation(projects.domain.domainPtt)
+            implementation(projects.serverCore)
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.kotlinx.coroutines.swing)

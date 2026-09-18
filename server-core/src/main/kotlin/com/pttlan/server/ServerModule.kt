@@ -26,7 +26,7 @@ import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
 import kotlinx.serialization.json.Json
 import org.koin.dsl.module
-import org.koin.ktor.plugin.Koin
+import org.koin.ktor.plugin.KoinIsolated
 import java.security.MessageDigest
 import kotlin.time.Duration.Companion.seconds
 
@@ -54,7 +54,8 @@ fun Application.module() {
         )
     }
 
-    install(Koin) {
+    // Isolated: an app that embeds the server (host mode) already has its own global Koin.
+    install(KoinIsolated) {
         modules(
             module {
                 single {
