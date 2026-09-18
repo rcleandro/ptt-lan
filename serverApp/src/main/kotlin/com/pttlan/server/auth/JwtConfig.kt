@@ -2,7 +2,9 @@ package com.pttlan.server.auth
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import com.auth0.jwt.interfaces.JWTVerifier
 import java.util.Date
+import java.util.UUID
 import kotlin.time.Duration.Companion.days
 
 object JwtConfig {
@@ -13,13 +15,11 @@ object JwtConfig {
     // Sem ele, uma chave aleatória por boot: bom para LAN, mas desloga todo mundo a cada restart.
     private val SECRET =
         System.getenv("PTT_JWT_SECRET")?.takeIf { it.isNotBlank() }
-            ?: java.util.UUID
-                .randomUUID()
-                .toString()
+            ?: UUID.randomUUID().toString()
 
     private val algorithm = Algorithm.HMAC256(SECRET)
 
-    val verifier =
+    val verifier: JWTVerifier =
         JWT
             .require(algorithm)
             .withIssuer(ISSUER)

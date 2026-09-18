@@ -107,10 +107,10 @@ complexity:
     ignoredLabels: []
   LargeClass:
     active: true
-    allowedLines: 600
+    allowedLines: 300
   LongMethod:
     active: true
-    allowedLines: 60
+    allowedLines: 40
   LongParameterList:
     active: true
     allowedFunctionParameters: 6
@@ -165,6 +165,7 @@ coroutines:
     active: false
   InjectDispatcher:
     active: true
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
     dispatcherNames:
       - 'IO'
       - 'Default'

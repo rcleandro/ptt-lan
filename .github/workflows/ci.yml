@@ -29,7 +29,7 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
       - name: Run Detekt, Ktlint and the module rules
-        run: ./gradlew detekt ktlintCheck checkModuleDependencies
+        run: ./gradlew detekt :serverApp:detektMain :serverApp:detektTest ktlintCheck checkModuleDependencies
       - name: Upload lint reports
         if: failure()
         uses: actions/upload-artifact@v7

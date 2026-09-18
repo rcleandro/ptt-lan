@@ -59,6 +59,11 @@ subprojects {
 
     tasks.matching { it.name == "detekt" }.configureEach {
         dependsOn(checkNoPrintln)
+        // The server is analysed with type resolution too; the KMP modules still need a baseline for that
+        // (23.3), so `checkNoPrintln` keeps covering the println ban everywhere else.
+        if (path == ":serverApp") {
+            dependsOn("detektMain", "detektTest")
+        }
     }
 
     tasks.withType<Test> {

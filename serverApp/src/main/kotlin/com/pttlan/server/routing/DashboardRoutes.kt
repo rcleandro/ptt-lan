@@ -15,10 +15,13 @@ import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import java.lang.management.ManagementFactory
 import kotlin.system.exitProcess
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val SHUTDOWN_DELAY_MS = 500L
 
@@ -93,7 +96,6 @@ fun Application.adminPassword(): String? =
         ?.getString()
         ?.takeIf { it.isNotBlank() }
 
-@Suppress("MagicNumber")
 fun Routing.dashboardRoutes(adminEnabled: Boolean) {
     val channelRegistry by inject<ChannelRegistry>()
 
@@ -102,26 +104,9 @@ fun Routing.dashboardRoutes(adminEnabled: Boolean) {
 
         route("/api/admin") {
             get("/metrics") {
-                val uptime = ManagementFactory.getRuntimeMXBean().uptime
-                val runtime = Runtime.getRuntime()
-                val memoryUsed = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
-                val memoryTotal = runtime.maxMemory() / (1024 * 1024)
-                val threads = ManagementFactory.getThreadMXBean().threadCount
-
-                val osBean = ManagementFactory.getOperatingSystemMXBean()
-                val rawCpuLoad =
-                    if (osBean is OperatingSystemMXBean) {
-                        osBean.processCpuLoad * 100.0
-                    } else {
-                        0.0
-                    }
-                val cpuLoad = rawCpuLoad.takeIf { it >= 0.0 && !it.isNaN() }?.coerceAtMost(100.0) ?: 0.0
-
-                val serverHealth = ServerHealthDto(uptime, memoryUsed, memoryTotal, threads, cpuLoad)
-
                 call.respond(
                     DashboardMetricsDto(
-                        serverHealth = serverHealth,
+                        serverHealth = serverHealth(),
                         globalConnections = channelRegistry.getGlobalConnectionsCount(),
                         channels = channelRegistry.getActiveChannelsInfo(),
                         logs = channelRegistry.getRecentLogs(),
@@ -150,6 +135,22 @@ fun Routing.dashboardRoutes(adminEnabled: Boolean) {
     }
 }
 
+/** Uptime, memory, threads and CPU of the JVM the server runs on. */
+@Suppress("MagicNumber")
+private fun serverHealth(): ServerHealthDto {
+    val runtime = Runtime.getRuntime()
+    val osBean = ManagementFactory.getOperatingSystemMXBean()
+    val rawCpuLoad = if (osBean is OperatingSystemMXBean) osBean.processCpuLoad * 100.0 else 0.0
+
+    return ServerHealthDto(
+        uptimeMs = ManagementFactory.getRuntimeMXBean().uptime,
+        memoryUsedMb = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024),
+        memoryTotalMb = runtime.maxMemory() / (1024 * 1024),
+        activeThreads = ManagementFactory.getThreadMXBean().threadCount,
+        cpuLoadPercent = rawCpuLoad.takeIf { it >= 0.0 && !it.isNaN() }?.coerceAtMost(100.0) ?: 0.0,
+    )
+}
+
 private fun Route.adminWriteRoutes(channelRegistry: ChannelRegistry) {
     post("/system/restart") {
         channelRegistry.resetServer()
@@ -158,10 +159,12 @@ private fun Route.adminWriteRoutes(channelRegistry: ChannelRegistry) {
 
     post("/system/shutdown") {
         call.respond(HttpStatusCode.OK, mapOf("status" to "ok"))
-        Thread {
-            Thread.sleep(SHUTDOWN_DELAY_MS)
+        // Long enough for the response to reach the panel before the process goes away. The application
+        // scope is the right owner here: this outlives the request on purpose.
+        call.application.launch {
+            delay(SHUTDOWN_DELAY_MS.milliseconds)
             exitProcess(0)
-        }.start()
+        }
     }
 
     post("/system/broadcast") {
