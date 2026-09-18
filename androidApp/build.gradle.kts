@@ -14,6 +14,11 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+    packaging {
+        // Netty jars all ship these; none of them is read at runtime
+        resources.excludes += listOf("META-INF/INDEX.LIST", "META-INF/io.netty.versions.properties", "META-INF/license/**")
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -37,4 +42,13 @@ dependencies {
     implementation(libs.ui.tooling.preview)
     implementation(libs.decompose)
     implementation(libs.decompose.extensions.compose)
+
+    // Spike 24.4: the server only reaches the test APK until 24.5 wires host mode into the app (+5 MB)
+    androidTestImplementation(projects.serverCore) {
+        // HTTP/3 natives for desktop OSes: the host serves HTTPS/WSS over TCP only, and they add megabytes
+        exclude(group = "io.netty", module = "netty-codec-native-quic")
+    }
+    androidTestImplementation(projects.core.coreNetwork)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.test.runner)
 }
