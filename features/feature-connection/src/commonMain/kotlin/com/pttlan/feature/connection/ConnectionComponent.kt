@@ -2,6 +2,7 @@ package com.pttlan.feature.connection
 
 import com.arkivanov.decompose.ComponentContext
 import com.pttlan.core.common.network.isLocalNetwork
+import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.domain.ptt.repository.ServerEndpoint
 import com.pttlan.domain.ptt.repository.ServerNode
@@ -69,8 +70,8 @@ class ConnectionComponent(
     private val _state =
         MutableStateFlow(
             ConnectionState(
-                nickname = settings.getString("nickname", ""),
-                manualIp = settings.getString("manualIp", ""),
+                nickname = settings.getString(SettingsKeys.NICKNAME, ""),
+                manualIp = settings.getString(SettingsKeys.MANUAL_IP, ""),
             ),
         )
     val state: StateFlow<ConnectionState> = _state.asStateFlow()
@@ -111,7 +112,7 @@ class ConnectionComponent(
                     scope.launch { _effects.send(ConnectionEffect.ShowError("Por favor, preencha o seu Nome")) }
                     return
                 }
-                settings.putString("nickname", _state.value.nickname)
+                settings.putString(SettingsKeys.NICKNAME, _state.value.nickname)
 
                 scope.launch {
                     val result = connectToServerUseCase(intent.server.endpoint, _state.value.nickname)
@@ -131,8 +132,8 @@ class ConnectionComponent(
                     scope.launch { _effects.send(ConnectionEffect.ShowError("Por favor, preencha o seu Nome")) }
                     return
                 }
-                settings.putString("nickname", _state.value.nickname)
-                settings.putString("manualIp", _state.value.manualIp)
+                settings.putString(SettingsKeys.NICKNAME, _state.value.nickname)
+                settings.putString(SettingsKeys.MANUAL_IP, _state.value.manualIp)
                 scope.launch {
                     val endpoint =
                         ServerEndpoint(

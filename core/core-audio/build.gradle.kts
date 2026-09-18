@@ -13,6 +13,9 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
     }
 }
 

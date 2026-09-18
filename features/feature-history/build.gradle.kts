@@ -18,7 +18,8 @@ kotlin {
             implementation(libs.material.icons.extended)
         }
         jvmTest.dependencies {
-            implementation(projects.core.coreTesting)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.mockk)
             implementation(kotlin("test"))
         }
     }

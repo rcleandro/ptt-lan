@@ -4,7 +4,6 @@ import com.pttlan.server.auth.JwtConfig
 import com.pttlan.server.channel.ChannelRegistry
 import com.pttlan.server.channel.DEFAULT_FLOOR_IDLE_TIMEOUT_MS
 import com.pttlan.server.channel.DEFAULT_MAX_SPEECH_DURATION_MS
-import com.pttlan.server.redis.RedisManager
 import com.pttlan.server.routing.adminPassword
 import com.pttlan.server.routing.authRoutes
 import com.pttlan.server.routing.dashboardRoutes
@@ -12,7 +11,6 @@ import com.pttlan.server.routing.pttRoutes
 import io.ktor.network.tls.certificates.generateCertificate
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.UserIdPrincipal
@@ -91,27 +89,13 @@ fun Application.module() {
         modules(
             module {
                 single {
-                    val redisManager = RedisManager()
-                    redisManager.start()
-                    redisManager
-                }
-                single {
                     ChannelRegistry(
-                        redisManager = get(),
                         floorIdleTimeoutMs = longConfig("ptt.floorIdleTimeoutMs", DEFAULT_FLOOR_IDLE_TIMEOUT_MS),
                         maxSpeechDurationMs = longConfig("ptt.maxSpeechDurationMs", DEFAULT_MAX_SPEECH_DURATION_MS),
                     )
                 }
             },
         )
-    }
-
-    monitor.subscribe(ApplicationStopped) {
-        val koin =
-            org.koin.java.KoinJavaComponent
-                .getKoin()
-        val redisManager: RedisManager = koin.get()
-        redisManager.stop()
     }
 
     val adminPassword = adminPassword()

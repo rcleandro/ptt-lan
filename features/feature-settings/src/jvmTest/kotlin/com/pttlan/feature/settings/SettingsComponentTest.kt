@@ -4,6 +4,8 @@ import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.core.common.storage.StorageOption
+import com.pttlan.core.datastore.SettingsDefaults
+import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.core.designsystem.theme.AppTheme
 import com.russhwolf.settings.Settings
 import io.mockk.every
@@ -32,13 +34,13 @@ class SettingsComponentTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
 
-        every { settings.getString("nickname", "") } returns "TestUser"
-        every { settings.getBoolean("use_opus", false) } returns false
-        every { settings.getInt("app_theme", 0) } returns 0
-        every { settings.getBoolean("always_listening", true) } returns true
-        every { settings.getBoolean("allow_cache", false) } returns false
-        every { settings.getString("cache_location", "Interno") } returns "Interno"
-        every { settings.getInt("max_cache_size_mb", 500) } returns 500
+        every { settings.getString(SettingsKeys.NICKNAME, "") } returns "TestUser"
+        every { settings.getBoolean(SettingsKeys.USE_OPUS, SettingsDefaults.USE_OPUS) } returns false
+        every { settings.getInt(SettingsKeys.APP_THEME, SettingsDefaults.APP_THEME) } returns 0
+        every { settings.getBoolean(SettingsKeys.ALWAYS_LISTENING, SettingsDefaults.ALWAYS_LISTENING) } returns true
+        every { settings.getBoolean(SettingsKeys.ALLOW_CACHE, SettingsDefaults.ALLOW_CACHE) } returns false
+        every { settings.getString(SettingsKeys.CACHE_LOCATION, SettingsDefaults.CACHE_LOCATION) } returns "Interno"
+        every { settings.getInt(SettingsKeys.MAX_CACHE_SIZE_MB, SettingsDefaults.MAX_CACHE_SIZE_MB) } returns 500
     }
 
     @AfterTest
@@ -89,7 +91,7 @@ class SettingsComponentTest {
             component.onIntent(SettingsIntent.UpdateNickname("NewName"))
 
             assertEquals("NewName", component.state.value.nickname)
-            verify(exactly = 1) { settings.putString("nickname", "NewName") }
+            verify(exactly = 1) { settings.putString(SettingsKeys.NICKNAME, "NewName") }
         }
 
     @Test
@@ -100,7 +102,7 @@ class SettingsComponentTest {
             component.onIntent(SettingsIntent.ToggleOpus(true))
 
             assertEquals(true, component.state.value.useOpus)
-            verify(exactly = 1) { settings.putBoolean("use_opus", true) }
+            verify(exactly = 1) { settings.putBoolean(SettingsKeys.USE_OPUS, true) }
         }
 
     @Test
@@ -111,7 +113,7 @@ class SettingsComponentTest {
             component.onIntent(SettingsIntent.ChangeTheme(AppTheme.DARK))
 
             assertEquals(AppTheme.DARK, component.state.value.appTheme)
-            verify(exactly = 1) { settings.putInt("app_theme", AppTheme.DARK.ordinal) }
+            verify(exactly = 1) { settings.putInt(SettingsKeys.APP_THEME, AppTheme.DARK.ordinal) }
         }
 
     @Test
@@ -122,7 +124,7 @@ class SettingsComponentTest {
             component.onIntent(SettingsIntent.ToggleReduceTransparency(true))
 
             assertEquals(true, component.state.value.reduceTransparency)
-            verify(exactly = 1) { settings.putBoolean("reduce_transparency", true) }
+            verify(exactly = 1) { settings.putBoolean(SettingsKeys.REDUCE_TRANSPARENCY, true) }
         }
 
     @Test
@@ -133,7 +135,7 @@ class SettingsComponentTest {
             component.onIntent(SettingsIntent.ToggleAlwaysListening(false))
 
             assertEquals(false, component.state.value.alwaysListening)
-            verify(exactly = 1) { settings.putBoolean("always_listening", false) }
+            verify(exactly = 1) { settings.putBoolean(SettingsKeys.ALWAYS_LISTENING, false) }
         }
 
     @Test
@@ -144,7 +146,7 @@ class SettingsComponentTest {
             component.onIntent(SettingsIntent.ToggleAllowCache(true))
 
             assertEquals(true, component.state.value.allowCache)
-            verify(exactly = 1) { settings.putBoolean("allow_cache", true) }
+            verify(exactly = 1) { settings.putBoolean(SettingsKeys.ALLOW_CACHE, true) }
         }
 
     @Test
@@ -155,7 +157,7 @@ class SettingsComponentTest {
             component.onIntent(SettingsIntent.ChangeCacheLocation("Externo"))
 
             assertEquals("Externo", component.state.value.cacheLocation)
-            verify(exactly = 1) { settings.putString("cache_location", "Externo") }
+            verify(exactly = 1) { settings.putString(SettingsKeys.CACHE_LOCATION, "Externo") }
         }
 
     @Test
@@ -166,7 +168,7 @@ class SettingsComponentTest {
             component.onIntent(SettingsIntent.ChangeMaxCacheSize(1024))
 
             assertEquals(1024, component.state.value.maxCacheSizeMb)
-            verify(exactly = 1) { settings.putInt("max_cache_size_mb", 1024) }
+            verify(exactly = 1) { settings.putInt(SettingsKeys.MAX_CACHE_SIZE_MB, 1024) }
         }
 
     @Test

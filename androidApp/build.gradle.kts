@@ -22,6 +22,7 @@ android {
 }
 
 dependencies {
+    implementation(projects.core.coreDatastore)
     implementation(projects.core.coreDi)
     implementation(projects.core.coreNavigation)
     implementation(projects.core.coreDesignsystem)

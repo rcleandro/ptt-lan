@@ -4,7 +4,7 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.pttlan.domain.ptt.model.VoiceMessage
-import com.pttlan.domain.ptt.repository.VoiceRepository
+import com.pttlan.domain.ptt.repository.HistoryRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -28,7 +28,7 @@ class HistoryComponentTest {
     private val lifecycle = LifecycleRegistry()
     private val componentContext: ComponentContext = DefaultComponentContext(lifecycle)
 
-    private val voiceRepository: VoiceRepository = mockk(relaxed = true)
+    private val historyRepository: HistoryRepository = mockk(relaxed = true)
     private val onBackClicked: () -> Unit = mockk(relaxed = true)
 
     private val testDispatcher = StandardTestDispatcher()
@@ -37,7 +37,7 @@ class HistoryComponentTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
 
-        coEvery { voiceRepository.getAllMessages() } returns emptyFlow()
+        coEvery { historyRepository.getAllMessages() } returns emptyFlow()
     }
 
     @AfterTest
@@ -48,7 +48,7 @@ class HistoryComponentTest {
     private fun createComponent() =
         HistoryComponent(
             componentContext = componentContext,
-            voiceRepository = voiceRepository,
+            historyRepository = historyRepository,
             onBackClicked = onBackClicked,
         )
 
@@ -57,7 +57,7 @@ class HistoryComponentTest {
         runTest(testDispatcher) {
             val mockMessage = mockk<VoiceMessage>(relaxed = true)
             coEvery { mockMessage.id } returns "msg-1"
-            coEvery { voiceRepository.getAllMessages() } returns flowOf(listOf(mockMessage))
+            coEvery { historyRepository.getAllMessages() } returns flowOf(listOf(mockMessage))
 
             val component = createComponent()
             advanceUntilIdle()
@@ -93,7 +93,7 @@ class HistoryComponentTest {
             // but for now, we just advance to the end.
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { voiceRepository.playMessage(mockMessage) }
+            coVerify(exactly = 1) { historyRepository.playMessage(mockMessage) }
             assertEquals(null, component.playingMessageId.value)
         }
 
@@ -105,7 +105,7 @@ class HistoryComponentTest {
             component.stopPlaying()
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { voiceRepository.stopPlayingMessage() }
+            coVerify(exactly = 1) { historyRepository.stopPlayingMessage() }
             assertEquals(null, component.playingMessageId.value)
         }
 }

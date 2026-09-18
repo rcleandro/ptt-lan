@@ -1,7 +1,6 @@
 package com.pttlan.domain.ptt.repository
-import com.pttlan.domain.ptt.model.VoiceMessage
-import kotlinx.coroutines.flow.Flow
 
+/** The live audio path: who holds the floor and the transmission itself. History lives in [HistoryRepository]. */
 interface VoiceRepository {
     suspend fun requestFloor(
         channelId: String,
@@ -19,23 +18,4 @@ interface VoiceRepository {
     )
 
     suspend fun stopTransmitting()
-
-    // History
-    fun getRecentMessages(channelId: String): Flow<List<VoiceMessage>>
-
-    fun getAllMessages(): Flow<List<VoiceMessage>>
-
-    suspend fun playMessage(message: VoiceMessage)
-
-    suspend fun pausePlayingMessage()
-
-    suspend fun resumePlayingMessage()
-
-    suspend fun stopPlayingMessage()
-
-    suspend fun clearAllMessages()
-
-    suspend fun deleteMessage(message: VoiceMessage)
-
-    suspend fun deleteChannelMessages(channelId: String)
 }

@@ -2,6 +2,7 @@ package com.pttlan.data.ptt.repository
 
 import co.touchlab.kermit.Logger
 import com.pttlan.core.common.network.isLocalNetwork
+import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.core.network.PttWebSocketClient
 import com.pttlan.core.network.discovery.ServerDiscoveryService
 import com.pttlan.core.network.normalizeHost
@@ -23,16 +24,14 @@ import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-internal const val DEVICE_ID_KEY = "device_id"
-
 /**
  * Stable per-install identity. It must not derive from the nickname: that one changes and collides between
  * people with the same name, while the server uses `deviceId` to recognise a returning device (20.3).
  */
 @OptIn(ExperimentalUuidApi::class)
 internal fun deviceId(settings: Settings): String =
-    settings.getStringOrNull(DEVICE_ID_KEY)
-        ?: Uuid.random().toString().also { settings.putString(DEVICE_ID_KEY, it) }
+    settings.getStringOrNull(SettingsKeys.DEVICE_ID)
+        ?: Uuid.random().toString().also { settings.putString(SettingsKeys.DEVICE_ID, it) }
 
 class ConnectionRepositoryImpl(
     private val discoveryService: ServerDiscoveryService,
