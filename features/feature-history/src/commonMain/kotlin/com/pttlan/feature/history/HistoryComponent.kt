@@ -1,6 +1,7 @@
 package com.pttlan.feature.history
 
 import com.arkivanov.decompose.ComponentContext
+import com.pttlan.domain.ptt.model.PlaybackPosition
 import com.pttlan.domain.ptt.model.VoiceMessage
 import com.pttlan.domain.ptt.repository.HistoryRepository
 import kotlinx.coroutines.CoroutineScope
@@ -27,6 +28,9 @@ class HistoryComponent(
 
     private val _isPaused = MutableStateFlow<Boolean>(false)
     val isPaused: StateFlow<Boolean> = _isPaused.asStateFlow()
+
+    /** Progress of the message being replayed, straight from the repository. */
+    val playbackPosition: StateFlow<PlaybackPosition?> = historyRepository.playbackPosition
 
     init {
         historyRepository

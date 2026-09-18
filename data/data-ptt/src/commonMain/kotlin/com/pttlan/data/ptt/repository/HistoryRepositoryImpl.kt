@@ -8,14 +8,19 @@ import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.core.database.PttDatabase
 import com.pttlan.core.datastore.SettingsDefaults
 import com.pttlan.core.datastore.SettingsKeys
+import com.pttlan.domain.ptt.model.PlaybackPosition
 import com.pttlan.domain.ptt.model.VoiceMessage
 import com.pttlan.domain.ptt.repository.HistoryRepository
 import com.russhwolf.settings.Settings
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -25,6 +30,13 @@ import okio.SYSTEM
 import okio.buffer
 import kotlin.time.Duration.Companion.milliseconds
 
+private const val PLAYBACK_CHUNK_BYTES = 4096
+private const val PAUSE_POLL_MS = 100L
+private const val MS_PER_SECOND = 1000L
+
+/** Mono 16 bit PCM at 48 kHz, the format the recorder writes. */
+private const val BYTES_PER_SECOND = 48_000L * 2
+
 /** Reading, replaying and deleting recorded messages. Writing them is [HistoryRecorder]. */
 class HistoryRepositoryImpl(
     private val audioPlayer: AudioPlayer,
@@ -32,9 +44,13 @@ class HistoryRepositoryImpl(
     private val settings: Settings,
     private val storageInfoProvider: StorageInfoProvider,
     private val fileSystem: FileSystem = FileSystem.SYSTEM,
+    dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : HistoryRepository {
     private val logger = Logger.withTag("audio")
-    private val scope = CoroutineScope(Dispatchers.Default)
+    private val scope = CoroutineScope(dispatcher)
+
+    private val _playbackPosition = MutableStateFlow<PlaybackPosition?>(null)
+    override val playbackPosition: StateFlow<PlaybackPosition?> = _playbackPosition.asStateFlow()
 
     private var playbackJob: Job? = null
     private var isPlaybackPaused = false
@@ -85,18 +101,43 @@ class HistoryRepositoryImpl(
             scope.launch {
                 try {
                     val path = message.filePath.toPath()
+                    // The recorded file is the honest total: `durationMs` is wall clock of the talk spurt
+                    val totalMs =
+                        fileSystem
+                            .metadataOrNull(path)
+                            ?.size
+                            ?.let { it * MS_PER_SECOND / BYTES_PER_SECOND }
+                            ?: message.durationMs
+                    _playbackPosition.value = PlaybackPosition(message.id, 0, totalMs)
+
                     val source = fileSystem.source(path).buffer()
-                    val buffer = ByteArray(4096)
+                    val buffer = ByteArray(PLAYBACK_CHUNK_BYTES)
+                    var sequenceNumber = 0
+                    var playedBytes = 0L
 
                     while (isActive) {
                         if (isPlaybackPaused) {
-                            delay(100.milliseconds)
+                            delay(PAUSE_POLL_MS.milliseconds)
                             continue
                         }
                         val read = source.read(buffer)
                         if (read == -1) break
-                        val chunk = if (read == buffer.size) buffer else buffer.copyOf(read)
-                        audioPlayer.play(chunk)
+
+                        // The player keeps the array in its queue, so it has to be a copy: reusing `buffer`
+                        // meant the next read overwrote audio that had not been played yet.
+                        // The sequence number has to advance as well, or the jitter buffer treats every chunk
+                        // after the first as a late duplicate of packet 0 and drops it.
+                        audioPlayer.play(buffer.copyOf(read), sequenceNumber = sequenceNumber++)
+
+                        // Feed at playback speed. Reading the whole file at disk speed and returning would hit
+                        // the `finally` below and stop the player while the queue was still full.
+                        delay((read * MS_PER_SECOND / BYTES_PER_SECOND).milliseconds)
+
+                        // Position comes from the bytes fed, not from a sum of per-chunk milliseconds:
+                        // the integer division would drop a few ms per chunk and never reach the end.
+                        playedBytes += read
+                        val positionMs = (playedBytes * MS_PER_SECOND / BYTES_PER_SECOND).coerceAtMost(totalMs)
+                        _playbackPosition.value = PlaybackPosition(message.id, positionMs, totalMs)
                     }
                     source.close()
                 } catch (e: Exception) {
@@ -105,6 +146,7 @@ class HistoryRepositoryImpl(
                     audioPlayer.stop()
                     currentPlaybackMessageId = null
                     isPlaybackPaused = false
+                    _playbackPosition.value = null
                 }
             }
         playbackJob?.join()
@@ -123,6 +165,7 @@ class HistoryRepositoryImpl(
     }
 
     override suspend fun stopPlayingMessage() {
+        _playbackPosition.value = null
         playbackJob?.cancel()
         playbackJob = null
         isPlaybackPaused = false
