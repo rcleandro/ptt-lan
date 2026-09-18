@@ -54,6 +54,14 @@ jobs:
       - name: Run Unit Tests
         # `test` does not run KMP `jvmTest` source sets, so they are listed explicitly
         run: ./gradlew jvmTest :serverApp:test
+      - name: Verify design system snapshots
+        run: ./gradlew :core:core-designsystem:verifyRoborazziAndroidHostTest
+      - name: Upload snapshot diffs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: roborazzi-diffs
+          path: '**/build/outputs/roborazzi'
       - name: Verify coverage floors
         run: ./gradlew koverVerify koverHtmlReport
       - name: Upload coverage reports
