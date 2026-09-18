@@ -314,7 +314,9 @@ class ChannelRegistry(
     }
 
     suspend fun broadcastGlobalAlert(message: String) {
-        val alert = ControlMessage.SystemAlert(message)
+        val alert: ControlMessage = ControlMessage.SystemAlert(message)
+        // Typed as the sealed interface on purpose: serializing the concrete class drops the "type"
+        // discriminator and no client can decode the frame.
         val json = PttJson.encodeToString(alert)
         globalConnections.keys.forEach {
             try {

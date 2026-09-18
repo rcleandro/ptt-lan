@@ -15,7 +15,7 @@ val ktlintEngineVersion = libs.versions.ktlintEngine.get()
  */
 val coverageFloors =
     mapOf(
-        ":domain:domain-ptt" to 10,
+        ":domain:domain-ptt" to 90,
         ":data:data-ptt" to 30,
         ":core:core-network" to 45,
         ":core:core-audio" to 25,
@@ -24,7 +24,7 @@ val coverageFloors =
         ":features:feature-channel-list" to 95,
         ":features:feature-history" to 40,
         ":features:feature-settings" to 95,
-        ":serverApp" to 75,
+        ":serverApp" to 85,
     )
 
 /**
