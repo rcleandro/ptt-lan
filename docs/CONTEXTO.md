@@ -71,7 +71,7 @@ androidApp/  desktopApp/  iosApp/ (Xcode + shared.framework)   serverApp/ (Ktor 
 | `core-telemetry` | Apenas `AnalyticsTracker` + `NoOpAnalyticsTracker` |
 | ~~`core-testing`, `feature-admin-web`~~ | Removidos na 22.2. O painel admin real está em `serverApp/src/main/resources/static/index.html` |
 | `domain-ptt` | Interfaces de repositório, modelos e use cases (finos, delegam ao repositório) |
-| `data-ptt` | `ConnectionRepositoryImpl`, `ChannelRepositoryImpl`, `ChannelSessionRepositoryImpl`, `VoiceRepositoryImpl` |
+| `data-ptt` | `ConnectionRepositoryImpl`, `ChannelRepositoryImpl`, `ChannelSessionRepositoryImpl`, `VoiceRepositoryImpl` (floor + TX/RX), `HistoryRepositoryImpl` e `HistoryRecorder` (22.7) |
 | `features/*` | `connection`, `channel-list`, `ptt`, `history`, `settings` — cada uma com `XComponent` (MVI), `XScreen` (Compose) e `di/XFeatureModule` |
 
 Convention plugins em `buildSrc`: `ptt.kmp.library` (targets + namespace derivado do path),

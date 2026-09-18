@@ -9,7 +9,7 @@ val historyFeatureModule =
         factory { (componentContext: ComponentContext, onBackClicked: () -> Unit) ->
             HistoryComponent(
                 componentContext = componentContext,
-                voiceRepository = get(),
+                historyRepository = get(),
                 onBackClicked = onBackClicked,
             )
         }

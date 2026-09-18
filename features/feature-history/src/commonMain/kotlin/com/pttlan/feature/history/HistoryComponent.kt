@@ -2,7 +2,7 @@ package com.pttlan.feature.history
 
 import com.arkivanov.decompose.ComponentContext
 import com.pttlan.domain.ptt.model.VoiceMessage
-import com.pttlan.domain.ptt.repository.VoiceRepository
+import com.pttlan.domain.ptt.repository.HistoryRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 
 class HistoryComponent(
     componentContext: ComponentContext,
-    private val voiceRepository: VoiceRepository,
+    private val historyRepository: HistoryRepository,
     private val onBackClicked: () -> Unit,
 ) : ComponentContext by componentContext {
     private val scope = CoroutineScope(Dispatchers.Main)
@@ -29,7 +29,7 @@ class HistoryComponent(
     val isPaused: StateFlow<Boolean> = _isPaused.asStateFlow()
 
     init {
-        voiceRepository
+        historyRepository
             .getAllMessages()
             .onEach { _messages.value = it }
             .launchIn(scope)
@@ -44,15 +44,15 @@ class HistoryComponent(
             if (_playingMessageId.value == message.id) {
                 if (_isPaused.value) {
                     _isPaused.value = false
-                    voiceRepository.resumePlayingMessage()
+                    historyRepository.resumePlayingMessage()
                 } else {
                     _isPaused.value = true
-                    voiceRepository.pausePlayingMessage()
+                    historyRepository.pausePlayingMessage()
                 }
             } else {
                 _playingMessageId.value = message.id
                 _isPaused.value = false
-                voiceRepository.playMessage(message)
+                historyRepository.playMessage(message)
                 if (_playingMessageId.value == message.id) {
                     _playingMessageId.value = null
                     _isPaused.value = false
@@ -63,7 +63,7 @@ class HistoryComponent(
 
     fun stopPlaying() {
         scope.launch {
-            voiceRepository.stopPlayingMessage()
+            historyRepository.stopPlayingMessage()
             _playingMessageId.value = null
             _isPaused.value = false
         }
@@ -71,19 +71,19 @@ class HistoryComponent(
 
     fun clearAllMessages() {
         scope.launch {
-            voiceRepository.clearAllMessages()
+            historyRepository.clearAllMessages()
         }
     }
 
     fun deleteMessage(message: VoiceMessage) {
         scope.launch {
-            voiceRepository.deleteMessage(message)
+            historyRepository.deleteMessage(message)
         }
     }
 
     fun deleteChannelMessages(channelId: String) {
         scope.launch {
-            voiceRepository.deleteChannelMessages(channelId)
+            historyRepository.deleteChannelMessages(channelId)
         }
     }
 }

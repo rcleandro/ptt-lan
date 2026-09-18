@@ -6,7 +6,7 @@ import com.pttlan.core.common.storage.StorageOption
 import com.pttlan.core.datastore.SettingsDefaults
 import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.core.designsystem.theme.AppTheme
-import com.pttlan.domain.ptt.repository.VoiceRepository
+import com.pttlan.domain.ptt.repository.HistoryRepository
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -70,7 +70,7 @@ class SettingsComponent(
     componentContext: ComponentContext,
     private val settings: Settings,
     private val storageInfoProvider: StorageInfoProvider,
-    private val voiceRepository: VoiceRepository,
+    private val historyRepository: HistoryRepository,
 ) : ComponentContext by componentContext {
     private val scope = CoroutineScope(Dispatchers.Main)
     private val _state =
@@ -149,7 +149,7 @@ class SettingsComponent(
 
             is SettingsIntent.ClearCache -> {
                 scope.launch {
-                    voiceRepository.clearAllMessages()
+                    historyRepository.clearAllMessages()
                 }
                 storageInfoProvider.clearCache(_state.value.cacheLocation)
                 _state.update { it.copy(currentCacheUsageMb = 0) }
