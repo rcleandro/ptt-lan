@@ -306,6 +306,6 @@ sem atraso para os demais; servidor sem log por pacote em `INFO`.
 
 | Suspeita | Onde | Como verificar |
 |---|---|---|
-| `startForegroundService` com tipo `microphone` disparado com o app em background pode lançar `ForegroundServiceStartNotAllowedException`/`SecurityException` no Android 14+ | `MainActivity.kt:70-76`, coleta em `lifecycleScope` sem `repeatOnLifecycle` | Conectar, mandar o app para background e derrubar/restaurar o servidor em um Android 14+ |
-| Timeout de socket do `HttpTimeout` (5s) afetando o WebSocket em silêncio longo | `HttpClient.kt` | Canal parado por 2 min, observando desconexões no log |
-| Sessões `CoroutineScope(Dispatchers.Default)` de repositórios singleton nunca canceladas | `data-ptt/*RepositoryImpl` | Só importa se um dia houver logout ou troca de servidor sem reiniciar o app. Revisar junto com a 22.7 |
+| ~~`startForegroundService` com tipo `microphone` em background~~ | **Confirmado e corrigido**: a coleta virou `repeatOnLifecycle(STARTED)` e o start ganhou `try/catch`. A 20.1 aumentou a exposição, porque agora o cliente reconecta sozinho em background e produz a transição que dispara a chamada | Validar em Android 14+: conectar, app em background, derrubar e restaurar o servidor |
+| ~~Timeout de socket do `HttpTimeout` (5s) no WebSocket~~ | **Confirmado e corrigido**: `socketTimeoutMillis` era 5s, igual ao `pingIntervalMillis`, sem margem nenhuma — um ping atrasado derrubava a conexão. Agora 30s, com `HttpClientTimeoutTest` travando a relação entre os dois | Validar: canal parado por 2 min sem desconexão no log |
+| Sessões `CoroutineScope(Dispatchers.Default)` de repositórios singleton nunca canceladas | `data-ptt/*RepositoryImpl` | **Verificado: inerte hoje.** Os três repositórios são singletons do Koin e vivem o processo inteiro; não existe logout nem troca de servidor sem reiniciar, então nada vaza. Vira problema no dia em que existir "sair do servidor" com o app aberto |
