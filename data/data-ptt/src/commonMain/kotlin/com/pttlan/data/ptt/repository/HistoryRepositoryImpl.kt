@@ -11,6 +11,7 @@ import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.domain.ptt.model.VoiceMessage
 import com.pttlan.domain.ptt.repository.HistoryRepository
 import com.russhwolf.settings.Settings
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -25,6 +26,13 @@ import okio.SYSTEM
 import okio.buffer
 import kotlin.time.Duration.Companion.milliseconds
 
+private const val PLAYBACK_CHUNK_BYTES = 4096
+private const val PAUSE_POLL_MS = 100L
+private const val MS_PER_SECOND = 1000L
+
+/** Mono 16 bit PCM at 48 kHz, the format the recorder writes. */
+private const val BYTES_PER_SECOND = 48_000L * 2
+
 /** Reading, replaying and deleting recorded messages. Writing them is [HistoryRecorder]. */
 class HistoryRepositoryImpl(
     private val audioPlayer: AudioPlayer,
@@ -32,9 +40,10 @@ class HistoryRepositoryImpl(
     private val settings: Settings,
     private val storageInfoProvider: StorageInfoProvider,
     private val fileSystem: FileSystem = FileSystem.SYSTEM,
+    dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : HistoryRepository {
     private val logger = Logger.withTag("audio")
-    private val scope = CoroutineScope(Dispatchers.Default)
+    private val scope = CoroutineScope(dispatcher)
 
     private var playbackJob: Job? = null
     private var isPlaybackPaused = false
@@ -84,19 +93,27 @@ class HistoryRepositoryImpl(
         playbackJob =
             scope.launch {
                 try {
-                    val path = message.filePath.toPath()
-                    val source = fileSystem.source(path).buffer()
-                    val buffer = ByteArray(4096)
+                    val source = fileSystem.source(message.filePath.toPath()).buffer()
+                    val buffer = ByteArray(PLAYBACK_CHUNK_BYTES)
+                    var sequenceNumber = 0
 
                     while (isActive) {
                         if (isPlaybackPaused) {
-                            delay(100.milliseconds)
+                            delay(PAUSE_POLL_MS.milliseconds)
                             continue
                         }
                         val read = source.read(buffer)
                         if (read == -1) break
-                        val chunk = if (read == buffer.size) buffer else buffer.copyOf(read)
-                        audioPlayer.play(chunk)
+
+                        // The player keeps the array in its queue, so it has to be a copy: reusing `buffer`
+                        // meant the next read overwrote audio that had not been played yet.
+                        // The sequence number has to advance as well, or the jitter buffer treats every chunk
+                        // after the first as a late duplicate of packet 0 and drops it.
+                        audioPlayer.play(buffer.copyOf(read), sequenceNumber = sequenceNumber++)
+
+                        // Feed at playback speed. Reading the whole file at disk speed and returning would hit
+                        // the `finally` below and stop the player while the queue was still full.
+                        delay((read * MS_PER_SECOND / BYTES_PER_SECOND).milliseconds)
                     }
                     source.close()
                 } catch (e: Exception) {
