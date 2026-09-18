@@ -41,7 +41,12 @@ Nenhum desenvolvedor ou agente de IA deve introduzir novas tecnologias ou mudar 
    | `PTT_KEYSTORE_PASSWORD` | `password` | Senha do keystore TLS, usada tanto para gerar `build/keystore.jks` quanto para lê-lo. |
    | `PTT_TRUST_PROXY` | `false` | Ligue **apenas** atrás de um proxy reverso: faz o servidor usar `X-Forwarded-For` como IP do cliente no rate limit. Em LAN, ligada, permitiria a qualquer cliente forjar o próprio IP. |
 
-6. Testes e qualidade: `./gradlew jvmTest :serverApp:test detekt ktlintCheck`. (Nos módulos KMP, `./gradlew test` não executa os testes `jvmTest`.)
+6. Snapshots do design system: as imagens de referência são gravadas **no Linux**, pelo workflow manual
+   `record-snapshots.yml` (Actions → Record snapshots → Run workflow na sua branch), porque o Robolectric
+   renderiza gradientes e cantos arredondados de forma diferente no macOS. Baixe o artefato `recorded-snapshots`
+   e commite os PNGs em `core/core-designsystem/src/androidHostTest/snapshots`. Localmente,
+   `./gradlew :core:core-designsystem:recordRoborazziAndroidHostTest` serve para ver o resultado, mas não para commitar.
+7. Testes e qualidade: `./gradlew jvmTest :serverApp:test detekt ktlintCheck`. (Nos módulos KMP, `./gradlew test` não executa os testes `jvmTest`.)
 
 ### Servidor via Docker
 

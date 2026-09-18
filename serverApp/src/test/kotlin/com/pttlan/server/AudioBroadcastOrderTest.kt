@@ -2,6 +2,7 @@ package com.pttlan.server
 
 import com.pttlan.core.network.protocol.ControlMessage
 import com.pttlan.server.auth.JwtConfig
+import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.server.testing.testApplication
@@ -34,39 +35,7 @@ class AudioBroadcastOrderTest {
             val listenerJoined = CompletableDeferred<Unit>()
             val received = CompletableDeferred<List<Int>>()
 
-            val listener =
-                scope.launch {
-                    client.webSocket("/ws?token=${JwtConfig.generateToken("u2", "Listener", "device-2")}") {
-                        send(
-                            Frame.Text(
-                                Json.encodeToString<ControlMessage>(
-                                    ControlMessage.JoinChannel("c1", "Listener", "u2"),
-                                ),
-                            ),
-                        )
-                        val order = mutableListOf<Int>()
-                        for (frame in incoming) {
-                            when (frame) {
-                                is Frame.Text -> {
-                                    if (frame.readText().contains("participant_list")) {
-                                        listenerJoined.complete(Unit)
-                                    }
-                                }
-
-                                is Frame.Binary -> {
-                                    order += frame.data[0].toInt()
-                                    if (order.size == PACKETS) {
-                                        received.complete(order.toList())
-                                        return@webSocket
-                                    }
-                                }
-
-                                else -> {}
-                            }
-                        }
-                    }
-                }
-
+            val listener = scope.launch { client.collectAudioOrder(listenerJoined, received) }
             listenerJoined.await()
 
             client.webSocket("/ws?token=${JwtConfig.generateToken("u1", "Speaker", "device-1")}") {
@@ -83,4 +52,33 @@ class AudioBroadcastOrderTest {
             listener.cancel()
             scope.cancel()
         }
+}
+
+/** Joins the channel, signals when the server confirms it, and records the order of the audio packets. */
+private suspend fun HttpClient.collectAudioOrder(
+    joined: CompletableDeferred<Unit>,
+    received: CompletableDeferred<List<Int>>,
+) {
+    webSocket("/ws?token=${JwtConfig.generateToken("u2", "Listener", "device-2")}") {
+        send(Frame.Text(Json.encodeToString<ControlMessage>(ControlMessage.JoinChannel("c1", "Listener", "u2"))))
+
+        val order = mutableListOf<Int>()
+        for (frame in incoming) {
+            when (frame) {
+                is Frame.Text -> {
+                    if (frame.readText().contains("participant_list")) joined.complete(Unit)
+                }
+
+                is Frame.Binary -> {
+                    order += frame.data[0].toInt()
+                    if (order.size == PACKETS) {
+                        received.complete(order.toList())
+                        return@webSocket
+                    }
+                }
+
+                else -> {}
+            }
+        }
+    }
 }

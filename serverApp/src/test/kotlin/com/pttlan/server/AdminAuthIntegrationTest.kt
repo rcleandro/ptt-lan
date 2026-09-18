@@ -20,7 +20,7 @@ class AdminAuthIntegrationTest {
         environment {
             config =
                 ApplicationConfig("application.conf").mergeWith(
-                    MapApplicationConfig("ptt.adminPassword" to (password ?: "")),
+                    MapApplicationConfig("ptt.adminPassword" to password.orEmpty()),
                 )
         }
     }

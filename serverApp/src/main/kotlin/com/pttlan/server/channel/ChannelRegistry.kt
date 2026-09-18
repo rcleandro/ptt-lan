@@ -14,6 +14,7 @@ import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -50,12 +51,13 @@ private class MutableTimeSeriesPoint(
 class ChannelRegistry(
     private val floorIdleTimeoutMs: Long = DEFAULT_FLOOR_IDLE_TIMEOUT_MS,
     private val maxSpeechDurationMs: Long = DEFAULT_MAX_SPEECH_DURATION_MS,
+    dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private val channels = ConcurrentHashMap<String, PttChannel>()
     private val globalConnections = ConcurrentHashMap<DefaultWebSocketServerSession, GlobalConnection>()
     private val cleanupJobs = ConcurrentHashMap<String, Job>()
     private val accumulatedSpeakerTime = ConcurrentHashMap<String, Long>()
-    private val scope = CoroutineScope(Dispatchers.Default)
+    private val scope = CoroutineScope(dispatcher)
 
     private val logMutex = Mutex()
     private val recentLogs = ArrayDeque<DashboardLogEventDto>()
@@ -312,7 +314,9 @@ class ChannelRegistry(
     }
 
     suspend fun broadcastGlobalAlert(message: String) {
-        val alert = ControlMessage.SystemAlert(message)
+        val alert: ControlMessage = ControlMessage.SystemAlert(message)
+        // Typed as the sealed interface on purpose: serializing the concrete class drops the "type"
+        // discriminator and no client can decode the frame.
         val json = PttJson.encodeToString(alert)
         globalConnections.keys.forEach {
             try {

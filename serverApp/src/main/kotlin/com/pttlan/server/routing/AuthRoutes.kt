@@ -5,6 +5,7 @@ import com.pttlan.core.network.protocol.LoginResponse
 import com.pttlan.server.auth.JwtConfig
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
+import io.ktor.server.plugins.ratelimit.RateLimitName
 import io.ktor.server.plugins.ratelimit.rateLimit
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -15,10 +16,7 @@ import java.util.UUID
 
 fun Route.authRoutes() {
     route("/api/auth") {
-        rateLimit(
-            io.ktor.server.plugins.ratelimit
-                .RateLimitName("login"),
-        ) {
+        rateLimit(RateLimitName("login")) {
             post("/login") {
                 val request = runCatching { call.receive<LoginRequest>() }.getOrNull()
                 if (request == null || request.nickname.isBlank() || request.deviceId.isBlank()) {

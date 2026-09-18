@@ -177,12 +177,7 @@ class ServerIntegrationTest {
             val owner =
                 testScope.launch {
                     client.webSocket("/ws?token=$ownerToken") {
-                        sendControl(ControlMessage.JoinChannel("room", "Owner", "owner"))
-                        sendControl(ControlMessage.StartSpeaking("room", "owner"))
-                        awaitMessage { it is ControlMessage.SpeakerChanged && it.userId == "owner" && it.isSpeaking }
-                        ownerHasFloor.complete(Unit)
-                        attackerDone.await()
-                        close()
+                        takeTheFloor(ownerHasFloor, attackerDone)
                     }
                 }
 
@@ -190,18 +185,9 @@ class ServerIntegrationTest {
                 testScope.launch {
                     ownerHasFloor.await()
                     client.webSocket("/ws?token=$attackerToken") {
-                        // Every message claims to come from the owner
-                        sendControl(ControlMessage.JoinChannel("room", "Owner", "owner"))
-                        sendControl(ControlMessage.StopSpeaking("room", "owner"))
-                        sendControl(ControlMessage.StartSpeaking("room", "owner"))
-
-                        val list = awaitMessage { it is ControlMessage.ParticipantList && it.participants.size == 2 }
-                        participants =
-                            (list as? ControlMessage.ParticipantList)
-                                ?.participants
-                                ?.map { "${it.userId}:${it.nickname}" }
-                                ?.toSet()
-                        attackerDenied = awaitMessage { it is ControlMessage.FloorDenied } != null
+                        val result = spoofTheOwner()
+                        participants = result.first
+                        attackerDenied = result.second
                         attackerDone.complete(Unit)
                         close()
                     }
@@ -214,6 +200,35 @@ class ServerIntegrationTest {
             assertEquals(setOf("owner:Owner", "attacker:Attacker"), participants, "Join must not replace the owner")
             assertTrue(attackerDenied, "Spoofed StopSpeaking must not release the owner's floor")
         }
+
+    /** Joins, takes the floor and holds it until the attacker is done. */
+    private suspend fun DefaultClientWebSocketSession.takeTheFloor(
+        hasFloor: CompletableDeferred<Unit>,
+        until: CompletableDeferred<Unit>,
+    ) {
+        sendControl(ControlMessage.JoinChannel("room", "Owner", "owner"))
+        sendControl(ControlMessage.StartSpeaking("room", "owner"))
+        awaitMessage { it is ControlMessage.SpeakerChanged && it.userId == "owner" && it.isSpeaking }
+        hasFloor.complete(Unit)
+        until.await()
+        close()
+    }
+
+    /** Sends messages that all claim to be the owner, and reports what the server made of them. */
+    private suspend fun DefaultClientWebSocketSession.spoofTheOwner(): Pair<Set<String>?, Boolean> {
+        sendControl(ControlMessage.JoinChannel("room", "Owner", "owner"))
+        sendControl(ControlMessage.StopSpeaking("room", "owner"))
+        sendControl(ControlMessage.StartSpeaking("room", "owner"))
+
+        val list = awaitMessage { it is ControlMessage.ParticipantList && it.participants.size == 2 }
+        val participants =
+            (list as? ControlMessage.ParticipantList)
+                ?.participants
+                ?.map { "${it.userId}:${it.nickname}" }
+                ?.toSet()
+        val denied = awaitMessage { it is ControlMessage.FloorDenied } != null
+        return participants to denied
+    }
 
     private suspend fun DefaultClientWebSocketSession.sendControl(message: ControlMessage) {
         send(Frame.Text(Json.encodeToString<ControlMessage>(message)))

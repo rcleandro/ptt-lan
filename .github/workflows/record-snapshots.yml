@@ -1,0 +1,29 @@
+name: Record snapshots
+
+# Snapshot images have to be recorded on the same platform that verifies them: Robolectric renders
+# gradients and rounded corners slightly differently on macOS and on Linux, so images recorded on a
+# developer Mac never match the Linux runner. Run this workflow on the branch, download the artifact
+# and commit the PNGs it produces.
+on:
+  workflow_dispatch:
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Record design system snapshots
+        run: ./gradlew :core:core-designsystem:recordRoborazziAndroidHostTest
+      - name: Upload recorded snapshots
+        uses: actions/upload-artifact@v7
+        with:
+          name: recorded-snapshots
+          path: core/core-designsystem/src/androidHostTest/snapshots

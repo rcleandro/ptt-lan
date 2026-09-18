@@ -1,12 +1,31 @@
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
 plugins {
+    id("ptt.module-rules")
     alias(libs.plugins.benManesVersions)
     alias(libs.plugins.dokka)
     alias(libs.plugins.roborazzi) apply false
     alias(libs.plugins.kover)
 }
 val ktlintEngineVersion = libs.versions.ktlintEngine.get()
+
+/**
+ * Minimum line coverage per module (23.2). Each value is what the module covers today, rounded down: the
+ * gate exists to stop regressions, and every test added in 23.1 is a reason to raise the number here.
+ */
+val coverageFloors =
+    mapOf(
+        ":domain:domain-ptt" to 90,
+        ":data:data-ptt" to 30,
+        ":core:core-network" to 45,
+        ":core:core-audio" to 25,
+        ":features:feature-ptt" to 70,
+        ":features:feature-connection" to 60,
+        ":features:feature-channel-list" to 95,
+        ":features:feature-history" to 40,
+        ":features:feature-settings" to 95,
+        ":serverApp" to 85,
+    )
 
 /**
  * Bans `println`/`printStackTrace` outside tests (21.4). Detekt's `ForbiddenMethodCall` is configured for the
@@ -47,6 +66,41 @@ subprojects {
     if (name != "androidApp") {
         pluginManager.apply("org.jlleitschuh.gradle.ktlint")
         pluginManager.apply("dev.detekt")
+        pluginManager.apply("org.jetbrains.kotlinx.kover")
+
+        // Section 16.2 of the technical plan does not require coverage of pure Compose UI, and generated
+        // code (SQLDelight, Compose singletons) would only dilute the number.
+        extensions.configure<kotlinx.kover.gradle.plugin.dsl.KoverProjectExtension> {
+            reports {
+                filters {
+                    excludes {
+                        classes(
+                            "*Screen*",
+                            "*ScreenKt*",
+                            "*ComposableSingletons*",
+                            "*.di.*",
+                            "com.pttlan.core.database.*",
+                            "*.theme.*",
+                            "*.components.*",
+                        )
+                    }
+                }
+
+                // Floor, not goal: these are the numbers the code has today, so the build fails on a
+                // regression. The targets of section 16.2 of the plan (domain 90, data 85, core-network 90,
+                // features 80) are what 23.1 climbs towards — raise the floor as tests land.
+                coverageFloors[project.path]?.let { floor ->
+                    verify {
+                        rule("Line coverage of ${project.path}") {
+                            bound {
+                                minValue = floor
+                                coverageUnits = kotlinx.kover.gradle.plugin.dsl.CoverageUnit.LINE
+                            }
+                        }
+                    }
+                }
+            }
+        }
         
         extensions.configure<KtlintExtension> {
             version.set(ktlintEngineVersion)
@@ -58,6 +112,11 @@ subprojects {
 
     tasks.matching { it.name == "detekt" }.configureEach {
         dependsOn(checkNoPrintln)
+        // The server is analysed with type resolution too; the KMP modules still need a baseline for that
+        // (23.3), so `checkNoPrintln` keeps covering the println ban everywhere else.
+        if (path == ":serverApp") {
+            dependsOn("detektMain", "detektTest")
+        }
     }
 
     tasks.withType<Test> {
