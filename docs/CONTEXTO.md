@@ -60,7 +60,7 @@ androidApp/  desktopApp/  iosApp/ (Xcode + shared.framework)   serverApp/ (Ktor 
 | `iosApp` | Shell SwiftUI (`ContentView` → `MainViewControllerKt.MainViewController()`); `project.yml` para XcodeGen |
 | `shared` | Só `iosMain`: gera `shared.framework` estático e expõe `MainViewController` |
 | `serverApp` | Servidor Ktor: `/ws`, `/api/auth/login`, painel `/admin` + `/api/admin/*`, mDNS |
-| `core-common` | `isLocalNetwork()`, `AudioCrypto` (RC4 para o cache), `StorageInfoProvider` expect/actual |
+| `core-common` | `isLocalNetwork()`, `StorageInfoProvider` expect/actual |
 | `core-network` | `HttpClient` + `createPlatformHttpClient` (expect/actual), `PttWebSocketClient`, protocolo (`ControlMessage`, `AudioEnvelope`), `ServerDiscoveryService` |
 | `core-audio` | Interfaces `AudioRecorder`/`AudioPlayer`/`AudioCodec`, `PcmPassthroughCodec`, `OpusAudioCodec`, implementações por plataforma com jitter buffer, `MicrophonePermissionManager` |
 | `core-database` | SQLDelight `PttDatabase` (tabelas `Channel`, `VoiceMessage`) + drivers |
@@ -110,7 +110,7 @@ accessors (`projects.core.coreNetwork`).
 
 ### 4.4 Histórico (replay local)
 - Só grava se `allow_cache = true` (padrão **false**). Cada fala recebida vira um arquivo
-  `<canal>_<epochMs>.pcm` no diretório de `cache_location`, com PCM decodificado e cifrado por `AudioCrypto`.
+  `<canal>_<epochMs>.pcm` no diretório de `cache_location`, com o PCM decodificado (sem cifra desde a 22.9).
 - Metadados em `VoiceMessage`; limite de 50 por canal e `max_cache_size_mb` (padrão 500) para o total de arquivos.
 - `HistoryComponent` lista, toca, pausa e apaga. O servidor **não** guarda áudio (ADR 0005).
 
@@ -193,7 +193,7 @@ O plano é o SSOT de intenção, mas estes pontos refletem o código atual:
 | Envelope de áudio | ProtoBuf | JSON com prefixo de tamanho (Int32) |
 | Taxa de amostragem | 16 kHz | 48 kHz |
 | TLS | Self-signed + TOFU com fingerprint exibido | Android/JVM (mesma implementação em `jvmAndAndroidMain`) e iOS aceitam **qualquer** certificado e hostname quando o host é "local" (`isLocalNetwork`: localhost, `.local`, 10/8, 172.16/12, 192.168/16) e usam a validação do sistema fora da LAN. Sem fingerprint |
-| "Criptografia do stream" | Sobre TLS | Só TLS. `AudioCrypto` (RC4, chave fixa no código) protege apenas os arquivos de cache |
+| "Criptografia do stream" | Sobre TLS | Só TLS. O `AudioCrypto` do cache foi removido na 22.9 ([ADR 0009](adr/0009-remover-audiocrypto.md)): a chave estava no binário |
 | Redis / multi-instância (Fase 17) | Estado e pub/sub no Redis | Removido na 22.1 ([ADR 0007](adr/0007-remover-redis.md)): o estado é em memória e o servidor roda em uma instância só |
 | Admin | — | Basic auth com `PTT_ADMIN_PASSWORD`; sem a variável, leitura (`metrics`, `logs/csv`) segue aberta e as rotas de escrita ficam desligadas |
 | Floor control | Liberado também por timeout de heartbeat; regra replicada no domain | O `Heartbeat` saiu do protocolo (21.5); quem cobre é o watchdog de inatividade da 20.4, e a regra só existe no servidor |

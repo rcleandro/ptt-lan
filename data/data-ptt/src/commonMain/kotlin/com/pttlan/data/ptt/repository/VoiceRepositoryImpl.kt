@@ -6,7 +6,6 @@ import co.touchlab.kermit.Logger
 import com.pttlan.core.audio.AudioCodec
 import com.pttlan.core.audio.AudioPlayer
 import com.pttlan.core.audio.AudioRecorder
-import com.pttlan.core.common.crypto.AudioCrypto
 import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.core.database.PttDatabase
 import com.pttlan.core.datastore.SettingsDefaults
@@ -64,7 +63,6 @@ class VoiceRepositoryImpl(
     private var currentMessageStartMs: Long = 0
     private var currentFileSink: BufferedSink? = null
     private var currentFilePath: String? = null
-    private var currentAudioCrypto: AudioCrypto? = null
 
     init {
         webSocketClient.controlMessages
@@ -85,7 +83,6 @@ class VoiceRepositoryImpl(
                                 currentFilePath = path.toString()
                                 try {
                                     currentFileSink = fileSystem.sink(path).buffer()
-                                    currentAudioCrypto = AudioCrypto()
                                 } catch (e: Exception) {
                                     logger.w(e) { "Failed to open the recording file" }
                                 }
@@ -94,7 +91,6 @@ class VoiceRepositoryImpl(
                     } else {
                         currentFileSink?.close()
                         currentFileSink = null
-                        currentAudioCrypto = null
                         if (currentSpeakerId == msg.userId && currentChannelId != null) {
                             if (currentFilePath != null) {
                                 val path = currentFilePath!!.toPath()
@@ -161,10 +157,7 @@ class VoiceRepositoryImpl(
                         timestampMs = envelope?.timestampMs ?: 0L,
                     )
                     try {
-                        if (currentFileSink != null && currentAudioCrypto != null) {
-                            val encrypted = currentAudioCrypto!!.process(decoded)
-                            currentFileSink?.write(encrypted)
-                        }
+                        currentFileSink?.write(decoded)
                     } catch (e: Exception) {
                         logger.w(e) { "Failed to store incoming audio" }
                     }
@@ -256,10 +249,7 @@ class VoiceRepositoryImpl(
                         webSocketClient.sendAudioChunk(envelope, encoded)
 
                         try {
-                            if (currentFileSink != null && currentAudioCrypto != null) {
-                                val encrypted = currentAudioCrypto!!.process(chunk)
-                                currentFileSink?.write(encrypted)
-                            }
+                            currentFileSink?.write(chunk)
                         } catch (e: Exception) {
                             logger.w(e) { "Failed to store outgoing audio" }
                         }
@@ -319,7 +309,6 @@ class VoiceRepositoryImpl(
                 try {
                     val path = message.filePath.toPath()
                     val source = fileSystem.source(path).buffer()
-                    val crypto = AudioCrypto()
                     val buffer = ByteArray(4096)
 
                     while (isActive) {
@@ -330,8 +319,7 @@ class VoiceRepositoryImpl(
                         val read = source.read(buffer)
                         if (read == -1) break
                         val chunk = if (read == buffer.size) buffer else buffer.copyOf(read)
-                        val decrypted = crypto.process(chunk)
-                        audioPlayer.play(decrypted)
+                        audioPlayer.play(chunk)
                     }
                     source.close()
                 } catch (e: Exception) {
