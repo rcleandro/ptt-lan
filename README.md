@@ -46,7 +46,7 @@ Nenhum desenvolvedor ou agente de IA deve introduzir novas tecnologias ou mudar 
    renderiza gradientes e cantos arredondados de forma diferente no macOS. Baixe o artefato `recorded-snapshots`
    e commite os PNGs em `core/core-designsystem/src/androidHostTest/snapshots`. Localmente,
    `./gradlew :core:core-designsystem:recordRoborazziAndroidHostTest` serve para ver o resultado, mas não para commitar.
-7. Testes e qualidade: `./gradlew jvmTest :serverApp:test detekt ktlintCheck`. (Nos módulos KMP, `./gradlew test` não executa os testes `jvmTest`.)
+7. Testes e qualidade: `./gradlew jvmTest :server-core:test detekt ktlintCheck`. (Nos módulos KMP, `./gradlew test` não executa os testes `jvmTest`.)
 
 ### Servidor via Docker
 

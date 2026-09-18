@@ -24,7 +24,7 @@ val coverageFloors =
         ":features:feature-channel-list" to 85,
         ":features:feature-history" to 35,
         ":features:feature-settings" to 90,
-        ":serverApp" to 85,
+        ":server-core" to 85,
     )
 
 /**
@@ -113,7 +113,7 @@ subprojects {
         dependsOn(checkNoPrintln)
         // The server is analysed with type resolution too; the KMP modules still need a baseline for that
         // (23.3), so `checkNoPrintln` keeps covering the println ban everywhere else.
-        if (path == ":serverApp") {
+        if (path == ":serverApp" || path == ":server-core") {
             dependsOn("detektMain", "detektTest")
         }
     }

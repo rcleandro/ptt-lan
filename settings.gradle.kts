@@ -21,6 +21,7 @@ include(":androidApp")
 include(":desktopApp")
 include(":iosApp")
 include(":serverApp")
+include(":server-core")
 include(":shared")
 
 include(":core:core-common")
