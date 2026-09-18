@@ -1,6 +1,7 @@
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
 plugins {
+    id("ptt.module-rules")
     alias(libs.plugins.benManesVersions)
     alias(libs.plugins.dokka)
     alias(libs.plugins.roborazzi) apply false

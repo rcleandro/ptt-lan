@@ -28,8 +28,8 @@ jobs:
         uses: gradle/actions/wrapper-validation@v6
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
-      - name: Run Detekt and Ktlint
-        run: ./gradlew detekt ktlintCheck
+      - name: Run Detekt, Ktlint and the module rules
+        run: ./gradlew detekt ktlintCheck checkModuleDependencies
       - name: Upload lint reports
         if: failure()
         uses: actions/upload-artifact@v7
