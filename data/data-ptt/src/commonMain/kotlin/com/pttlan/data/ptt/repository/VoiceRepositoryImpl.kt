@@ -9,6 +9,8 @@ import com.pttlan.core.audio.AudioRecorder
 import com.pttlan.core.common.crypto.AudioCrypto
 import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.core.database.PttDatabase
+import com.pttlan.core.datastore.SettingsDefaults
+import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.core.network.PttWebSocketClient
 import com.pttlan.core.network.protocol.AudioCodecType
 import com.pttlan.core.network.protocol.AudioEnvelope
@@ -73,9 +75,9 @@ class VoiceRepositoryImpl(
                         currentSpeakerNickname = msg.nickname
                         currentChannelId = msg.channelId
                         currentMessageStartMs = Clock.System.now().toEpochMilliseconds()
-                        val allowCache = settings.getBoolean("allow_cache", false)
+                        val allowCache = settings.getBoolean(SettingsKeys.ALLOW_CACHE, SettingsDefaults.ALLOW_CACHE)
                         if (allowCache) {
-                            val cacheLocation = settings.getString("cache_location", "Interno")
+                            val cacheLocation = settings.getString(SettingsKeys.CACHE_LOCATION, SettingsDefaults.CACHE_LOCATION)
                             val dirPath = storageInfoProvider.getCacheDirPath(cacheLocation)
                             if (dirPath != null) {
                                 val fileName = "${msg.channelId}_$currentMessageStartMs.pcm"
@@ -171,9 +173,9 @@ class VoiceRepositoryImpl(
 
     private fun manageCache() {
         try {
-            val maxCacheSizeMb = settings.getInt("max_cache_size_mb", 500)
+            val maxCacheSizeMb = settings.getInt(SettingsKeys.MAX_CACHE_SIZE_MB, SettingsDefaults.MAX_CACHE_SIZE_MB)
             val limitBytes = maxCacheSizeMb * 1024L * 1024L
-            val cacheLocation = settings.getString("cache_location", "Interno")
+            val cacheLocation = settings.getString(SettingsKeys.CACHE_LOCATION, SettingsDefaults.CACHE_LOCATION)
             val dirPath = storageInfoProvider.getCacheDirPath(cacheLocation) ?: return
 
             val dir = dirPath.toPath()
@@ -215,7 +217,7 @@ class VoiceRepositoryImpl(
     ) {
         transmissionJob?.cancel()
 
-        val useOpus = settings.getBoolean("use_opus", false)
+        val useOpus = settings.getBoolean(SettingsKeys.USE_OPUS, SettingsDefaults.USE_OPUS)
         val codecType =
             if (useOpus) {
                 AudioCodecType.OPUS
@@ -368,7 +370,7 @@ class VoiceRepositoryImpl(
         database.voiceMessageQueries.deleteAllMessages()
 
         try {
-            val cacheLocation = settings.getString("cache_location", "Interno")
+            val cacheLocation = settings.getString(SettingsKeys.CACHE_LOCATION, SettingsDefaults.CACHE_LOCATION)
             val dirPath = storageInfoProvider.getCacheDirPath(cacheLocation) ?: return
             val dir = dirPath.toPath()
             val files = fileSystem.list(dir).filter { it.name.endsWith(".pcm") }

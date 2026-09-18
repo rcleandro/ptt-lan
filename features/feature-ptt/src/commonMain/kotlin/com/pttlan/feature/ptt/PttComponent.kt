@@ -3,6 +3,7 @@ package com.pttlan.feature.ptt
 import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.Lifecycle
+import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.core.network.protocol.ParticipantDto
 import com.pttlan.domain.ptt.repository.VoiceRepository
 import com.pttlan.domain.ptt.usecase.JoinChannelUseCase
@@ -86,7 +87,7 @@ class PttComponent(
 
     init {
         scope.launch {
-            val nickname = settings.getString("nickname", "User-${userId.take(4)}")
+            val nickname = settings.getString(SettingsKeys.NICKNAME, "User-${userId.take(4)}")
             joinChannelUseCase(channelId = channelId, userId = userId, nickname = nickname)
         }
 

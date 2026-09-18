@@ -8,6 +8,8 @@ import com.arkivanov.decompose.router.stack.navigate
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.lifecycle.Lifecycle
+import com.pttlan.core.datastore.SettingsDefaults
+import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.domain.ptt.repository.ConnectionRepository
 import com.pttlan.domain.ptt.repository.ConnectionStatus
@@ -61,20 +63,20 @@ class RootComponent(
     private val connectionRepository: ConnectionRepository = get()
     private val settings: Settings = get()
 
-    val isCacheEnabled: StateFlow<Boolean> = observeBoolean("allow_cache", false)
+    val isCacheEnabled: StateFlow<Boolean> = observeBoolean(SettingsKeys.ALLOW_CACHE, SettingsDefaults.ALLOW_CACHE)
 
-    val reduceTransparency: StateFlow<Boolean> = observeBoolean("reduce_transparency", false)
+    val reduceTransparency: StateFlow<Boolean> = observeBoolean(SettingsKeys.REDUCE_TRANSPARENCY, SettingsDefaults.REDUCE_TRANSPARENCY)
 
     @OptIn(ExperimentalSettingsApi::class)
     val appTheme: StateFlow<AppTheme> =
         (settings as? ObservableSettings)
-            ?.getIntFlow("app_theme", 0)
+            ?.getIntFlow(SettingsKeys.APP_THEME, SettingsDefaults.APP_THEME)
             ?.map(::toAppTheme)
             ?.stateIn(
                 scope = lifecycle.coroutineScope(),
                 started = SharingStarted.WhileSubscribed(),
-                initialValue = toAppTheme(settings.getInt("app_theme", 0)),
-            ) ?: MutableStateFlow(toAppTheme(settings.getInt("app_theme", 0)))
+                initialValue = toAppTheme(settings.getInt(SettingsKeys.APP_THEME, SettingsDefaults.APP_THEME)),
+            ) ?: MutableStateFlow(toAppTheme(settings.getInt(SettingsKeys.APP_THEME, SettingsDefaults.APP_THEME)))
 
     @OptIn(ExperimentalSettingsApi::class)
     private fun observeBoolean(

@@ -21,6 +21,8 @@ import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.coroutines.getBooleanFlow
 import com.russhwolf.settings.ExperimentalSettingsApi
 import android.os.Build
+import com.pttlan.core.datastore.SettingsKeys
+import com.pttlan.core.datastore.SettingsDefaults
 
 @OptIn(ExperimentalSettingsApi::class)
 class MainActivity : ComponentActivity() {
@@ -62,7 +64,7 @@ class MainActivity : ComponentActivity() {
             combine(
                 connectionRepository.connectionStatus,
                 channelSessionRepository.activeSessionChannelId,
-                (settings as ObservableSettings).getBooleanFlow("always_listening", true)
+                (settings as ObservableSettings).getBooleanFlow(SettingsKeys.ALWAYS_LISTENING, SettingsDefaults.ALWAYS_LISTENING)
             ) { status, activeChannel, alwaysListening ->
                 Triple(status, activeChannel, alwaysListening)
             }.collect { (status, activeChannel, alwaysListening) ->

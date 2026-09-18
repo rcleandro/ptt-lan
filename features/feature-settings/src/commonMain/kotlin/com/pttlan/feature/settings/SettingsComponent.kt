@@ -3,6 +3,8 @@ package com.pttlan.feature.settings
 import com.arkivanov.decompose.ComponentContext
 import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.core.common.storage.StorageOption
+import com.pttlan.core.datastore.SettingsDefaults
+import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.domain.ptt.repository.VoiceRepository
 import com.russhwolf.settings.Settings
@@ -74,17 +76,22 @@ class SettingsComponent(
     private val _state =
         MutableStateFlow(
             SettingsState(
-                nickname = settings.getString("nickname", ""),
-                useOpus = settings.getBoolean("use_opus", false),
-                appTheme = AppTheme.entries.getOrElse(settings.getInt("app_theme", 0)) { AppTheme.SYSTEM },
-                reduceTransparency = settings.getBoolean("reduce_transparency", false),
-                alwaysListening = settings.getBoolean("always_listening", true),
-                allowCache = settings.getBoolean("allow_cache", false),
-                cacheLocation = settings.getString("cache_location", "Interno"),
-                maxCacheSizeMb = settings.getInt("max_cache_size_mb", 500),
+                nickname = settings.getString(SettingsKeys.NICKNAME, ""),
+                useOpus = settings.getBoolean(SettingsKeys.USE_OPUS, SettingsDefaults.USE_OPUS),
+                appTheme =
+                    AppTheme.entries.getOrElse(
+                        settings.getInt(SettingsKeys.APP_THEME, SettingsDefaults.APP_THEME),
+                    ) { AppTheme.SYSTEM },
+                reduceTransparency = settings.getBoolean(SettingsKeys.REDUCE_TRANSPARENCY, SettingsDefaults.REDUCE_TRANSPARENCY),
+                alwaysListening = settings.getBoolean(SettingsKeys.ALWAYS_LISTENING, SettingsDefaults.ALWAYS_LISTENING),
+                allowCache = settings.getBoolean(SettingsKeys.ALLOW_CACHE, SettingsDefaults.ALLOW_CACHE),
+                cacheLocation = settings.getString(SettingsKeys.CACHE_LOCATION, SettingsDefaults.CACHE_LOCATION),
+                maxCacheSizeMb = settings.getInt(SettingsKeys.MAX_CACHE_SIZE_MB, SettingsDefaults.MAX_CACHE_SIZE_MB),
                 currentCacheUsageMb =
                     (
-                        storageInfoProvider.getCacheUsageBytes(settings.getString("cache_location", "Interno")) /
+                        storageInfoProvider.getCacheUsageBytes(
+                            settings.getString(SettingsKeys.CACHE_LOCATION, SettingsDefaults.CACHE_LOCATION),
+                        ) /
                             (1024 * 1024)
                     ).toInt(),
                 storageOptions = storageInfoProvider.getAvailableStorageOptions(),
@@ -96,37 +103,37 @@ class SettingsComponent(
     fun onIntent(intent: SettingsIntent) {
         when (intent) {
             is SettingsIntent.UpdateNickname -> {
-                settings.putString("nickname", intent.nickname)
+                settings.putString(SettingsKeys.NICKNAME, intent.nickname)
                 _state.update { it.copy(nickname = intent.nickname) }
             }
 
             is SettingsIntent.ToggleOpus -> {
-                settings.putBoolean("use_opus", intent.enabled)
+                settings.putBoolean(SettingsKeys.USE_OPUS, intent.enabled)
                 _state.update { it.copy(useOpus = intent.enabled) }
             }
 
             is SettingsIntent.ChangeTheme -> {
-                settings.putInt("app_theme", intent.theme.ordinal)
+                settings.putInt(SettingsKeys.APP_THEME, intent.theme.ordinal)
                 _state.update { it.copy(appTheme = intent.theme) }
             }
 
             is SettingsIntent.ToggleReduceTransparency -> {
-                settings.putBoolean("reduce_transparency", intent.enabled)
+                settings.putBoolean(SettingsKeys.REDUCE_TRANSPARENCY, intent.enabled)
                 _state.update { it.copy(reduceTransparency = intent.enabled) }
             }
 
             is SettingsIntent.ToggleAlwaysListening -> {
-                settings.putBoolean("always_listening", intent.enabled)
+                settings.putBoolean(SettingsKeys.ALWAYS_LISTENING, intent.enabled)
                 _state.update { it.copy(alwaysListening = intent.enabled) }
             }
 
             is SettingsIntent.ToggleAllowCache -> {
-                settings.putBoolean("allow_cache", intent.enabled)
+                settings.putBoolean(SettingsKeys.ALLOW_CACHE, intent.enabled)
                 _state.update { it.copy(allowCache = intent.enabled) }
             }
 
             is SettingsIntent.ChangeCacheLocation -> {
-                settings.putString("cache_location", intent.location)
+                settings.putString(SettingsKeys.CACHE_LOCATION, intent.location)
                 _state.update {
                     it.copy(
                         cacheLocation = intent.location,
@@ -136,7 +143,7 @@ class SettingsComponent(
             }
 
             is SettingsIntent.ChangeMaxCacheSize -> {
-                settings.putInt("max_cache_size_mb", intent.sizeMb)
+                settings.putInt(SettingsKeys.MAX_CACHE_SIZE_MB, intent.sizeMb)
                 _state.update { it.copy(maxCacheSizeMb = intent.sizeMb) }
             }
 

@@ -1,5 +1,6 @@
 package com.pttlan.data.ptt.repository
 
+import com.pttlan.core.datastore.SettingsKeys
 import com.russhwolf.settings.MapSettings
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -15,7 +16,7 @@ class DeviceIdTest {
 
         assertTrue(first.isNotBlank())
         assertEquals(first, deviceId(settings))
-        assertEquals(first, settings.getStringOrNull(DEVICE_ID_KEY))
+        assertEquals(first, settings.getStringOrNull(SettingsKeys.DEVICE_ID))
     }
 
     @Test
