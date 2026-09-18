@@ -8,6 +8,7 @@ import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.core.database.PttDatabase
 import com.pttlan.core.datastore.SettingsDefaults
 import com.pttlan.core.datastore.SettingsKeys
+import com.pttlan.domain.ptt.model.PlaybackPosition
 import com.pttlan.domain.ptt.model.VoiceMessage
 import com.pttlan.domain.ptt.repository.HistoryRepository
 import com.russhwolf.settings.Settings
@@ -17,6 +18,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -44,6 +48,9 @@ class HistoryRepositoryImpl(
 ) : HistoryRepository {
     private val logger = Logger.withTag("audio")
     private val scope = CoroutineScope(dispatcher)
+
+    private val _playbackPosition = MutableStateFlow<PlaybackPosition?>(null)
+    override val playbackPosition: StateFlow<PlaybackPosition?> = _playbackPosition.asStateFlow()
 
     private var playbackJob: Job? = null
     private var isPlaybackPaused = false
@@ -93,9 +100,20 @@ class HistoryRepositoryImpl(
         playbackJob =
             scope.launch {
                 try {
-                    val source = fileSystem.source(message.filePath.toPath()).buffer()
+                    val path = message.filePath.toPath()
+                    // The recorded file is the honest total: `durationMs` is wall clock of the talk spurt
+                    val totalMs =
+                        fileSystem
+                            .metadataOrNull(path)
+                            ?.size
+                            ?.let { it * MS_PER_SECOND / BYTES_PER_SECOND }
+                            ?: message.durationMs
+                    _playbackPosition.value = PlaybackPosition(message.id, 0, totalMs)
+
+                    val source = fileSystem.source(path).buffer()
                     val buffer = ByteArray(PLAYBACK_CHUNK_BYTES)
                     var sequenceNumber = 0
+                    var playedBytes = 0L
 
                     while (isActive) {
                         if (isPlaybackPaused) {
@@ -114,6 +132,12 @@ class HistoryRepositoryImpl(
                         // Feed at playback speed. Reading the whole file at disk speed and returning would hit
                         // the `finally` below and stop the player while the queue was still full.
                         delay((read * MS_PER_SECOND / BYTES_PER_SECOND).milliseconds)
+
+                        // Position comes from the bytes fed, not from a sum of per-chunk milliseconds:
+                        // the integer division would drop a few ms per chunk and never reach the end.
+                        playedBytes += read
+                        val positionMs = (playedBytes * MS_PER_SECOND / BYTES_PER_SECOND).coerceAtMost(totalMs)
+                        _playbackPosition.value = PlaybackPosition(message.id, positionMs, totalMs)
                     }
                     source.close()
                 } catch (e: Exception) {
@@ -122,6 +146,7 @@ class HistoryRepositoryImpl(
                     audioPlayer.stop()
                     currentPlaybackMessageId = null
                     isPlaybackPaused = false
+                    _playbackPosition.value = null
                 }
             }
         playbackJob?.join()
@@ -140,6 +165,7 @@ class HistoryRepositoryImpl(
     }
 
     override suspend fun stopPlayingMessage() {
+        _playbackPosition.value = null
         playbackJob?.cancel()
         playbackJob = null
         isPlaybackPaused = false

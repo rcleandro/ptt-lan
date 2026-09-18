@@ -6,9 +6,11 @@ import com.pttlan.core.audio.JitterBufferPolicy
 import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.core.common.storage.StorageOption
 import com.pttlan.core.database.PttDatabase
+import com.pttlan.domain.ptt.model.PlaybackPosition
 import com.pttlan.domain.ptt.model.VoiceMessage
 import com.russhwolf.settings.MapSettings
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import okio.Path.Companion.toPath
@@ -20,6 +22,9 @@ import kotlin.test.assertTrue
 
 private const val CACHE_DIR = "/cache"
 private const val MESSAGE_PATH = "/cache/c1_1.pcm"
+
+/** One 4096 byte chunk at 48 kHz mono 16 bit. */
+private const val CHUNK_MS = 43L
 
 private class RecordingAudioPlayer : AudioPlayer {
     val chunks = mutableListOf<Pair<ByteArray, Int>>()
@@ -95,6 +100,39 @@ class HistoryPlaybackTest {
             assertContentEquals(recorded, player.chunks.flatMap { it.first.toList() }.toByteArray())
             assertEquals(listOf(0, 1, 2, 3), player.chunks.map { it.second })
             assertTrue(player.stopped, "the player is stopped once the message ends")
+        }
+
+    @Test
+    fun reportsTheProgressOfTheReplay() =
+        runTest {
+            fileSystem.write(MESSAGE_PATH.toPath()) { write(recorded) }
+            val repository =
+                HistoryRepositoryImpl(
+                    audioPlayer = player,
+                    database = database,
+                    settings = MapSettings(),
+                    storageInfoProvider = NoStorageInfoProvider(),
+                    fileSystem = fileSystem,
+                    dispatcher = StandardTestDispatcher(testScheduler),
+                )
+            val seen = mutableListOf<PlaybackPosition>()
+            backgroundScope.launch {
+                repository.playbackPosition.collect { it?.let(seen::add) }
+            }
+
+            repository.playMessage(message)
+
+            assertTrue(seen.isNotEmpty(), "the progress must be reported while playing")
+            assertTrue(seen.map { it.positionMs } == seen.map { it.positionMs }.sorted(), "progress only moves forward")
+            assertEquals(message.id, seen.first().messageId)
+            // StateFlow conflates, so the very last value may be swallowed by the reset that follows it;
+            // what matters is that progress got to the end, within one chunk
+            val last = seen.last()
+            assertTrue(
+                last.positionMs >= last.durationMs - CHUNK_MS,
+                "progress should reach the end, got ${last.positionMs} of ${last.durationMs}",
+            )
+            assertEquals(null, repository.playbackPosition.value, "progress is cleared once the message ends")
         }
 
     @Test
