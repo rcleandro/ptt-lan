@@ -88,7 +88,7 @@ fun PttScreen(
     )
 }
 
-internal fun PttState.buttonState(): PttButtonState =
+fun PttState.buttonState(): PttButtonState =
     when {
         isTransmitting && isFloorGranted -> PttButtonState.Transmitting
         isTransmitting -> PttButtonState.Requesting

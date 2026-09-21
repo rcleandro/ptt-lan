@@ -34,6 +34,8 @@ graph LR
     F21 --> F23[23 Gates de qualidade]
     F22 --> F23
     F23 --> F24[24 Modo host]
+    F24 --> F25[25 App Wear OS]
+    F21 --> F26[26 Fone Bluetooth]
 ```
 
 A fase 18 vem primeiro porque é barata e deixa o CI confiável para as próximas. A 19 vem antes da 20 porque
@@ -324,6 +326,49 @@ servidor com a tela bloqueada, e se o Wi-Fi em modo de economia aumenta a latên
 
 **Critério de conclusão:** Desktop (e Android, se o spike passar) hospeda um canal descoberto pelos outros
 clientes via mDNS, sem `serverApp` rodando na rede.
+
+---
+
+## Fase 25 — App Wear OS
+
+**Objetivo:** o relógio entra num canal como cliente e fala e ouve sem depender do celular, como decidido na
+[ADR 0011](adr/0011-app-wear-os.md). Só cliente: o relógio não hospeda sala.
+
+| Item | Status | Ação | Esforço |
+|---|---|---|---|
+| 25.1 Spike em relógio físico | 🔎 parcial | Validar, sem o celular por perto: Wi-Fi sob demanda (`requestNetwork` com `TRANSPORT_WIFI` + `bindProcessToNetwork`), descoberta NSD por esse Wi-Fi, `AudioRecord`/`AudioTrack` com Opus, alto-falante, botões físicos e consumo de bateria. Passa se o relógio achar o servidor, entrar num canal e falar e ouvir com um celular por 30 min | **Parte automática passou** no Galaxy Watch9 (SM-L355F, Wear OS sobre Android 17/API 37, só `armeabi-v7a`): `WearSpikeTest` (`./gradlew :wearApp:connectedDebugAndroidTest`, com um servidor na rede) sobe o Wi-Fi com `requestNetwork`, acha o servidor por NSD em ~0,4 s, entra no "Geral" com o `PttWebSocketClient` real em ~2 s, captura 20 ms do microfone e o Opus aceita todos os frames (~110 bytes cada), e acha o alto-falante. **Achado:** no Android 17 o app só vê e alcança a rede local com `ACCESS_LOCAL_NETWORK` (permissão em tempo de execução); sem ela o NSD só abre um seletor do sistema (`NsdPickerActivity`) e o login para `192.168.x.x` estoura o tempo, enquanto o `adb shell` conecta. O `androidApp` também tem `targetSdk` 37 e vai precisar dela em celulares com Android 17 (hoje o razr está na API 36). `MulticastLock` não foi necessário. **Só Bluetooth (Wi-Fi do relógio desligado):** o IP manual de um servidor da LAN funciona pelo proxy do celular no Galaxy Watch9; a descoberta não, porque o proxy não repassa multicast. **Falta, à mão, com as telas da 25.3:** o roteiro abaixo (30 min, bateria, volume) e o tempo do Wi-Fi a frio — no spike ele já estava ligado pelo `adb` sem fio | M (prazo de 1–2 dias) |
+| 25.2 Módulo `:wearApp` | ✔ feito | Só se a 25.1 passar. App Android (`minSdk` 30) com o mesmo papel do `androidApp`: depende das features e do `core-di`, sem `server-core`. Reusa `RootComponent` e os componentes das features | `WearApplication` sobe o mesmo grafo do Koin do celular, sem o host de sala; `MainActivity` usa o `RootComponent` com os componentes das features; `LanNetwork` pede o Wi-Fi e prende o processo a ele, e refaz a busca quando a LAN fica acessível. Dependências novas no catálogo: Compose for Wear OS 1.6.2 e `activity-compose`. **Achado no relógio:** criar a navegação antes da permissão fazia a busca abrir o seletor do sistema (`NsdPickerActivity`) por cima do pedido; agora as permissões (microfone e, no Android 17, rede local) vêm antes, com um aviso na tela. O `androidApp` ainda busca antes da permissão: num celular com Android 17 o seletor pode aparecer no primeiro uso | M |
+| 25.3 Telas do relógio | ✔ feito | Compose for Wear OS: servidores (descoberta + IP manual), canais e PTT (botão de segurar e participantes). Sem histórico e com configurações mínimas (nome e PIN) | Três telas em Compose for Wear OS (Material 3) sobre os componentes do celular: conexão (nome, PIN, servidores achados, procurar de novo e IP), canais ativos com o número de pessoas e "Sair do servidor", e PTT com botão redondo de segurar, vibração ao apertar e soltar, quem está falando e "Sair". Texto (nome, PIN, IP) pelo `RemoteInput` do sistema (`wear-input` 1.2.0). Histórico e configurações ficam no celular. Verificado no Galaxy Watch9 falando e ouvindo com o celular; o nome da sala ficava sob a hora do relógio até a tela de PTT usar o `contentPadding` do `ScreenScaffold` | M |
+| 25.4 Sessão e bateria | ✔ feito | Foreground service com Ongoing Activity, só enquanto há sessão; sem "sempre escutando"; botões `KEYCODE_STEM_*` mapeados para o PTT pelo `handlePttKey`; saída de áudio verificada (alto-falante ou fone Bluetooth) | `WearSessionService` (foreground service de microfone e reprodução) com Ongoing Activity no mostrador: sobe quando a conexão se completa e se encerra sozinho quando ela termina; a notificação tem "Sair". `LanNetwork` virou um só por processo, com contagem de quem o segura (tela e sessão), para um não soltar o Wi-Fi do outro. **Decisão:** deslizar para a direita volta uma tela (`SwipeToDismissBox`): no PTT sai do canal, nos canais sai do servidor; fechar o app (na primeira tela ou pelos recentes) encerra a sessão, e o botão de início mantém no canal ouvindo. Antes, fechar o app destruía a tela do canal, que saía do canal, e a conexão ficava aberta sem canal. **Botões físicos:** o Galaxy Watch9 só expõe `KEY_POWER` e `KEY_APPSELECT`, ambos do sistema, então não há PTT por botão; o código de `KEYCODE_STEM_*` saiu por não ter onde ser verificado. Verificado no relógio: sessão com a tela apagada e o app no mostrador, atalho reabrindo o canal, "Sair" e fechar pelos recentes | M |
+| 25.5 CI | ✔ feito | Build do `:wearApp` no workflow, ao lado do `androidApp` | Job `build-wear`: compila o app e o APK de teste do spike (que só roda num relógio, mas assim não apodrece) e publica o APK como artefato | P |
+| 25.6 Rede local no Android 17 (celular) | ✔ feito | Achado na 25.1: o `androidApp` tem `targetSdk` 37 e, num celular com Android 17, não acharia salas nem conectaria sem `ACCESS_LOCAL_NETWORK` | Permissão declarada no manifesto e pedida na abertura junto com microfone e notificações, só a partir da API 37 (`startupPermissions`, com `StartupPermissionsTest`). Não verificado em celular: o razr está na API 36; a necessidade foi vista no relógio com Android 17 | P |
+| 25.7 Ícone do relógio | ✔ feito | O `:wearApp` aparecia com o ícone genérico do Android | Usa o ícone adaptativo do celular (fundo, frente e monocromático, em vetor); o Wear OS o recorta em círculo | P |
+| 25.8 Visual do relógio | ✔ feito | As telas usavam o tema padrão do Material 3 para Wear e não se pareciam com o app | `WearPttTheme` leva a paleta escura e a IBM Plex Sans do design system para o tema do Wear, e envolve o `PttTheme` para os componentes do design system. A tela de PTT usa o `PttButton` do celular (mesmos estados e animações; `buttonState()` ficou público para os dois usarem a mesma regra) e põe canal e pessoas em texto curvo junto da hora. Cada tela virou `…Screen(component)` + `…Content(state, onIntent)` sem estado, com 11 previews em relógio redondo grande e pequeno | P |
+
+**Roteiro da 25.1** (relógio físico, celular desligado ou longe): (1) um servidor ou host na rede; (2) o relógio
+pede o Wi-Fi e acha o servidor na lista, ou entra por IP; (3) entra num canal com um celular; (4) os dois alternam
+falas por 30 min; (5) anotar tempo para o Wi-Fi subir, latência percebida, cortes, volume do alto-falante e
+bateria gasta. Se o Wi-Fi sob demanda falhar ou variar demais entre fabricantes, a ADR 0011 cai para o plano B
+(extensão do app do celular pela Data Layer).
+
+**Critério de conclusão:** o relógio entra num canal (servidor ou host) e fala e ouve com celular e Desktop,
+sem o celular por perto.
+
+---
+
+## Fase 26 — Fone Bluetooth
+
+**Objetivo:** ouvir e falar pelo fone Bluetooth em todas as plataformas. Hoje (lido no código, não testado com
+fone): Android e Wear tocam no fone mas gravam pelo microfone do aparelho; o iOS ignora o fone e toca no alto-falante;
+o Desktop segue o dispositivo padrão do sistema.
+
+| Item | Status | Ação | Esforço |
+|---|---|---|---|
+| 26.1 iOS toca no fone | a fazer | A sessão usa `PlayAndRecord` só com `defaultToSpeaker`; sem opção de Bluetooth o iOS não roteia para o fone. Acrescentar `allowBluetoothA2DP` (saída em qualidade cheia; o microfone continua o do iPhone) | P |
+| 26.2 Microfone do fone, como opção | a fazer | Opção "Usar microfone do fone Bluetooth" nas configurações, desligada por padrão. Ligada: Android e Wear com `setCommunicationDevice` (SCO/LE Audio) e `VOICE_COMMUNICATION`; iOS com `allowBluetooth` (HFP). O microfone do fone clássico só funciona no perfil de chamada, que baixa todo o áudio para qualidade de telefone (8–16 kHz) e leva ~1 s para ativar: decidir numa ADR entre ativar só enquanto se segura o botão (atraso para começar a falar) e a sessão toda (sem atraso, qualidade de telefone). LE Audio não tem a perda | M |
+
+**Critério de conclusão:** com um fone Bluetooth, o áudio sai nele em Android, Wear, iOS e Desktop, e, com a opção
+ligada, a fala é captada pelo microfone do fone.
 
 ---
 
