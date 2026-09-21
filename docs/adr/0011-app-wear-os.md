@@ -48,7 +48,9 @@ O relógio é **só cliente**: não hospeda sala.
   (300–500 mAh) em poucas horas. A sessão dura enquanto o app está aberto, ou pouco além disso.
 - **Rede.** O relógio usa a internet do celular por Bluetooth e desliga o Wi-Fi para economizar. Por esse
   caminho não há garantia de alcançar a LAN nem de o multicast funcionar, por isso o app pede o Wi-Fi. Ligar o
-  Wi-Fi leva alguns segundos e varia por fabricante. O IP manual continua como alternativa.
+  Wi-Fi leva alguns segundos e varia por fabricante. O IP manual continua como alternativa. Verificado no Galaxy
+  Watch9 só com Bluetooth: o IP manual de um servidor da LAN funciona pelo proxy do celular, mas a descoberta não
+  (o proxy não repassa multicast).
 - **Áudio.** Alto-falante de relógio é baixo para ambiente aberto, e alguns modelos não têm. O app aceita
   fone Bluetooth e verifica a saída disponível.
 - **Botão de falar.** Segurar na tela funciona em todos. Botões físicos (`KEYCODE_STEM_*`) entram pelo
