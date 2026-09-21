@@ -167,13 +167,18 @@ class ConnectionComponent(
         }
     }
 
-    /** Persists the nickname, or reports that it is missing and returns false. */
+    /**
+     * Persists the nickname trimmed, or reports that it is missing and returns false. Trimmed here, not while
+     * typing: it names the hosted room, and JmDNS never resolves a service whose name ends in a space.
+     */
     private fun saveNickname(): Boolean {
-        if (_state.value.nickname.isBlank()) {
+        val nickname = _state.value.nickname.trim()
+        if (nickname.isEmpty()) {
             scope.launch { _effects.send(ConnectionEffect.ShowError("Por favor, preencha o seu Nome")) }
             return false
         }
-        settings.putString(SettingsKeys.NICKNAME, _state.value.nickname)
+        _state.update { it.copy(nickname = nickname) }
+        settings.putString(SettingsKeys.NICKNAME, nickname)
         return true
     }
 

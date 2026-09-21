@@ -2,6 +2,7 @@ package com.pttlan.feature.connection
 
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
+import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.domain.ptt.repository.LocalServerHost
 import com.pttlan.domain.ptt.repository.ServerEndpoint
 import com.pttlan.domain.ptt.repository.ServerNode
@@ -31,6 +32,7 @@ import org.koin.dsl.module
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
@@ -165,6 +167,24 @@ class ConnectionComponentTest {
             advanceUntilIdle()
 
             coVerify(exactly = 1) { connectToServerUseCase(hostEndpoint, "User1") }
+        }
+
+    @Test
+    fun `a nickname with surrounding spaces hosts and joins trimmed`() =
+        runTest {
+            // Desktop discovery (JmDNS) never resolves a service whose name ends in a space.
+            val host: LocalServerHost = mockk()
+            val hostEndpoint = ServerEndpoint("localhost", 9443, isLocal = true)
+            coEvery { host.start("PTT-LAN-User1", null) } returns Result.success(hostEndpoint)
+            coEvery { connectToServerUseCase(hostEndpoint, "User1") } returns Result.success(Unit)
+            val component = createComponent(host)
+
+            component.onIntent(ConnectionIntent.UpdateNickname(" User1 "))
+            component.onIntent(ConnectionIntent.HostServer)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { connectToServerUseCase(hostEndpoint, "User1") }
+            assertEquals("User1", settings.getString(SettingsKeys.NICKNAME, ""))
         }
 
     @Test
