@@ -33,6 +33,7 @@ graph LR
     F18 --> F22[22 Simplificação e arquitetura]
     F21 --> F23[23 Gates de qualidade]
     F22 --> F23
+    F23 --> F24[24 Modo host]
 ```
 
 A fase 18 vem primeiro porque é barata e deixa o CI confiável para as próximas. A 19 vem antes da 20 porque
@@ -299,6 +300,30 @@ sem atraso para os demais; servidor sem log por pacote em `INFO`.
 | 23.5 Snapshot tests | ✔ feito | Plano marca como feito, mas não existem. Roborazzi já está no catalog | `DesignSystemSnapshotTest` em `core-designsystem/src/androidHostTest`: 5 imagens (`PttButton` transmitindo e recebendo, `ConnectionStatusBadge`, `ChannelCard`, `ParticipantAvatar`), todas no tema escuro. `verifyRoborazziAndroidHostTest` roda no CI e os diffs sobem como artefato quando falha. O Robolectric precisou de `@Config(sdk = [34])`: no SDK do `compileSdk` ele quebra com "Failed to interact with raw FileDescriptor internals". **As imagens são gravadas no Linux**, pelo workflow manual `record-snapshots.yml`, porque o Robolectric renderiza gradiente e canto arredondado de forma diferente no macOS — imagem gravada no Mac nunca bate no runner | M |
 
 **Critério de conclusão:** CI falha com cobertura abaixo da meta, nova issue de Detekt ou dependência proibida entre features.
+
+---
+
+## Fase 24 — Modo host
+
+**Objetivo:** um dos aparelhos hospeda o canal, sem máquina à parte, como decidido na
+[ADR 0010](adr/0010-modo-host-no-app.md). O `serverApp` e a imagem Docker continuam como estão.
+
+| Item | Status | Ação | Esforço |
+|---|---|---|---|
+| 24.1 Núcleo do servidor em módulo próprio | ✔ feito | Extrair `ChannelRegistry`, `PttChannel`, rotas, `JwtConfig` e `Application.module()` para `server-core` (JVM), junto com os testes. Em `serverApp` ficam só `main`, keystore, Netty e JmDNS. Sem mudança de comportamento | `server-core` tem o `module()` (em `ServerModule.kt`), rotas, canais, auth, o painel estático e os 19 testes do servidor, com o piso de cobertura de 85 que era do `serverApp`. O `serverApp` ficou com `main`, keystore, Netty, JmDNS e o `application.conf`. O anúncio mDNS saiu do `module()` e passou a ser feito no `main`: os testes pararam de anunciar o servidor na rede, e quem embutir o núcleo decide como anunciar. O `/system/shutdown` do painel continua com `exitProcess`, o que derrubaria o app inteiro num host embutido; a 24.2 tem de tratar isso | M |
+| 24.2 Hospedar no Desktop | ✔ feito | Ação "Hospedar" na tela de conexão do `desktopApp`: sobe o servidor no próprio processo, anuncia por mDNS e conecta nele como cliente comum | `PttHostServer` (em `server-core`) sobe o `module()` num Netty embutido, com certificado gerado em memória a cada início e anúncio mDNS como `PTT-LAN-<nome>`; o anúncio saiu do `serverApp` para `announceOnLan`, usado pelos dois. O domínio ganhou `LocalServerHost`, registrado só no Desktop (`DesktopServerHost`); o `ConnectionComponent` o recebe por `getOrNull()` e a tela mostra o cartão "Hospedar" apenas quando ele existe. Fechar a janela para o servidor, senão as threads do Netty manteriam o processo vivo. Sem `application.conf`, as rotas de escrita do painel ficam desligadas, então o `exitProcess` do shutdown não é alcançável no host. **Bug evitado:** o `install(Koin)` do servidor parava o Koin global do app e punha o dele no lugar; virou `KoinIsolated`. `PttHostServerTest` cobre TLS, anúncio, shutdown desligado, start idempotente e o Koin do app (falha com o plugin antigo) | M |
+| 24.3 PIN de sala | ✔ feito | No modo host, `/api/auth/login` exige o PIN definido por quem hospeda. O `serverApp` segue sem PIN | `LoginRequest` ganhou `pin` opcional (clientes antigos seguem compatíveis) e o login compara com `ptt.roomPin` em tempo constante, respondendo 401 quando não bate. Só o `PttHostServer` preenche `ptt.roomPin`; o `serverApp` não tem a chave e continua aberto. A tela de conexão ganhou o campo "PIN da sala (opcional)", usado para entrar e para hospedar; PIN em branco hospeda uma sala aberta. O cliente trata o 401 como "PIN da sala incorreto" (antes viraria `NoTransformationFoundException`). O rate limit de login (5/min por IP) limita tentativa de força bruta. `RoomPinTest` e `PttHostServerTest` cobrem servidor e cliente real, ambos vistos falhando antes | P |
+| 24.4 Spike Android | 🔎 parcial | Validar engine (Netty × CIO) com TLS, keystore PKCS12 gerado no aparelho, `NsdManager.registerService` e foreground service. Passa se um celular hospedar e outros dois falarem por 10 min com a tela bloqueada | **No emulador (Android 15, API 35), passou de primeira:** `HostModeSpikeTest` (instrumentado, `./gradlew :androidApp:connectedDebugAndroidTest`) sobe o `PttHostServer` no aparelho com **Netty + TLS**, faz login com PIN pelo `PttWebSocketClient` real, abre o WebSocket e recebe a lista de participantes, e acha o servidor anunciado por **NSD** (`announceWithNsd`). Achados: CIO nem precisou ser testado, o Netty funciona (tenta o `epoll` nativo, não acha e cai para NIO, só log de debug); o certificado em memória não pediu PKCS12, porque o `buildKeyStore` usa o tipo padrão da plataforma; o `KoinIsolated` da 24.2 também convive com o Koin do app no Android; o Netty 4.2 arrasta nativos de QUIC para desktop, excluídos (`netty-codec-native-quic`); o servidor soma **+5,1 MB** ao APK de release sem R8 (17,4 → 22,5 MB), então fica só no APK de teste até a 24.5. **Falta, com aparelhos físicos:** o roteiro manual abaixo; e nada abaixo da API 35 foi testado (o `minSdk` é 26) | M (prazo de 1–2 dias) |
+| 24.5 Hospedar no Android | ✔ feito | Só se a 24.4 passar. Opus como padrão no host; painel admin não é exposto | `AndroidServerHost` liga o `PttHostServer` com anúncio por NSD e é registrado no Koin do `PttApplication`, então o cartão "Hospedar" aparece no Android. O foreground service passou a subir também enquanto houver sala hospedada, mesmo fora de canal (`listeningServiceWanted`, com teste); o "Stop" da notificação encerra a sala. O painel admin não é servido no modo host (`ptt.adminPanel=false`): as métricas usam `ManagementFactory`, que o Android não tem, e o shutdown chamaria `exitProcess`. **Opus não virou padrão:** o codec é de quem fala, e o custo do host é retransmitir a fala de cada participante, então trocar só o do host quase não muda a carga. O ganho real pede Opus como padrão para todos, decisão à parte. Verificado no emulador pela interface: hospedar com PIN leva à lista de canais, com o serviço em primeiro plano; do Mac, via `adb forward`, o login dá 401 sem PIN e com PIN errado e 200 com o certo, e `/api/admin/metrics` dá 404. O APK de release cresce 5,1 MB | G |
+
+**Roteiro manual da 24.4** (três aparelhos na mesma Wi-Fi, com o build da 24.5): (1) o celular A hospeda com PIN; (2) B e C acham "PTT-LAN-<nome>" na lista e entram com o
+PIN; (3) A bloqueia a tela; (4) B e C alternam falas por 10 min; (5) anotar cortes de áudio, quedas de conexão e o
+consumo de bateria de A no período. Pontos a observar: Doze e economia de energia do fabricante derrubando o
+servidor com a tela bloqueada, e se o Wi-Fi em modo de economia aumenta a latência (se sim, a 24.5 pega um
+`WifiLock` de baixa latência enquanto hospeda).
+
+**Critério de conclusão:** Desktop (e Android, se o spike passar) hospeda um canal descoberto pelos outros
+clientes via mDNS, sem `serverApp` rodando na rede.
 
 ---
 

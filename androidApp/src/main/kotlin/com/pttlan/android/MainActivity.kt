@@ -13,7 +13,6 @@ import com.pttlan.domain.ptt.repository.ConnectionRepository
 import org.koin.android.ext.android.inject
 import com.pttlan.core.navigation.RootComponent
 import com.pttlan.core.navigation.RootScreen
-import com.pttlan.domain.ptt.repository.ConnectionStatus
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -62,6 +61,7 @@ class MainActivity : ComponentActivity() {
         val settings: com.russhwolf.settings.Settings by inject()
         val connectionRepository: ConnectionRepository by inject()
         val channelSessionRepository: ChannelSessionRepository by inject()
+        val serverHost: AndroidServerHost by inject()
 
         lifecycleScope.launch {
             // Only while the activity is at least STARTED: since phase 20.1 the client reconnects on its own,
@@ -72,15 +72,16 @@ class MainActivity : ComponentActivity() {
                 combine(
                     connectionRepository.connectionStatus,
                     channelSessionRepository.activeSessionChannelId,
-                    (settings as ObservableSettings).getBooleanFlow(SettingsKeys.ALWAYS_LISTENING, SettingsDefaults.ALWAYS_LISTENING)
-                ) { status, activeChannel, alwaysListening ->
-                    Triple(status, activeChannel, alwaysListening)
-                }.collect { (status, activeChannel, alwaysListening) ->
+                    (settings as ObservableSettings).getBooleanFlow(SettingsKeys.ALWAYS_LISTENING, SettingsDefaults.ALWAYS_LISTENING),
+                    serverHost.isHosting,
+                ) { status, activeChannel, alwaysListening, hosting ->
+                    listeningServiceWanted(status, activeChannel, alwaysListening, hosting)
+                }.collect { wanted ->
                     val intent = android.content.Intent(this@MainActivity, PttForegroundService::class.java)
-                    if (status == ConnectionStatus.Connected && activeChannel != null && alwaysListening) {
-                        startListeningService(intent)
-                    } else if (status == ConnectionStatus.Disconnected || activeChannel == null || !alwaysListening) {
-                        stopService(intent)
+                    when (wanted) {
+                        true -> startListeningService(intent)
+                        false -> stopService(intent)
+                        null -> Unit
                     }
                 }
             }

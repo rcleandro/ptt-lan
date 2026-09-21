@@ -12,6 +12,7 @@ import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
@@ -80,14 +81,18 @@ class PttWebSocketClient(
         isLocal: Boolean,
         nickname: String,
         deviceId: String,
+        pin: String? = null,
     ): LoginResponse {
         val cleanHost = normalizeHost(host)
         val url = "https://$cleanHost:$port/api/auth/login"
-        return httpClient
-            .post(url) {
+        val response =
+            httpClient.post(url) {
                 contentType(ContentType.Application.Json)
-                setBody(LoginRequest(nickname, deviceId))
-            }.body()
+                setBody(LoginRequest(nickname, deviceId, pin))
+            }
+        // The only 401 at login is a room PIN that does not match (host mode, 24.3)
+        check(response.status != HttpStatusCode.Unauthorized) { "PIN da sala incorreto" }
+        return response.body()
     }
 
     suspend fun connect(

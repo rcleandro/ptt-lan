@@ -2,10 +2,12 @@ package com.pttlan.core.network.protocol
 
 import kotlinx.serialization.Serializable
 
+/** [pin] is only checked by a server that hosts a room with a PIN (host mode); the others ignore it. */
 @Serializable
 data class LoginRequest(
     val nickname: String,
     val deviceId: String,
+    val pin: String? = null,
 )
 
 /**

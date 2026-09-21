@@ -33,10 +33,11 @@ class ConnectToServerUseCase(
     suspend operator fun invoke(
         endpoint: ServerEndpoint,
         nickname: String,
+        pin: String? = null,
     ): Result<Unit> {
         if (nickname.isBlank()) {
             return Result.failure(IllegalArgumentException("Nickname cannot be empty"))
         }
-        return connectionRepository.connect(endpoint, nickname)
+        return connectionRepository.connect(endpoint, nickname, pin)
     }
 }

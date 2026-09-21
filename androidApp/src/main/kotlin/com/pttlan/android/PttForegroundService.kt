@@ -8,8 +8,10 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import org.koin.android.ext.android.inject
 
 class PttForegroundService : Service() {
+    private val serverHost: AndroidServerHost by inject()
 
     override fun onCreate() {
         super.onCreate()
@@ -18,6 +20,8 @@ class PttForegroundService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
+            // Stop also ends a hosted room: otherwise MainActivity would start the service again for it
+            serverHost.stop()
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
             return START_NOT_STICKY
@@ -66,7 +70,7 @@ class PttForegroundService : Service() {
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("PTT-LAN")
-            .setContentText("Listening for incoming audio...")
+            .setContentText(if (serverHost.isHosting.value) "Hosting a channel on this device" else "Listening for incoming audio...")
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .setContentIntent(pendingIntent)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopIntent)

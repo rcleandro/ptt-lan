@@ -38,9 +38,11 @@ interface ConnectionRepository {
 
     fun stopDiscovery()
 
+    /** [pin] is the room PIN of a hosted channel (host mode); null for servers without one. */
     suspend fun connect(
         endpoint: ServerEndpoint,
         nickname: String,
+        pin: String? = null,
     ): Result<Unit>
 
     fun disconnect()
