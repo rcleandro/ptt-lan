@@ -33,13 +33,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.pttlan.core.designsystem.theme.PttTheme
 
-enum class PttButtonState {
-    Idle,
-    Requesting,
-    Transmitting,
-    Receiving,
-}
-
 private const val PRESSED_SCALE = 0.97f
 private const val GLOW_RADIUS_FACTOR = 1.25f
 private const val IDLE_GLOW_ALPHA = 0.18f

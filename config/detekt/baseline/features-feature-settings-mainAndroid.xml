@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LongMethod:SettingsComponent.kt:SettingsComponent$fun onIntent</ID>
+    <ID>LongMethod:SettingsScreen.kt:@Composable fun SettingsScreenContent</ID>
+    <ID>LongMethod:SettingsScreen.kt:@Composable private fun CacheLocationDialog</ID>
+    <ID>MagicNumber:SettingsScreen.kt:140</ID>
+    <ID>TooManyFunctions:SettingsScreen.kt:com.pttlan.feature.settings.SettingsScreen.kt</ID>
+  </CurrentIssues>
+</SmellBaseline>

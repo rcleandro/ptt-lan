@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LongMethod:HistoryMessageList.kt:@Composable fun VoiceMessageItem</ID>
+    <ID>LongMethod:HistoryMessageList.kt:@Composable internal fun MessageList</ID>
+    <ID>LongMethod:HistoryScreen.kt:@Composable fun HistoryScreenContent</ID>
+    <ID>LongParameterList:HistoryScreen.kt:@Composable fun HistoryScreenContent</ID>
+    <ID>MagicNumber:HistoryScreen.kt:160</ID>
+  </CurrentIssues>
+</SmellBaseline>

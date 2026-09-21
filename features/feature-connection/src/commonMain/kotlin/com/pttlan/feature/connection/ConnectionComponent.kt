@@ -121,31 +121,16 @@ class ConnectionComponent(
     fun onIntent(intent: ConnectionIntent) {
         when (intent) {
             is ConnectionIntent.ConnectToDiscovered -> {
-                if (!saveNickname()) return
-                connect(intent.server.endpoint, "Tempo de conexão excedido. O servidor está offline?")
+                if (saveNickname()) connect(intent.server.endpoint, "Tempo de conexão excedido. O servidor está offline?")
             }
 
             is ConnectionIntent.ConnectToManualIp -> {
-                if (!saveNickname()) return
-                settings.putString(SettingsKeys.MANUAL_IP, _state.value.manualIp)
-                val endpoint =
-                    ServerEndpoint(
-                        host = intent.ip,
-                        port = 9443,
-                        isLocal = isLocalNetwork(intent.ip),
-                    )
-                connect(endpoint, "Tempo de conexão excedido. Verifique o IP e tente novamente.")
+                if (saveNickname()) connectToManualIp(intent.ip)
             }
 
             is ConnectionIntent.HostServer -> {
-                val host = localServerHost ?: return
-                if (!saveNickname()) return
-                scope.launch {
-                    host
-                        .start(serviceName = "PTT-LAN-${_state.value.nickname}", pin = pinOrNull())
-                        .onSuccess { endpoint -> connect(endpoint, "Tempo de conexão excedido ao entrar no próprio canal.") }
-                        .onFailure { _effects.send(ConnectionEffect.ShowError("Não foi possível hospedar: ${it.message}")) }
-                }
+                val host = localServerHost
+                if (host != null && saveNickname()) hostServer(host)
             }
 
             is ConnectionIntent.UpdateManualIp -> {
@@ -159,6 +144,26 @@ class ConnectionComponent(
             is ConnectionIntent.UpdatePin -> {
                 _state.update { it.copy(pin = intent.pin.trim()) }
             }
+        }
+    }
+
+    private fun connectToManualIp(ip: String) {
+        settings.putString(SettingsKeys.MANUAL_IP, _state.value.manualIp)
+        val endpoint =
+            ServerEndpoint(
+                host = ip,
+                port = 9443,
+                isLocal = isLocalNetwork(ip),
+            )
+        connect(endpoint, "Tempo de conexão excedido. Verifique o IP e tente novamente.")
+    }
+
+    private fun hostServer(host: LocalServerHost) {
+        scope.launch {
+            host
+                .start(serviceName = "PTT-LAN-${_state.value.nickname}", pin = pinOrNull())
+                .onSuccess { endpoint -> connect(endpoint, "Tempo de conexão excedido ao entrar no próprio canal.") }
+                .onFailure { _effects.send(ConnectionEffect.ShowError("Não foi possível hospedar: ${it.message}")) }
         }
     }
 

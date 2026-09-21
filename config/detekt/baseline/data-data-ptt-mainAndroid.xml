@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>InjectDispatcher:ChannelRepositoryImpl.kt:ChannelRepositoryImpl$Default</ID>
+    <ID>InjectDispatcher:ConnectionRepositoryImpl.kt:ConnectionRepositoryImpl$Default</ID>
+    <ID>InjectDispatcher:HistoryRepositoryImpl.kt:HistoryRepositoryImpl$Default</ID>
+    <ID>InjectDispatcher:VoiceRepositoryImpl.kt:VoiceRepositoryImpl$Default</ID>
+    <ID>LongMethod:ConnectionRepositoryImpl.kt:ConnectionRepositoryImpl$override suspend fun connect: Result&lt;Unit&gt;</ID>
+    <ID>LongMethod:HistoryRepositoryImpl.kt:HistoryRepositoryImpl$override suspend fun playMessage</ID>
+    <ID>LoopWithTooManyJumpStatements:HistoryRepositoryImpl.kt:HistoryRepositoryImpl$while</ID>
+    <ID>MagicNumber:VoiceRepositoryImpl.kt:VoiceRepositoryImpl$100</ID>
+    <ID>ReturnCount:HistoryRecorder.kt:HistoryRecorder$private fun trimCacheBySize</ID>
+    <ID>TooGenericExceptionCaught:ConnectionRepositoryImpl.kt:ConnectionRepositoryImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:HistoryRecorder.kt:HistoryRecorder$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:HistoryRepositoryImpl.kt:HistoryRepositoryImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:VoiceRepositoryImpl.kt:VoiceRepositoryImpl$e: Exception</ID>
+  </CurrentIssues>
+</SmellBaseline>

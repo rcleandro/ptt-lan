@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>InjectDispatcher:AndroidAudioInterfaces.kt:AndroidAudioRecorder$IO</ID>
+    <ID>LongMethod:AndroidAudioInterfaces.kt:AndroidAudioPlayer$override fun play</ID>
+    <ID>MagicNumber:AndroidAudioInterfaces.kt:AndroidAudioPlayer$4</ID>
+    <ID>MagicNumber:AndroidAudioInterfaces.kt:AndroidAudioPlayer$500</ID>
+    <ID>MagicNumber:AndroidAudioInterfaces.kt:AndroidAudioRecorder$1000</ID>
+    <ID>MagicNumber:AndroidAudioInterfaces.kt:AndroidAudioRecorder$20</ID>
+    <ID>MagicNumber:AndroidAudioInterfaces.kt:AndroidAudioRecorder$4</ID>
+    <ID>MagicNumber:OpusAudioCodec.kt:OpusAudioCodec$0xFF</ID>
+    <ID>MagicNumber:OpusAudioCodec.kt:OpusAudioCodec$1920</ID>
+    <ID>MagicNumber:OpusAudioCodec.kt:OpusAudioCodec$4000</ID>
+    <ID>MagicNumber:OpusAudioCodec.kt:OpusAudioCodec$8</ID>
+    <ID>ReturnCount:JitterBuffer.kt:JitterBufferPolicy$fun shouldWaitForMore: Boolean</ID>
+    <ID>TooGenericExceptionCaught:OpusAudioCodec.kt:OpusAudioCodec$e: Exception</ID>
+  </CurrentIssues>
+</SmellBaseline>

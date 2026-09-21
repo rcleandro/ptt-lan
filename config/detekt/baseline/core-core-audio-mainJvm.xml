@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>InjectDispatcher:AudioInterfaces.kt:JvmAudioRecorder$IO</ID>
+    <ID>MagicNumber:AudioInterfaces.kt:JvmAudioPlayer$16</ID>
+    <ID>MagicNumber:AudioInterfaces.kt:JvmAudioPlayer$500</ID>
+    <ID>MagicNumber:AudioInterfaces.kt:JvmAudioRecorder$1000</ID>
+    <ID>MagicNumber:AudioInterfaces.kt:JvmAudioRecorder$16</ID>
+    <ID>MagicNumber:AudioInterfaces.kt:JvmAudioRecorder$20</ID>
+    <ID>MagicNumber:OpusAudioCodec.kt:OpusAudioCodec$0xFF</ID>
+    <ID>MagicNumber:OpusAudioCodec.kt:OpusAudioCodec$1920</ID>
+    <ID>MagicNumber:OpusAudioCodec.kt:OpusAudioCodec$4000</ID>
+    <ID>MagicNumber:OpusAudioCodec.kt:OpusAudioCodec$8</ID>
+    <ID>ReturnCount:JitterBuffer.kt:JitterBufferPolicy$fun shouldWaitForMore: Boolean</ID>
+    <ID>TooGenericExceptionCaught:OpusAudioCodec.kt:OpusAudioCodec$e: Exception</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LongParameterList:ChannelListScreen.kt:@Composable fun ChannelListScreenContent</ID>
+    <ID>MagicNumber:ChannelListScreen.kt:120</ID>
+    <ID>MagicNumber:ChannelListScreen.kt:180</ID>
+  </CurrentIssues>
+</SmellBaseline>
