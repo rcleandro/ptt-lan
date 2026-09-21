@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- BgDark, as in the watch screens: watches only use dark themes -->
+    <color name="ptt_background">#FF0E1114</color>
+</resources>
