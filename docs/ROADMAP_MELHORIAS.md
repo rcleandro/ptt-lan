@@ -34,6 +34,7 @@ graph LR
     F21 --> F23[23 Gates de qualidade]
     F22 --> F23
     F23 --> F24[24 Modo host]
+    F24 --> F25[25 App Wear OS]
 ```
 
 A fase 18 vem primeiro porque é barata e deixa o CI confiável para as próximas. A 19 vem antes da 20 porque
@@ -324,6 +325,30 @@ servidor com a tela bloqueada, e se o Wi-Fi em modo de economia aumenta a latên
 
 **Critério de conclusão:** Desktop (e Android, se o spike passar) hospeda um canal descoberto pelos outros
 clientes via mDNS, sem `serverApp` rodando na rede.
+
+---
+
+## Fase 25 — App Wear OS
+
+**Objetivo:** o relógio entra num canal como cliente e fala e ouve sem depender do celular, como decidido na
+[ADR 0011](adr/0011-app-wear-os.md). Só cliente: o relógio não hospeda sala.
+
+| Item | Status | Ação | Esforço |
+|---|---|---|---|
+| 25.1 Spike em relógio físico | a fazer | Validar, sem o celular por perto: Wi-Fi sob demanda (`requestNetwork` com `TRANSPORT_WIFI` + `bindProcessToNetwork`), descoberta NSD por esse Wi-Fi, `AudioRecord`/`AudioTrack` com Opus, alto-falante, botões físicos e consumo de bateria. Passa se o relógio achar o servidor, entrar num canal e falar e ouvir com um celular por 30 min | M (prazo de 1–2 dias) |
+| 25.2 Módulo `:wearApp` | a fazer | Só se a 25.1 passar. App Android (`minSdk` 30) com o mesmo papel do `androidApp`: depende das features e do `core-di`, sem `server-core`. Reusa `RootComponent` e os componentes das features | M |
+| 25.3 Telas do relógio | a fazer | Compose for Wear OS: servidores (descoberta + IP manual), canais e PTT (botão de segurar e participantes). Sem histórico e com configurações mínimas (nome e PIN) | M |
+| 25.4 Sessão e bateria | a fazer | Foreground service com Ongoing Activity, só enquanto há sessão; sem "sempre escutando"; botões `KEYCODE_STEM_*` mapeados para o PTT pelo `handlePttKey`; saída de áudio verificada (alto-falante ou fone Bluetooth) | M |
+| 25.5 CI | a fazer | Build do `:wearApp` no workflow, ao lado do `androidApp` | P |
+
+**Roteiro da 25.1** (relógio físico, celular desligado ou longe): (1) um servidor ou host na rede; (2) o relógio
+pede o Wi-Fi e acha o servidor na lista, ou entra por IP; (3) entra num canal com um celular; (4) os dois alternam
+falas por 30 min; (5) anotar tempo para o Wi-Fi subir, latência percebida, cortes, volume do alto-falante e
+bateria gasta. Se o Wi-Fi sob demanda falhar ou variar demais entre fabricantes, a ADR 0011 cai para o plano B
+(extensão do app do celular pela Data Layer).
+
+**Critério de conclusão:** o relógio entra num canal (servidor ou host) e fala e ouve com celular e Desktop,
+sem o celular por perto.
 
 ---
 
