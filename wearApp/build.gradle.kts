@@ -29,6 +29,7 @@ dependencies {
     // the watch does not host (ADR 0011).
     implementation(projects.core.coreDi)
     implementation(projects.core.coreNavigation)
+    implementation(projects.core.coreDesignsystem)
     implementation(projects.core.coreNetwork)
     implementation(projects.core.coreAudio)
     implementation(projects.domain.domainPtt)
@@ -44,6 +45,9 @@ dependencies {
     implementation(libs.wear.compose.foundation)
     implementation(libs.wear.input)
     implementation(libs.wear.ongoing)
+    implementation(libs.wear.tooling.preview)
+    implementation(libs.ui.tooling.preview)
+    debugImplementation(libs.ui.tooling)
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.test.runner)

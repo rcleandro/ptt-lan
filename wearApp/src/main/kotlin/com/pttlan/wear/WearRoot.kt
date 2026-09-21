@@ -19,7 +19,7 @@ import com.pttlan.feature.ptt.PttIntent
 @Composable
 fun WearRoot(root: RootComponent) {
     val stack by root.childStack.subscribeAsState()
-    MaterialTheme {
+    WearPttTheme {
         AppScaffold {
             // Swiping right goes back one screen, the Wear OS way. On the first screen the system's own swipe
             // closes the app, which ends the session (MainActivity). The background stays empty: drawing the
@@ -60,7 +60,7 @@ private fun goBack(
 
 @Composable
 fun WearPermissionWait() {
-    MaterialTheme {
+    WearPttTheme {
         AppScaffold {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Permita o microfone e a rede local para usar o PTT-LAN")

@@ -51,6 +51,7 @@ wearCompose = "1.6.2"
 activityCompose = "1.13.0"
 wearOngoing = "1.1.0"
 wearInput = "1.2.0"
+wearToolingPreview = "1.0.0"
 
 [libraries]
 # Gradle plugins (referenced as libraries for version-catalog plugin declarations)
@@ -143,6 +144,7 @@ wear-compose-foundation = { module = "androidx.wear.compose:compose-foundation",
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
 wear-ongoing = { module = "androidx.wear:wear-ongoing", version.ref = "wearOngoing" }
 wear-input = { module = "androidx.wear:wear-input", version.ref = "wearInput" }
+wear-tooling-preview = { module = "androidx.wear:wear-tooling-preview", version.ref = "wearToolingPreview" }
 
 [plugins]
 androidApplication = { id = "com.android.application" }
