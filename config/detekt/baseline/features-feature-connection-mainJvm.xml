@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LongMethod:ConnectionComponent.kt:ConnectionComponent$fun onIntent</ID>
+    <ID>LongMethod:ConnectionScreen.kt:@Composable fun ServerCard</ID>
+    <ID>MagicNumber:ConnectionScreen.kt:140</ID>
+    <ID>MagicNumber:ConnectionScreen.kt:160</ID>
+    <ID>MagicNumber:ConnectionScreen.kt:60</ID>
+  </CurrentIssues>
+</SmellBaseline>

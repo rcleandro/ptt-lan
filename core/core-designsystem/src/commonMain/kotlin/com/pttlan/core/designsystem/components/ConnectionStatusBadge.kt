@@ -15,12 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.pttlan.core.designsystem.theme.PttTheme
 
-enum class ConnectionStatus {
-    Online,
-    Reconnecting,
-    Offline,
-}
-
 /** Glass status pill for the top bar. */
 @Composable
 fun ConnectionStatusBadge(

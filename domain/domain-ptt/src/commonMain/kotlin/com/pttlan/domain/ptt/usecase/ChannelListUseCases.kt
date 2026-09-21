@@ -44,7 +44,7 @@ class CreateChannelUseCase(
     private val channelRepository: ChannelRepository,
 ) {
     suspend operator fun invoke(name: String): String {
-        if (name.isBlank()) throw IllegalArgumentException("Channel name cannot be empty")
+        require(name.isNotBlank()) { "Channel name cannot be empty" }
         val id = name.lowercase().replace(" ", "-")
         channelRepository.saveChannel(ChannelDomain(id, name, false))
         return id

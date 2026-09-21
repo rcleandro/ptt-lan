@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>MagicNumber:ServerDiscoveryService.ios.kt:ServerDiscoveryService.&lt;no name provided&gt;$5.0</ID>
+  </CurrentIssues>
+</SmellBaseline>

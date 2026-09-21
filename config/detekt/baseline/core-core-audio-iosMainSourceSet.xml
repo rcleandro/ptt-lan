@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LongMethod:IosAudioInterfaces.kt:IosAudioPlayer$override fun play</ID>
+    <ID>LongMethod:IosAudioInterfaces.kt:IosAudioRecorder$override fun startCapture: Flow&lt;ByteArray&gt;</ID>
+    <ID>MagicNumber:IosAudioInterfaces.kt:0xFF</ID>
+    <ID>MagicNumber:IosAudioInterfaces.kt:8</ID>
+    <ID>MagicNumber:IosAudioInterfaces.kt:IosAudioPlayer$0xFF</ID>
+    <ID>MagicNumber:IosAudioInterfaces.kt:IosAudioPlayer$32767.0f</ID>
+    <ID>MagicNumber:IosAudioInterfaces.kt:IosAudioPlayer$8</ID>
+    <ID>TooGenericExceptionCaught:IosAudioInterfaces.kt:IosAudioPlayer$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:IosAudioInterfaces.kt:IosAudioRecorder$e: Exception</ID>
+  </CurrentIssues>
+</SmellBaseline>

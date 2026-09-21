@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:PttButton.kt:@Composable fun PttButton</ID>
+    <ID>LongMethod:ChannelCard.kt:@Composable fun ChannelCard</ID>
+    <ID>LongMethod:ParticipantAvatar.kt:@Composable fun ParticipantAvatar</ID>
+    <ID>LongMethod:PttButton.kt:@Composable fun PttButton</ID>
+    <ID>MagicNumber:PttButton.kt:0.06f</ID>
+    <ID>MagicNumber:PttButton.kt:0.18f</ID>
+    <ID>MagicNumber:PttButton.kt:0.19f</ID>
+    <ID>MagicNumber:PttButton.kt:0.28f</ID>
+    <ID>MagicNumber:PttButton.kt:0.3f</ID>
+    <ID>MagicNumber:PttButton.kt:0.46f</ID>
+    <ID>MagicNumber:PttButton.kt:0.55f</ID>
+    <ID>MagicNumber:PttButton.kt:0.62f</ID>
+    <ID>MagicNumber:PttButton.kt:0.8f</ID>
+  </CurrentIssues>
+</SmellBaseline>

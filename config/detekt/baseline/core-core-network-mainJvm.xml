@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:PttWebSocketClient.kt:PttWebSocketClient$suspend fun connect</ID>
+    <ID>InjectDispatcher:ServerDiscoveryService.jvm.kt:ServerDiscoveryService$IO</ID>
+    <ID>InstanceOfCheckForException:PttWebSocketClient.kt:PttWebSocketClient$e is ServerRefusedException</ID>
+    <ID>LongMethod:PttWebSocketClient.kt:PttWebSocketClient$suspend fun connect</ID>
+    <ID>LoopWithTooManyJumpStatements:PttWebSocketClient.kt:PttWebSocketClient$while</ID>
+    <ID>MagicNumber:PttWebSocketClient.kt:PttWebSocketClient$0.8</ID>
+    <ID>MagicNumber:PttWebSocketClient.kt:PttWebSocketClient$1.2</ID>
+    <ID>MagicNumber:PttWebSocketClient.kt:PttWebSocketClient$1000L</ID>
+    <ID>MagicNumber:PttWebSocketClient.kt:PttWebSocketClient$30000L</ID>
+    <ID>NestedBlockDepth:PttWebSocketClient.kt:PttWebSocketClient$suspend fun connect</ID>
+    <ID>TooGenericExceptionCaught:PttWebSocketClient.kt:PttWebSocketClient$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ServerDiscoveryService.jvm.kt:ServerDiscoveryService$e: Exception</ID>
+    <ID>UnnecessaryFullyQualifiedName:PttWebSocketClient.kt:PttWebSocketClient$okio.Buffer()</ID>
+    <ID>UnusedParameter:PttWebSocketClient.kt:PttWebSocketClient$isLocal: Boolean</ID>
+    <ID>UnusedPrivateProperty:ServerDiscoveryService.jvm.kt:ServerDiscoveryService$private var jmdns: JmDNS? = null</ID>
+    <ID>VarCouldBeVal:ServerDiscoveryService.jvm.kt:ServerDiscoveryService$private var jmdns: JmDNS? = null</ID>
+  </CurrentIssues>
+</SmellBaseline>

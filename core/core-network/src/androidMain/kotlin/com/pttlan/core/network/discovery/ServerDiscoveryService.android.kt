@@ -47,17 +47,17 @@ actual class ServerDiscoveryService actual constructor() : KoinComponent {
                             serviceInfo,
                             object : NsdManager.ResolveListener {
                                 override fun onResolveFailed(
-                                    serviceInfo: NsdServiceInfo,
+                                    failed: NsdServiceInfo,
                                     errorCode: Int,
                                 ) {}
 
-                                override fun onServiceResolved(serviceInfo: NsdServiceInfo) {
-                                    val host = serviceInfo.host?.hostAddress ?: return
+                                override fun onServiceResolved(resolved: NsdServiceInfo) {
+                                    val host = resolved.host?.hostAddress ?: return
                                     val server =
                                         DiscoveredServer(
-                                            name = serviceInfo.serviceName,
+                                            name = resolved.serviceName,
                                             host = host,
-                                            port = serviceInfo.port,
+                                            port = resolved.port,
                                         )
                                     trySend(server)
                                 }

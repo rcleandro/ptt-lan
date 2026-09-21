@@ -28,8 +28,8 @@ val coverageFloors =
     )
 
 /**
- * Bans `println`/`printStackTrace` outside tests (21.4). Detekt's `ForbiddenMethodCall` is configured for the
- * same thing, but it only runs with type resolution (`detektMain`), which this build does not wire up yet.
+ * Bans `println`/`printStackTrace` outside tests (21.4). Detekt's `ForbiddenMethodCall` does the same, but only
+ * with type resolution, which iosMain does not get (23.3).
  */
 val checkNoPrintln by tasks.registering {
     group = "verification"
@@ -59,6 +59,16 @@ val checkNoPrintln by tasks.registering {
         }
     }
 }
+
+/**
+ * Findings that predate 23.3, kept so `detekt` fails only on new ones. One file per module and task, all in
+ * `config/detekt/baseline`: by default mainJvm and mainAndroid share one file and the last run overwrites it.
+ */
+fun Project.detektBaselineFile(task: Task, prefix: String): File =
+    rootDir.resolve(
+        "config/detekt/baseline/${path.drop(1).replace(':', '-')}-" +
+            "${task.name.removePrefix(prefix).replaceFirstChar { it.lowercase() }}.xml",
+    )
 
 subprojects {
     pluginManager.apply("org.jetbrains.dokka")
@@ -109,13 +119,31 @@ subprojects {
         }
     }
 
+    // Generated sources (SQLDelight, Compose resources) are fed to the type-resolved tasks too.
+    val generated = "${File.separator}build${File.separator}"
+    tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
+        exclude { it.file.path.contains(generated) }
+        detektBaselineFile(this, "detekt").takeIf { it.exists() }?.let { baseline.set(it) }
+    }
+    tasks.withType<dev.detekt.gradle.DetektCreateBaselineTask>().configureEach {
+        exclude { it.file.path.contains(generated) }
+        baseline.set(detektBaselineFile(this, "detektBaseline"))
+    }
+
+    // On KMP modules the plain `detekt` task looks for src/main/kotlin and analyses nothing, so it runs the
+    // type-resolved tasks instead (23.3): main and test on JVM, main on Android, and iosMain without types.
+    val typeResolvedDetekt =
+        setOf(
+            "detektMain",
+            "detektTest",
+            "detektMainJvm",
+            "detektTestJvm",
+            "detektMainAndroid",
+            "detektIosMainSourceSet",
+        )
     tasks.matching { it.name == "detekt" }.configureEach {
         dependsOn(checkNoPrintln)
-        // The server is analysed with type resolution too; the KMP modules still need a baseline for that
-        // (23.3), so `checkNoPrintln` keeps covering the println ban everywhere else.
-        if (path == ":serverApp" || path == ":server-core") {
-            dependsOn("detektMain", "detektTest")
-        }
+        dependsOn(project.tasks.matching { it.name in typeResolvedDetekt })
     }
 
     tasks.withType<Test> {

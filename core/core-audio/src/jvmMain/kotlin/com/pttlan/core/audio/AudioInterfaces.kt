@@ -24,9 +24,7 @@ class JvmAudioRecorder : AudioRecorder {
             val format = AudioFormat(sampleRate.toFloat(), 16, 1, true, false)
             val info = DataLine.Info(TargetDataLine::class.java, format)
 
-            if (!AudioSystem.isLineSupported(info)) {
-                throw Exception("Line not supported")
-            }
+            check(AudioSystem.isLineSupported(info)) { "Line not supported" }
 
             line = AudioSystem.getLine(info) as TargetDataLine
             line?.open(format)
