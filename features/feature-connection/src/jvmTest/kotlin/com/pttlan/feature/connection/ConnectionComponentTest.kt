@@ -2,6 +2,8 @@ package com.pttlan.feature.connection
 
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
+import com.arkivanov.essenty.lifecycle.destroy
+import com.arkivanov.essenty.lifecycle.resume
 import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.domain.ptt.repository.LocalServerHost
 import com.pttlan.domain.ptt.repository.ServerEndpoint
@@ -17,10 +19,14 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -162,6 +168,33 @@ class ConnectionComponentTest {
             advanceUntilIdle()
 
             assertEquals(listOf(fresh), component.state.value.discoveredServers)
+        }
+
+    @Test
+    fun `destroying the screen stops its network search`() =
+        runTest {
+            // Leaving the app with back destroys the component while a hosted room keeps the process alive;
+            // its NSD search kept running in the background and was never stopped.
+            var searching = false
+            every { discoverServersUseCase() } returns
+                flow<ServerNode> { awaitCancellation() }
+                    .onStart { searching = true }
+                    .onCompletion { searching = false }
+            val lifecycle = LifecycleRegistry()
+            lifecycle.resume()
+            ConnectionComponent(
+                componentContext = DefaultComponentContext(lifecycle),
+                observeConnectionStatusUseCase = observeConnectionStatusUseCase,
+                discoverServersUseCase = discoverServersUseCase,
+                connectToServerUseCase = connectToServerUseCase,
+            )
+            advanceUntilIdle()
+            assertTrue(searching)
+
+            lifecycle.destroy()
+            advanceUntilIdle()
+
+            assertFalse(searching)
         }
 
     @Test

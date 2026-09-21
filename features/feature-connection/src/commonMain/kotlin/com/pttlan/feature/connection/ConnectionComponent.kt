@@ -1,6 +1,7 @@
 package com.pttlan.feature.connection
 
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.pttlan.core.common.network.isLocalNetwork
 import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.domain.ptt.repository.ConnectionStatus
@@ -16,6 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -101,6 +103,10 @@ class ConnectionComponent(
     private var discoveryJob: Job? = null
 
     init {
+        // Without this the search outlived the screen: leaving the app with back while hosting keeps the process
+        // alive, and the NSD search went on in the background, never stopped.
+        lifecycle.doOnDestroy { scope.cancel() }
+
         scope.launch {
             observeConnectionStatusUseCase().collect { status ->
                 _state.update { it.copy(status = status) }
