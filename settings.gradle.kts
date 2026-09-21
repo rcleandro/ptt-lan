@@ -18,6 +18,7 @@ dependencyResolutionManagement {
 rootProject.name = "ptt-lan"
 
 include(":androidApp")
+include(":wearApp")
 include(":desktopApp")
 include(":iosApp")
 include(":serverApp")

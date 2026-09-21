@@ -73,7 +73,7 @@ fun Project.detektBaselineFile(task: Task, prefix: String): File =
 subprojects {
     pluginManager.apply("org.jetbrains.dokka")
     
-    if (name != "androidApp") {
+    if (name != "androidApp" && name != "wearApp") {
         pluginManager.apply("org.jlleitschuh.gradle.ktlint")
         pluginManager.apply("dev.detekt")
         pluginManager.apply("org.jetbrains.kotlinx.kover")

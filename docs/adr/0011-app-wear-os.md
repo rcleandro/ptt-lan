@@ -53,4 +53,7 @@ O relógio é **só cliente**: não hospeda sala.
   fone Bluetooth e verifica a saída disponível.
 - **Botão de falar.** Segurar na tela funciona em todos. Botões físicos (`KEYCODE_STEM_*`) entram pelo
   `handlePttKey` que já existe, onde o relógio os tiver livres.
+- **Permissão de rede local.** No Android 17 (o do Galaxy Watch9) o app precisa de `ACCESS_LOCAL_NETWORK`,
+  pedida em tempo de execução, para descobrir e alcançar servidores na LAN; sem ela o NSD só abre um seletor do
+  sistema e as conexões para IPs locais expiram. Vale também para o `androidApp` em celulares com Android 17.
 - **Fora do relógio:** histórico, configurações completas e o modo host.
