@@ -1,5 +1,7 @@
 package com.pttlan.core.di
 
+import com.pttlan.core.audio.HeadsetMicRoute
+import com.pttlan.core.audio.IosHeadsetMicRoute
 import com.pttlan.core.common.storage.IosStorageInfoProvider
 import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.core.database.DatabaseDriverFactory
@@ -12,4 +14,5 @@ actual val platformModule: Module =
         single { DatabaseDriverFactory() }
         single { SettingsFactory() }
         single<StorageInfoProvider> { IosStorageInfoProvider() }
+        single<HeadsetMicRoute> { IosHeadsetMicRoute() }
     }

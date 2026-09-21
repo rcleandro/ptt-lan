@@ -25,6 +25,7 @@ import platform.AVFAudio.AVAudioPCMBuffer
 import platform.AVFAudio.AVAudioPCMFormatInt16
 import platform.AVFAudio.AVAudioPlayerNode
 import platform.AVFAudio.AVAudioSession
+import platform.AVFAudio.AVAudioSessionCategoryOptionAllowBluetooth
 import platform.AVFAudio.AVAudioSessionCategoryOptionAllowBluetoothA2DP
 import platform.AVFAudio.AVAudioSessionCategoryOptionDefaultToSpeaker
 import platform.AVFAudio.AVAudioSessionCategoryPlayAndRecord
@@ -40,12 +41,17 @@ import platform.Foundation.NSError
 
 private val logger = Logger.withTag("audio")
 
+/** Set by [IosHeadsetMicRoute]: the headset's microphone, through HFP (26.2, ADR 0012). */
+internal var headsetMicEnabled = false
+
 /**
  * Speaker by default, and a Bluetooth headset when one is connected (26.1): without the A2DP option iOS ignores
  * the headset under `PlayAndRecord` and plays on the speaker. A2DP is output only, in full quality; the
- * microphone stays the iPhone's (the headset's needs HFP, 26.2).
+ * headset's microphone needs HFP, added only when the user turns it on.
  */
-private val SESSION_OPTIONS = AVAudioSessionCategoryOptionDefaultToSpeaker or AVAudioSessionCategoryOptionAllowBluetoothA2DP
+internal fun sessionOptions() =
+    AVAudioSessionCategoryOptionDefaultToSpeaker or AVAudioSessionCategoryOptionAllowBluetoothA2DP or
+        (if (headsetMicEnabled) AVAudioSessionCategoryOptionAllowBluetooth else 0uL)
 
 /** 20 ms at 48 kHz: the frame size Opus accepts and the same one Android and the JVM emit. */
 private const val FRAME_SAMPLES = 960
@@ -62,7 +68,7 @@ class IosAudioRecorder : AudioRecorder {
         callbackFlow {
             try {
                 val session = AVAudioSession.sharedInstance()
-                session.setCategory(AVAudioSessionCategoryPlayAndRecord, SESSION_OPTIONS, null)
+                session.setCategory(AVAudioSessionCategoryPlayAndRecord, sessionOptions(), null)
                 session.setPreferredSampleRate(sampleRate.toDouble(), null)
                 session.setActive(true, null)
 
@@ -211,7 +217,7 @@ class IosAudioPlayer : AudioPlayer {
             if (session.category != AVAudioSessionCategoryPlayAndRecord &&
                 session.category != AVAudioSessionCategoryPlayback
             ) {
-                session.setCategory(AVAudioSessionCategoryPlayAndRecord, SESSION_OPTIONS, null)
+                session.setCategory(AVAudioSessionCategoryPlayAndRecord, sessionOptions(), null)
                 session.setActive(true, null)
             }
 

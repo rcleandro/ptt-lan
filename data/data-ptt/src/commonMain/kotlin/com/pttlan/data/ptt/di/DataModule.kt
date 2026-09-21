@@ -4,6 +4,7 @@ import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.data.ptt.repository.ChannelRepositoryImpl
 import com.pttlan.data.ptt.repository.ChannelSessionRepositoryImpl
 import com.pttlan.data.ptt.repository.ConnectionRepositoryImpl
+import com.pttlan.data.ptt.repository.HeadsetMicSession
 import com.pttlan.data.ptt.repository.HistoryRecorder
 import com.pttlan.data.ptt.repository.HistoryRepositoryImpl
 import com.pttlan.data.ptt.repository.VoiceRepositoryImpl
@@ -18,6 +19,7 @@ import org.koin.dsl.module
 val dataModule =
     module {
         single<ConnectionRepository> { ConnectionRepositoryImpl(get(), get(), get()) }
+        single(createdAtStart = true) { HeadsetMicSession(get<ConnectionRepository>().connectionStatus, get(), get()) }
         single<ChannelSessionRepository> { ChannelSessionRepositoryImpl(get()) }
         single<ChannelRepository>(createdAtStart = true) {
             ChannelRepositoryImpl(get(), get())

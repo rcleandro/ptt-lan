@@ -234,6 +234,13 @@ private fun AudioSection(
         )
         GroupDivider()
         SwitchRow(
+            title = "Microfone do fone Bluetooth",
+            subtitle = "Fala pelo fone; o áudio fica com qualidade de telefone e o relógio pareado fica mudo. Vale na próxima conexão",
+            checked = state.useHeadsetMic,
+            onCheckedChange = { onIntent(SettingsIntent.ToggleHeadsetMic(it)) },
+        )
+        GroupDivider()
+        SwitchRow(
             title = "Sempre ouvindo",
             subtitle = "Recebe áudio com o app em segundo plano",
             checked = state.alwaysListening,

@@ -21,6 +21,7 @@ object SettingsKeys {
 
     const val USE_OPUS = "use_opus"
     const val ALWAYS_LISTENING = "always_listening"
+    const val USE_HEADSET_MIC = "use_headset_mic"
 }
 
 /** Defaults for the keys that have one, so reader and writer cannot disagree. */
@@ -32,4 +33,7 @@ object SettingsDefaults {
     const val MAX_CACHE_SIZE_MB = 500
     const val USE_OPUS = true
     const val ALWAYS_LISTENING = true
+
+    /** Off: the headset's microphone drops all audio to phone quality (ADR 0012). */
+    const val USE_HEADSET_MIC = false
 }

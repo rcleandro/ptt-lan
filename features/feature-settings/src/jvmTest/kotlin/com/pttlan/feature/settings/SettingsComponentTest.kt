@@ -104,6 +104,20 @@ class SettingsComponentTest {
         }
 
     @Test
+    fun `the headset microphone is off until turned on`() =
+        runTest(testDispatcher) {
+            // Stored nowhere yet: the settings answer with the default the caller passes
+            every { settings.getBoolean(SettingsKeys.USE_HEADSET_MIC, any()) } answers { secondArg() }
+            val component = createComponent()
+            assertEquals(false, component.state.value.useHeadsetMic)
+
+            component.onIntent(SettingsIntent.ToggleHeadsetMic(true))
+
+            assertEquals(true, component.state.value.useHeadsetMic)
+            verify(exactly = 1) { settings.putBoolean(SettingsKeys.USE_HEADSET_MIC, true) }
+        }
+
+    @Test
     fun `ToggleOpus intent updates state and settings`() =
         runTest(testDispatcher) {
             val component = createComponent()
