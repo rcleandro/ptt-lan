@@ -22,7 +22,7 @@ class AndroidServerHost(
     private val server = PttHostServer(announce = { port, name -> announceWithNsd(context, port, name) })
 
     private val _isHosting = MutableStateFlow(false)
-    val isHosting: StateFlow<Boolean> = _isHosting.asStateFlow()
+    override val isHosting: StateFlow<Boolean> = _isHosting.asStateFlow()
 
     override suspend fun start(
         serviceName: String,

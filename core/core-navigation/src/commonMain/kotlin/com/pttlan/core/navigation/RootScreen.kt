@@ -86,7 +86,6 @@ private fun RootContent(component: RootComponent) {
                 is RootComponent.Child.ChannelListChild -> {
                     ChannelListScreen(
                         component = instance.component,
-                        onBack = component::goBack,
                         onOpenSettings = component::navigateToSettings,
                         onOpenHistory = openHistory,
                         connectionStatus = badgeStatus,
