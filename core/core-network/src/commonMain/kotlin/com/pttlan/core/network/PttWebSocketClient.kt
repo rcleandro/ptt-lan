@@ -168,7 +168,8 @@ class PttWebSocketClient(
                     }
                 }
 
-                // A policy close is the server refusing this client (name taken, bad token): retrying is pointless
+                // A policy close is the server refusing this client (name taken, bad token) or a host ending the room:
+                // retrying is pointless
                 // and the reason has to reach the UI instead of a generic "desconectado".
                 val closeReason = withTimeoutOrNull(1.seconds) { ws.closeReason.await() }
                 if (closeReason?.knownReason == CloseReason.Codes.VIOLATED_POLICY) {

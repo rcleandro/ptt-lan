@@ -2,6 +2,7 @@ package com.pttlan.feature.channellist
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.backhandler.BackCallback
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.pttlan.domain.ptt.repository.ActiveChannelDomain
 import com.pttlan.domain.ptt.repository.ChannelDomain
 import com.pttlan.domain.ptt.repository.LocalServerHost
@@ -11,6 +12,7 @@ import com.pttlan.domain.ptt.usecase.JoinChannelUseCaseImpl
 import com.pttlan.domain.ptt.usecase.ObserveActiveChannelsUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -53,8 +55,13 @@ sealed interface ChannelListEffect {
         val channelId: String,
     ) : ChannelListEffect
 
-    /** Disconnect and go back to the connection screen. */
-    data object Leave : ChannelListEffect
+    /**
+     * Disconnect and go back to the connection screen; [endRoom] also stops the room this device hosts. Done by
+     * the root, which outlives this screen: leaving destroys it, and a stop() left in its scope never ran.
+     */
+    data class Leave(
+        val endRoom: Boolean = false,
+    ) : ChannelListEffect
 }
 
 class ChannelListComponent(
@@ -77,6 +84,8 @@ class ChannelListComponent(
         // Without this the system back only popped the screen: the user stayed connected, and a host kept the
         // room running with no way back into it from the connection screen.
         backHandler.register(BackCallback { onIntent(ChannelListIntent.Leave) })
+        // A new list is created for every session; without this each old one kept its collectors running.
+        lifecycle.doOnDestroy { scope.cancel() }
 
         scope.launch {
             getRecentChannelsUseCase().collect { channels ->
@@ -115,14 +124,13 @@ class ChannelListComponent(
                 if (localServerHost?.isHosting?.value == true) {
                     _state.update { it.copy(confirmingStopHost = true) }
                 } else {
-                    scope.launch { _effects.emit(ChannelListEffect.Leave) }
+                    scope.launch { _effects.emit(ChannelListEffect.Leave()) }
                 }
             }
 
             is ChannelListIntent.ConfirmStopHost -> {
                 _state.update { it.copy(confirmingStopHost = false) }
-                localServerHost?.stop()
-                scope.launch { _effects.emit(ChannelListEffect.Leave) }
+                scope.launch { _effects.emit(ChannelListEffect.Leave(endRoom = true)) }
             }
 
             is ChannelListIntent.DismissStopHost -> {

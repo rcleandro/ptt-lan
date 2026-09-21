@@ -1,5 +1,6 @@
 package com.pttlan.server
 
+import com.pttlan.server.channel.ChannelRegistry
 import io.ktor.network.tls.certificates.buildKeyStore
 import io.ktor.server.application.Application
 import io.ktor.server.config.MapApplicationConfig
@@ -8,6 +9,8 @@ import io.ktor.server.engine.applicationEnvironment
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.engine.sslConnector
 import io.ktor.server.netty.Netty
+import kotlinx.coroutines.runBlocking
+import org.koin.ktor.ext.getKoin
 import java.util.UUID
 
 const val PTT_PORT = 9443
@@ -52,7 +55,11 @@ class PttHostServer(
             embeddedServer(
                 Netty,
                 applicationEnvironment {
-                    config = MapApplicationConfig("ptt.roomPin" to pin.orEmpty(), "ptt.adminPanel" to "false")
+                    config =
+                        MapApplicationConfig(
+                            "ptt.roomPin" to pin.orEmpty(),
+                            "ptt.adminPanel" to "false",
+                        )
                 },
                 configure = {
                     sslConnector(
@@ -73,6 +80,11 @@ class PttHostServer(
     fun stop() {
         announcement?.close()
         announcement = null
+        // Tells the others the room ended while their sockets are still open; otherwise they sat on "reconectando"
+        // for minutes. serverApp never does this, so its restarts keep clients retrying.
+        server?.application?.let { app ->
+            runBlocking { app.getKoin().get<ChannelRegistry>().closeRoom("O host encerrou a sala") }
+        }
         server?.stop()
         server = null
     }

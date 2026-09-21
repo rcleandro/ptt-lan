@@ -127,15 +127,8 @@ class ConnectionComponent(
                 // new one starts, or its teardown would stop the new search.
                 previous?.cancelAndJoin()
                 _state.update { it.copy(discoveredServers = emptyList()) }
-                discoverServersUseCase().collect { newServer ->
-                    _state.update { currentState ->
-                        val existing = currentState.discoveredServers
-                        if (existing.any { it.name == newServer.name }) {
-                            currentState
-                        } else {
-                            currentState.copy(discoveredServers = existing + newServer)
-                        }
-                    }
+                discoverServersUseCase().collect { servers ->
+                    _state.update { it.copy(discoveredServers = servers) }
                 }
             }
     }

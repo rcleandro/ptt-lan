@@ -1,6 +1,7 @@
 package com.pttlan.feature.history
 
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.pttlan.domain.ptt.model.PlaybackPosition
 import com.pttlan.domain.ptt.model.VoiceMessage
 import com.pttlan.domain.ptt.repository.HistoryRepository
@@ -33,10 +34,18 @@ class HistoryComponent(
     val playbackPosition: StateFlow<PlaybackPosition?> = historyRepository.playbackPosition
 
     init {
-        historyRepository
-            .getAllMessages()
-            .onEach { _messages.value = it }
-            .launchIn(scope)
+        val feed =
+            historyRepository
+                .getAllMessages()
+                .onEach { _messages.value = it }
+                .launchIn(scope)
+
+        // Not scope.cancel(): a delete the user just asked for has to finish. Only what outlives the screen
+        // stops: the feed, and a replay that would go on with no controls over the live channel audio.
+        lifecycle.doOnDestroy {
+            feed.cancel()
+            if (_playingMessageId.value != null) stopPlaying()
+        }
     }
 
     fun onBack() {

@@ -5,6 +5,7 @@ import com.pttlan.core.common.network.isLocalNetwork
 import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.core.network.PttWebSocketClient
 import com.pttlan.core.network.discovery.ServerDiscoveryService
+import com.pttlan.core.network.discovery.currentServers
 import com.pttlan.core.network.normalizeHost
 import com.pttlan.domain.ptt.repository.ConnectionRepository
 import com.pttlan.domain.ptt.repository.ConnectionStatus
@@ -59,18 +60,20 @@ class ConnectionRepositoryImpl(
     private var monitorJob: Job? = null
     private val connectMutex = Mutex()
 
-    override fun discoverServers(): Flow<ServerNode> =
-        discoveryService.discover().map {
-            val normalizedHost = normalizeHost(it.host)
-            ServerNode(
-                name = it.name,
-                endpoint =
-                    ServerEndpoint(
-                        host = normalizedHost,
-                        port = it.port,
-                        isLocal = isLocalNetwork(normalizedHost),
-                    ),
-            )
+    override fun discoverServers(): Flow<List<ServerNode>> =
+        discoveryService.discover().currentServers().map { servers ->
+            servers.map {
+                val normalizedHost = normalizeHost(it.host)
+                ServerNode(
+                    name = it.name,
+                    endpoint =
+                        ServerEndpoint(
+                            host = normalizedHost,
+                            port = it.port,
+                            isLocal = isLocalNetwork(normalizedHost),
+                        ),
+                )
+            }
         }
 
     override fun stopDiscovery() {

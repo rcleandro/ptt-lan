@@ -22,9 +22,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 import java.lang.management.ManagementFactory
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
+
+/** How long ending a hosted room waits for the clients to receive the close. */
+private const val ROOM_CLOSE_TIMEOUT_MS = 1_000L
 
 private const val CLEANUP_DELAY_MS = 5 * 60 * 1000L
 private const val MAX_LOGS = 100
@@ -276,6 +280,23 @@ class ChannelRegistry(
         }
         broadcastActiveChannels()
         return true
+    }
+
+    /**
+     * Host mode: the room ends with the app that hosts it. A policy close is what clients read as "do not retry,
+     * show this reason" — unlike `GOING_AWAY` from [resetServer], after which they reconnect.
+     */
+    suspend fun closeRoom(reason: String) {
+        val sessions = globalConnections.keys.toList()
+        sessions.forEach {
+            try {
+                it.close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, reason))
+            } catch (_: Exception) {
+            }
+        }
+        // close() only queues the frame; the engine stops right after and would drop it unsent. Bounded, so a
+        // client that never answers cannot hold the host app on its way out.
+        withTimeoutOrNull(ROOM_CLOSE_TIMEOUT_MS) { sessions.forEach { it.closeReason.await() } }
     }
 
     suspend fun resetServer() {

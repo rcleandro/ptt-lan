@@ -159,7 +159,7 @@ class ConnectionComponentTest {
         runTest {
             val gone = ServerNode("PTT-LAN-Gone", ServerEndpoint("192.168.0.20", 9443, isLocal = true))
             val fresh = ServerNode("PTT-LAN-Fresh", ServerEndpoint("192.168.0.21", 9443, isLocal = true))
-            every { discoverServersUseCase() } returnsMany listOf(flowOf(gone), flowOf(fresh))
+            every { discoverServersUseCase() } returnsMany listOf(flowOf(listOf(gone)), flowOf(listOf(fresh)))
             val component = createComponent()
             advanceUntilIdle()
             assertEquals(listOf(gone), component.state.value.discoveredServers)
@@ -177,7 +177,7 @@ class ConnectionComponentTest {
             // its NSD search kept running in the background and was never stopped.
             var searching = false
             every { discoverServersUseCase() } returns
-                flow<ServerNode> { awaitCancellation() }
+                flow<List<ServerNode>> { awaitCancellation() }
                     .onStart { searching = true }
                     .onCompletion { searching = false }
             val lifecycle = LifecycleRegistry()

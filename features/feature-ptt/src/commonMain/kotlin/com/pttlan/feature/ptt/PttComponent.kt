@@ -126,8 +126,12 @@ class PttComponent(
         lifecycle.subscribe(
             object : Lifecycle.Callbacks {
                 override fun onDestroy() {
+                    // Leaving mid-press gets no release: the PTT key's lands on another screen and is dropped,
+                    // and the on-screen button's gesture is cancelled. The microphone would stay on.
+                    val transmitting = _state.value.isTransmitting || _state.value.isFloorGranted
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
+                            if (transmitting) stopTransmittingUseCase(channelId, userId)
                             leaveChannelUseCase(channelId = channelId, userId = userId)
                         } catch (e: Exception) {
                             logger.w(e) { "Failed to leave channel $channelId" }

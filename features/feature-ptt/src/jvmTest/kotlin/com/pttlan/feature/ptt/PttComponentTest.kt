@@ -4,6 +4,8 @@ import app.cash.turbine.test
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
+import com.arkivanov.essenty.lifecycle.destroy
+import com.arkivanov.essenty.lifecycle.resume
 import com.pttlan.domain.ptt.repository.VoiceRepository
 import com.pttlan.domain.ptt.usecase.JoinChannelUseCase
 import com.pttlan.domain.ptt.usecase.LeaveChannelUseCase
@@ -112,6 +114,35 @@ class PttComponentTest {
 
             assertTrue(component.state.value.isTransmitting)
             coVerify(exactly = 1) { startTransmittingUseCase("ch-1", "user-1") }
+        }
+
+    @Test
+    fun `leaving the screen mid-press stops transmitting`() =
+        runTest(testDispatcher) {
+            // Back while holding the PTT key: the release lands on another screen and was dropped, and the
+            // on-screen button's gesture is cancelled without a release, so the microphone stayed on.
+            val component = createComponent()
+            testScheduler.advanceUntilIdle()
+            component.onIntent(PttIntent.PressPtt)
+            testScheduler.advanceUntilIdle()
+
+            lifecycle.resume()
+            lifecycle.destroy()
+
+            coVerify(timeout = 2_000) { stopTransmittingUseCase("ch-1", "user-1") }
+        }
+
+    @Test
+    fun `leaving the screen without transmitting does not touch the floor`() =
+        runTest(testDispatcher) {
+            createComponent()
+            testScheduler.advanceUntilIdle()
+
+            lifecycle.resume()
+            lifecycle.destroy()
+
+            coVerify(timeout = 2_000) { leaveChannelUseCase("ch-1", "user-1") }
+            coVerify(exactly = 0) { stopTransmittingUseCase(any(), any()) }
         }
 
     @Test

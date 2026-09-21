@@ -24,6 +24,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
         }
         jvmTest.dependencies {
             // Reconnection is only meaningful against a real WSS endpoint, so the test boots a tiny Ktor server

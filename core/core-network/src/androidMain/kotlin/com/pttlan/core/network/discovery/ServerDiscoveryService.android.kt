@@ -17,7 +17,7 @@ actual class ServerDiscoveryService actual constructor() : KoinComponent {
 
     private var discoveryListener: NsdManager.DiscoveryListener? = null
 
-    actual fun discover(): Flow<DiscoveredServer> =
+    actual fun discover(): Flow<DiscoveryEvent> =
         callbackFlow {
             val serviceType = "_pttlan._tcp."
 
@@ -59,14 +59,14 @@ actual class ServerDiscoveryService actual constructor() : KoinComponent {
                                             host = host,
                                             port = resolved.port,
                                         )
-                                    trySend(server)
+                                    trySend(DiscoveryEvent.Found(server))
                                 }
                             },
                         )
                     }
 
                     override fun onServiceLost(serviceInfo: NsdServiceInfo) {
-                        // Handle if needed
+                        trySend(DiscoveryEvent.Lost(serviceInfo.serviceName))
                     }
                 }
 

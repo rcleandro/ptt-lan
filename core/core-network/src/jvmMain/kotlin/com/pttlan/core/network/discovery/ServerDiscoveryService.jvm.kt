@@ -16,7 +16,7 @@ import kotlin.concurrent.thread
 actual class ServerDiscoveryService actual constructor() {
     private var jmdns: JmDNS? = null
 
-    actual fun discover(): Flow<DiscoveredServer> =
+    actual fun discover(): Flow<DiscoveryEvent> =
         callbackFlow {
             val serviceType = "_pttlan._tcp.local."
             try {
@@ -33,7 +33,7 @@ actual class ServerDiscoveryService actual constructor() {
                         }
 
                         override fun serviceRemoved(event: ServiceEvent) {
-                            // Could handle removal if needed
+                            trySend(DiscoveryEvent.Lost(event.name))
                         }
 
                         override fun serviceResolved(event: ServiceEvent) {
@@ -45,7 +45,7 @@ actual class ServerDiscoveryService actual constructor() {
                                     host = host,
                                     port = info.port,
                                 )
-                            trySend(server)
+                            trySend(DiscoveryEvent.Found(server))
                         }
                     }
 

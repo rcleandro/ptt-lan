@@ -13,6 +13,7 @@ import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.domain.ptt.repository.ConnectionRepository
 import com.pttlan.domain.ptt.repository.ConnectionStatus
+import com.pttlan.domain.ptt.repository.LocalServerHost
 import com.pttlan.feature.channellist.ChannelListComponent
 import com.pttlan.feature.channellist.ChannelListEffect
 import com.pttlan.feature.connection.ConnectionComponent
@@ -62,6 +63,7 @@ class RootComponent(
     private val navigation = StackNavigation<Config>()
 
     private val connectionRepository: ConnectionRepository = get()
+    private val localServerHost: LocalServerHost? = getKoin().getOrNull()
     private val settings: Settings = get()
 
     val isCacheEnabled: StateFlow<Boolean> = observeBoolean(SettingsKeys.ALLOW_CACHE, SettingsDefaults.ALLOW_CACHE)
@@ -160,7 +162,7 @@ class RootComponent(
                                 if (stack.lastOrNull() == nextConfig) stack else stack + nextConfig
                             }
                         } else if (effect is ChannelListEffect.Leave) {
-                            leaveServer()
+                            leaveServer(endRoom = effect.endRoom)
                         }
                     }
                 }
@@ -205,9 +207,11 @@ class RootComponent(
         }
 
     /** Leaving on purpose: no "Servidor desconectado" message, unlike a drop. */
-    private fun leaveServer() {
+    private fun leaveServer(endRoom: Boolean) {
         wasConnected = false
         connectionRepository.disconnect()
+        // After the disconnect: this device is in its own room too, and would get its own "O host encerrou a sala".
+        if (endRoom) localServerHost?.stop()
         navigation.navigate { listOf(Config.Connection) }
 
         // The connection screen was kept under the stack with the list it had, which still shows the room just
