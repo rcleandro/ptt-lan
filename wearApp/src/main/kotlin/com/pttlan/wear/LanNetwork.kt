@@ -11,7 +11,9 @@ import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Wear OS reaches the internet through the phone over Bluetooth and keeps Wi-Fi off, and that route does not
- * reach the LAN. This asks for Wi-Fi and binds the whole process to it while held (spike 25.1).
+ * reach the LAN. This asks for Wi-Fi and binds the whole process to it while anyone holds it (spike 25.1).
+ * Counted, because the screen and the session hold it on their own: the binding is process-wide, and one of
+ * them letting go must not cut the other off.
  */
 class LanNetwork(
     context: Context,
@@ -19,6 +21,7 @@ class LanNetwork(
     private val connectivity = context.getSystemService(ConnectivityManager::class.java)
     private val _available = MutableStateFlow(false)
     val available: StateFlow<Boolean> = _available.asStateFlow()
+    private var holders = 0
 
     private val callback =
         object : ConnectivityManager.NetworkCallback() {
@@ -33,16 +36,23 @@ class LanNetwork(
             }
         }
 
+    @Synchronized
     fun acquire() {
-        connectivity.requestNetwork(
-            NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build(),
-            callback,
-        )
+        if (holders++ == 0) {
+            connectivity.requestNetwork(
+                NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build(),
+                callback,
+            )
+        }
     }
 
+    @Synchronized
     fun release() {
-        connectivity.bindProcessToNetwork(null)
-        connectivity.unregisterNetworkCallback(callback)
-        _available.value = false
+        if (holders == 0) return
+        if (--holders == 0) {
+            connectivity.bindProcessToNetwork(null)
+            connectivity.unregisterNetworkCallback(callback)
+            _available.value = false
+        }
     }
 }

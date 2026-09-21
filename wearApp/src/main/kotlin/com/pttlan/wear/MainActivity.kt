@@ -4,6 +4,12 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import org.koin.android.ext.android.inject
+import com.pttlan.domain.ptt.repository.ConnectionStatus
+import com.pttlan.domain.ptt.repository.ConnectionRepository
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.Lifecycle
+import android.content.Intent
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -19,7 +25,8 @@ import kotlinx.coroutines.launch
 private const val LOCAL_NETWORK_PERMISSION_SDK = 37
 
 class MainActivity : ComponentActivity() {
-    private val lanNetwork by lazy { LanNetwork(this) }
+    private val lanNetwork: LanNetwork by inject()
+    private val connectionRepository: ConnectionRepository by inject()
     private val requestPermissions =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { showApp() }
 
@@ -31,6 +38,8 @@ class MainActivity : ComponentActivity() {
         val missing =
             buildList {
                 add(Manifest.permission.RECORD_AUDIO)
+                // The session's Ongoing Activity is a notification
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(Manifest.permission.POST_NOTIFICATIONS)
                 if (Build.VERSION.SDK_INT >= LOCAL_NETWORK_PERMISSION_SDK) add(Manifest.permission.ACCESS_LOCAL_NETWORK)
             }.filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
         if (missing.isEmpty()) {
@@ -54,10 +63,21 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        lifecycleScope.launch {
+            // Started while this screen is visible: Android refuses a microphone service started from the background.
+            // It stops on its own when the connection ends.
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                connectionRepository.connectionStatus.filter { it == ConnectionStatus.Connected }.collect {
+                    startForegroundService(Intent(this@MainActivity, WearSessionService::class.java))
+                }
+            }
+        }
         setContent { WearRoot(root) }
     }
 
     override fun onDestroy() {
+        // Closing the app ends the session; leaving it with the home button keeps it (ADR 0011)
+        if (isFinishing) connectionRepository.disconnect()
         lanNetwork.release()
         super.onDestroy()
     }
