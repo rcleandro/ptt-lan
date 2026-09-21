@@ -1,6 +1,7 @@
 package com.pttlan.feature.connection
 
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.pttlan.core.common.network.isLocalNetwork
 import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.domain.ptt.repository.ConnectionStatus
@@ -14,7 +15,10 @@ import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,6 +63,9 @@ sealed interface ConnectionIntent {
     ) : ConnectionIntent
 
     data object HostServer : ConnectionIntent
+
+    /** Starts the network search over, dropping hosts that already left. */
+    data object RefreshServers : ConnectionIntent
 }
 
 sealed interface ConnectionEffect {
@@ -93,8 +100,13 @@ class ConnectionComponent(
     val effects: Flow<ConnectionEffect> = _effects.receiveAsFlow()
 
     private val scope = CoroutineScope(Dispatchers.Main)
+    private var discoveryJob: Job? = null
 
     init {
+        // Without this the search outlived the screen: leaving the app with back while hosting keeps the process
+        // alive, and the NSD search went on in the background, never stopped.
+        lifecycle.doOnDestroy { scope.cancel() }
+
         scope.launch {
             observeConnectionStatusUseCase().collect { status ->
                 _state.update { it.copy(status = status) }
@@ -104,18 +116,28 @@ class ConnectionComponent(
             }
         }
 
-        scope.launch {
-            discoverServersUseCase().collect { newServer ->
-                _state.update { currentState ->
-                    val existing = currentState.discoveredServers
-                    if (existing.any { it.name == newServer.name }) {
-                        currentState
-                    } else {
-                        currentState.copy(discoveredServers = existing + newServer)
+        startDiscovery()
+    }
+
+    private fun startDiscovery() {
+        val previous = discoveryJob
+        discoveryJob =
+            scope.launch {
+                // Each platform keeps its browser in a field, so the old search has to be torn down before the
+                // new one starts, or its teardown would stop the new search.
+                previous?.cancelAndJoin()
+                _state.update { it.copy(discoveredServers = emptyList()) }
+                discoverServersUseCase().collect { newServer ->
+                    _state.update { currentState ->
+                        val existing = currentState.discoveredServers
+                        if (existing.any { it.name == newServer.name }) {
+                            currentState
+                        } else {
+                            currentState.copy(discoveredServers = existing + newServer)
+                        }
                     }
                 }
             }
-        }
     }
 
     fun onIntent(intent: ConnectionIntent) {
@@ -131,6 +153,10 @@ class ConnectionComponent(
             is ConnectionIntent.HostServer -> {
                 val host = localServerHost
                 if (host != null && saveNickname()) hostServer(host)
+            }
+
+            is ConnectionIntent.RefreshServers -> {
+                startDiscovery()
             }
 
             is ConnectionIntent.UpdateManualIp -> {
@@ -167,13 +193,18 @@ class ConnectionComponent(
         }
     }
 
-    /** Persists the nickname, or reports that it is missing and returns false. */
+    /**
+     * Persists the nickname trimmed, or reports that it is missing and returns false. Trimmed here, not while
+     * typing: it names the hosted room, and JmDNS never resolves a service whose name ends in a space.
+     */
     private fun saveNickname(): Boolean {
-        if (_state.value.nickname.isBlank()) {
+        val nickname = _state.value.nickname.trim()
+        if (nickname.isEmpty()) {
             scope.launch { _effects.send(ConnectionEffect.ShowError("Por favor, preencha o seu Nome")) }
             return false
         }
-        settings.putString(SettingsKeys.NICKNAME, _state.value.nickname)
+        _state.update { it.copy(nickname = nickname) }
+        settings.putString(SettingsKeys.NICKNAME, nickname)
         return true
     }
 

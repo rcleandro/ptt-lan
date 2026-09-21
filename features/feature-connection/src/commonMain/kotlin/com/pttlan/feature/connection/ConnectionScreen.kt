@@ -26,6 +26,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -165,7 +166,12 @@ private fun ServerList(
         if (state.canHost) {
             item { HostCard(onHost = { onIntent(ConnectionIntent.HostServer) }) }
         }
-        item { DiscoveryHeader(isSearching = state.discoveredServers.isEmpty()) }
+        item {
+            DiscoveryHeader(
+                isSearching = state.discoveredServers.isEmpty(),
+                onRefresh = { onIntent(ConnectionIntent.RefreshServers) },
+            )
+        }
         items(state.discoveredServers) { server ->
             ServerCard(server = server) { onIntent(ConnectionIntent.ConnectToDiscovered(server)) }
         }
@@ -222,10 +228,14 @@ private fun HostCard(onHost: () -> Unit) {
 }
 
 @Composable
-private fun DiscoveryHeader(isSearching: Boolean) {
+private fun DiscoveryHeader(
+    isSearching: Boolean,
+    onRefresh: () -> Unit,
+) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         SectionLabel(text = "Na rede", modifier = Modifier.weight(1f).padding(start = 4.dp))
         if (isSearching) {
@@ -237,6 +247,7 @@ private fun DiscoveryHeader(isSearching: Boolean) {
                 SectionLabel(text = "procurando")
             }
         }
+        GlassIconButton(icon = Icons.Default.Refresh, contentDescription = "Procurar novamente", onClick = onRefresh)
     }
 }
 

@@ -11,6 +11,7 @@ import java.net.NetworkInterface
 import javax.jmdns.JmDNS
 import javax.jmdns.ServiceEvent
 import javax.jmdns.ServiceListener
+import kotlin.concurrent.thread
 
 actual class ServerDiscoveryService actual constructor() {
     private var jmdns: JmDNS? = null
@@ -51,7 +52,9 @@ actual class ServerDiscoveryService actual constructor() {
                 jmdns?.addServiceListener(serviceType, listener)
 
                 awaitClose {
+                    // Closed, not just unsubscribed: every search creates its own JmDNS (socket and threads).
                     jmdns?.removeServiceListener(serviceType, listener)
+                    stopDiscovery()
                 }
             } catch (e: Exception) {
                 close(e)
@@ -59,8 +62,10 @@ actual class ServerDiscoveryService actual constructor() {
         }
 
     actual fun stopDiscovery() {
-        jmdns?.close()
+        val closing = jmdns ?: return
         jmdns = null
+        // close() waits on JmDNS's own timers; the caller is usually the UI thread.
+        thread(name = "jmdns-close") { closing.close() }
     }
 
     private fun getLocalIpAddress(): InetAddress? =

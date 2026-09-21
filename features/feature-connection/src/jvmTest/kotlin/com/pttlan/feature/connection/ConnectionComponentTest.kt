@@ -2,6 +2,9 @@ package com.pttlan.feature.connection
 
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
+import com.arkivanov.essenty.lifecycle.destroy
+import com.arkivanov.essenty.lifecycle.resume
+import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.domain.ptt.repository.LocalServerHost
 import com.pttlan.domain.ptt.repository.ServerEndpoint
 import com.pttlan.domain.ptt.repository.ServerNode
@@ -16,9 +19,14 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -31,6 +39,7 @@ import org.koin.dsl.module
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
@@ -146,6 +155,49 @@ class ConnectionComponentTest {
         }
 
     @Test
+    fun `refreshing starts the search over and drops hosts that left`() =
+        runTest {
+            val gone = ServerNode("PTT-LAN-Gone", ServerEndpoint("192.168.0.20", 9443, isLocal = true))
+            val fresh = ServerNode("PTT-LAN-Fresh", ServerEndpoint("192.168.0.21", 9443, isLocal = true))
+            every { discoverServersUseCase() } returnsMany listOf(flowOf(gone), flowOf(fresh))
+            val component = createComponent()
+            advanceUntilIdle()
+            assertEquals(listOf(gone), component.state.value.discoveredServers)
+
+            component.onIntent(ConnectionIntent.RefreshServers)
+            advanceUntilIdle()
+
+            assertEquals(listOf(fresh), component.state.value.discoveredServers)
+        }
+
+    @Test
+    fun `destroying the screen stops its network search`() =
+        runTest {
+            // Leaving the app with back destroys the component while a hosted room keeps the process alive;
+            // its NSD search kept running in the background and was never stopped.
+            var searching = false
+            every { discoverServersUseCase() } returns
+                flow<ServerNode> { awaitCancellation() }
+                    .onStart { searching = true }
+                    .onCompletion { searching = false }
+            val lifecycle = LifecycleRegistry()
+            lifecycle.resume()
+            ConnectionComponent(
+                componentContext = DefaultComponentContext(lifecycle),
+                observeConnectionStatusUseCase = observeConnectionStatusUseCase,
+                discoverServersUseCase = discoverServersUseCase,
+                connectToServerUseCase = connectToServerUseCase,
+            )
+            advanceUntilIdle()
+            assertTrue(searching)
+
+            lifecycle.destroy()
+            advanceUntilIdle()
+
+            assertFalse(searching)
+        }
+
+    @Test
     fun `without a local server host, hosting is not offered`() {
         assertFalse(createComponent().state.value.canHost)
     }
@@ -165,6 +217,24 @@ class ConnectionComponentTest {
             advanceUntilIdle()
 
             coVerify(exactly = 1) { connectToServerUseCase(hostEndpoint, "User1") }
+        }
+
+    @Test
+    fun `a nickname with surrounding spaces hosts and joins trimmed`() =
+        runTest {
+            // Desktop discovery (JmDNS) never resolves a service whose name ends in a space.
+            val host: LocalServerHost = mockk()
+            val hostEndpoint = ServerEndpoint("localhost", 9443, isLocal = true)
+            coEvery { host.start("PTT-LAN-User1", null) } returns Result.success(hostEndpoint)
+            coEvery { connectToServerUseCase(hostEndpoint, "User1") } returns Result.success(Unit)
+            val component = createComponent(host)
+
+            component.onIntent(ConnectionIntent.UpdateNickname(" User1 "))
+            component.onIntent(ConnectionIntent.HostServer)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { connectToServerUseCase(hostEndpoint, "User1") }
+            assertEquals("User1", settings.getString(SettingsKeys.NICKNAME, ""))
         }
 
     @Test

@@ -15,6 +15,7 @@ import io.ktor.websocket.close
 import io.ktor.websocket.readText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -149,6 +150,38 @@ class PttWebSocketClientReconnectTest {
                 assertEquals(2, sessions.get())
                 // 20.5: the panel shows "Desconhecida" unless the client sends its version on every handshake
                 assertEquals(listOf(APP_VERSION, APP_VERSION), reportedVersions.toList())
+            } finally {
+                client.disconnect()
+                httpClient.close()
+                server.stop(0, 0)
+            }
+        }
+
+    @Test
+    fun connectingAgainAfterCancellingOpensANewSession() =
+        runBlocking {
+            // Cancelling the loop runs its finally in a cancelled coroutine, where the suspending close() threw
+            // before `session = null`: the next connect reused the old socket, logged in under the old token.
+            val port = freePort()
+            val sessions = AtomicInteger()
+            val server = startServer(port, Channel(Channel.UNLIMITED), sessions, closeFirstSession = false)
+            val httpClient = createHttpClient()
+            val client = PttWebSocketClient(httpClient)
+
+            try {
+                val first =
+                    CoroutineScope(Dispatchers.Default).launch {
+                        client.connect(host = "127.0.0.1", port = port, isLocal = true, token = "first")
+                    }
+                withTimeout(10.seconds) { client.isConnected.first { it } }
+                first.cancelAndJoin()
+
+                CoroutineScope(Dispatchers.Default).launch {
+                    client.connect(host = "127.0.0.1", port = port, isLocal = true, token = "second")
+                }
+                withTimeout(10.seconds) { client.isConnected.first { it } }
+
+                assertEquals(2, sessions.get(), "the second connect must open its own session")
             } finally {
                 client.disconnect()
                 httpClient.close()
