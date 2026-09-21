@@ -72,8 +72,6 @@ sealed interface ConnectionEffect {
     data class ShowError(
         val message: String,
     ) : ConnectionEffect
-
-    data object NavigateToChannelList : ConnectionEffect
 }
 
 class ConnectionComponent(
@@ -97,7 +95,15 @@ class ConnectionComponent(
     val state: StateFlow<ConnectionState> = _state.asStateFlow()
 
     private val _effects = Channel<ConnectionEffect>(Channel.BUFFERED)
+
+    /** Collected by the screen only. */
     val effects: Flow<ConnectionEffect> = _effects.receiveAsFlow()
+
+    // Its own channel, collected by RootComponent only: a Channel hands each item to a single collector, and when
+    // this shared [effects] with the screen, whichever collector came first took the navigation — on iOS the
+    // screen, so the first tap connected but stayed on this screen.
+    private val _navigateToChannelList = Channel<Unit>(Channel.CONFLATED)
+    val navigateToChannelList: Flow<Unit> = _navigateToChannelList.receiveAsFlow()
 
     private val scope = CoroutineScope(Dispatchers.Main)
     private var discoveryJob: Job? = null
@@ -111,7 +117,7 @@ class ConnectionComponent(
             observeConnectionStatusUseCase().collect { status ->
                 _state.update { it.copy(status = status) }
                 if (status == ConnectionStatus.Connected) {
-                    _effects.send(ConnectionEffect.NavigateToChannelList)
+                    _navigateToChannelList.send(Unit)
                 }
             }
         }

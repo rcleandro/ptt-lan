@@ -16,7 +16,6 @@ import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.feature.channellist.ChannelListComponent
 import com.pttlan.feature.channellist.ChannelListEffect
 import com.pttlan.feature.connection.ConnectionComponent
-import com.pttlan.feature.connection.ConnectionEffect
 import com.pttlan.feature.connection.ConnectionIntent
 import com.pttlan.feature.history.HistoryComponent
 import com.pttlan.feature.ptt.PttComponent
@@ -139,11 +138,9 @@ class RootComponent(
             is Config.Connection -> {
                 val component: ConnectionComponent = get(parameters = { parametersOf(context) })
                 context.lifecycle.coroutineScope().launch {
-                    component.effects.collect { effect ->
-                        if (effect is ConnectionEffect.NavigateToChannelList) {
-                            navigation.navigate { stack ->
-                                if (stack.contains(Config.ChannelList)) stack else stack + Config.ChannelList
-                            }
+                    component.navigateToChannelList.collect {
+                        navigation.navigate { stack ->
+                            if (stack.contains(Config.ChannelList)) stack else stack + Config.ChannelList
                         }
                     }
                 }
