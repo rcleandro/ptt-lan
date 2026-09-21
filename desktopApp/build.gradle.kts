@@ -43,7 +43,7 @@ compose.desktop {
                 iconFile.set(project.file("src/main/resources/icon.ico"))
             }
             linux {
-                iconFile.set(project.file("src/main/resources/icon.png"))
+                iconFile.set(project.file("src/jvmMain/resources/icon.png"))
             }
             packageName = "PTT"
             packageVersion = "1.0.0"
