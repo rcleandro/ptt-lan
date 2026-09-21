@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 data class SettingsState(
     val nickname: String = "",
     val useOpus: Boolean = SettingsDefaults.USE_OPUS,
+    val useHeadsetMic: Boolean = SettingsDefaults.USE_HEADSET_MIC,
     val appTheme: AppTheme = AppTheme.SYSTEM,
     val reduceTransparency: Boolean = false,
     val alwaysListening: Boolean = true,
@@ -33,6 +34,10 @@ data class SettingsState(
 sealed interface SettingsIntent {
     data class UpdateNickname(
         val nickname: String,
+    ) : SettingsIntent
+
+    data class ToggleHeadsetMic(
+        val enabled: Boolean,
     ) : SettingsIntent
 
     data class ToggleOpus(
@@ -78,6 +83,7 @@ class SettingsComponent(
             SettingsState(
                 nickname = settings.getString(SettingsKeys.NICKNAME, ""),
                 useOpus = settings.getBoolean(SettingsKeys.USE_OPUS, SettingsDefaults.USE_OPUS),
+                useHeadsetMic = settings.getBoolean(SettingsKeys.USE_HEADSET_MIC, SettingsDefaults.USE_HEADSET_MIC),
                 appTheme =
                     AppTheme.entries.getOrElse(
                         settings.getInt(SettingsKeys.APP_THEME, SettingsDefaults.APP_THEME),
@@ -105,6 +111,11 @@ class SettingsComponent(
             is SettingsIntent.UpdateNickname -> {
                 settings.putString(SettingsKeys.NICKNAME, intent.nickname)
                 _state.update { it.copy(nickname = intent.nickname) }
+            }
+
+            is SettingsIntent.ToggleHeadsetMic -> {
+                settings.putBoolean(SettingsKeys.USE_HEADSET_MIC, intent.enabled)
+                _state.update { it.copy(useHeadsetMic = intent.enabled) }
             }
 
             is SettingsIntent.ToggleOpus -> {

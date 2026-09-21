@@ -364,8 +364,8 @@ o Desktop segue o dispositivo padrão do sistema.
 
 | Item | Status | Ação | Esforço |
 |---|---|---|---|
-| 26.1 iOS toca no fone | a fazer | A sessão usa `PlayAndRecord` só com `defaultToSpeaker`; sem opção de Bluetooth o iOS não roteia para o fone. Acrescentar `allowBluetoothA2DP` (saída em qualidade cheia; o microfone continua o do iPhone) | P |
-| 26.2 Microfone do fone, como opção | a fazer | Opção "Usar microfone do fone Bluetooth" nas configurações, desligada por padrão. Ligada: Android e Wear com `setCommunicationDevice` (SCO/LE Audio) e `VOICE_COMMUNICATION`; iOS com `allowBluetooth` (HFP). O microfone do fone clássico só funciona no perfil de chamada, que baixa todo o áudio para qualidade de telefone (8–16 kHz) e leva ~1 s para ativar: decidir numa ADR entre ativar só enquanto se segura o botão (atraso para começar a falar) e a sessão toda (sem atraso, qualidade de telefone). LE Audio não tem a perda | M |
+| 26.1 iOS toca no fone | 🔎 parcial | A sessão usa `PlayAndRecord` só com `defaultToSpeaker`; sem opção de Bluetooth o iOS não roteia para o fone. Acrescentar `allowBluetoothA2DP` (saída em qualidade cheia; o microfone continua o do iPhone) | As duas configurações da sessão (captura e reprodução) passaram a usar as mesmas opções, `SESSION_OPTIONS` = `DefaultToSpeaker` + `AllowBluetoothA2DP`. Compila para o simulador. **Falta:** verificar num iPhone com fone — o simulador não tem Bluetooth | P |
+| 26.2 Microfone do fone, como opção | ✔ feito | Opção "Usar microfone do fone Bluetooth" nas configurações, desligada por padrão. Ligada: Android e Wear com `setCommunicationDevice` (SCO/LE Audio) e `VOICE_COMMUNICATION`; iOS com `allowBluetooth` (HFP). O microfone do fone clássico só funciona no perfil de chamada, que baixa todo o áudio para qualidade de telefone (8–16 kHz) e leva ~1 s para ativar: decidir numa ADR entre ativar só enquanto se segura o botão (atraso para começar a falar) e a sessão toda (sem atraso, qualidade de telefone). LE Audio não tem a perda | **Decidido na [ADR 0012](adr/0012-microfone-do-fone-bluetooth.md): a sessão toda.** Opção desligada por padrão (`use_headset_mic`). `HeadsetMicSession` (no `data-ptt`) liga a rota ao conectar e a desliga ao sair, sem trocar na reconexão; a opção é lida quando a sessão começa. Rota por plataforma (`HeadsetMicRoute`): Android e Wear com `setCommunicationDevice` e, enquanto ativa, captura `VOICE_COMMUNICATION` e reprodução `USAGE_VOICE_COMMUNICATION` (o player reabre a saída quando o modo muda); iOS com HFP (`AllowBluetooth`) e o fone como entrada preferida; Desktop sem efeito. Verificado no razr com fone: a fala sai pelo microfone do fone e o Desktop a ouviu. **Limitação aceita:** o relógio pareado com o mesmo celular vê o modo de chamada como chamada ativa e silencia a mídia; está no aviso da opção. iOS não verificado | M |
 
 **Critério de conclusão:** com um fone Bluetooth, o áudio sai nele em Android, Wear, iOS e Desktop, e, com a opção
 ligada, a fala é captada pelo microfone do fone.
@@ -373,7 +373,7 @@ ligada, a fala é captada pelo microfone do fone.
 ---
 
 ## A confirmar (não entra em fase até reproduzir)
-
+    
 | Suspeita | Onde | Como verificar |
 |---|---|---|
 | ~~`startForegroundService` com tipo `microphone` em background~~ | **Confirmado e corrigido**: a coleta virou `repeatOnLifecycle(STARTED)` e o start ganhou `try/catch`. A 20.1 aumentou a exposição, porque agora o cliente reconecta sozinho em background e produz a transição que dispara a chamada | Validar em Android 14+: conectar, app em background, derrubar e restaurar o servidor |

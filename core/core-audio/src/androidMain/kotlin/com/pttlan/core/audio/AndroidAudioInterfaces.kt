@@ -32,7 +32,8 @@ class AndroidAudioRecorder : AudioRecorder {
 
             audioRecord =
                 AudioRecord(
-                    MediaRecorder.AudioSource.MIC,
+                    // The call profile only hands the headset's microphone to voice communication
+                    if (CallRoute.active) MediaRecorder.AudioSource.VOICE_COMMUNICATION else MediaRecorder.AudioSource.MIC,
                     sampleRate,
                     channelConfig,
                     audioFormat,
@@ -75,6 +76,7 @@ class AndroidAudioPlayer : AudioPlayer {
     private val policy = JitterBufferPolicy()
     private var isPlaying = false
     private var playThread: Thread? = null
+    private var trackForCall = false
 
     override fun play(
         chunk: ByteArray,
@@ -82,7 +84,10 @@ class AndroidAudioPlayer : AudioPlayer {
         sequenceNumber: Int,
         timestampMs: Long,
     ) {
+        // The route changed since the track opened: reopen it on the right usage, or it keeps the old device
+        if (audioTrack != null && trackForCall != CallRoute.active) stop()
         if (audioTrack == null) {
+            trackForCall = CallRoute.active
             val channelConfig = AudioFormat.CHANNEL_OUT_MONO
             val audioFormat = AudioFormat.ENCODING_PCM_16BIT
             val bufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat)
@@ -93,8 +98,8 @@ class AndroidAudioPlayer : AudioPlayer {
                     .setAudioAttributes(
                         AudioAttributes
                             .Builder()
-                            .setUsage(AudioAttributes.USAGE_MEDIA)
-                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                            .setUsage(if (trackForCall) AudioAttributes.USAGE_VOICE_COMMUNICATION else AudioAttributes.USAGE_MEDIA)
+                            .setContentType(if (trackForCall) AudioAttributes.CONTENT_TYPE_SPEECH else AudioAttributes.CONTENT_TYPE_MUSIC)
                             .build(),
                     ).setAudioFormat(
                         AudioFormat
