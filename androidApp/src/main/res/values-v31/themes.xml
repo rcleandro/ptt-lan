@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ draws its own launch screen: same background, picked by day or night through the color -->
+    <style name="Theme.PttLan" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/ptt_background</item>
+        <item name="android:windowSplashScreenBackground">@color/ptt_background</item>
+    </style>
+</resources>

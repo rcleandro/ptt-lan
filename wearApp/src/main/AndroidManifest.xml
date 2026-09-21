@@ -18,6 +18,7 @@
     <application
         android:name=".WearApplication"
         android:icon="@mipmap/ic_launcher"
+        android:theme="@style/Theme.PttLan.Wear"
         android:label="PTT-LAN">
         <!-- Works without the phone app: it talks to the server on its own (ADR 0011) -->
         <meta-data
