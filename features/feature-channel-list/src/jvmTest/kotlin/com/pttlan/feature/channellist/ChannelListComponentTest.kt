@@ -3,18 +3,23 @@ package com.pttlan.feature.channellist
 import app.cash.turbine.test
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.DefaultComponentContext
+import com.arkivanov.essenty.backhandler.BackDispatcher
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.pttlan.domain.ptt.repository.ActiveChannelDomain
 import com.pttlan.domain.ptt.repository.ChannelDomain
+import com.pttlan.domain.ptt.repository.LocalServerHost
 import com.pttlan.domain.ptt.usecase.CreateChannelUseCase
 import com.pttlan.domain.ptt.usecase.GetRecentChannelsUseCase
 import com.pttlan.domain.ptt.usecase.JoinChannelUseCaseImpl
 import com.pttlan.domain.ptt.usecase.ObserveActiveChannelsUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -26,6 +31,8 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChannelListComponentTest {
@@ -52,14 +59,17 @@ class ChannelListComponentTest {
         Dispatchers.resetMain()
     }
 
-    private fun createComponent() =
-        ChannelListComponent(
-            componentContext = componentContext,
-            getRecentChannelsUseCase = getRecentChannelsUseCase,
-            observeActiveChannelsUseCase = observeActiveChannelsUseCase,
-            joinChannelUseCase = joinChannelUseCase,
-            createChannelUseCase = createChannelUseCase,
-        )
+    private fun createComponent(
+        localServerHost: LocalServerHost? = null,
+        context: ComponentContext = componentContext,
+    ) = ChannelListComponent(
+        componentContext = context,
+        getRecentChannelsUseCase = getRecentChannelsUseCase,
+        observeActiveChannelsUseCase = observeActiveChannelsUseCase,
+        joinChannelUseCase = joinChannelUseCase,
+        createChannelUseCase = createChannelUseCase,
+        localServerHost = localServerHost,
+    )
 
     @Test
     fun `initialization loads recent and active channels`() =
@@ -132,5 +142,75 @@ class ChannelListComponentTest {
             advanceUntilIdle()
 
             coVerify(exactly = 0) { createChannelUseCase(any()) }
+        }
+
+    private fun hostingRoom(): LocalServerHost = mockk(relaxed = true) { every { isHosting } returns MutableStateFlow(true) }
+
+    @Test
+    fun `leaving a server this device does not host disconnects right away`() =
+        runTest(testDispatcher) {
+            val component = createComponent()
+
+            component.effects.test {
+                component.onIntent(ChannelListIntent.Leave)
+                assertEquals(ChannelListEffect.Leave, awaitItem())
+            }
+            assertFalse(component.state.value.confirmingStopHost)
+        }
+
+    @Test
+    fun `leaving a hosted room asks before ending it`() =
+        runTest(testDispatcher) {
+            val host = hostingRoom()
+            val component = createComponent(host)
+
+            component.effects.test {
+                component.onIntent(ChannelListIntent.Leave)
+                advanceUntilIdle()
+                expectNoEvents()
+            }
+            assertTrue(component.state.value.confirmingStopHost)
+            verify(exactly = 0) { host.stop() }
+        }
+
+    @Test
+    fun `confirming ends the room and leaves`() =
+        runTest(testDispatcher) {
+            val host = hostingRoom()
+            val component = createComponent(host)
+            component.onIntent(ChannelListIntent.Leave)
+
+            component.effects.test {
+                component.onIntent(ChannelListIntent.ConfirmStopHost)
+                assertEquals(ChannelListEffect.Leave, awaitItem())
+            }
+            verify(exactly = 1) { host.stop() }
+            assertFalse(component.state.value.confirmingStopHost)
+        }
+
+    @Test
+    fun `cancelling keeps the room and stays on the list`() =
+        runTest(testDispatcher) {
+            val host = hostingRoom()
+            val component = createComponent(host)
+            component.onIntent(ChannelListIntent.Leave)
+
+            component.onIntent(ChannelListIntent.DismissStopHost)
+
+            assertFalse(component.state.value.confirmingStopHost)
+            verify(exactly = 0) { host.stop() }
+        }
+
+    @Test
+    fun `the system back goes through the same question`() =
+        runTest(testDispatcher) {
+            // It used to just pop the screen, leaving the user connected and the room running.
+            val backDispatcher = BackDispatcher()
+            val component =
+                createComponent(hostingRoom(), DefaultComponentContext(LifecycleRegistry(), backHandler = backDispatcher))
+
+            assertTrue(backDispatcher.back())
+
+            assertTrue(component.state.value.confirmingStopHost)
         }
 }

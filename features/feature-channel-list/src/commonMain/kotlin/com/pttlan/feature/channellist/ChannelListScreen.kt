@@ -26,9 +26,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -57,7 +59,6 @@ private val DockClearance = 120.dp
 @Composable
 fun ChannelListScreen(
     component: ChannelListComponent,
-    onBack: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenHistory: (() -> Unit)?,
     connectionStatus: ConnectionStatus = ConnectionStatus.Online,
@@ -67,7 +68,6 @@ fun ChannelListScreen(
     ChannelListScreenContent(
         state = state,
         onIntent = component::onIntent,
-        onBack = onBack,
         onOpenSettings = onOpenSettings,
         onOpenHistory = onOpenHistory,
         connectionStatus = connectionStatus,
@@ -79,7 +79,6 @@ fun ChannelListScreenContent(
     state: ChannelListState,
     onIntent: (ChannelListIntent) -> Unit,
     modifier: Modifier = Modifier,
-    onBack: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
     onOpenHistory: (() -> Unit)? = null,
     connectionStatus: ConnectionStatus = ConnectionStatus.Online,
@@ -99,7 +98,13 @@ fun ChannelListScreenContent(
         ChannelList(state = state, onIntent = onIntent)
 
         PttTopBar(
-            navigation = { GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, "Desconectar", onBack) },
+            navigation = {
+                GlassIconButton(
+                    icon = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Desconectar",
+                    onClick = { onIntent(ChannelListIntent.Leave) },
+                )
+            },
             center = { ConnectionStatusBadge(status = connectionStatus) },
             actions = { ToolbarGroup(onOpenSettings, onOpenHistory) },
         )
@@ -110,6 +115,28 @@ fun ChannelListScreenContent(
             modifier = Modifier.align(Alignment.BottomCenter),
         )
     }
+
+    if (state.confirmingStopHost) {
+        StopHostDialog(onIntent)
+    }
+}
+
+@Composable
+private fun StopHostDialog(onIntent: (ChannelListIntent) -> Unit) {
+    AlertDialog(
+        onDismissRequest = { onIntent(ChannelListIntent.DismissStopHost) },
+        title = { Text("Encerrar a sala?") },
+        text = { Text("Você está hospedando esta sala. Ao sair, ela será encerrada e todos serão desconectados.") },
+        shape = MaterialTheme.shapes.large,
+        confirmButton = {
+            TextButton(onClick = { onIntent(ChannelListIntent.ConfirmStopHost) }) {
+                Text("Encerrar", color = PttTheme.customColors.statusOffline)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { onIntent(ChannelListIntent.DismissStopHost) }) { Text("Cancelar") }
+        },
+    )
 }
 
 @Composable

@@ -1,8 +1,10 @@
 package com.pttlan.feature.channellist
 
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.backhandler.BackCallback
 import com.pttlan.domain.ptt.repository.ActiveChannelDomain
 import com.pttlan.domain.ptt.repository.ChannelDomain
+import com.pttlan.domain.ptt.repository.LocalServerHost
 import com.pttlan.domain.ptt.usecase.CreateChannelUseCase
 import com.pttlan.domain.ptt.usecase.GetRecentChannelsUseCase
 import com.pttlan.domain.ptt.usecase.JoinChannelUseCaseImpl
@@ -22,6 +24,8 @@ data class ChannelListState(
     val recentChannels: List<ChannelDomain> = emptyList(),
     val activeChannels: List<ActiveChannelDomain> = emptyList(),
     val newChannelName: String = "",
+    /** Leaving while hosting ends the room for everyone, so it asks first. */
+    val confirmingStopHost: Boolean = false,
 )
 
 sealed interface ChannelListIntent {
@@ -35,12 +39,22 @@ sealed interface ChannelListIntent {
     ) : ChannelListIntent
 
     data object CreateChannel : ChannelListIntent
+
+    /** Back arrow or system back: leaves the server, asking first when this device hosts the room. */
+    data object Leave : ChannelListIntent
+
+    data object ConfirmStopHost : ChannelListIntent
+
+    data object DismissStopHost : ChannelListIntent
 }
 
 sealed interface ChannelListEffect {
     data class NavigateToChannel(
         val channelId: String,
     ) : ChannelListEffect
+
+    /** Disconnect and go back to the connection screen. */
+    data object Leave : ChannelListEffect
 }
 
 class ChannelListComponent(
@@ -49,6 +63,7 @@ class ChannelListComponent(
     private val observeActiveChannelsUseCase: ObserveActiveChannelsUseCase,
     private val joinChannelUseCase: JoinChannelUseCaseImpl,
     private val createChannelUseCase: CreateChannelUseCase,
+    private val localServerHost: LocalServerHost? = null,
 ) : ComponentContext by componentContext {
     private val _state = MutableStateFlow(ChannelListState())
     val state: StateFlow<ChannelListState> = _state.asStateFlow()
@@ -59,6 +74,10 @@ class ChannelListComponent(
     private val scope = CoroutineScope(Dispatchers.Main)
 
     init {
+        // Without this the system back only popped the screen: the user stayed connected, and a host kept the
+        // room running with no way back into it from the connection screen.
+        backHandler.register(BackCallback { onIntent(ChannelListIntent.Leave) })
+
         scope.launch {
             getRecentChannelsUseCase().collect { channels ->
                 _state.update { it.copy(recentChannels = channels) }
@@ -90,6 +109,24 @@ class ChannelListComponent(
                     joinChannelUseCase(intent.channelId, intent.name)
                     _effects.emit(ChannelListEffect.NavigateToChannel(intent.channelId))
                 }
+            }
+
+            is ChannelListIntent.Leave -> {
+                if (localServerHost?.isHosting?.value == true) {
+                    _state.update { it.copy(confirmingStopHost = true) }
+                } else {
+                    scope.launch { _effects.emit(ChannelListEffect.Leave) }
+                }
+            }
+
+            is ChannelListIntent.ConfirmStopHost -> {
+                _state.update { it.copy(confirmingStopHost = false) }
+                localServerHost?.stop()
+                scope.launch { _effects.emit(ChannelListEffect.Leave) }
+            }
+
+            is ChannelListIntent.DismissStopHost -> {
+                _state.update { it.copy(confirmingStopHost = false) }
             }
 
             is ChannelListIntent.CreateChannel -> {

@@ -17,6 +17,7 @@ import com.pttlan.feature.channellist.ChannelListComponent
 import com.pttlan.feature.channellist.ChannelListEffect
 import com.pttlan.feature.connection.ConnectionComponent
 import com.pttlan.feature.connection.ConnectionEffect
+import com.pttlan.feature.connection.ConnectionIntent
 import com.pttlan.feature.history.HistoryComponent
 import com.pttlan.feature.ptt.PttComponent
 import com.pttlan.feature.ptt.PttEffect
@@ -105,9 +106,11 @@ class RootComponent(
     /** Drives the "reconectando" badge; the screens keep showing while the client retries. */
     val connectionStatus: StateFlow<ConnectionStatus> = connectionRepository.connectionStatus
 
+    /** Set once connected; a `Disconnected` after it is a drop, reported to the user. Cleared on a voluntary leave. */
+    private var wasConnected = false
+
     init {
         lifecycle.coroutineScope().launch {
-            var wasConnected = false
             connectionRepository.connectionStatus.collect { status ->
                 // `Reconnecting` keeps the current screen: PttWebSocketClient is still retrying with backoff.
                 // Only `Disconnected` (attempts exhausted or manual exit) sends the user back.
@@ -156,6 +159,8 @@ class RootComponent(
                             navigation.navigate { stack ->
                                 if (stack.lastOrNull() == nextConfig) stack else stack + nextConfig
                             }
+                        } else if (effect is ChannelListEffect.Leave) {
+                            leaveServer()
                         }
                     }
                 }
@@ -198,6 +203,20 @@ class RootComponent(
                 Child.SettingsChild(component)
             }
         }
+
+    /** Leaving on purpose: no "Servidor desconectado" message, unlike a drop. */
+    private fun leaveServer() {
+        wasConnected = false
+        connectionRepository.disconnect()
+        navigation.navigate { listOf(Config.Connection) }
+
+        // The connection screen was kept under the stack with the list it had, which still shows the room just
+        // left (and, after ending a hosted room, a room that no longer exists).
+        val activeChild = childStack.value.active.instance
+        if (activeChild is Child.ConnectionChild) {
+            activeChild.component.onIntent(ConnectionIntent.RefreshServers)
+        }
+    }
 
     fun goBack() {
         navigation.pop()
