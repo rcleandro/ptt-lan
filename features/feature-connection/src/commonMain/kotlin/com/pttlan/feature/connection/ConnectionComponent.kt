@@ -14,7 +14,9 @@ import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,6 +61,9 @@ sealed interface ConnectionIntent {
     ) : ConnectionIntent
 
     data object HostServer : ConnectionIntent
+
+    /** Starts the network search over, dropping hosts that already left. */
+    data object RefreshServers : ConnectionIntent
 }
 
 sealed interface ConnectionEffect {
@@ -93,6 +98,7 @@ class ConnectionComponent(
     val effects: Flow<ConnectionEffect> = _effects.receiveAsFlow()
 
     private val scope = CoroutineScope(Dispatchers.Main)
+    private var discoveryJob: Job? = null
 
     init {
         scope.launch {
@@ -104,18 +110,28 @@ class ConnectionComponent(
             }
         }
 
-        scope.launch {
-            discoverServersUseCase().collect { newServer ->
-                _state.update { currentState ->
-                    val existing = currentState.discoveredServers
-                    if (existing.any { it.name == newServer.name }) {
-                        currentState
-                    } else {
-                        currentState.copy(discoveredServers = existing + newServer)
+        startDiscovery()
+    }
+
+    private fun startDiscovery() {
+        val previous = discoveryJob
+        discoveryJob =
+            scope.launch {
+                // Each platform keeps its browser in a field, so the old search has to be torn down before the
+                // new one starts, or its teardown would stop the new search.
+                previous?.cancelAndJoin()
+                _state.update { it.copy(discoveredServers = emptyList()) }
+                discoverServersUseCase().collect { newServer ->
+                    _state.update { currentState ->
+                        val existing = currentState.discoveredServers
+                        if (existing.any { it.name == newServer.name }) {
+                            currentState
+                        } else {
+                            currentState.copy(discoveredServers = existing + newServer)
+                        }
                     }
                 }
             }
-        }
     }
 
     fun onIntent(intent: ConnectionIntent) {
@@ -131,6 +147,10 @@ class ConnectionComponent(
             is ConnectionIntent.HostServer -> {
                 val host = localServerHost
                 if (host != null && saveNickname()) hostServer(host)
+            }
+
+            is ConnectionIntent.RefreshServers -> {
+                startDiscovery()
             }
 
             is ConnectionIntent.UpdateManualIp -> {

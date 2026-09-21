@@ -20,6 +20,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -145,6 +146,22 @@ class ConnectionComponentTest {
             val effect = component.effects.first()
             assertTrue(effect is ConnectionEffect.ShowError)
             assertTrue(effect.message.contains("Tempo de conexão excedido"))
+        }
+
+    @Test
+    fun `refreshing starts the search over and drops hosts that left`() =
+        runTest {
+            val gone = ServerNode("PTT-LAN-Gone", ServerEndpoint("192.168.0.20", 9443, isLocal = true))
+            val fresh = ServerNode("PTT-LAN-Fresh", ServerEndpoint("192.168.0.21", 9443, isLocal = true))
+            every { discoverServersUseCase() } returnsMany listOf(flowOf(gone), flowOf(fresh))
+            val component = createComponent()
+            advanceUntilIdle()
+            assertEquals(listOf(gone), component.state.value.discoveredServers)
+
+            component.onIntent(ConnectionIntent.RefreshServers)
+            advanceUntilIdle()
+
+            assertEquals(listOf(fresh), component.state.value.discoveredServers)
         }
 
     @Test
