@@ -1,8 +1,13 @@
 package com.pttlan.server
 
 import com.pttlan.core.network.PttWebSocketClient
+import com.pttlan.core.network.ServerRefusedException
 import com.pttlan.core.network.createHttpClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
@@ -22,6 +27,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 /** Host mode (24.2): the embedded server answers over TLS on a real port, like `serverApp` does. */
 class PttHostServerTest {
@@ -104,6 +110,25 @@ class PttHostServerTest {
                 assertFailsWith<IllegalStateException> { client.login("localhost", port, true, "guest", "d2", "0000") }
             assertEquals("PIN da sala incorreto", wrongPin.message)
             assertTrue(client.login("localhost", port, true, "guest", "d2", "4821").token.isNotBlank())
+        }
+
+    @Test
+    fun `ending the room tells the connected clients instead of leaving them retrying`() =
+        runBlocking {
+            // Stopping used to just drop the sockets: the others sat on "reconectando" for minutes.
+            server.start("PTT-LAN-host")
+            val client = PttWebSocketClient(createHttpClient())
+            val token = client.login("localhost", port, true, "guest", "d3").token
+            // The server's first message comes once it registered the session; `isConnected` is set before that.
+            val registered = async(Dispatchers.Default) { client.controlMessages.first() }
+            val session = async(Dispatchers.Default) { runCatching { client.connect("localhost", port, true, token) } }
+            withTimeout(10.seconds) { registered.await() }
+
+            server.stop()
+
+            val ended = withTimeout(10.seconds) { session.await() }.exceptionOrNull()
+            assertTrue(ended is ServerRefusedException, "got $ended")
+            assertEquals("O host encerrou a sala", ended.message)
         }
 
     @Test

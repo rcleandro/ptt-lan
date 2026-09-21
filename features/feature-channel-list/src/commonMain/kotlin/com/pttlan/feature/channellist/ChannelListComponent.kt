@@ -55,8 +55,13 @@ sealed interface ChannelListEffect {
         val channelId: String,
     ) : ChannelListEffect
 
-    /** Disconnect and go back to the connection screen. */
-    data object Leave : ChannelListEffect
+    /**
+     * Disconnect and go back to the connection screen; [endRoom] also stops the room this device hosts. Done by
+     * the root, which outlives this screen: leaving destroys it, and a stop() left in its scope never ran.
+     */
+    data class Leave(
+        val endRoom: Boolean = false,
+    ) : ChannelListEffect
 }
 
 class ChannelListComponent(
@@ -119,14 +124,13 @@ class ChannelListComponent(
                 if (localServerHost?.isHosting?.value == true) {
                     _state.update { it.copy(confirmingStopHost = true) }
                 } else {
-                    scope.launch { _effects.emit(ChannelListEffect.Leave) }
+                    scope.launch { _effects.emit(ChannelListEffect.Leave()) }
                 }
             }
 
             is ChannelListIntent.ConfirmStopHost -> {
                 _state.update { it.copy(confirmingStopHost = false) }
-                localServerHost?.stop()
-                scope.launch { _effects.emit(ChannelListEffect.Leave) }
+                scope.launch { _effects.emit(ChannelListEffect.Leave(endRoom = true)) }
             }
 
             is ChannelListIntent.DismissStopHost -> {

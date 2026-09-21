@@ -24,10 +24,12 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -159,7 +161,7 @@ class ChannelListComponentTest {
 
             component.effects.test {
                 component.onIntent(ChannelListIntent.Leave)
-                assertEquals(ChannelListEffect.Leave, awaitItem())
+                assertEquals(ChannelListEffect.Leave(endRoom = false), awaitItem())
             }
             assertFalse(component.state.value.confirmingStopHost)
         }
@@ -180,17 +182,18 @@ class ChannelListComponentTest {
         }
 
     @Test
-    fun `confirming ends the room and leaves`() =
+    fun `confirming asks the root to leave and end the room`() =
         runTest(testDispatcher) {
+            // The root stops the room: leaving destroys this screen, and a stop() left in its scope never ran.
             val host = hostingRoom()
             val component = createComponent(host)
             component.onIntent(ChannelListIntent.Leave)
 
             component.effects.test {
                 component.onIntent(ChannelListIntent.ConfirmStopHost)
-                assertEquals(ChannelListEffect.Leave, awaitItem())
+                assertEquals(ChannelListEffect.Leave(endRoom = true), awaitItem())
             }
-            verify(exactly = 1) { host.stop() }
+            verify(exactly = 0) { host.stop() }
             assertFalse(component.state.value.confirmingStopHost)
         }
 
