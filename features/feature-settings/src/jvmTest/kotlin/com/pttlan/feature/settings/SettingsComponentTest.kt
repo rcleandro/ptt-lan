@@ -84,6 +84,15 @@ class SettingsComponentTest {
         }
 
     @Test
+    fun `a fresh install transmits with Opus`() =
+        runTest(testDispatcher) {
+            // Nothing stored yet: the settings answer with whatever default the caller passes.
+            every { settings.getBoolean(SettingsKeys.USE_OPUS, any()) } answers { secondArg() }
+
+            assertEquals(true, createComponent().state.value.useOpus)
+        }
+
+    @Test
     fun `UpdateNickname intent updates state and settings`() =
         runTest(testDispatcher) {
             val component = createComponent()
