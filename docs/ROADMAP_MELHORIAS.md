@@ -35,6 +35,7 @@ graph LR
     F22 --> F23
     F23 --> F24[24 Modo host]
     F24 --> F25[25 App Wear OS]
+    F21 --> F26[26 Fone Bluetooth]
 ```
 
 A fase 18 vem primeiro porque é barata e deixa o CI confiável para as próximas. A 19 vem antes da 20 porque
@@ -352,6 +353,22 @@ bateria gasta. Se o Wi-Fi sob demanda falhar ou variar demais entre fabricantes,
 
 **Critério de conclusão:** o relógio entra num canal (servidor ou host) e fala e ouve com celular e Desktop,
 sem o celular por perto.
+
+---
+
+## Fase 26 — Fone Bluetooth
+
+**Objetivo:** ouvir e falar pelo fone Bluetooth em todas as plataformas. Hoje (lido no código, não testado com
+fone): Android e Wear tocam no fone mas gravam pelo microfone do aparelho; o iOS ignora o fone e toca no alto-falante;
+o Desktop segue o dispositivo padrão do sistema.
+
+| Item | Status | Ação | Esforço |
+|---|---|---|---|
+| 26.1 iOS toca no fone | a fazer | A sessão usa `PlayAndRecord` só com `defaultToSpeaker`; sem opção de Bluetooth o iOS não roteia para o fone. Acrescentar `allowBluetoothA2DP` (saída em qualidade cheia; o microfone continua o do iPhone) | P |
+| 26.2 Microfone do fone, como opção | a fazer | Opção "Usar microfone do fone Bluetooth" nas configurações, desligada por padrão. Ligada: Android e Wear com `setCommunicationDevice` (SCO/LE Audio) e `VOICE_COMMUNICATION`; iOS com `allowBluetooth` (HFP). O microfone do fone clássico só funciona no perfil de chamada, que baixa todo o áudio para qualidade de telefone (8–16 kHz) e leva ~1 s para ativar: decidir numa ADR entre ativar só enquanto se segura o botão (atraso para começar a falar) e a sessão toda (sem atraso, qualidade de telefone). LE Audio não tem a perda | M |
+
+**Critério de conclusão:** com um fone Bluetooth, o áudio sai nele em Android, Wear, iOS e Desktop, e, com a opção
+ligada, a fala é captada pelo microfone do fone.
 
 ---
 
