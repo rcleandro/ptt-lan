@@ -340,6 +340,7 @@ clientes via mDNS, sem `serverApp` rodando na rede.
 | 25.3 Telas do relógio | a fazer | Compose for Wear OS: servidores (descoberta + IP manual), canais e PTT (botão de segurar e participantes). Sem histórico e com configurações mínimas (nome e PIN) | M |
 | 25.4 Sessão e bateria | a fazer | Foreground service com Ongoing Activity, só enquanto há sessão; sem "sempre escutando"; botões `KEYCODE_STEM_*` mapeados para o PTT pelo `handlePttKey`; saída de áudio verificada (alto-falante ou fone Bluetooth) | M |
 | 25.5 CI | a fazer | Build do `:wearApp` no workflow, ao lado do `androidApp` | P |
+| 25.6 Rede local no Android 17 (celular) | ✔ feito | Achado na 25.1: o `androidApp` tem `targetSdk` 37 e, num celular com Android 17, não acharia salas nem conectaria sem `ACCESS_LOCAL_NETWORK` | Permissão declarada no manifesto e pedida na abertura junto com microfone e notificações, só a partir da API 37 (`startupPermissions`, com `StartupPermissionsTest`). Não verificado em celular: o razr está na API 36; a necessidade foi vista no relógio com Android 17 | P |
 
 **Roteiro da 25.1** (relógio físico, celular desligado ou longe): (1) um servidor ou host na rede; (2) o relógio
 pede o Wi-Fi e acha o servidor na lista, ou entra por IP; (3) entra num canal com um celular; (4) os dois alternam
