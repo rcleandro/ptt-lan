@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.androidApplication)
+    alias(libs.plugins.composeCompiler)
 }
 
 android {
@@ -18,12 +19,29 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+    buildFeatures {
+        compose = true
+    }
 }
 
 dependencies {
+    // The phone's layers and components as they are; only the screens are the watch's own. No server-core:
+    // the watch does not host (ADR 0011).
+    implementation(projects.core.coreDi)
+    implementation(projects.core.coreNavigation)
     implementation(projects.core.coreNetwork)
     implementation(projects.core.coreAudio)
+    implementation(projects.domain.domainPtt)
+    implementation(projects.features.featureConnection)
+    implementation(projects.features.featureChannelList)
+    implementation(projects.features.featurePtt)
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.koin.android)
+    implementation(libs.decompose)
+    implementation(libs.decompose.extensions.compose)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.wear.compose.material3)
+    implementation(libs.wear.compose.foundation)
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.test.runner)

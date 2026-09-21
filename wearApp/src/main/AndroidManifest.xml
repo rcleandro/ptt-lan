@@ -11,7 +11,9 @@
     <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
-    <application android:label="PTT-LAN">
+    <application
+        android:name=".WearApplication"
+        android:label="PTT-LAN">
         <!-- Works without the phone app: it talks to the server on its own (ADR 0011) -->
         <meta-data
             android:name="com.google.android.wearable.standalone"
