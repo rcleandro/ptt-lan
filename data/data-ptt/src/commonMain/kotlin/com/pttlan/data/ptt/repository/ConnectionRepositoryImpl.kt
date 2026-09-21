@@ -12,14 +12,17 @@ import com.pttlan.domain.ptt.repository.ServerEndpoint
 import com.pttlan.domain.ptt.repository.ServerNode
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -37,6 +40,7 @@ class ConnectionRepositoryImpl(
     private val discoveryService: ServerDiscoveryService,
     private val webSocketClient: PttWebSocketClient,
     private val settings: Settings,
+    dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ConnectionRepository {
     private val _connectionStatus = MutableStateFlow(ConnectionStatus.Disconnected)
     override val connectionStatus: StateFlow<ConnectionStatus> = _connectionStatus.asStateFlow()
@@ -48,7 +52,7 @@ class ConnectionRepositoryImpl(
         get() = webSocketClient.lastCloseReason
 
     private val logger = Logger.withTag("network")
-    private val scope = CoroutineScope(Dispatchers.Default)
+    private val scope = CoroutineScope(dispatcher)
     private var connectionJob: Job? = null
     private var monitorJob: Job? = null
 
@@ -77,8 +81,11 @@ class ConnectionRepositoryImpl(
     ): Result<Unit> {
         _connectionStatus.value = ConnectionStatus.Connecting
 
-        connectionJob?.cancel()
+        // A session can still be open (back to the connection screen without leaving, then hosting again):
+        // it is torn down before the new one starts, and its teardown must not report Disconnected, which
+        // RootComponent answers by dropping everything and going home.
         monitorJob?.cancel()
+        connectionJob?.cancelAndJoin()
         val deferred = CompletableDeferred<Unit>()
 
         connectionJob =
@@ -101,7 +108,8 @@ class ConnectionRepositoryImpl(
                     deferred.completeExceptionally(e)
                     logger.w(e) { "Failed to connect to ${endpoint.host}:${endpoint.port}" }
                 } finally {
-                    _connectionStatus.value = ConnectionStatus.Disconnected
+                    // Cancelled means replaced or left on purpose: whoever cancelled sets the status.
+                    if (isActive) _connectionStatus.value = ConnectionStatus.Disconnected
                 }
             }
 
