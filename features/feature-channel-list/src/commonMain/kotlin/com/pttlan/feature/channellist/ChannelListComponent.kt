@@ -2,6 +2,7 @@ package com.pttlan.feature.channellist
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.backhandler.BackCallback
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.pttlan.domain.ptt.repository.ActiveChannelDomain
 import com.pttlan.domain.ptt.repository.ChannelDomain
 import com.pttlan.domain.ptt.repository.LocalServerHost
@@ -11,6 +12,7 @@ import com.pttlan.domain.ptt.usecase.JoinChannelUseCaseImpl
 import com.pttlan.domain.ptt.usecase.ObserveActiveChannelsUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -77,6 +79,8 @@ class ChannelListComponent(
         // Without this the system back only popped the screen: the user stayed connected, and a host kept the
         // room running with no way back into it from the connection screen.
         backHandler.register(BackCallback { onIntent(ChannelListIntent.Leave) })
+        // A new list is created for every session; without this each old one kept its collectors running.
+        lifecycle.doOnDestroy { scope.cancel() }
 
         scope.launch {
             getRecentChannelsUseCase().collect { channels ->

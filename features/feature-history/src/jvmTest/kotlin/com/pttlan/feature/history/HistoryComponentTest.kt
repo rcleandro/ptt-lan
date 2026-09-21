@@ -3,6 +3,8 @@ package com.pttlan.feature.history
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
+import com.arkivanov.essenty.lifecycle.destroy
+import com.arkivanov.essenty.lifecycle.resume
 import com.pttlan.domain.ptt.model.VoiceMessage
 import com.pttlan.domain.ptt.repository.HistoryRepository
 import io.mockk.coEvery
@@ -11,8 +13,12 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -22,6 +28,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HistoryComponentTest {
@@ -107,5 +114,27 @@ class HistoryComponentTest {
 
             coVerify(exactly = 1) { historyRepository.stopPlayingMessage() }
             assertEquals(null, component.playingMessageId.value)
+        }
+
+    @Test
+    fun `leaving the screen stops the replay and the message feed`() =
+        runTest(testDispatcher) {
+            // Replay went on after leaving, with no controls, over the live channel audio.
+            var feeding = false
+            coEvery { historyRepository.getAllMessages() } returns
+                flow<List<VoiceMessage>> { awaitCancellation() }
+                    .onStart { feeding = true }
+                    .onCompletion { feeding = false }
+            coEvery { historyRepository.playMessage(any()) } coAnswers { awaitCancellation() }
+            lifecycle.resume()
+            val component = createComponent()
+            component.playMessage(mockk(relaxed = true))
+            advanceUntilIdle()
+
+            lifecycle.destroy()
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { historyRepository.stopPlayingMessage() }
+            assertFalse(feeding)
         }
 }
