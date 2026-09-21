@@ -30,6 +30,6 @@ object SettingsDefaults {
     const val ALLOW_CACHE = false
     const val CACHE_LOCATION = "Interno"
     const val MAX_CACHE_SIZE_MB = 500
-    const val USE_OPUS = false
+    const val USE_OPUS = true
     const val ALWAYS_LISTENING = true
 }

@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 
 data class SettingsState(
     val nickname: String = "",
-    val useOpus: Boolean = false,
+    val useOpus: Boolean = SettingsDefaults.USE_OPUS,
     val appTheme: AppTheme = AppTheme.SYSTEM,
     val reduceTransparency: Boolean = false,
     val alwaysListening: Boolean = true,

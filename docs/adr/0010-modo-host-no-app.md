@@ -64,8 +64,10 @@ O modo host mantém o protocolo, o cliente e as regras do servidor. Plataformas:
   complexo e não entra agora. Quando o host sai, os clientes caem na tela de conexão com "Servidor
   desconectado", como já acontece hoje.
 - **Carga no host.** Ele recebe e retransmite o áudio de todos: em PCM 48 kHz são ~768 kbps por ouvinte.
-  O codec é escolhido por quem fala, então ligar Opus só no host não reduz essa carga; o ganho pede Opus como
-  padrão em todos os clientes, o que ficou como decisão à parte (ver 24.5 no roadmap).
+  O codec é escolhido por quem fala, então ligar Opus só no host não reduz essa carga. Por isso o **Opus virou
+  o padrão em todos os clientes** (~24–32 kbps em modo VoIP, cerca de 25 vezes menos). Salas mistas continuam
+  funcionando, porque quem recebe decodifica pelo `codec` de cada pacote, e quem já tinha desligado o Opus
+  mantém a escolha.
 - **Acesso.** O login não tem senha, então qualquer um na rede entra no canal hospedado. No modo host entra
   um PIN de sala, verificado em `/api/auth/login`.
 - **Painel admin.** Fica restrito ao `serverApp`: no modo host (Desktop e Android) o painel não é servido.
