@@ -22,13 +22,19 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_pttlan._tcp</string>
+	</array>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>O PTT-LAN procura e conecta a servidores e salas na sua rede local.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Este aplicativo precisa de acesso ao microfone para transmitir seu áudio PTT.</string>
-	<key>UILaunchScreen</key>
-	<dict/>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
 	</array>
+	<key>UILaunchScreen</key>
+	<dict/>
 </dict>
 </plist>

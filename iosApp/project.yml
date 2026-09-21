@@ -17,6 +17,12 @@ targets:
         UILaunchScreen: {}
         CFBundleDisplayName: PTT-LAN
         CFBundleName: PTT-LAN
+        # Keeps receiving (and the hosted room) alive with the screen locked
+        UIBackgroundModes: [audio]
+        # iOS 14+: without these, Bonjour never sees the servers and the first LAN connection only raises the
+        # local network prompt and fails
+        NSLocalNetworkUsageDescription: "O PTT-LAN procura e conecta a servidores e salas na sua rede local."
+        NSBonjourServices: [_pttlan._tcp]
     settings:
       base:
         GENERATE_INFOPLIST_FILE: NO
@@ -35,9 +41,15 @@ targets:
           - $(inherited)
           - "-framework"
           - "shared"
+          # Xcode 16+: Compose references UIViewLayoutRegion, missing from older SDKs
+          - "-Wl,-U,_OBJC_CLASS_$_UIViewLayoutRegion"
     preBuildScripts:
       - name: Compile Kotlin Framework
         script: |
+          if [ "YES" = "$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED" ]; then
+            echo "Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \"YES\""
+            exit 0
+          fi
           cd "$SRCROOT/.."
           ./gradlew :shared:embedAndSignAppleFrameworkForXcode
         alwaysOutOfDate: true
