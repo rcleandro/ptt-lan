@@ -24,6 +24,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -55,6 +57,7 @@ class ConnectionRepositoryImpl(
     private val scope = CoroutineScope(dispatcher)
     private var connectionJob: Job? = null
     private var monitorJob: Job? = null
+    private val connectMutex = Mutex()
 
     override fun discoverServers(): Flow<ServerNode> =
         discoveryService.discover().map {
@@ -79,57 +82,72 @@ class ConnectionRepositoryImpl(
         nickname: String,
         pin: String?,
     ): Result<Unit> {
-        _connectionStatus.value = ConnectionStatus.Connecting
-
-        // A session can still be open (back to the connection screen without leaving, then hosting again):
-        // it is torn down before the new one starts, and its teardown must not report Disconnected, which
-        // RootComponent answers by dropping everything and going home.
-        monitorJob?.cancel()
-        connectionJob?.cancelAndJoin()
         val deferred = CompletableDeferred<Unit>()
+        lateinit var monitor: Job
 
-        connectionJob =
-            scope.launch {
-                try {
-                    val login =
-                        webSocketClient.login(
-                            endpoint.host,
-                            endpoint.port,
-                            endpoint.isLocal,
-                            nickname,
-                            deviceId(settings),
-                            pin,
-                        )
-                    sessionUserId = login.userId
+        // Serialised: two calls at once (a double tap on "Hospedar") would both wait on the same old job and
+        // each start a loop over the one shared client.
+        connectMutex.withLock {
+            _connectionStatus.value = ConnectionStatus.Connecting
 
-                    // We launch the infinite reconnect loop in the background
-                    webSocketClient.connect(endpoint.host, endpoint.port, endpoint.isLocal, login.token)
-                } catch (e: Exception) {
-                    deferred.completeExceptionally(e)
-                    logger.w(e) { "Failed to connect to ${endpoint.host}:${endpoint.port}" }
-                } finally {
-                    // Cancelled means replaced or left on purpose: whoever cancelled sets the status.
-                    if (isActive) _connectionStatus.value = ConnectionStatus.Disconnected
-                }
-            }
+            // A session can still be open (back to the connection screen without leaving, then hosting again):
+            // it is torn down before the new one starts, and its teardown must not report Disconnected, which
+            // RootComponent answers by dropping everything and going home.
+            monitorJob?.cancel()
+            connectionJob?.cancelAndJoin()
 
-        monitorJob =
-            scope.launch {
-                webSocketClient.isConnected.collect { isConnected ->
-                    if (isConnected) {
-                        _connectionStatus.value = ConnectionStatus.Connected
-                        deferred.complete(Unit)
-                    } else if (_connectionStatus.value == ConnectionStatus.Connected) {
-                        _connectionStatus.value = ConnectionStatus.Reconnecting
+            connectionJob =
+                scope
+                    .launch {
+                        try {
+                            val login =
+                                webSocketClient.login(
+                                    endpoint.host,
+                                    endpoint.port,
+                                    endpoint.isLocal,
+                                    nickname,
+                                    deviceId(settings),
+                                    pin,
+                                )
+                            sessionUserId = login.userId
+
+                            // We launch the infinite reconnect loop in the background
+                            webSocketClient.connect(endpoint.host, endpoint.port, endpoint.isLocal, login.token)
+                        } catch (e: Exception) {
+                            deferred.completeExceptionally(e)
+                            logger.w(e) { "Failed to connect to ${endpoint.host}:${endpoint.port}" }
+                        } finally {
+                            // Cancelled means replaced or left on purpose: whoever cancelled sets the status.
+                            if (isActive) _connectionStatus.value = ConnectionStatus.Disconnected
+                        }
+                    }.also { job ->
+                        // Covers a job replaced before it ever ran, and a loop that ends without connecting:
+                        // either way the caller would wait on the loading screen forever.
+                        job.invokeOnCompletion { cause ->
+                            deferred.completeExceptionally(cause ?: IllegalStateException("Conexão encerrada"))
+                        }
+                    }
+
+            monitor =
+                scope.launch {
+                    webSocketClient.isConnected.collect { isConnected ->
+                        if (isConnected) {
+                            _connectionStatus.value = ConnectionStatus.Connected
+                            deferred.complete(Unit)
+                        } else if (_connectionStatus.value == ConnectionStatus.Connected) {
+                            _connectionStatus.value = ConnectionStatus.Reconnecting
+                        }
                     }
                 }
-            }
+            monitorJob = monitor
+        }
 
         return try {
             deferred.await()
             Result.success(Unit)
         } catch (e: Exception) {
-            monitorJob?.cancel()
+            // This call's monitor only: after a replacement the field already holds the new connection's.
+            monitor.cancel()
             Result.failure(e)
         }
     }
