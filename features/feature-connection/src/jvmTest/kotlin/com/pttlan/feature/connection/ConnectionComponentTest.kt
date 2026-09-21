@@ -5,6 +5,7 @@ import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.pttlan.core.datastore.SettingsKeys
+import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.domain.ptt.repository.LocalServerHost
 import com.pttlan.domain.ptt.repository.ServerEndpoint
 import com.pttlan.domain.ptt.repository.ServerNode
@@ -21,12 +22,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -284,5 +287,21 @@ class ConnectionComponentTest {
             advanceUntilIdle()
 
             coVerify(exactly = 1) { connectToServerUseCase(endpoint, "User1", "4821") }
+        }
+
+    @Test
+    fun `connecting navigates even while the screen collects the effects`() =
+        runTest {
+            // Both used to collect one Channel, which hands each item to a single collector: the screen, which
+            // started first, took the navigation and the first tap never left the connection screen.
+            val status = MutableStateFlow(ConnectionStatus.Disconnected)
+            every { observeConnectionStatusUseCase() } returns status
+            val component = createComponent()
+            backgroundScope.launch { component.effects.collect { } }
+            advanceUntilIdle()
+
+            status.value = ConnectionStatus.Connected
+
+            withTimeout(1_000) { component.navigateToChannelList.first() }
         }
 }
