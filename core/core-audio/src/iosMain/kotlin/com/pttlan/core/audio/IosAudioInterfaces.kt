@@ -25,6 +25,7 @@ import platform.AVFAudio.AVAudioPCMBuffer
 import platform.AVFAudio.AVAudioPCMFormatInt16
 import platform.AVFAudio.AVAudioPlayerNode
 import platform.AVFAudio.AVAudioSession
+import platform.AVFAudio.AVAudioSessionCategoryOptionAllowBluetoothA2DP
 import platform.AVFAudio.AVAudioSessionCategoryOptionDefaultToSpeaker
 import platform.AVFAudio.AVAudioSessionCategoryPlayAndRecord
 import platform.AVFAudio.AVAudioSessionCategoryPlayback
@@ -38,6 +39,13 @@ import platform.AVFoundation.requestAccessForMediaType
 import platform.Foundation.NSError
 
 private val logger = Logger.withTag("audio")
+
+/**
+ * Speaker by default, and a Bluetooth headset when one is connected (26.1): without the A2DP option iOS ignores
+ * the headset under `PlayAndRecord` and plays on the speaker. A2DP is output only, in full quality; the
+ * microphone stays the iPhone's (the headset's needs HFP, 26.2).
+ */
+private val SESSION_OPTIONS = AVAudioSessionCategoryOptionDefaultToSpeaker or AVAudioSessionCategoryOptionAllowBluetoothA2DP
 
 /** 20 ms at 48 kHz: the frame size Opus accepts and the same one Android and the JVM emit. */
 private const val FRAME_SAMPLES = 960
@@ -54,7 +62,7 @@ class IosAudioRecorder : AudioRecorder {
         callbackFlow {
             try {
                 val session = AVAudioSession.sharedInstance()
-                session.setCategory(AVAudioSessionCategoryPlayAndRecord, AVAudioSessionCategoryOptionDefaultToSpeaker, null)
+                session.setCategory(AVAudioSessionCategoryPlayAndRecord, SESSION_OPTIONS, null)
                 session.setPreferredSampleRate(sampleRate.toDouble(), null)
                 session.setActive(true, null)
 
@@ -203,7 +211,7 @@ class IosAudioPlayer : AudioPlayer {
             if (session.category != AVAudioSessionCategoryPlayAndRecord &&
                 session.category != AVAudioSessionCategoryPlayback
             ) {
-                session.setCategory(AVAudioSessionCategoryPlayAndRecord, AVAudioSessionCategoryOptionDefaultToSpeaker, null)
+                session.setCategory(AVAudioSessionCategoryPlayAndRecord, SESSION_OPTIONS, null)
                 session.setActive(true, null)
             }
 
