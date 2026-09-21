@@ -21,7 +21,7 @@ class ObserveConnectionStatusUseCase(
 class DiscoverServersUseCase(
     private val connectionRepository: ConnectionRepository,
 ) {
-    operator fun invoke(): Flow<ServerNode> = connectionRepository.discoverServers()
+    operator fun invoke(): Flow<List<ServerNode>> = connectionRepository.discoverServers()
 }
 
 /**

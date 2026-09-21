@@ -34,7 +34,8 @@ interface ConnectionRepository {
     /** Reason the server gave for closing the session ("Nome já em uso", …), when there was one. */
     val lastDisconnectReason: String?
 
-    fun discoverServers(): Flow<ServerNode>
+    /** The servers on the network right now, re-emitted whenever one appears or leaves. */
+    fun discoverServers(): Flow<List<ServerNode>>
 
     fun stopDiscovery()
 

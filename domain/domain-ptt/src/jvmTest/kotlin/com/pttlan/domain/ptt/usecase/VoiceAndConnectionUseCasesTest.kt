@@ -45,9 +45,9 @@ class VoiceAndConnectionUseCasesTest {
         runTest {
             val node = ServerNode("PTT-LAN", ServerEndpoint("192.168.0.50", 9443, true))
             every { connectionRepository.connectionStatus } returns MutableStateFlow(ConnectionStatus.Connected)
-            every { connectionRepository.discoverServers() } returns flowOf(node)
+            every { connectionRepository.discoverServers() } returns flowOf(listOf(node))
 
             assertEquals(ConnectionStatus.Connected, ObserveConnectionStatusUseCase(connectionRepository)().first())
-            assertEquals(node, DiscoverServersUseCase(connectionRepository)().first())
+            assertEquals(listOf(node), DiscoverServersUseCase(connectionRepository)().first())
         }
 }

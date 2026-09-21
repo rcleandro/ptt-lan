@@ -19,7 +19,7 @@ import platform.posix.AF_INET
 actual class ServerDiscoveryService actual constructor() {
     private var browser: NSNetServiceBrowser? = null
 
-    actual fun discover(): Flow<DiscoveredServer> =
+    actual fun discover(): Flow<DiscoveryEvent> =
         callbackFlow {
             val serviceType = "_pttlan._tcp."
             val domain = "local."
@@ -46,7 +46,7 @@ actual class ServerDiscoveryService actual constructor() {
                                             host = host,
                                             port = sender.port.toInt(),
                                         )
-                                    trySend(server)
+                                    trySend(DiscoveryEvent.Found(server))
                                 }
 
                                 @ObjCSignatureOverride
@@ -69,6 +69,7 @@ actual class ServerDiscoveryService actual constructor() {
                         moreComing: Boolean,
                     ) {
                         services.remove(didRemoveService.name)
+                        trySend(DiscoveryEvent.Lost(didRemoveService.name))
                     }
                 }
 
