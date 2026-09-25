@@ -1,0 +1,21 @@
+# Sends the graph saved by dependency-graph.yml, with the write permission that one cannot have (30.7).
+name: Dependency graph submit
+
+on:
+  workflow_run:
+    workflows: [ 'Dependency graph' ]
+    types: [ completed ]
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download and submit the dependency graph
+        uses: gradle/actions/dependency-submission@v6
+        with:
+          dependency-graph: download-and-submit
