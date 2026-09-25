@@ -36,6 +36,7 @@ graph LR
     F23 --> F24[24 Modo host]
     F24 --> F25[25 App Wear OS]
     F21 --> F26[26 Fone Bluetooth]
+    F22 --> F27[27 Layout para dobráveis]
 ```
 
 A fase 18 vem primeiro porque é barata e deixa o CI confiável para as próximas. A 19 vem antes da 20 porque
@@ -369,6 +370,29 @@ o Desktop segue o dispositivo padrão do sistema.
 
 **Critério de conclusão:** com um fone Bluetooth, o áudio sai nele em Android, Wear, iOS e Desktop, e, com a opção
 ligada, a fala é captada pelo microfone do fone.
+
+---
+
+## Fase 27 — Layout para dobráveis
+
+**Objetivo:** a UI se adapta a dobráveis (Galaxy Fold e Flip, iPhone dobrável) e, de quebra, a tablets, iPad
+em Split View e Desktop. Toda a UI é Compose Multiplatform em `commonMain` (o iOS só embrulha a `ComposeView`),
+então o trabalho é um só para todas as plataformas. Hoje só a `PttScreen` se adapta, e a regra
+`maxWidth > maxHeight && maxHeight < 600dp` foi pensada para celular deitado e para carro: no Fold aberto
+(~840×900dp) ela não é atendida e sai uma coluna única esticada. As outras quatro telas não se adaptam. O iOS não
+informa ao app onde fica a dobradiça, só o tamanho da janela: no iPhone dobrável basta o layout por largura, e a
+postura (meio aberto) é só no Android.
+
+| Item | Status | Ação | Esforço |
+|---|---|---|---|
+| 27.1 Pontos de quebra por largura | a fazer | Trocar a regra de "tela larga" por faixas de largura (< 600 / 600–840 / > 840dp) e aplicar nas 5 telas, com o `BoxWithConstraints` que já existe, sem dependência nova | P |
+| 27.2 Lista e detalhe lado a lado | a fazer | Em larguras > 840dp (Fold aberto, tablet, Desktop), canais e PTT lado a lado. Mexe na navegação Decompose | M/G |
+| 27.3 Postura mesa (Flip meio aberto) | a fazer | Botão PTT na metade de baixo e status na de cima, via `FoldingFeature` do `androidx.window` com `expect/actual`, sem efeito no iOS | M |
+| 27.4 Tela externa do Flip | a fazer | Validar e ajustar o modo compacto para a tela externa pequena | P |
+| 27.5 Dobrar sem cair | a fazer | Dobrar ou desdobrar com o botão pressionado ou durante uma fala não pode derrubar a conexão nem prender o floor. Teste de configuration change | P |
+
+**Critério de conclusão:** no Fold aberto e fechado, no Flip aberto, meio aberto e na tela externa, e no iPhone e
+iPad, nenhuma tela fica esticada ou cortada, e dobrar durante uma transmissão não afeta a conexão.
 
 ---
 
