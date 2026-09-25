@@ -95,6 +95,14 @@ fun ConnectionScreen(
         onOpenSettings = onOpenSettings,
         onOpenHistory = onOpenHistory,
     )
+
+    state.certificateChange?.let { change ->
+        CertificateChangeDialog(
+            change = change,
+            onTrust = { component.onIntent(ConnectionIntent.TrustNewCertificate) },
+            onDismiss = { component.onIntent(ConnectionIntent.DismissCertificateChange) },
+        )
+    }
 }
 
 @Composable

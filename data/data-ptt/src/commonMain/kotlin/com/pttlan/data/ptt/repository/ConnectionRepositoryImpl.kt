@@ -54,6 +54,16 @@ class ConnectionRepositoryImpl(
     override val lastDisconnectReason: String?
         get() = webSocketClient.lastCloseReason
 
+    /** The server of the current or last connection, for its certificate code. */
+    private var currentEndpoint: ServerEndpoint? = null
+
+    override val serverCertificateCode: String?
+        get() = currentEndpoint?.let { webSocketClient.pins?.codeFor(normalizeHost(it.host), it.port) }
+
+    override fun trustServerCertificate(endpoint: ServerEndpoint) {
+        webSocketClient.pins?.trustChanged(normalizeHost(endpoint.host), endpoint.port)
+    }
+
     private val logger = Logger.withTag("network")
     private val scope = CoroutineScope(dispatcher)
     private var connectionJob: Job? = null
@@ -92,6 +102,7 @@ class ConnectionRepositoryImpl(
         // each start a loop over the one shared client.
         connectMutex.withLock {
             _connectionStatus.value = ConnectionStatus.Connecting
+            currentEndpoint = endpoint
 
             // A session can still be open (back to the connection screen without leaving, then hosting again):
             // it is torn down before the new one starts, and its teardown must not report Disconnected, which

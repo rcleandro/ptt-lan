@@ -12,6 +12,7 @@ import com.pttlan.domain.ptt.repository.ChannelDomain
 import com.pttlan.domain.ptt.repository.LocalServerHost
 import com.pttlan.domain.ptt.usecase.CreateChannelUseCase
 import com.pttlan.domain.ptt.usecase.GetRecentChannelsUseCase
+import com.pttlan.domain.ptt.usecase.GetServerCertificateCodeUseCase
 import com.pttlan.domain.ptt.usecase.JoinChannelUseCaseImpl
 import com.pttlan.domain.ptt.usecase.ObserveActiveChannelsUseCase
 import io.mockk.coEvery
@@ -51,6 +52,7 @@ class ChannelListComponentTest {
     private val observeActiveChannelsUseCase: ObserveActiveChannelsUseCase = mockk(relaxed = true)
     private val joinChannelUseCase: JoinChannelUseCaseImpl = mockk(relaxed = true)
     private val createChannelUseCase: CreateChannelUseCase = mockk(relaxed = true)
+    private val getServerCertificateCodeUseCase: GetServerCertificateCodeUseCase = mockk(relaxed = true)
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -76,6 +78,7 @@ class ChannelListComponentTest {
         observeActiveChannelsUseCase = observeActiveChannelsUseCase,
         joinChannelUseCase = joinChannelUseCase,
         createChannelUseCase = createChannelUseCase,
+        getServerCertificateCodeUseCase = getServerCertificateCodeUseCase,
         localServerHost = localServerHost,
     )
 
@@ -104,6 +107,16 @@ class ChannelListComponentTest {
             advanceUntilIdle()
 
             assertEquals("New Channel", component.state.value.newChannelName)
+        }
+
+    @Test
+    fun `the server certificate code is shown, so people can compare it with the host's`() =
+        runTest(testDispatcher) {
+            every { getServerCertificateCodeUseCase() } returns "A1B2-C3D4"
+
+            val component = createComponent()
+
+            assertEquals("A1B2-C3D4", component.state.value.serverCode)
         }
 
     @Test

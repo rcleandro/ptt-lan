@@ -9,6 +9,7 @@ import com.pttlan.domain.ptt.repository.ChannelDomain
 import com.pttlan.domain.ptt.repository.LocalServerHost
 import com.pttlan.domain.ptt.usecase.CreateChannelUseCase
 import com.pttlan.domain.ptt.usecase.GetRecentChannelsUseCase
+import com.pttlan.domain.ptt.usecase.GetServerCertificateCodeUseCase
 import com.pttlan.domain.ptt.usecase.JoinChannelUseCaseImpl
 import com.pttlan.domain.ptt.usecase.ObserveActiveChannelsUseCase
 import kotlinx.coroutines.CoroutineScope
@@ -29,6 +30,8 @@ data class ChannelListState(
     val newChannelName: String = "",
     /** Leaving while hosting ends the room for everyone, so it asks first. */
     val confirmingStopHost: Boolean = false,
+    /** Code of the server's certificate, the same on the host and on everyone who joined it (30.5). */
+    val serverCode: String? = null,
 )
 
 sealed interface ChannelListIntent {
@@ -71,9 +74,11 @@ class ChannelListComponent(
     private val observeActiveChannelsUseCase: ObserveActiveChannelsUseCase,
     private val joinChannelUseCase: JoinChannelUseCaseImpl,
     private val createChannelUseCase: CreateChannelUseCase,
+    getServerCertificateCodeUseCase: GetServerCertificateCodeUseCase,
     private val localServerHost: LocalServerHost? = null,
 ) : ComponentContext by componentContext {
-    private val _state = MutableStateFlow(ChannelListState())
+    // Explicit invoke: detekt's analysis misses the operator call here and flags the use case as unused
+    private val _state = MutableStateFlow(ChannelListState(serverCode = getServerCertificateCodeUseCase.invoke()))
     val state: StateFlow<ChannelListState> = _state.asStateFlow()
 
     private val _effects = MutableSharedFlow<ChannelListEffect>()

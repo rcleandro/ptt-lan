@@ -45,6 +45,8 @@ const val DEFAULT_MAX_RECONNECT_ATTEMPTS = 10
 class PttWebSocketClient(
     private val httpClient: HttpClient,
     private val maxReconnectAttempts: Int = DEFAULT_MAX_RECONNECT_ATTEMPTS,
+    /** The same pins [httpClient] checks, to tell a refused certificate apart from other failures. */
+    val pins: CertificatePins? = null,
 ) {
     private val logger = Logger.withTag("network")
     private var session: DefaultClientWebSocketSession? = null
@@ -87,9 +89,14 @@ class PttWebSocketClient(
         val cleanHost = normalizeHost(host)
         val url = "https://$cleanHost:$port/api/auth/login"
         val response =
-            httpClient.post(url) {
-                contentType(ContentType.Application.Json)
-                setBody(LoginRequest(nickname, deviceId, pin))
+            try {
+                httpClient.post(url) {
+                    contentType(ContentType.Application.Json)
+                    setBody(LoginRequest(nickname, deviceId, pin))
+                }
+            } catch (e: Exception) {
+                // A handshake refused for a changed certificate surfaces as a generic TLS error: say what it was
+                throw pins?.changeFor(cleanHost, port) ?: e
             }
         // The only 401 at login is a room PIN that does not match (host mode, 24.3)
         check(response.status != HttpStatusCode.Unauthorized) { "PIN da sala incorreto" }

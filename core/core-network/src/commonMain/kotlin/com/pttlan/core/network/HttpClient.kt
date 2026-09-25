@@ -10,7 +10,8 @@ import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-expect fun createPlatformHttpClient(): HttpClient
+/** [pins] keeps the certificates trusted on first use for LAN servers (30.5). */
+expect fun createPlatformHttpClient(pins: CertificatePins): HttpClient
 
 /** Ping traffic on an idle WebSocket. The socket timeout has to stay comfortably above it. */
 internal const val WEBSOCKET_PING_INTERVAL_MS = 5_000L
@@ -24,8 +25,8 @@ private const val REQUEST_TIMEOUT_MS = 5_000L
  */
 internal const val SOCKET_TIMEOUT_MS = 30_000L
 
-fun createHttpClient(): HttpClient =
-    createPlatformHttpClient().config {
+fun createHttpClient(pins: CertificatePins = CertificatePins()): HttpClient =
+    createPlatformHttpClient(pins).config {
         install(WebSockets) {
             pingIntervalMillis = WEBSOCKET_PING_INTERVAL_MS
         }

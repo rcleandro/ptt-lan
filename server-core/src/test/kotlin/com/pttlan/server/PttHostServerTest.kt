@@ -1,5 +1,7 @@
 package com.pttlan.server
 
+import com.pttlan.core.common.ServerCertificateChangedException
+import com.pttlan.core.network.CertificatePins
 import com.pttlan.core.network.PttWebSocketClient
 import com.pttlan.core.network.ServerRefusedException
 import com.pttlan.core.network.createHttpClient
@@ -13,6 +15,7 @@ import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
+import java.io.File
 import java.net.ConnectException
 import java.net.HttpURLConnection
 import java.net.ServerSocket
@@ -205,6 +208,58 @@ class PttHostServerTest {
                 assertTrue(outcome.exceptionOrNull() is ServerRefusedException, "got ${outcome.exceptionOrNull()}")
             } finally {
                 client.disconnect()
+            }
+        }
+
+    private fun hostWithCertificateIn(file: File) = PttHostServer(port, keyStoreFile = file) { _, _ -> null }
+
+    @Test
+    fun `the host keeps its certificate across rooms, so the clients still recognize it`() =
+        runBlocking {
+            val file = File.createTempFile("host-cert", ".p12").also { it.delete() }
+            val host = hostWithCertificateIn(file)
+            val pins = CertificatePins()
+            val client = PttWebSocketClient(createHttpClient(pins), pins = pins)
+            try {
+                host.start("PTT-LAN-host")
+                client.login("localhost", port, true, "guest", "d5")
+                host.stop()
+                host.start("PTT-LAN-host")
+
+                assertTrue(client.login("localhost", port, true, "guest", "d5").token.isNotBlank())
+            } finally {
+                host.stop()
+                file.delete()
+            }
+        }
+
+    @Test
+    fun `another certificate on a known host is refused with both codes until the user trusts it`() =
+        runBlocking {
+            val fileA = File.createTempFile("host-a", ".p12").also { it.delete() }
+            val fileB = File.createTempFile("host-b", ".p12").also { it.delete() }
+            val pins = CertificatePins()
+            val client = PttWebSocketClient(createHttpClient(pins), pins = pins)
+            val hostA = hostWithCertificateIn(fileA)
+            val hostB = hostWithCertificateIn(fileB)
+            try {
+                hostA.start("PTT-LAN-host")
+                client.login("localhost", port, true, "guest", "d6")
+                val trustedCode = pins.codeFor("localhost", port)
+                hostA.stop()
+                hostB.start("PTT-LAN-impostor")
+
+                val change = assertFailsWith<ServerCertificateChangedException> { client.login("localhost", port, true, "guest", "d6") }
+                assertEquals(trustedCode, change.previousCode)
+                assertTrue(change.newCode != change.previousCode)
+
+                pins.trustChanged("localhost", port)
+                assertTrue(client.login("localhost", port, true, "guest", "d6").token.isNotBlank())
+            } finally {
+                hostA.stop()
+                hostB.stop()
+                fileA.delete()
+                fileB.delete()
             }
         }
 }

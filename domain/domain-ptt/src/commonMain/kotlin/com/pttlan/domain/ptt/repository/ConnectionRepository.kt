@@ -34,6 +34,15 @@ interface ConnectionRepository {
     /** Reason the server gave for closing the session ("Nome já em uso", …), when there was one. */
     val lastDisconnectReason: String?
 
+    /**
+     * Short code of the certificate the connected LAN server showed, to compare with the one its host sees (30.5).
+     * Null off the LAN, where the system validates the certificate.
+     */
+    val serverCertificateCode: String?
+
+    /** Trusts the new certificate [endpoint] showed after it changed, once the user compared the codes (30.5). */
+    fun trustServerCertificate(endpoint: ServerEndpoint)
+
     /** The servers on the network right now, re-emitted whenever one appears or leaves. */
     fun discoverServers(): Flow<List<ServerNode>>
 

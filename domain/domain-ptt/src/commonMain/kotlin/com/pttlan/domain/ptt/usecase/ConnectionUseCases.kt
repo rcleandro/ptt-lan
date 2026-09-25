@@ -41,3 +41,17 @@ class ConnectToServerUseCase(
         return connectionRepository.connect(endpoint, nickname, pin)
     }
 }
+
+/** Trusts a LAN server's new certificate after it changed and the user compared the codes (30.5). */
+class TrustServerCertificateUseCase(
+    private val connectionRepository: ConnectionRepository,
+) {
+    operator fun invoke(endpoint: ServerEndpoint) = connectionRepository.trustServerCertificate(endpoint)
+}
+
+/** Code of the connected LAN server's certificate, shown so people can compare it with the host's (30.5). */
+class GetServerCertificateCodeUseCase(
+    private val connectionRepository: ConnectionRepository,
+) {
+    operator fun invoke(): String? = connectionRepository.serverCertificateCode
+}

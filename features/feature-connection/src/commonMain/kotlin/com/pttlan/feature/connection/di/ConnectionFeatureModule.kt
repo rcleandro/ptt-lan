@@ -12,6 +12,7 @@ val connectionFeatureModule =
                 observeConnectionStatusUseCase = get(),
                 discoverServersUseCase = get(),
                 connectToServerUseCase = get(),
+                trustServerCertificateUseCase = get(),
                 localServerHost = getOrNull(),
             )
         }

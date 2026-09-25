@@ -155,25 +155,7 @@ private fun ChannelList(
             PaddingValues(start = 20.dp, end = 20.dp, top = topInset + TopBarClearance, bottom = DockClearance),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item {
-            Column(modifier = Modifier.padding(bottom = 4.dp)) {
-                Text(
-                    text = "Canais",
-                    style = MaterialTheme.typography.displayLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
-                Text(
-                    text =
-                        if (state.activeChannels.isEmpty()) {
-                            "Nenhuma sala ativa no momento. Crie uma abaixo."
-                        } else {
-                            "Salas ativas neste servidor"
-                        },
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
+        item { ChannelListHeader(state) }
         items(state.activeChannels, key = { it.id }) { channel ->
             ChannelCard(
                 name = channel.id,
@@ -280,6 +262,36 @@ private fun ChannelListScreenPreviewLight() {
     PttTheme(appTheme = AppTheme.LIGHT) {
         Box(Modifier.background(MaterialTheme.colorScheme.background)) {
             ChannelListScreenContent(state = previewState, onIntent = {})
+        }
+    }
+}
+
+@Composable
+private fun ChannelListHeader(state: ChannelListState) {
+    Column(modifier = Modifier.padding(bottom = 4.dp)) {
+        Text(
+            text = "Canais",
+            style = MaterialTheme.typography.displayLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        Text(
+            text =
+                if (state.activeChannels.isEmpty()) {
+                    "Nenhuma sala ativa no momento. Crie uma abaixo."
+                } else {
+                    "Salas ativas neste servidor"
+                },
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        state.serverCode?.let { code ->
+            // The host and everyone in its room see the same code; a different one means another server
+            Text(
+                text = "Código do servidor: $code",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
+            )
         }
     }
 }

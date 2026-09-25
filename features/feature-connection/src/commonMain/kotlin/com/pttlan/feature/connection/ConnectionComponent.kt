@@ -2,6 +2,7 @@ package com.pttlan.feature.connection
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
+import com.pttlan.core.common.ServerCertificateChangedException
 import com.pttlan.core.common.network.isLocalNetwork
 import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.domain.ptt.repository.ConnectionStatus
@@ -11,6 +12,7 @@ import com.pttlan.domain.ptt.repository.ServerNode
 import com.pttlan.domain.ptt.usecase.ConnectToServerUseCase
 import com.pttlan.domain.ptt.usecase.DiscoverServersUseCase
 import com.pttlan.domain.ptt.usecase.ObserveConnectionStatusUseCase
+import com.pttlan.domain.ptt.usecase.TrustServerCertificateUseCase
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -39,6 +41,16 @@ data class ConnectionState(
     val pin: String = "",
     /** Whether this platform can host the channel itself (host mode). */
     val canHost: Boolean = false,
+    /** A LAN server showed another certificate than the trusted one: the user decides (30.5). */
+    val certificateChange: CertificateChange? = null,
+)
+
+/** What the certificate dialog shows, and where to connect again if the user trusts the new certificate. */
+data class CertificateChange(
+    val endpoint: ServerEndpoint,
+    val previousCode: String,
+    val newCode: String,
+    val timeoutMessage: String,
 )
 
 sealed interface ConnectionIntent {
@@ -66,6 +78,11 @@ sealed interface ConnectionIntent {
 
     /** Starts the network search over, dropping hosts that already left. */
     data object RefreshServers : ConnectionIntent
+
+    /** The user compared the codes and trusts the server's new certificate. */
+    data object TrustNewCertificate : ConnectionIntent
+
+    data object DismissCertificateChange : ConnectionIntent
 }
 
 sealed interface ConnectionEffect {
@@ -79,6 +96,7 @@ class ConnectionComponent(
     private val observeConnectionStatusUseCase: ObserveConnectionStatusUseCase,
     private val discoverServersUseCase: DiscoverServersUseCase,
     private val connectToServerUseCase: ConnectToServerUseCase,
+    private val trustServerCertificateUseCase: TrustServerCertificateUseCase,
     private val localServerHost: LocalServerHost? = null,
 ) : ComponentContext by componentContext,
     KoinComponent {
@@ -169,6 +187,18 @@ class ConnectionComponent(
             is ConnectionIntent.UpdatePin -> {
                 _state.update { it.copy(pin = intent.pin.trim()) }
             }
+
+            is ConnectionIntent.TrustNewCertificate -> {
+                val change = _state.value.certificateChange ?: return
+                _state.update { it.copy(certificateChange = null) }
+                // Explicit invoke: detekt's analysis misses the operator call here and flags the use case as unused
+                trustServerCertificateUseCase.invoke(change.endpoint)
+                connect(change.endpoint, change.timeoutMessage)
+            }
+
+            is ConnectionIntent.DismissCertificateChange -> {
+                _state.update { it.copy(certificateChange = null) }
+            }
         }
     }
 
@@ -215,7 +245,11 @@ class ConnectionComponent(
     ) {
         scope.launch {
             val exception = connectToServerUseCase(endpoint, _state.value.nickname, pinOrNull()).exceptionOrNull() ?: return@launch
-            if (exception is TimeoutCancellationException) {
+            if (exception is ServerCertificateChangedException) {
+                _state.update {
+                    it.copy(certificateChange = CertificateChange(endpoint, exception.previousCode, exception.newCode, timeoutMessage))
+                }
+            } else if (exception is TimeoutCancellationException) {
                 _effects.send(ConnectionEffect.ShowError(timeoutMessage))
             } else if (exception !is CancellationException) {
                 _effects.send(ConnectionEffect.ShowError("Falha ao conectar: ${exception.message}"))

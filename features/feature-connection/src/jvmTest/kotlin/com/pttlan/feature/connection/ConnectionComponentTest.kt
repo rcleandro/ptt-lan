@@ -85,6 +85,7 @@ class ConnectionComponentTest {
             observeConnectionStatusUseCase = observeConnectionStatusUseCase,
             discoverServersUseCase = discoverServersUseCase,
             connectToServerUseCase = connectToServerUseCase,
+            trustServerCertificateUseCase = mockk(relaxed = true),
             localServerHost = localServerHost,
         )
     }
@@ -190,6 +191,7 @@ class ConnectionComponentTest {
                 observeConnectionStatusUseCase = observeConnectionStatusUseCase,
                 discoverServersUseCase = discoverServersUseCase,
                 connectToServerUseCase = connectToServerUseCase,
+                trustServerCertificateUseCase = mockk(relaxed = true),
             )
             advanceUntilIdle()
             assertTrue(searching)

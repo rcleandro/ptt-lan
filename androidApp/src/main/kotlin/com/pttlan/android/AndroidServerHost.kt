@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import kotlin.concurrent.thread
+import java.io.File
 
 /**
  * Host mode on Android (24.5): the server runs in this process, announced through NSD, and the app connects to
@@ -19,7 +20,12 @@ import kotlin.concurrent.thread
 class AndroidServerHost(
     context: Context,
 ) : LocalServerHost {
-    private val server = PttHostServer(announce = { port, name -> announceWithNsd(context, port, name) })
+    private val server =
+        PttHostServer(
+            // One certificate for good: clients trust it on first use and refuse a different one (30.5)
+            keyStoreFile = File(context.filesDir, "host-certificate.keystore"),
+            announce = { port, name -> announceWithNsd(context, port, name) },
+        )
 
     private val _isHosting = MutableStateFlow(false)
     override val isHosting: StateFlow<Boolean> = _isHosting.asStateFlow()
