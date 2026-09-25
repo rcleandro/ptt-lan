@@ -15,6 +15,9 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
+/** Going back after this much of a message restarts it instead of going to the previous one. */
+private const val RESTART_AFTER_MS = 3_000L
+
 class HistoryComponent(
     componentContext: ComponentContext,
     private val historyRepository: HistoryRepository,
@@ -88,6 +91,22 @@ class HistoryComponent(
         if (_queue.value.none { it.id == message.id }) _queue.value = emptyList()
         playFrom(message)
     }
+
+    fun playNext() {
+        val queue = _queue.value
+        queue.getOrNull(playingIndex(queue) + 1)?.let(::playFrom)
+    }
+
+    /** Like a music player: the previous message in the first seconds, otherwise the current one from the start. */
+    fun playPrevious() {
+        val queue = _queue.value
+        val index = playingIndex(queue)
+        if (index < 0) return
+        val elapsedMs = playbackPosition.value?.takeIf { it.messageId == queue[index].id }?.positionMs ?: 0L
+        playFrom(if (elapsedMs < RESTART_AFTER_MS && index > 0) queue[index - 1] else queue[index])
+    }
+
+    private fun playingIndex(queue: List<VoiceMessage>): Int = queue.indexOfFirst { it.id == _playingMessageId.value }
 
     private fun playFrom(first: VoiceMessage) {
         playJob?.cancel()

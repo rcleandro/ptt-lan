@@ -5,22 +5,26 @@ import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
+import com.pttlan.domain.ptt.model.PlaybackPosition
 import com.pttlan.domain.ptt.model.VoiceMessage
 import com.pttlan.domain.ptt.repository.HistoryRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -256,5 +260,92 @@ class HistoryComponentTest {
             assertEquals(listOf("a"), played)
             assertEquals(null, component.playingMessageId.value)
             assertEquals(emptyList(), component.queue.value)
+        }
+
+    /** Starts "Geral" with every message held until it is replaced, and returns what was played. */
+    private fun TestScope.playRoomHeld(position: MutableStateFlow<PlaybackPosition?>): Pair<HistoryComponent, List<String>> {
+        coEvery { historyRepository.getAllMessages() } returns flowOf(room)
+        every { historyRepository.playbackPosition } returns position
+        val played = mutableListOf<String>()
+        coEvery { historyRepository.playMessage(any()) } coAnswers {
+            played += firstArg<VoiceMessage>().id
+            awaitCancellation()
+        }
+        val component = createComponent()
+        advanceUntilIdle()
+        component.playChannel("Geral")
+        advanceUntilIdle()
+        return component to played
+    }
+
+    @Test
+    fun `next skips to the following message of the queue`() =
+        runTest(testDispatcher) {
+            val (component, played) = playRoomHeld(MutableStateFlow(null))
+
+            component.playNext()
+            advanceUntilIdle()
+
+            assertEquals(listOf("a", "b"), played)
+            assertEquals("b", component.playingMessageId.value)
+        }
+
+    @Test
+    fun `next on the last message keeps playing it`() =
+        runTest(testDispatcher) {
+            val (component, played) = playRoomHeld(MutableStateFlow(null))
+            component.playNext()
+            advanceUntilIdle()
+            component.playNext()
+            advanceUntilIdle()
+
+            component.playNext()
+            advanceUntilIdle()
+
+            assertEquals(listOf("a", "b", "c"), played)
+            assertEquals("c", component.playingMessageId.value)
+        }
+
+    @Test
+    fun `previous in the first seconds goes back to the previous message`() =
+        runTest(testDispatcher) {
+            val position = MutableStateFlow<PlaybackPosition?>(null)
+            val (component, played) = playRoomHeld(position)
+            component.playNext()
+            advanceUntilIdle()
+            position.value = PlaybackPosition("b", positionMs = 1_000, durationMs = 9_000)
+
+            component.playPrevious()
+            advanceUntilIdle()
+
+            assertEquals(listOf("a", "b", "a"), played)
+            assertEquals("a", component.playingMessageId.value)
+        }
+
+    @Test
+    fun `previous later in the message restarts it`() =
+        runTest(testDispatcher) {
+            val position = MutableStateFlow<PlaybackPosition?>(null)
+            val (component, played) = playRoomHeld(position)
+            component.playNext()
+            advanceUntilIdle()
+            position.value = PlaybackPosition("b", positionMs = 5_000, durationMs = 9_000)
+
+            component.playPrevious()
+            advanceUntilIdle()
+
+            assertEquals(listOf("a", "b", "b"), played)
+            assertEquals(listOf("a", "b", "c"), component.queue.value.map { it.id })
+        }
+
+    @Test
+    fun `previous on the first message restarts it`() =
+        runTest(testDispatcher) {
+            val (component, played) = playRoomHeld(MutableStateFlow(null))
+
+            component.playPrevious()
+            advanceUntilIdle()
+
+            assertEquals(listOf("a", "a"), played)
         }
 }

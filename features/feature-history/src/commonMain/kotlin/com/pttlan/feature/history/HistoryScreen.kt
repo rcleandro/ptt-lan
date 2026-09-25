@@ -82,6 +82,8 @@ fun HistoryScreen(component: HistoryComponent) {
         queue = queue,
         onPlayClick = component::playMessage,
         onPlayChannelClick = component::playChannel,
+        onPrevious = component::playPrevious,
+        onNext = component::playNext,
         onClearCacheClick = component::clearAllMessages,
         onDeleteMessage = component::deleteMessage,
         onDeleteChannelClick = component::deleteChannelMessages,
@@ -98,6 +100,8 @@ fun HistoryScreenContent(
     queue: List<VoiceMessage> = emptyList(),
     onPlayClick: (VoiceMessage) -> Unit,
     onPlayChannelClick: (String) -> Unit = {},
+    onPrevious: () -> Unit = {},
+    onNext: () -> Unit = {},
     onClearCacheClick: () -> Unit,
     onDeleteMessage: (VoiceMessage) -> Unit,
     onDeleteChannelClick: (String) -> Unit,
@@ -149,7 +153,12 @@ fun HistoryScreenContent(
             MiniPlayer(
                 message = playingMessage,
                 isPaused = isPaused,
-                queueLabel = if (queueIndex >= 0) "${queueIndex + 1} de ${queue.size}" else null,
+                queue =
+                    if (queueIndex >= 0) {
+                        QueueControls("${queueIndex + 1} de ${queue.size}", queueIndex < queue.lastIndex, onPrevious, onNext)
+                    } else {
+                        null
+                    },
                 position = playbackPosition?.takeIf { it.messageId == playingMessage.id },
                 onPlayPause = { onPlayClick(playingMessage) },
                 modifier = Modifier.align(Alignment.BottomCenter),

@@ -14,6 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,11 +40,19 @@ private const val SECONDS_PER_MINUTE = 60L
 private const val PROGRESS_TRACK_ALPHA = 0.18f
 private const val PROGRESS_LABEL_ALPHA = 0.7f
 
+/** The mini player's controls while a room plays in sequence. */
+internal class QueueControls(
+    val label: String,
+    val hasNext: Boolean,
+    val onPrevious: () -> Unit,
+    val onNext: () -> Unit,
+)
+
 @Composable
 internal fun MiniPlayer(
     message: VoiceMessage,
     isPaused: Boolean,
-    queueLabel: String?,
+    queue: QueueControls?,
     position: PlaybackPosition?,
     onPlayPause: () -> Unit,
     modifier: Modifier = Modifier,
@@ -55,7 +68,8 @@ internal fun MiniPlayer(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        SenderAvatar(message.senderNickname)
+        // The skip buttons take the avatar's room, so the name still fits on a phone.
+        if (queue == null) SenderAvatar(message.senderNickname)
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = message.senderNickname,
@@ -65,10 +79,18 @@ internal fun MiniPlayer(
                 overflow = TextOverflow.Ellipsis,
             )
             val state = if (isPaused) "pausado" else "tocando"
-            SectionLabel(text = listOfNotNull("# ${message.channelId}", queueLabel, state).joinToString(" · "))
+            SectionLabel(text = listOfNotNull("# ${message.channelId}", queue?.label, state).joinToString(" · "))
             PlaybackProgress(position = position, fallbackDurationMs = message.durationMs)
         }
+        if (queue != null) {
+            IconButton(onClick = queue.onPrevious) { Icon(Icons.Default.SkipPrevious, contentDescription = "Anterior") }
+        }
         PlayButton(isPlaying = !isPaused, isActive = true, onClick = onPlayPause, size = 52)
+        if (queue != null) {
+            IconButton(onClick = queue.onNext, enabled = queue.hasNext) {
+                Icon(Icons.Default.SkipNext, contentDescription = "Próxima")
+            }
+        }
     }
 }
 
