@@ -58,6 +58,7 @@ import com.pttlan.core.designsystem.components.PttTopBar
 import com.pttlan.core.designsystem.components.SectionLabel
 import com.pttlan.core.designsystem.components.contentCard
 import com.pttlan.core.designsystem.components.glass
+import com.pttlan.core.designsystem.components.readableWidth
 import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.domain.ptt.model.PlaybackPosition
@@ -124,6 +125,7 @@ fun HistoryScreenContent(
         }
 
         PttTopBar(
+            modifier = Modifier.readableWidth(),
             navigation = { GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, "Voltar", onBack) },
             actions = {
                 if (messages.isNotEmpty()) {

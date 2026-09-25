@@ -62,6 +62,7 @@ import com.pttlan.core.designsystem.components.PttTopBar
 import com.pttlan.core.designsystem.components.SectionLabel
 import com.pttlan.core.designsystem.components.SegmentedControl
 import com.pttlan.core.designsystem.components.contentCard
+import com.pttlan.core.designsystem.components.readableWidth
 import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.core.designsystem.theme.PttTheme
 import kotlin.math.roundToInt
@@ -118,6 +119,7 @@ fun SettingsScreenContent(
             modifier =
                 Modifier
                     .fillMaxSize()
+                    .readableWidth()
                     .verticalScroll(rememberScrollState())
                     .windowInsetsPadding(WindowInsets.statusBars)
                     .windowInsetsPadding(WindowInsets.navigationBars)
@@ -139,7 +141,10 @@ fun SettingsScreenContent(
             )
         }
 
-        PttTopBar(navigation = { GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, "Voltar", onBack) })
+        PttTopBar(
+            modifier = Modifier.readableWidth(),
+            navigation = { GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, "Voltar", onBack) },
+        )
     }
 
     if (showCacheLocationDialog) {

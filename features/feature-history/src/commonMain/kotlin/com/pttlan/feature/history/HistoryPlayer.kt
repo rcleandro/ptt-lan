@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.pttlan.core.designsystem.components.SectionLabel
 import com.pttlan.core.designsystem.components.glass
+import com.pttlan.core.designsystem.components.readableWidth
 import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.domain.ptt.model.PlaybackPosition
 import com.pttlan.domain.ptt.model.VoiceMessage
@@ -45,7 +46,7 @@ internal fun MiniPlayer(
     Row(
         modifier =
             modifier
-                .fillMaxWidth()
+                .readableWidth()
                 .windowInsetsPadding(WindowInsets.navigationBars)
                 .padding(horizontal = 12.dp, vertical = 16.dp)
                 .glass(MaterialTheme.shapes.extraLarge)

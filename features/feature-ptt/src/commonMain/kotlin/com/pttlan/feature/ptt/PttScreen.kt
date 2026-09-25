@@ -50,6 +50,7 @@ import com.pttlan.core.designsystem.components.PttTopBar
 import com.pttlan.core.designsystem.components.SectionLabel
 import com.pttlan.core.designsystem.components.StatusDot
 import com.pttlan.core.designsystem.components.glass
+import com.pttlan.core.designsystem.components.readableWidth
 import com.pttlan.core.designsystem.components.snackbar.PttSnackbarType
 import com.pttlan.core.designsystem.components.snackbar.SnackbarController
 import com.pttlan.core.designsystem.components.snackbar.SnackbarEvent
@@ -108,8 +109,7 @@ fun PttScreenContent(
     val buttonState = state.buttonState()
 
     BoxWithConstraints(modifier = modifier.fillMaxSize().windowInsetsPadding(WindowInsets.navigationBars)) {
-        // Landscape phones and Android Automotive head units: talk area and channel area side by side.
-        val isWide = maxWidth > maxHeight && maxHeight < CompactHeight
+        val isWide = isSideBySide(maxWidth, maxHeight)
         val buttonSize = if (maxHeight < RegularHeight) 160.dp else 208.dp
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -130,17 +130,16 @@ fun PttScreenContent(
             if (isWide) {
                 Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                     TalkArea(state, buttonState, buttonSize, onIntent, Modifier.weight(1f))
-                    ChannelArea(state, buttonState, onIntent, Modifier.weight(1f))
+                    ChannelArea(state, buttonState, onIntent, Modifier.weight(1f).readableWidth())
                 }
             } else {
                 TalkArea(state, buttonState, buttonSize, onIntent, Modifier.weight(1f))
-                ChannelArea(state, buttonState, onIntent)
+                ChannelArea(state, buttonState, onIntent, Modifier.readableWidth())
             }
         }
     }
 }
 
-private val CompactHeight = 600.dp
 private val RegularHeight = 700.dp
 
 @Composable

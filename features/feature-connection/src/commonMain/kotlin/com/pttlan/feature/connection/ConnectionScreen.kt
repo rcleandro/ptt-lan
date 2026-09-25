@@ -52,6 +52,7 @@ import com.pttlan.core.designsystem.components.SectionLabel
 import com.pttlan.core.designsystem.components.StatusDot
 import com.pttlan.core.designsystem.components.contentCard
 import com.pttlan.core.designsystem.components.glass
+import com.pttlan.core.designsystem.components.readableWidth
 import com.pttlan.core.designsystem.components.snackbar.PttSnackbarType
 import com.pttlan.core.designsystem.components.snackbar.SnackbarController
 import com.pttlan.core.designsystem.components.snackbar.SnackbarEvent
@@ -144,7 +145,7 @@ private fun ServerList(
     onOpenHistory: (() -> Unit)?,
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.statusBars),
+        modifier = Modifier.fillMaxSize().readableWidth().windowInsetsPadding(WindowInsets.statusBars),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = DockClearance),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -316,7 +317,7 @@ private fun ManualConnectDock(
     Column(
         modifier =
             modifier
-                .fillMaxWidth()
+                .readableWidth()
                 .windowInsetsPadding(WindowInsets.navigationBars)
                 .imePadding()
                 .padding(horizontal = 12.dp, vertical = 16.dp)
