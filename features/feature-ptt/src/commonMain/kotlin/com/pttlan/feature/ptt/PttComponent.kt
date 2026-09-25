@@ -4,6 +4,8 @@ import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.Lifecycle
 import com.pttlan.core.datastore.SettingsKeys
+import com.pttlan.core.designsystem.generated.resources.Res
+import com.pttlan.core.designsystem.generated.resources.default_nickname
 import com.pttlan.domain.ptt.model.ParticipantDomain
 import com.pttlan.domain.ptt.repository.VoiceRepository
 import com.pttlan.domain.ptt.usecase.JoinChannelUseCase
@@ -26,8 +28,12 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+
+/** Characters of the user id in the fallback nickname, when none was saved. */
+private const val NICKNAME_SUFFIX_LENGTH = 4
 
 data class PttState(
     val channelId: String = "",
@@ -55,8 +61,9 @@ sealed interface PttEffect {
 
     data object NavigateToHistory : PttEffect
 
+    /** [serverReason] is the text the server sent; null when the app itself saw the channel busy. */
     data class ShowFloorDenied(
-        val reason: String,
+        val serverReason: String?,
     ) : PttEffect
 }
 
@@ -87,7 +94,9 @@ class PttComponent(
 
     init {
         scope.launch {
-            val nickname = settings.getString(SettingsKeys.NICKNAME, "User-${userId.take(4)}")
+            val nickname =
+                settings.getStringOrNull(SettingsKeys.NICKNAME)
+                    ?: getString(Res.string.default_nickname, userId.take(NICKNAME_SUFFIX_LENGTH))
             joinChannelUseCase(channelId = channelId, userId = userId, nickname = nickname)
         }
 
@@ -147,7 +156,7 @@ class PttComponent(
         when (intent) {
             is PttIntent.PressPtt -> {
                 if (_state.value.floorBlocked) {
-                    scope.launch { _effects.emit(PttEffect.ShowFloorDenied("Canal ocupado")) }
+                    scope.launch { _effects.emit(PttEffect.ShowFloorDenied(serverReason = null)) }
                     return
                 }
                 scope.launch {

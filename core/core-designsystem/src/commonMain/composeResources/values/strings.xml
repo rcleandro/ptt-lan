@@ -68,4 +68,25 @@
     <string name="stop_host_title">Encerrar a sala?</string>
     <string name="stop_host_text">Você está hospedando esta sala. Ao sair, ela será encerrada e todos serão desconectados.</string>
     <string name="stop_host_confirm">Encerrar</string>
+
+    <!-- Push-to-talk screen -->
+    <string name="ptt_back_to_channels">Voltar para canais</string>
+    <string name="ptt_participants">%1$d no canal</string>
+    <string name="ptt_leave">Sair do canal</string>
+    <string name="ptt_in_channel">No canal</string>
+    <string name="ptt_status_free">Canal livre</string>
+    <string name="ptt_status_free_headline">Segure para falar</string>
+    <string name="ptt_status_requesting">Pedindo a palavra</string>
+    <string name="ptt_status_requesting_headline">Aguardando…</string>
+    <string name="ptt_status_transmitting">Transmitindo</string>
+    <string name="ptt_status_transmitting_headline">Você está no ar</string>
+    <string name="ptt_status_receiving">Recebendo</string>
+    <string name="ptt_status_receiving_headline">%1$s está falando</string>
+    <string name="ptt_someone">Alguém</string>
+    <string name="ptt_hint_idle">ou use o botão de mídia do fone ou do volante</string>
+    <string name="ptt_hint_requesting">solte para cancelar</string>
+    <string name="ptt_hint_transmitting">solte para encerrar</string>
+    <string name="ptt_hint_receiving">aguarde a sua vez para falar</string>
+    <string name="ptt_channel_busy">Canal ocupado</string>
+    <string name="default_nickname">User-%1$s</string>
 </resources>

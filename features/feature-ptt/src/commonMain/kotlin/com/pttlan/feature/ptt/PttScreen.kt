@@ -56,9 +56,30 @@ import com.pttlan.core.designsystem.components.readableWidth
 import com.pttlan.core.designsystem.components.snackbar.PttSnackbarType
 import com.pttlan.core.designsystem.components.snackbar.SnackbarController
 import com.pttlan.core.designsystem.components.snackbar.SnackbarEvent
+import com.pttlan.core.designsystem.generated.resources.Res
+import com.pttlan.core.designsystem.generated.resources.ptt_channel_busy
+import com.pttlan.core.designsystem.generated.resources.ptt_hint_idle
+import com.pttlan.core.designsystem.generated.resources.ptt_hint_receiving
+import com.pttlan.core.designsystem.generated.resources.ptt_hint_requesting
+import com.pttlan.core.designsystem.generated.resources.ptt_hint_transmitting
+import com.pttlan.core.designsystem.generated.resources.ptt_in_channel
+import com.pttlan.core.designsystem.generated.resources.ptt_leave
+import com.pttlan.core.designsystem.generated.resources.ptt_someone
+import com.pttlan.core.designsystem.generated.resources.ptt_status_free
+import com.pttlan.core.designsystem.generated.resources.ptt_status_free_headline
+import com.pttlan.core.designsystem.generated.resources.ptt_status_receiving
+import com.pttlan.core.designsystem.generated.resources.ptt_status_receiving_headline
+import com.pttlan.core.designsystem.generated.resources.ptt_status_requesting
+import com.pttlan.core.designsystem.generated.resources.ptt_status_requesting_headline
+import com.pttlan.core.designsystem.generated.resources.ptt_status_transmitting
+import com.pttlan.core.designsystem.generated.resources.ptt_status_transmitting_headline
+import com.pttlan.core.designsystem.resolveString
 import com.pttlan.core.designsystem.theme.AppTheme
+import com.pttlan.core.designsystem.theme.Dimens
 import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.domain.ptt.model.ParticipantDomain
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun PttScreen(
@@ -75,7 +96,7 @@ fun PttScreen(
             if (effect is PttEffect.ShowFloorDenied) {
                 SnackbarController.sendEvent(
                     SnackbarEvent(
-                        message = effect.reason,
+                        message = effect.serverReason ?: resolveString(Res.string.ptt_channel_busy),
                         type = PttSnackbarType.ErrorOrWarning,
                     ),
                 )
@@ -114,7 +135,7 @@ fun PttScreenContent(
 
     BoxWithConstraints(modifier = modifier.fillMaxSize().windowInsetsPadding(WindowInsets.navigationBars)) {
         val isWide = isSideBySide(maxWidth, maxHeight)
-        val buttonSize = if (maxHeight < RegularHeight) 160.dp else 208.dp
+        val buttonSize = if (maxHeight < RegularHeight) CompactButtonSize else RegularButtonSize
         val tabletopFold = LocalTabletopFold.current
         val topBar = @Composable { ChannelTopBar(state, onIntent, onBack, showHistory, connectionStatus) }
 
@@ -126,9 +147,9 @@ fun PttScreenContent(
                     Spacer(modifier = Modifier.weight(1f))
                     StatusBlock(buttonState = buttonState, speakerName = state.currentSpeakerName)
                     Spacer(modifier = Modifier.weight(1f))
-                    Box(modifier = Modifier.readableWidth().padding(bottom = 16.dp)) { ParticipantsPanel(state, buttonState) }
+                    Box(modifier = Modifier.readableWidth().padding(bottom = Dimens.SpaceXl)) { ParticipantsPanel(state, buttonState) }
                 }
-                TalkArea(state, buttonState, 160.dp, onIntent, Modifier.weight(1f), withStatus = false)
+                TalkArea(state, buttonState, CompactButtonSize, onIntent, Modifier.weight(1f), withStatus = false)
                 ChannelArea(state, buttonState, onIntent, Modifier.readableWidth(), withParticipants = false)
             } else if (isWide) {
                 topBar()
@@ -146,6 +167,10 @@ fun PttScreenContent(
 }
 
 private val RegularHeight = 700.dp
+private val RegularButtonSize = 208.dp
+private val CompactButtonSize = 160.dp
+private val ParticipantsPaddingVertical = 14.dp
+private val ParticipantsSpacing = 10.dp
 
 @Composable
 private fun TalkArea(
@@ -163,7 +188,7 @@ private fun TalkArea(
     ) {
         if (withStatus) {
             StatusBlock(buttonState = buttonState, speakerName = state.currentSpeakerName)
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Dimens.SpaceXl))
         }
         PttButton(
             state = buttonState,
@@ -172,11 +197,11 @@ private fun TalkArea(
             buttonSize = buttonSize,
         )
         Text(
-            text = buttonState.hint(),
+            text = stringResource(buttonState.hint()),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = Dimens.Space3xl, vertical = Dimens.SpaceLg),
         )
     }
 }
@@ -192,67 +217,14 @@ private fun ChannelArea(
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         if (withParticipants) ParticipantsPanel(state = state, buttonState = buttonState)
         PillButton(
-            text = "Sair do canal",
+            text = stringResource(Res.string.ptt_leave),
             onClick = { onIntent(PttIntent.LeaveChannel) },
             style = PillButtonStyle.GlassDestructive,
             icon = Icons.AutoMirrored.Filled.Logout,
-            modifier = Modifier.padding(vertical = 16.dp),
+            modifier = Modifier.padding(vertical = Dimens.SpaceXl),
         )
     }
 }
-
-@Composable
-private fun StatusBlock(
-    buttonState: PttButtonState,
-    speakerName: String?,
-) {
-    val colors = PttTheme.customColors
-    val (eyebrow, color: Color, headline) =
-        when (buttonState) {
-            PttButtonState.Idle -> {
-                Triple("Canal livre", colors.statusOnline, "Segure para falar")
-            }
-
-            PttButtonState.Requesting -> {
-                Triple("Pedindo a palavra", colors.accentTx, "Aguardando…")
-            }
-
-            PttButtonState.Transmitting -> {
-                Triple("Transmitindo", colors.accentTx, "Você está no ar")
-            }
-
-            PttButtonState.Receiving -> {
-                Triple("Recebendo", MaterialTheme.colorScheme.primary, "${speakerName ?: "Alguém"} está falando")
-            }
-        }
-
-    Column(
-        modifier = Modifier.padding(horizontal = 24.dp).semantics { liveRegion = LiveRegionMode.Polite },
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            StatusDot(color = color, halo = buttonState != PttButtonState.Idle)
-            SectionLabel(text = eyebrow, color = color)
-        }
-        Text(
-            text = headline,
-            style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
-
-private fun PttButtonState.hint(): String =
-    when (this) {
-        PttButtonState.Idle -> "ou use o botão de mídia do fone ou do volante"
-        PttButtonState.Requesting -> "solte para cancelar"
-        PttButtonState.Transmitting -> "solte para encerrar"
-        PttButtonState.Receiving -> "aguarde a sua vez para falar"
-    }
 
 @Composable
 private fun ParticipantsPanel(
@@ -263,18 +235,18 @@ private fun ParticipantsPanel(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = Dimens.SpaceXl)
                 .glass(MaterialTheme.shapes.large)
-                .padding(vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+                .padding(vertical = ParticipantsPaddingVertical),
+        verticalArrangement = Arrangement.spacedBy(ParticipantsSpacing),
     ) {
-        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
-            SectionLabel(text = "No canal", modifier = Modifier.weight(1f))
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.Space2xl)) {
+            SectionLabel(text = stringResource(Res.string.ptt_in_channel), modifier = Modifier.weight(1f))
             SectionLabel(text = state.participants.size.toString())
         }
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceXs, Alignment.CenterHorizontally),
         ) {
             items(state.participants, key = { it.userId }) { participant ->
                 val isSelf = participant.userId == state.localUserId
