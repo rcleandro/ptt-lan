@@ -37,6 +37,10 @@ graph LR
     F24 --> F25[25 App Wear OS]
     F21 --> F26[26 Fone Bluetooth]
     F22 --> F27[27 Layout para dobráveis]
+    F27 --> F28[28 Player do histórico]
+    F28 --> F29[29 Testes nos dispositivos]
+    F29 --> F30[30 Segurança do app e do host]
+    F29 --> F31[31 Desempenho e eficiência]
 ```
 
 A fase 18 vem primeiro porque é barata e deixa o CI confiável para as próximas. A 19 vem antes da 20 porque
@@ -393,6 +397,99 @@ postura (meio aberto) é só no Android.
 
 **Critério de conclusão:** no Fold aberto e fechado, no Flip aberto, meio aberto e na tela externa, e no iPhone e
 iPad, nenhuma tela fica esticada ou cortada, e dobrar durante uma transmissão não afeta a conexão.
+
+---
+
+## Fase 28 — Player do histórico e lista de reprodução
+
+**Objetivo:** ouvir o que foi falado numa sala na ordem em que foi publicado, em sequência, sem tocar um áudio de
+cada vez. Hoje o player (`HistoryPlayer.kt`, `HistoryComponent.playMessage`) toca uma mensagem por vez, com tocar,
+pausar e parar; a barra de progresso só mostra o andamento, não dá para arrastar. A lista já vem do banco em ordem
+de gravação (`VoiceMessage.sq`, `ORDER BY recordedAt ASC`) e a tela já agrupa por canal (`HistoryMessageList.kt:86`),
+então a ordem de publicação está pronta para usar. Limite que continua: o histórico é local, com o que o aparelho
+ouviu enquanto estava no canal. O servidor não guarda áudio, então o que se perdeu fora do canal não aparece. Vem
+antes da Fase 29 para entrar na rodada de testes nos aparelhos.
+
+| Item | Status | Ação | Esforço |
+|---|---|---|---|
+| 28.1 Lista de reprodução por sala | a fazer | Botão "Tocar a sala" no cabeçalho de cada canal: toca todas as mensagens daquela sala em ordem de `recordedAt`, uma atrás da outra, e para no fim. Tocar numa mensagem com a fila ativa segue a partir dela. O mini player mostra a posição na fila ("3 de 12"), a sala e quem falou. A fila fica no `HistoryComponent`, sobre o `playMessage` que já existe, que termina quando o áudio acaba. Testes da ordem, do avanço automático e do fim da fila | M |
+| 28.2 Anterior e próxima | a fazer | Botões de voltar e avançar no mini player com a fila ativa. Voltar nos primeiros segundos vai para a mensagem anterior; depois disso, reinicia a atual | P |
+| 28.3 Pular dentro do áudio | a fazer | Barra de progresso arrastável e botões de voltar e avançar 5 s. No PCM a posição é direta (32 bytes por ms, a 16 kHz e 16 bits). Se a 31.4 (histórico em Opus) vier antes, o pulo usa um índice de frames | M |
+| 28.4 Velocidade | a fazer | 1×, 1,5× e 2× sem mudar o tom da voz. Android tem isso pronto (`PlaybackParams` no `AudioTrack`); iOS também (`AVAudioUnitTimePitch`). O Desktop não tem nada pronto e precisa de um time-stretch (WSOLA ou uma porta do Sonic). Pode sair primeiro no Android e no iOS | M/G |
+| 28.5 Não ouvidas e "continuar de onde parei" | a fazer | Coluna `playedAt` em `VoiceMessage`, marcada quando a mensagem toca até o fim. Contador de não ouvidas no cabeçalho de cada sala e opção "Tocar não ouvidas", que monta a fila da 28.1 só com elas. É a primeira migração do banco (hoje não existe nenhum `.sqm`), então precisa de teste de migração | M |
+| 28.6 Ao vivo tem prioridade | 🔎 | Reproduzir o que acontece hoje quando chega uma fala ao vivo durante um replay. O esperado: pausar a fila, tocar o ao vivo e retomar a fila quando o canal ficar livre. Sem isso, os dois áudios saem juntos | M |
+| 28.7 Tocar com a tela apagada | 🔎 | Verificar se o replay continua em segundo plano e com a tela bloqueada. Se não continuar, controles de mídia do sistema (MediaSession no Android, Now Playing no iOS) com tocar, pausar e próxima, sem abrir o app | M/G |
+| 28.8 Exportar um áudio | a decidir | Compartilhar uma mensagem como `.wav` (cabeçalho WAV sobre o PCM, sem dependência nova) pelo menu de compartilhar do sistema | P |
+
+**Critério de conclusão:** numa sala com várias mensagens, "Tocar a sala" toca tudo na ordem em que foi publicado,
+com próxima, anterior, pulo e velocidade funcionando no Android, no iOS e no Desktop (velocidade onde houver);
+não ouvidas marcadas e contadas; uma fala ao vivo durante o replay não se mistura com ele.
+
+---
+
+## Fase 29 — Testes de tela e de funcionalidade nos dispositivos
+
+**Objetivo:** passar o app inteiro, tela por tela e fluxo por fluxo, nos aparelhos reais (razr 60, relógio Wear OS,
+Mac, iPhone e iPad ou os simuladores, iPhone Duo no Xcode 27.1), com áudio cruzado entre plataformas. O que for
+encontrado vira correção nesta fase, se for pequeno, ou item das fases 29 e 30. As ideias de funcionalidade só
+entram depois dos testes, escolhidas pelo que os testes mostrarem. Hoje cada fase testou só o que mudou, e ninguém
+passou o app inteiro de ponta a ponta desde a Fase 17.
+
+| Item | Status | Ação | Esforço |
+|---|---|---|---|
+| 29.1 Roteiro e matriz de aparelhos | a fazer | `docs/TESTES_DISPOSITIVOS.md` com aparelhos × fluxos: conectar (descoberta e IP manual), hospedar com e sem PIN, criar e trocar canal, falar e ouvir, disputa pela palavra, histórico e replay, configurações, segundo plano, reconexão, fone Bluetooth e relógio. Cada linha com resultado e data, para repetir a rodada antes de cada release | P |
+| 29.2 Rodada funcional com áudio cruzado | a fazer | Android ↔ iOS ↔ Desktop ↔ Wear no mesmo canal, com host no Desktop e depois no Android: quem fala é ouvido por todos, dois apertam juntos e só um ganha, quem cai sai da lista e o floor é solto. Anotar a latência percebida (boca a ouvido) para a 31.1 | M |
+| 29.3 Revisão visual | a fazer | Capturas de cada tela em claro e escuro, fonte do sistema em 200%, retrato e paisagem, e nos tamanhos da Fase 27. Procurar texto cortado, sobreposição e alvos de toque abaixo de 48dp. **Achado da 27.2:** no lado a lado aparecem duas setas de voltar juntas (a da lista volta para a Conexão e a do PTT fecha o canal), fácil de confundir | M |
+| 29.4 Acessibilidade | a fazer | TalkBack e VoiceOver: o botão PTT precisa de rótulo e de uma ação que não dependa de segurar (por exemplo, dois toques para começar e dois para parar com o leitor ligado); status e participantes anunciados quando mudam; contraste dos textos secundários | M |
+| 29.5 Rede real | a fazer | Wi-Fi com isolamento de clientes (roteador de convidados), troca de rede no meio da fala, servidor que cai e volta, modo avião, celular como hotspot. Conferir se cada caso mostra uma mensagem que diga o que fazer, em vez de um erro técnico | M |
+| 29.6 Pendências abertas | a fazer | Fechar o que ficou parcial: 25.1 (relógio sem o celular por perto), 26.1 (iOS tocando no fone), 20.3 🔎 ("Nome já em uso" ao reconectar) e layout no iPhone Duo (larguras da 27.1 e 27.2; a postura mesa no iOS depende de a API da dobradiça do iOS 27.1 ser lida no `iosApp`, em Swift, porque o Kotlin 2.4 ainda não traz o SDK 27) | M |
+| 29.7 Melhorias e funcionalidades candidatas | a decidir | Lista para escolher depois da 29.2–29.6, sem compromisso: som curto ao começar e ao terminar a fala (o "câmbio" do rádio); vibração ao ganhar ou perder a palavra; modo "tocar para falar" (liga e desliga) como opção de acessibilidade; indicador de nível do microfone enquanto fala; aviso quando alguém entra ou sai do canal; atalho de teclado para falar no Desktop (barra de espaço segurada). Cada uma escolhida vira item numerado aqui | — |
+
+**Critério de conclusão:** o roteiro da 29.1 rodado inteiro em todos os aparelhos, com o resultado registrado;
+nenhum fluxo principal quebrado; os achados corrigidos ou transformados em itens com fase definida.
+
+---
+
+## Fase 30 — Segurança do app e do modo host
+
+**Objetivo:** revisar o que mudou desde a Fase 19, que protegeu o servidor dedicado. Depois dela vieram o modo host
+(24), o PIN de sala, o relógio e o histórico gravado no aparelho, e nenhum desses passou por revisão de segurança.
+Os itens ✅ foram confirmados lendo o código; os 🔎 precisam ser reproduzidos antes de mexer. Se a revisão (30.1)
+não achar mais nada, a fase fecha só com os ✅.
+
+| Item | Status | Evidência | Ação | Esforço |
+|---|---|---|---|---|
+| 30.1 Revisão das superfícies novas | a fazer | Modo host no Android e Desktop, PIN, Wear, histórico, descoberta por mDNS | Uma passada com o modelo de ameaça da Fase 19 (quem está na mesma rede consegue o quê?) sobre as superfícies novas; cada achado vira item desta fase | M |
+| 30.2 Backup leva o histórico de voz | ✅ | `androidApp/src/main/AndroidManifest.xml:22`: `android:allowBackup="true"`, sem regras de extração | O backup automático do Google copia settings (incluindo o `deviceId`) e os áudios do histórico. Desligar o backup ou usar `dataExtractionRules` para excluir o cache de voz e as settings de identidade | P |
+| 30.3 PIN sem tamanho mínimo | ✅ | `AuthRoutes.kt` compara o PIN em tempo constante, mas a tela de hospedar aceita qualquer tamanho; o login permite 5 tentativas por minuto por IP (`ServerModule.kt:118`) | Um PIN de 1 a 4 dígitos cai em minutos, ou horas, por força bruta. Exigir no mínimo 6 dígitos ao hospedar e travar a sala por alguns minutos depois de N erros seguidos, contando por sala e não só por IP | P |
+| 30.4 Expulsar não impede voltar | 🔎 | `ChannelRegistry.kickUser` só tira do canal; o JWT vale 24 h (`JwtConfig.kt:45`) | Reproduzir: expulsar pelo painel e ver se o cliente entra de novo sozinho ao reconectar (20.1). Se entrar, bloquear o `sub` expulso até o token vencer | M |
+| 30.5 Certificado na rede local | a decidir | Na LAN, Android, iOS e JVM aceitam qualquer certificado de host local (19.3). Quem está na mesma rede pode se passar pelo servidor | Evolução já prevista na 19.3: TOFU com o fingerprint do certificado guardado por host, mostrado junto ao PIN no modo host. Só vale se o uso em rede não confiável for real | M |
+| 30.6 Histórico no armazenamento externo em Android 8 e 9 | ✅ | Opção "Externo" usa `externalCacheDir` (`AndroidStorageInfoProvider.kt:61`); `minSdk` 26 | Antes do Android 10, outros apps com permissão de armazenamento leem essa pasta. Esconder a opção "Externo" abaixo da API 29 | P |
+| 30.7 Revisão de dependências no CI | a fazer | O Dependabot abre PRs, mas nada barra uma dependência com vulnerabilidade conhecida | `actions/dependency-review-action` nos PRs, falhando em severidade alta | P |
+
+**Critério de conclusão:** os itens ✅ corrigidos, com teste onde houver lógica (PIN, bloqueio); os 🔎 reproduzidos
+e corrigidos, ou descartados com o motivo anotado; a revisão da 30.1 registrada.
+
+---
+
+## Fase 31 — Desempenho e eficiência
+
+**Objetivo:** medir antes de otimizar. Primeiro números de abertura, latência, bateria, memória e armazenamento nos
+aparelhos da Fase 29; depois só as otimizações que esses números justificarem. O servidor já teve o hot path
+revisto na 21.3, então o foco aqui é o app.
+
+| Item | Status | Evidência | Ação | Esforço |
+|---|---|---|---|---|
+| 31.1 Linha de base | a fazer | Não há nenhum número registrado de abertura, latência ou bateria | Medir e anotar aqui: abertura a frio (Macrobenchmark), latência boca a ouvido (gravando os dois aparelhos juntos), bateria em 30 min de canal parado e em 30 min falando (`dumpsys batterystats`), memória na tela PTT e tamanho do APK. Os itens seguintes são refeitos contra esses números | M |
+| 31.2 R8 no release | ✅ | `androidApp` e `wearApp` não têm bloco `buildTypes`: o release sai sem minificação nem remoção de recursos | Ligar `isMinifyEnabled` e `isShrinkResources`, com regras de keep para kotlinx.serialization, Koin, Ktor e o JNI do Opus. Conferir a 29.2 inteira no APK de release, porque o R8 quebra em tempo de execução, não na compilação | M |
+| 31.3 Baseline Profile | a fazer | Sem `profileinstaller` nem perfil gerado | Perfil para a abertura e para a tela PTT, gerado com Macrobenchmark. Só manter se a 31.1 mostrar ganho na abertura | M |
+| 31.4 Histórico em Opus | ✅ | `HistoryRecorder.kt:61` grava `.pcm`: 16 kHz, 16 bits, cerca de 1,9 MB por minuto, mesmo com Opus no fio (`USE_OPUS` é o padrão) | Gravar os frames Opus recebidos, cerca de 10× menores, e decodificar ao tocar. Os arquivos `.pcm` antigos continuam tocando até a limpeza | M |
+| 31.5 Wi-Fi com a tela apagada | 🔎 | Nenhum `WifiLock` na sessão | Com a tela apagada, a economia de energia do Wi-Fi pode atrasar ou picotar o áudio recebido. Medir na 31.1; se confirmar, `WIFI_MODE_FULL_LOW_LATENCY` só enquanto houver sessão, junto do foreground service | P |
+| 31.6 Recomposições na tela PTT | 🔎 | Animações do botão e dos participantes durante a fala | Contar recomposições no Layout Inspector durante uma fala; corrigir se algo recompor a tela inteira a cada frame de áudio | P |
+| 31.7 Carga do servidor | a fazer | Só existem testes funcionais | Teste de carga com N clientes JVM simulados (o próprio `PttWebSocketClient`), medindo CPU e memória do host por canal e por falante. Define quantas pessoas o modo host no celular aguenta | M |
+
+**Critério de conclusão:** os números da 31.1 registrados antes e depois de cada otimização; nenhuma regressão na
+rodada da 29.2; o APK de release com R8 passando no roteiro da 29.1.
 
 ---
 
