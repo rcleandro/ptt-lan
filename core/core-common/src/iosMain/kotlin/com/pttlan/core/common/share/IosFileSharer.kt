@@ -4,6 +4,7 @@ import platform.Foundation.NSTemporaryDirectory
 import platform.Foundation.NSURL
 import platform.UIKit.UIActivityViewController
 import platform.UIKit.UIApplication
+import platform.UIKit.popoverPresentationController
 
 /** The share sheet (`UIActivityViewController`) over the app's current screen. */
 class IosFileSharer : FileSharer {
