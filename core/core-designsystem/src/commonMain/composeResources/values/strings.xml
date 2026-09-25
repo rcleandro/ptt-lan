@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Every text the user sees (pt-BR). Kept here, never in Kotlin, so the app can be translated by adding a
+     values-<language>/strings.xml. Grouped by screen. -->
+<resources>
+
+    <!-- Design system components -->
+    <string name="channel_name"># %1$s</string>
+    <string name="channel_card_empty">vazia</string>
+    <plurals name="channel_card_people">
+        <item quantity="one">%1$d pessoa</item>
+        <item quantity="other">%1$d pessoas</item>
+    </plurals>
+    <string name="status_online">conectado</string>
+    <string name="status_reconnecting">reconectando</string>
+    <string name="status_offline">offline</string>
+    <string name="ptt_button_idle">Falar: segure para transmitir</string>
+    <string name="ptt_button_requesting">Pedindo a palavra: solte para cancelar</string>
+    <string name="ptt_button_transmitting">Transmitindo: solte para encerrar</string>
+    <string name="ptt_button_receiving">Canal ocupado: aguarde para falar</string>
+    <string name="participant_self">Você</string>
+</resources>

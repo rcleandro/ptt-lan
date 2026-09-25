@@ -34,10 +34,19 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.pttlan.core.designsystem.theme.Dimens
 import com.pttlan.core.designsystem.theme.PttTheme
 
 private const val DISABLED_ALPHA = 0.45f
 private const val DESTRUCTIVE_FILL_ALPHA = 0.14f
+
+/** Round glass controls and the status badge share this height. */
+internal val GlassControlSize = 44.dp
+private val GlassIconSize = 22.dp
+private val PillPaddingHorizontal = 22.dp
+private val PillIconSize = 18.dp
+private val FieldPaddingHorizontal = 18.dp
+private val SegmentHeight = 36.dp
 
 /** 44dp round glass button for top bars. */
 @Composable
@@ -51,7 +60,7 @@ fun GlassIconButton(
     Box(
         modifier =
             modifier
-                .size(44.dp)
+                .size(GlassControlSize)
                 .glass(CircleShape)
                 .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -60,7 +69,7 @@ fun GlassIconButton(
             imageVector = icon,
             contentDescription = contentDescription,
             tint = tint,
-            modifier = Modifier.size(22.dp),
+            modifier = Modifier.size(GlassIconSize),
         )
     }
 }
@@ -110,13 +119,13 @@ fun PillButton(
                 .alpha(if (enabled) 1f else DISABLED_ALPHA)
                 .then(container)
                 .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-                .heightIn(min = 48.dp)
-                .padding(horizontal = 22.dp),
+                .heightIn(min = Dimens.TouchTarget)
+                .padding(horizontal = PillPaddingHorizontal),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd, Alignment.CenterHorizontally),
     ) {
         if (icon != null) {
-            Icon(imageVector = icon, contentDescription = null, tint = contentColor, modifier = Modifier.size(18.dp))
+            Icon(imageVector = icon, contentDescription = null, tint = contentColor, modifier = Modifier.size(PillIconSize))
         }
         Text(text = text, style = MaterialTheme.typography.labelLarge, color = contentColor)
     }
@@ -147,11 +156,11 @@ fun PttTextField(
             Box(
                 modifier =
                     Modifier
-                        .heightIn(min = 48.dp)
+                        .heightIn(min = Dimens.TouchTarget)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
-                        .padding(horizontal = 18.dp),
+                        .border(Dimens.Hairline, MaterialTheme.colorScheme.outline, CircleShape)
+                        .padding(horizontal = FieldPaddingHorizontal),
                 contentAlignment = Alignment.CenterStart,
             ) {
                 if (value.isEmpty()) {
@@ -177,8 +186,8 @@ fun LabeledTextField(
             modifier
                 .fillMaxWidth()
                 .contentCard()
-                .padding(horizontal = 18.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+                .padding(horizontal = FieldPaddingHorizontal, vertical = Dimens.SpaceLg),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceXs),
     ) {
         SectionLabel(text = label)
         BasicTextField(
@@ -228,10 +237,10 @@ fun <T> SegmentedControl(
                 .fillMaxWidth()
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.background)
-                .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
-                .padding(4.dp)
+                .border(Dimens.Hairline, MaterialTheme.colorScheme.outline, CircleShape)
+                .padding(Dimens.SpaceXs)
                 .selectableGroup(),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceXs),
     ) {
         options.forEach { (value, label) ->
             val isSelected = value == selected
@@ -239,7 +248,7 @@ fun <T> SegmentedControl(
                 modifier =
                     Modifier
                         .weight(1f)
-                        .height(36.dp)
+                        .height(SegmentHeight)
                         .then(if (isSelected) Modifier.glass(CircleShape) else Modifier.clip(CircleShape))
                         .selectable(selected = isSelected, role = Role.RadioButton, onClick = { onSelect(value) }),
                 contentAlignment = Alignment.Center,

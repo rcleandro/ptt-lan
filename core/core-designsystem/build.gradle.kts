@@ -13,6 +13,10 @@ kotlin {
         withHostTest {
             isIncludeAndroidResources = true
         }
+        // Compose resources (strings, fonts) reach the Android assets only with Android resources on
+        androidResources {
+            enable = true
+        }
     }
     iosArm64()
     iosSimulatorArm64()

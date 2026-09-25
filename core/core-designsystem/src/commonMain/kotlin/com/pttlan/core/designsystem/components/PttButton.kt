@@ -31,7 +31,14 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.pttlan.core.designsystem.generated.resources.Res
+import com.pttlan.core.designsystem.generated.resources.ptt_button_idle
+import com.pttlan.core.designsystem.generated.resources.ptt_button_receiving
+import com.pttlan.core.designsystem.generated.resources.ptt_button_requesting
+import com.pttlan.core.designsystem.generated.resources.ptt_button_transmitting
+import com.pttlan.core.designsystem.theme.Dimens
 import com.pttlan.core.designsystem.theme.PttTheme
+import org.jetbrains.compose.resources.stringResource
 
 private const val PRESSED_SCALE = 0.97f
 private const val GLOW_RADIUS_FACTOR = 1.25f
@@ -43,6 +50,15 @@ private const val TINT_HIGHLIGHT_MIX = 0.6f
 private const val TINT_EDGE_DARKEN = 0.3f
 private const val TINT_ALPHA = 0.9f
 private const val BOTTOM_SHADE_ALPHA = 0.22f
+private const val LENS_GRADIENT_SCALE = 1.2f
+private const val SHEEN_ALPHA = 0.4f
+private const val SHEEN_BOTTOM = 0.34f
+private val DefaultButtonSize = 208.dp
+private val RingSpacing = 16.dp
+private val RequestRingGap = 10.dp
+private val RequestRingStroke = 2.dp
+private val RequestRingDash = 10.dp
+private val RequestRingDashGap = 8.dp
 
 /**
  * Push-to-talk lens (ADR 0006). Clear glass when the channel is free, amber-tinted while transmitting,
@@ -54,8 +70,8 @@ fun PttButton(
     onPressStart: () -> Unit,
     onPressEnd: () -> Unit,
     modifier: Modifier = Modifier,
-    buttonSize: Dp = 208.dp,
-    buttonMargin: Dp = 16.dp,
+    buttonSize: Dp = DefaultButtonSize,
+    buttonMargin: Dp = Dimens.SpaceXl,
 ) {
     val colors = PttTheme.customColors
     val primary = MaterialTheme.colorScheme.primary
@@ -77,10 +93,10 @@ fun PttButton(
     )
     val label =
         when (state) {
-            PttButtonState.Idle -> "Falar: segure para transmitir"
-            PttButtonState.Requesting -> "Pedindo a palavra: solte para cancelar"
-            PttButtonState.Transmitting -> "Transmitindo: solte para encerrar"
-            PttButtonState.Receiving -> "Canal ocupado: aguarde para falar"
+            PttButtonState.Idle -> stringResource(Res.string.ptt_button_idle)
+            PttButtonState.Requesting -> stringResource(Res.string.ptt_button_requesting)
+            PttButtonState.Transmitting -> stringResource(Res.string.ptt_button_transmitting)
+            PttButtonState.Receiving -> stringResource(Res.string.ptt_button_receiving)
         }
     val lens =
         LensColors(
@@ -168,8 +184,8 @@ private fun DrawScope.drawHalo(
         for (ring in 1..RING_COUNT) {
             drawCircle(
                 color = tint.copy(alpha = RING_BASE_ALPHA / ring * tintProgress),
-                radius = radius + (ring * 16).dp.toPx(),
-                style = Stroke(width = 1.dp.toPx()),
+                radius = radius + RingSpacing.toPx() * ring,
+                style = Stroke(width = Dimens.Hairline.toPx()),
             )
         }
     }
@@ -177,11 +193,11 @@ private fun DrawScope.drawHalo(
     if (requestProgress > 0f) {
         drawCircle(
             color = lens.accent.copy(alpha = requestProgress),
-            radius = radius + 10.dp.toPx(),
+            radius = radius + RequestRingGap.toPx(),
             style =
                 Stroke(
-                    width = 2.dp.toPx(),
-                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(10.dp.toPx(), 8.dp.toPx())),
+                    width = RequestRingStroke.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(RequestRingDash.toPx(), RequestRingDashGap.toPx())),
                 ),
         )
     }
@@ -205,23 +221,23 @@ private fun DrawScope.drawLens(
                 0.46f to mid,
                 0.8f to edge,
                 center = Offset(size.width * 0.3f, size.height * 0.18f),
-                radius = size.maxDimension * 1.2f,
+                radius = size.maxDimension * LENS_GRADIENT_SCALE,
             ),
     )
     drawCircle(Brush.verticalGradient(0.55f to Color.Transparent, 1f to Color.Black.copy(alpha = BOTTOM_SHADE_ALPHA)))
     drawOval(
         brush =
             Brush.verticalGradient(
-                listOf(Color.White.copy(alpha = 0.4f), Color.Transparent),
+                listOf(Color.White.copy(alpha = SHEEN_ALPHA), Color.Transparent),
                 startY = size.height * 0.06f,
-                endY = size.height * 0.34f,
+                endY = size.height * SHEEN_BOTTOM,
             ),
         topLeft = Offset(size.width * 0.19f, size.height * 0.06f),
         size = Size(size.width * 0.62f, size.height * 0.28f),
     )
     drawCircle(
         color = lerp(lens.idleBorder, lerp(tint, Color.White, TINT_HIGHLIGHT_MIX), tintProgress),
-        radius = size.minDimension / 2 - 0.5.dp.toPx(),
-        style = Stroke(width = 1.dp.toPx()),
+        radius = size.minDimension / 2 - Dimens.Hairline.toPx() / 2,
+        style = Stroke(width = Dimens.Hairline.toPx()),
     )
 }

@@ -18,7 +18,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.pttlan.core.designsystem.generated.resources.Res
+import com.pttlan.core.designsystem.generated.resources.channel_card_empty
+import com.pttlan.core.designsystem.generated.resources.channel_card_people
+import com.pttlan.core.designsystem.generated.resources.channel_name
+import com.pttlan.core.designsystem.theme.Dimens
 import com.pttlan.core.designsystem.theme.PttTheme
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
+
+private val CardPaddingVertical = 14.dp
+private val PeopleIconSize = 14.dp
 
 @Composable
 fun ChannelCard(
@@ -36,31 +46,31 @@ fun ChannelCard(
                 .fillMaxWidth()
                 .contentCard()
                 .clickable(onClick = onClick)
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+                .padding(horizontal = Dimens.SpaceXl, vertical = CardPaddingVertical),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
     ) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)) {
             Text(
-                text = "# $name",
+                text = stringResource(Res.string.channel_name, name),
                 style = MaterialTheme.typography.titleMedium,
                 color = if (isEmpty) secondary else MaterialTheme.colorScheme.onBackground,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)) {
                 Icon(
                     imageVector = Icons.Default.People,
                     contentDescription = null,
                     tint = PttTheme.customColors.textTertiary,
-                    modifier = Modifier.size(14.dp),
+                    modifier = Modifier.size(PeopleIconSize),
                 )
                 Text(
                     text =
-                        when (participantCount) {
-                            0 -> "vazia"
-                            1 -> "1 pessoa"
-                            else -> "$participantCount pessoas"
+                        if (isEmpty) {
+                            stringResource(Res.string.channel_card_empty)
+                        } else {
+                            pluralStringResource(Res.plurals.channel_card_people, participantCount, participantCount)
                         },
                     style = MaterialTheme.typography.labelSmall,
                     color = secondary,
