@@ -13,18 +13,34 @@ object JwtConfig {
 
     // `PTT_JWT_SECRET` mantém os tokens válidos entre reinícios e entre instâncias.
     // Sem ele, uma chave aleatória por boot: bom para LAN, mas desloga todo mundo a cada restart.
-    private val SECRET =
-        System.getenv("PTT_JWT_SECRET")?.takeIf { it.isNotBlank() }
-            ?: UUID.randomUUID().toString()
+    private val fixedSecret = System.getenv("PTT_JWT_SECRET")?.takeIf { it.isNotBlank() }
 
-    private val algorithm = Algorithm.HMAC256(SECRET)
+    @Volatile
+    private var algorithm = newAlgorithm()
 
-    val verifier: JWTVerifier =
+    @Volatile
+    var verifier: JWTVerifier = newVerifier()
+        private set
+
+    private fun newAlgorithm() = Algorithm.HMAC256(fixedSecret ?: UUID.randomUUID().toString())
+
+    private fun newVerifier() =
         JWT
             .require(algorithm)
             .withIssuer(ISSUER)
             .withAudience(AUDIENCE)
             .build()
+
+    /**
+     * A new signing key, so every token issued before stops working. Host mode calls it for each room it opens:
+     * the key used to live as long as the app, and hosting again with a new PIN still let the old tokens in (30.1).
+     * A fixed `PTT_JWT_SECRET` stays, since keeping tokens across restarts is what it is for.
+     */
+    fun rotateKey() {
+        if (fixedSecret != null) return
+        algorithm = newAlgorithm()
+        verifier = newVerifier()
+    }
 
     /**
      * Issues a session token. [userId] goes into the `sub` claim and is the only identity the WebSocket

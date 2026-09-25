@@ -1,5 +1,6 @@
 package com.pttlan.server
 
+import com.pttlan.server.auth.JwtConfig
 import com.pttlan.server.channel.ChannelRegistry
 import io.ktor.network.tls.certificates.buildKeyStore
 import io.ktor.server.application.Application
@@ -47,6 +48,8 @@ class PttHostServer(
     ) {
         if (server != null) return
         require(pin.isNullOrBlank() || pin.length >= MIN_PIN_LENGTH) { "O PIN precisa ter pelo menos $MIN_PIN_LENGTH caracteres" }
+        // Tokens of an earlier room, with another PIN or none, must not open this one
+        JwtConfig.rotateKey()
 
         val password = UUID.randomUUID().toString()
         val keyStore =

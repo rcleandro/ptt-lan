@@ -8,6 +8,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
@@ -185,5 +186,25 @@ class PttHostServerTest {
             val locked = assertFailsWith<IllegalStateException> { client.login("localhost", port, true, "guest", "d2", "000000") }
 
             assertTrue(locked.message.orEmpty().contains("travada"), "got: ${locked.message}")
+        }
+
+    @Test
+    fun `a token from an earlier room does not open the next one`() =
+        runBlocking {
+            // The signing key lived as long as the app: hosting again with a new PIN still let old tokens in.
+            server.start("PTT-LAN-host", pin = "482193")
+            val oldToken = PttWebSocketClient(createHttpClient()).login("localhost", port, true, "guest", "d4", "482193").token
+            server.stop()
+            server.start("PTT-LAN-host", pin = "731905")
+
+            val client = PttWebSocketClient(createHttpClient())
+            try {
+                val outcome = withTimeoutOrNull(10.seconds) { runCatching { client.connect("localhost", port, true, oldToken) } }
+
+                assertTrue(outcome != null, "the old token got into the new room")
+                assertTrue(outcome.exceptionOrNull() is ServerRefusedException, "got ${outcome.exceptionOrNull()}")
+            } finally {
+                client.disconnect()
+            }
         }
 }
