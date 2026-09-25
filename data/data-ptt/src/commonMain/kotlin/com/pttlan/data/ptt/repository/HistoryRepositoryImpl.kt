@@ -4,6 +4,7 @@ import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import co.touchlab.kermit.Logger
 import com.pttlan.core.audio.AudioPlayer
+import com.pttlan.core.audio.wavHeader
 import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.core.database.PttDatabase
 import com.pttlan.core.datastore.SettingsDefaults
@@ -19,7 +20,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import okio.FileSystem
+import okio.IOException
 import okio.Path.Companion.toPath
 import okio.SYSTEM
 import kotlin.time.Clock
@@ -31,7 +34,7 @@ class HistoryRepositoryImpl(
     private val settings: Settings,
     private val storageInfoProvider: StorageInfoProvider,
     private val fileSystem: FileSystem = FileSystem.SYSTEM,
-    dispatcher: CoroutineDispatcher = Dispatchers.Default,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
     /** Whether someone is speaking in the channel; live audio shares [audioPlayer] and goes first. */
     liveSpeaking: Flow<Boolean> = emptyFlow(),
 ) : HistoryRepository {
@@ -49,13 +52,6 @@ class HistoryRepositoryImpl(
     override val playbackPosition: StateFlow<PlaybackPosition?> = replay.position
 
     override val playbackSpeed: StateFlow<Float> = replay.speed
-
-    override fun getRecentMessages(channelId: String): Flow<List<VoiceMessage>> =
-        database.voiceMessageQueries
-            .getRecentMessagesByChannel(channelId)
-            .asFlow()
-            .mapToList(Dispatchers.Default)
-            .map { list -> list.map { it.toDomain() } }
 
     override fun getAllMessages(): Flow<List<VoiceMessage>> =
         database.voiceMessageQueries
@@ -78,6 +74,26 @@ class HistoryRepositoryImpl(
     }
 
     override suspend fun stopPlayingMessage() = replay.stop()
+
+    override suspend fun exportAsWav(
+        message: VoiceMessage,
+        directory: String,
+    ): String? =
+        withContext(dispatcher) {
+            val source = message.filePath.toPath()
+            val target = directory.toPath() / "${source.name.substringBeforeLast('.')}.wav"
+            try {
+                val pcm = fileSystem.read(source) { readByteArray() }
+                fileSystem.write(target) {
+                    write(wavHeader(pcm.size))
+                    write(pcm)
+                }
+                target.toString()
+            } catch (e: IOException) {
+                logger.w(e) { "Failed to export a message as wav" }
+                null
+            }
+        }
 
     override suspend fun clearAllMessages() {
         stopPlayingMessage()

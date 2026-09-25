@@ -3,6 +3,7 @@ package com.pttlan.data.ptt.repository
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.pttlan.core.audio.AudioPlayer
 import com.pttlan.core.audio.JitterBufferPolicy
+import com.pttlan.core.audio.wavHeader
 import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.core.common.storage.StorageOption
 import com.pttlan.core.database.PttDatabase
@@ -319,5 +320,27 @@ class HistoryPlaybackTest {
             openApp().setPlaybackSpeed(1.5f)
 
             assertEquals(1.5f, openApp().playbackSpeed.value)
+        }
+
+    @Test
+    fun exportingWritesTheMessageAsAWav() =
+        runTest {
+            fileSystem.write(MESSAGE_PATH.toPath()) { write(recorded) }
+            val repository =
+                HistoryRepositoryImpl(
+                    audioPlayer = player,
+                    database = database,
+                    settings = MapSettings(),
+                    storageInfoProvider = NoStorageInfoProvider(),
+                    fileSystem = fileSystem,
+                    dispatcher = StandardTestDispatcher(testScheduler),
+                )
+            fileSystem.createDirectories("/shared".toPath())
+
+            val path = repository.exportAsWav(message, "/shared")
+
+            assertEquals("/shared/c1_1.wav", path)
+            val wav = fileSystem.read("/shared/c1_1.wav".toPath()) { readByteArray() }
+            assertContentEquals(wavHeader(recorded.size) + recorded, wav)
         }
 }

@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -63,13 +64,19 @@ internal class ChannelActions(
     val onDelete: (String) -> Unit,
 )
 
+/** What a message row does: play or pause it, share it as a `.wav`, or delete it. */
+internal class MessageActions(
+    val onPlay: (VoiceMessage) -> Unit,
+    val onShare: (VoiceMessage) -> Unit,
+    val onDelete: (VoiceMessage) -> Unit,
+)
+
 @Composable
 internal fun MessageList(
     messages: List<VoiceMessage>,
     playingMessageId: String?,
     isPaused: Boolean,
-    onPlayClick: (VoiceMessage) -> Unit,
-    onDeleteMessage: (VoiceMessage) -> Unit,
+    messageActions: MessageActions,
     channelActions: ChannelActions,
 ) {
     var collapsedChannels by remember { mutableStateOf(setOf<String>()) }
@@ -124,8 +131,7 @@ internal fun MessageList(
                                 message = message,
                                 isPlaying = message.id == playingMessageId,
                                 isPaused = message.id == playingMessageId && isPaused,
-                                onPlayClick = { onPlayClick(message) },
-                                onDeleteClick = { onDeleteMessage(message) },
+                                actions = messageActions,
                             )
                         }
                     }
@@ -174,12 +180,11 @@ private fun ChannelHeader(
 }
 
 @Composable
-fun VoiceMessageItem(
+internal fun VoiceMessageItem(
     message: VoiceMessage,
     isPlaying: Boolean,
     isPaused: Boolean,
-    onPlayClick: () -> Unit,
-    onDeleteClick: () -> Unit,
+    actions: MessageActions,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -187,7 +192,7 @@ fun VoiceMessageItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        PlayButton(isPlaying = isPlaying && !isPaused, isActive = isPlaying, onClick = onPlayClick, size = 40)
+        PlayButton(isPlaying = isPlaying && !isPaused, isActive = isPlaying, onClick = { actions.onPlay(message) }, size = 40)
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = message.senderNickname,
@@ -197,26 +202,20 @@ fun VoiceMessageItem(
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                text =
-                    when {
-                        isPlaying && isPaused -> {
-                            "pausado · ${formatDuration(message.durationMs)}"
-                        }
-
-                        isPlaying -> {
-                            "tocando · ${formatDuration(message.durationMs)}"
-                        }
-
-                        else -> {
-                            "${Instant.fromEpochMilliseconds(message.recordedAt).toRelativeDisplay()} · " +
-                                formatDuration(message.durationMs)
-                        }
-                    },
+                text = messageStatus(message, isPlaying, isPaused),
                 style = MaterialTheme.typography.labelSmall,
                 color = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        IconButton(onClick = onDeleteClick) {
+        IconButton(onClick = { actions.onShare(message) }) {
+            Icon(
+                imageVector = Icons.Default.Share,
+                contentDescription = "Compartilhar áudio",
+                tint = PttTheme.customColors.textTertiary,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+        IconButton(onClick = { actions.onDelete(message) }) {
             Icon(
                 imageVector = Icons.Default.Delete,
                 contentDescription = "Apagar áudio",
@@ -224,6 +223,20 @@ fun VoiceMessageItem(
                 modifier = Modifier.size(20.dp),
             )
         }
+    }
+}
+
+/** "tocando · 0:12", "pausado · 0:12", or when it was recorded and how long it is. */
+private fun messageStatus(
+    message: VoiceMessage,
+    isPlaying: Boolean,
+    isPaused: Boolean,
+): String {
+    val duration = formatDuration(message.durationMs)
+    return when {
+        isPlaying && isPaused -> "pausado · $duration"
+        isPlaying -> "tocando · $duration"
+        else -> "${Instant.fromEpochMilliseconds(message.recordedAt).toRelativeDisplay()} · $duration"
     }
 }
 

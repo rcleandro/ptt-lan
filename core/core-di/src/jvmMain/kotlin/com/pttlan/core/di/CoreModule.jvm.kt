@@ -2,6 +2,8 @@ package com.pttlan.core.di
 
 import com.pttlan.core.audio.HeadsetMicRoute
 import com.pttlan.core.audio.NoHeadsetMicRoute
+import com.pttlan.core.common.share.FileSharer
+import com.pttlan.core.common.share.JvmFileSharer
 import com.pttlan.core.common.storage.JvmStorageInfoProvider
 import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.core.database.DatabaseDriverFactory
@@ -15,4 +17,5 @@ actual val platformModule: Module =
         single { SettingsFactory() }
         single<StorageInfoProvider> { JvmStorageInfoProvider() }
         single<HeadsetMicRoute> { NoHeadsetMicRoute }
+        single<FileSharer> { JvmFileSharer() }
     }

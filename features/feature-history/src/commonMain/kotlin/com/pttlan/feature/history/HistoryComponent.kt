@@ -2,6 +2,7 @@ package com.pttlan.feature.history
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
+import com.pttlan.core.common.share.FileSharer
 import com.pttlan.domain.ptt.model.VoiceMessage
 import com.pttlan.domain.ptt.repository.HistoryRepository
 import kotlinx.coroutines.CoroutineScope
@@ -16,6 +17,7 @@ import kotlinx.coroutines.launch
 class HistoryComponent(
     componentContext: ComponentContext,
     private val historyRepository: HistoryRepository,
+    private val fileSharer: FileSharer,
     private val onBackClicked: () -> Unit,
 ) : ComponentContext by componentContext {
     private val scope = CoroutineScope(Dispatchers.Main)
@@ -44,6 +46,14 @@ class HistoryComponent(
 
     fun onBack() {
         onBackClicked()
+    }
+
+    /** Hands the message to the system's share sheet as a `.wav`. */
+    fun shareMessage(message: VoiceMessage) {
+        scope.launch {
+            val path = historyRepository.exportAsWav(message, fileSharer.shareDirectory)
+            if (path != null) fileSharer.share(path, "audio/wav")
+        }
     }
 
     fun clearAllMessages() {

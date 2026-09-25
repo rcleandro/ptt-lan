@@ -92,6 +92,7 @@ fun HistoryScreen(component: HistoryComponent) {
         onCycleSpeed = playback::cycleSpeed,
         onClearCacheClick = component::clearAllMessages,
         onDeleteMessage = component::deleteMessage,
+        onShareMessage = component::shareMessage,
         onDeleteChannelClick = component::deleteChannelMessages,
         onBack = component::onBack,
     )
@@ -114,6 +115,7 @@ fun HistoryScreenContent(
     onCycleSpeed: () -> Unit = {},
     onClearCacheClick: () -> Unit,
     onDeleteMessage: (VoiceMessage) -> Unit,
+    onShareMessage: (VoiceMessage) -> Unit = {},
     onDeleteChannelClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
@@ -138,8 +140,7 @@ fun HistoryScreenContent(
                 messages = messages,
                 playingMessageId = playingMessageId,
                 isPaused = isPaused,
-                onPlayClick = onPlayClick,
-                onDeleteMessage = { messageToDelete = it },
+                messageActions = MessageActions(onPlay = onPlayClick, onShare = onShareMessage, onDelete = { messageToDelete = it }),
                 channelActions =
                     ChannelActions(
                         onPlay = onPlayChannelClick,

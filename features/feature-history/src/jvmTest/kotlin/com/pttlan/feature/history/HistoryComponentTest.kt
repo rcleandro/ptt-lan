@@ -5,6 +5,7 @@ import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
+import com.pttlan.core.common.share.FileSharer
 import com.pttlan.domain.ptt.model.PlaybackPosition
 import com.pttlan.domain.ptt.model.VoiceMessage
 import com.pttlan.domain.ptt.repository.HistoryRepository
@@ -42,6 +43,7 @@ class HistoryComponentTest {
 
     private val historyRepository: HistoryRepository = mockk(relaxed = true)
     private val onBackClicked: () -> Unit = mockk(relaxed = true)
+    private val fileSharer: FileSharer = mockk(relaxed = true)
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -61,6 +63,7 @@ class HistoryComponentTest {
         HistoryComponent(
             componentContext = componentContext,
             historyRepository = historyRepository,
+            fileSharer = fileSharer,
             onBackClicked = onBackClicked,
         )
 

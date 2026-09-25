@@ -16,8 +16,6 @@ interface HistoryRepository {
     /** Replay speed, 1 by default; it keeps the voice's pitch and is kept for the next time the app opens. */
     val playbackSpeed: StateFlow<Float>
 
-    fun getRecentMessages(channelId: String): Flow<List<VoiceMessage>>
-
     fun getAllMessages(): Flow<List<VoiceMessage>>
 
     suspend fun playMessage(message: VoiceMessage)
@@ -33,6 +31,12 @@ interface HistoryRepository {
 
     /** Applies to the message playing and to the ones after it. */
     suspend fun setPlaybackSpeed(speed: Float)
+
+    /** Writes [message] as a `.wav` in [directory] and returns its path, for sharing; null if its audio is gone. */
+    suspend fun exportAsWav(
+        message: VoiceMessage,
+        directory: String,
+    ): String?
 
     suspend fun clearAllMessages()
 

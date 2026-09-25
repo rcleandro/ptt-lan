@@ -10,6 +10,7 @@ val historyFeatureModule =
             HistoryComponent(
                 componentContext = componentContext,
                 historyRepository = get(),
+                fileSharer = get(),
                 onBackClicked = onBackClicked,
             )
         }
