@@ -140,6 +140,8 @@ class ChannelListComponent(
             is ChannelListIntent.CreateChannel -> {
                 val name = _state.value.newChannelName
                 if (name.isNotBlank()) {
+                    // On a wide screen the list stays beside the channel just created, with the name still typed
+                    _state.update { it.copy(newChannelName = "") }
                     scope.launch {
                         val id = createChannelUseCase(name)
                         _effects.emit(ChannelListEffect.NavigateToChannel(id))

@@ -1,6 +1,13 @@
 package com.pttlan.android
 
 import android.os.Bundle
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalDensity
+import androidx.window.layout.WindowInfoTracker
+import com.pttlan.core.designsystem.components.LocalTabletopFold
 import co.touchlab.kermit.Logger
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -82,7 +89,14 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            RootScreen(component = rootComponent)
+            // Changes as the device folds and unfolds; stays empty on phones without a hinge
+            val layoutInfo by remember {
+                WindowInfoTracker.getOrCreate(this@MainActivity).windowLayoutInfo(this@MainActivity)
+            }.collectAsState(initial = null)
+            val density = LocalDensity.current.density
+            CompositionLocalProvider(LocalTabletopFold provides layoutInfo?.let { tabletopFold(it, density) }) {
+                RootScreen(component = rootComponent)
+            }
         }
     }
 

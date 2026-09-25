@@ -25,5 +25,8 @@ kotlin {
             implementation(libs.multiplatform.settings.coroutines)
             implementation(libs.koin.core)
         }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
     }
 }

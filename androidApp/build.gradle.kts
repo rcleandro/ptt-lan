@@ -48,7 +48,11 @@ dependencies {
         exclude(group = "io.netty", module = "netty-codec-native-quic")
     }
 
+    implementation(libs.androidx.window)
+
     testImplementation(kotlin("test-junit"))
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.window.testing)
 
     androidTestImplementation(projects.core.coreNetwork)
     androidTestImplementation(libs.androidx.junit)

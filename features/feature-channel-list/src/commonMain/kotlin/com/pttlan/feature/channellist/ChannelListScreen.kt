@@ -49,6 +49,7 @@ import com.pttlan.core.designsystem.components.PillButton
 import com.pttlan.core.designsystem.components.PttTextField
 import com.pttlan.core.designsystem.components.PttTopBar
 import com.pttlan.core.designsystem.components.glass
+import com.pttlan.core.designsystem.components.readableWidth
 import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.domain.ptt.repository.ActiveChannelDomain
@@ -62,12 +63,14 @@ fun ChannelListScreen(
     onOpenSettings: () -> Unit,
     onOpenHistory: (() -> Unit)?,
     connectionStatus: ConnectionStatus = ConnectionStatus.Online,
+    modifier: Modifier = Modifier,
 ) {
     val state by component.state.collectAsState()
 
     ChannelListScreenContent(
         state = state,
         onIntent = component::onIntent,
+        modifier = modifier,
         onOpenSettings = onOpenSettings,
         onOpenHistory = onOpenHistory,
         connectionStatus = connectionStatus,
@@ -98,6 +101,7 @@ fun ChannelListScreenContent(
         ChannelList(state = state, onIntent = onIntent)
 
         PttTopBar(
+            modifier = Modifier.readableWidth(),
             navigation = {
                 GlassIconButton(
                     icon = Icons.AutoMirrored.Filled.ArrowBack,
@@ -146,7 +150,7 @@ private fun ChannelList(
 ) {
     val topInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().readableWidth(),
         contentPadding =
             PaddingValues(start = 20.dp, end = 20.dp, top = topInset + TopBarClearance, bottom = DockClearance),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -227,7 +231,7 @@ private fun NewChannelDock(
     Row(
         modifier =
             modifier
-                .fillMaxWidth()
+                .readableWidth()
                 .windowInsetsPadding(WindowInsets.navigationBars)
                 .imePadding()
                 .padding(horizontal = 12.dp, vertical = 16.dp)

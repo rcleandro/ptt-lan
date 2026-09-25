@@ -42,6 +42,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.pttlan.core.designsystem.components.SectionLabel
 import com.pttlan.core.designsystem.components.contentCard
+import com.pttlan.core.designsystem.components.readableWidth
 import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.domain.ptt.model.VoiceMessage
 import com.pttlan.feature.history.util.toRelativeDisplay
@@ -63,7 +64,7 @@ internal fun MessageList(
     val topInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().readableWidth(),
         contentPadding =
             PaddingValues(start = 20.dp, end = 20.dp, top = topInset + TopBarClearance, bottom = PlayerClearance),
         verticalArrangement = Arrangement.spacedBy(8.dp),

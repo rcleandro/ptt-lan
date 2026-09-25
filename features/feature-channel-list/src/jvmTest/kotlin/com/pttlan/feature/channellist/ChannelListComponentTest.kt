@@ -140,6 +140,19 @@ class ChannelListComponentTest {
         }
 
     @Test
+    fun `CreateChannel clears the name, which stays on screen beside the channel on wide screens`() =
+        runTest(testDispatcher) {
+            coEvery { createChannelUseCase("Obra") } returns "obra"
+
+            val component = createComponent()
+            component.onIntent(ChannelListIntent.UpdateNewChannelName("Obra"))
+            component.onIntent(ChannelListIntent.CreateChannel)
+            advanceUntilIdle()
+
+            assertEquals("", component.state.value.newChannelName)
+        }
+
+    @Test
     fun `CreateChannel intent does not call use case if name is blank`() =
         runTest(testDispatcher) {
             val component = createComponent()

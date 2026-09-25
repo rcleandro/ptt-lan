@@ -55,6 +55,13 @@ private fun Lifecycle.coroutineScope(): CoroutineScope {
     return scope
 }
 
+/**
+ * Opens [channel] from the channel list. On a wide screen the list stays beside the open channel (27.2), so picking
+ * another one replaces it instead of stacking a second channel on top; leaving it still goes back to the list.
+ */
+internal fun List<RootComponent.Config>.openingChannel(channel: RootComponent.Config.PttScreen): List<RootComponent.Config> =
+    if (lastOrNull() == channel) this else takeWhile { it !is RootComponent.Config.PttScreen } + channel
+
 class RootComponent(
     componentContext: ComponentContext,
 ) : ComponentContext by componentContext,
@@ -154,10 +161,7 @@ class RootComponent(
                 context.lifecycle.coroutineScope().launch {
                     component.effects.collect { effect ->
                         if (effect is ChannelListEffect.NavigateToChannel) {
-                            val nextConfig = Config.PttScreen(effect.channelId)
-                            navigation.navigate { stack ->
-                                if (stack.lastOrNull() == nextConfig) stack else stack + nextConfig
-                            }
+                            navigation.navigate { stack -> stack.openingChannel(Config.PttScreen(effect.channelId)) }
                         } else if (effect is ChannelListEffect.Leave) {
                             leaveServer(endRoom = effect.endRoom)
                         }

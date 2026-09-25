@@ -49,6 +49,7 @@ roborazzi = "1.75.0"
 
 wearCompose = "1.6.2"
 activityCompose = "1.13.0"
+androidxWindow = "1.5.1"
 wearOngoing = "1.1.0"
 wearInput = "1.2.0"
 wearToolingPreview = "1.0.0"
@@ -142,6 +143,8 @@ roborazzi-junit = { module = "io.github.takahirom.roborazzi:roborazzi-junit-rule
 wear-compose-material3 = { module = "androidx.wear.compose:compose-material3", version.ref = "wearCompose" }
 wear-compose-foundation = { module = "androidx.wear.compose:compose-foundation", version.ref = "wearCompose" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+androidx-window = { module = "androidx.window:window", version.ref = "androidxWindow" }
+androidx-window-testing = { module = "androidx.window:window-testing", version.ref = "androidxWindow" }
 wear-ongoing = { module = "androidx.wear:wear-ongoing", version.ref = "wearOngoing" }
 wear-input = { module = "androidx.wear:wear-input", version.ref = "wearInput" }
 wear-tooling-preview = { module = "androidx.wear:wear-tooling-preview", version.ref = "wearToolingPreview" }
