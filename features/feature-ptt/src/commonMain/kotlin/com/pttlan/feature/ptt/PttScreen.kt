@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -41,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import com.pttlan.core.designsystem.components.ConnectionStatus
 import com.pttlan.core.designsystem.components.ConnectionStatusBadge
 import com.pttlan.core.designsystem.components.GlassIconButton
+import com.pttlan.core.designsystem.components.LocalTabletopFold
 import com.pttlan.core.designsystem.components.ParticipantAvatar
 import com.pttlan.core.designsystem.components.PillButton
 import com.pttlan.core.designsystem.components.PillButtonStyle
@@ -113,28 +115,29 @@ fun PttScreenContent(
     BoxWithConstraints(modifier = modifier.fillMaxSize().windowInsetsPadding(WindowInsets.navigationBars)) {
         val isWide = isSideBySide(maxWidth, maxHeight)
         val buttonSize = if (maxHeight < RegularHeight) 160.dp else 208.dp
+        val tabletopFold = LocalTabletopFold.current
+        val topBar = @Composable { ChannelTopBar(state, onIntent, onBack, showHistory, connectionStatus) }
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            PttTopBar(
-                navigation = { GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, "Voltar para canais", onBack) },
-                center = { ChannelTitle(channelId = state.channelId, participantCount = state.participants.size) },
-                actions = {
-                    // Only while the connection is not healthy: the channel title owns the center slot
-                    if (connectionStatus != ConnectionStatus.Online) {
-                        ConnectionStatusBadge(status = connectionStatus)
-                    }
-                    if (showHistory) {
-                        GlassIconButton(Icons.Default.History, "Histórico", { onIntent(PttIntent.GoToHistory) })
-                    }
-                },
-            )
-
-            if (isWide) {
+            if (tabletopFold != null) {
+                // Tabletop: what to read stands up above the hinge, the button lies flat below it within reach.
+                Column(modifier = Modifier.height(tabletopFold), horizontalAlignment = Alignment.CenterHorizontally) {
+                    topBar()
+                    Spacer(modifier = Modifier.weight(1f))
+                    StatusBlock(buttonState = buttonState, speakerName = state.currentSpeakerName)
+                    Spacer(modifier = Modifier.weight(1f))
+                    Box(modifier = Modifier.readableWidth().padding(bottom = 16.dp)) { ParticipantsPanel(state, buttonState) }
+                }
+                TalkArea(state, buttonState, 160.dp, onIntent, Modifier.weight(1f), withStatus = false)
+                ChannelArea(state, buttonState, onIntent, Modifier.readableWidth(), withParticipants = false)
+            } else if (isWide) {
+                topBar()
                 Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                     TalkArea(state, buttonState, buttonSize, onIntent, Modifier.weight(1f))
                     ChannelArea(state, buttonState, onIntent, Modifier.weight(1f).readableWidth())
                 }
             } else {
+                topBar()
                 TalkArea(state, buttonState, buttonSize, onIntent, Modifier.weight(1f))
                 ChannelArea(state, buttonState, onIntent, Modifier.readableWidth())
             }
@@ -151,14 +154,17 @@ private fun TalkArea(
     buttonSize: Dp,
     onIntent: (PttIntent) -> Unit,
     modifier: Modifier = Modifier,
+    withStatus: Boolean = true,
 ) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        StatusBlock(buttonState = buttonState, speakerName = state.currentSpeakerName)
-        Spacer(modifier = Modifier.height(16.dp))
+        if (withStatus) {
+            StatusBlock(buttonState = buttonState, speakerName = state.currentSpeakerName)
+            Spacer(modifier = Modifier.height(16.dp))
+        }
         PttButton(
             state = buttonState,
             onPressStart = { onIntent(PttIntent.PressPtt) },
@@ -181,9 +187,10 @@ private fun ChannelArea(
     buttonState: PttButtonState,
     onIntent: (PttIntent) -> Unit,
     modifier: Modifier = Modifier,
+    withParticipants: Boolean = true,
 ) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        ParticipantsPanel(state = state, buttonState = buttonState)
+        if (withParticipants) ParticipantsPanel(state = state, buttonState = buttonState)
         PillButton(
             text = "Sair do canal",
             onClick = { onIntent(PttIntent.LeaveChannel) },
@@ -191,26 +198,6 @@ private fun ChannelArea(
             icon = Icons.AutoMirrored.Filled.Logout,
             modifier = Modifier.padding(vertical = 16.dp),
         )
-    }
-}
-
-@Composable
-private fun ChannelTitle(
-    channelId: String,
-    participantCount: Int,
-) {
-    Column(
-        modifier = Modifier.glass(CircleShape).padding(horizontal = 22.dp, vertical = 5.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = "# $channelId",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        SectionLabel(text = "$participantCount no canal")
     }
 }
 
@@ -348,6 +335,29 @@ private fun PttScreenPreviewLight() {
                     ),
                 onIntent = {},
             )
+        }
+    }
+}
+
+/** A Flip half open on a table: the hinge crosses the screen 440dp from the top. */
+@Preview(widthDp = 412, heightDp = 880)
+@Composable
+private fun PttScreenPreviewTabletop() {
+    PttTheme(appTheme = AppTheme.DARK) {
+        CompositionLocalProvider(LocalTabletopFold provides 440.dp) {
+            Box(Modifier.background(MaterialTheme.colorScheme.background)) {
+                PttScreenContent(
+                    state =
+                        PttState(
+                            channelId = "Geral",
+                            localUserId = "u1",
+                            currentSpeakerId = "u2",
+                            currentSpeakerName = "Marcos",
+                            participants = previewParticipants,
+                        ),
+                    onIntent = {},
+                )
+            }
         }
     }
 }

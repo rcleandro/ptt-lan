@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -31,6 +32,12 @@ val ReadableWidth: Dp = 600.dp
 
 /** From this width on (open Fold, tablet, Desktop) there is room for two panes side by side. */
 val ExpandedWidth: Dp = 840.dp
+
+/**
+ * How far below the top of the window a half-open foldable lying flat bends (tabletop, like a Flip on a table);
+ * null otherwise. Only Android knows where the hinge is; iOS and Desktop never provide it.
+ */
+val LocalTabletopFold = compositionLocalOf<Dp?> { null }
 
 /** Fills the width up to [ReadableWidth] and centers the content in the rest; no-op on phones. */
 fun Modifier.readableWidth(): Modifier = fillMaxWidth().wrapContentWidth().widthIn(max = ReadableWidth).fillMaxWidth()
