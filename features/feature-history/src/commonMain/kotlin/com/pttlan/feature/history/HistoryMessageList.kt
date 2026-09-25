@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -51,7 +52,9 @@ import com.pttlan.feature.history.util.toRelativeDisplay
 import kotlin.time.Instant
 
 private val TopBarClearance = 72.dp
-private val PlayerClearance = 160.dp
+
+/** The mini player's height above the navigation bar: 16 + 10 padding on each side, 52 + 24 + 16 + 48 of rows. */
+private val PlayerClearance = 200.dp
 
 /** What a room header does: play the room or its unheard messages in sequence, or (long press) delete it. */
 internal class ChannelActions(
@@ -71,11 +74,13 @@ internal fun MessageList(
 ) {
     var collapsedChannels by remember { mutableStateOf(setOf<String>()) }
     val topInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    // The mini player sits above the navigation bar, so the last message has to clear both
+    val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().readableWidth(),
         contentPadding =
-            PaddingValues(start = 20.dp, end = 20.dp, top = topInset + TopBarClearance, bottom = PlayerClearance),
+            PaddingValues(start = 20.dp, end = 20.dp, top = topInset + TopBarClearance, bottom = bottomInset + PlayerClearance),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         item {
