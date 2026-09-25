@@ -6,6 +6,7 @@ plugins {
 
 dependencies {
     implementation(projects.core.coreNetwork)
+    implementation(projects.core.coreCommon)
 
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.host.common)

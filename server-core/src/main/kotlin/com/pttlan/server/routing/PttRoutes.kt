@@ -77,6 +77,12 @@ fun Routing.pttRoutes() {
                         try {
                             when (val message = PttJson.decodeFromString<ControlMessage>(text)) {
                                 is ControlMessage.JoinChannel -> {
+                                    val refusal = channelRegistry.refusalToOpen(message.channelId)
+                                    if (refusal != null) {
+                                        logger.info("User {} ({}) refused channel: {}", nickname, userId, refusal)
+                                        send(Frame.Text(PttJson.encodeToString<ControlMessage>(ControlMessage.SystemAlert(refusal))))
+                                        continue
+                                    }
                                     currentChannelId = message.channelId
                                     logger.info("User {} ({}) joined channel {}", nickname, userId, message.channelId)
 

@@ -107,6 +107,16 @@ class ChannelListComponentTest {
         }
 
     @Test
+    fun `a channel name is cut at 40 characters while typing`() =
+        runTest(testDispatcher) {
+            val component = createComponent()
+
+            component.onIntent(ChannelListIntent.UpdateNewChannelName("x".repeat(60)))
+
+            assertEquals("x".repeat(40), component.state.value.newChannelName)
+        }
+
+    @Test
     fun `JoinChannel intent calls use case and emits effect`() =
         runTest(testDispatcher) {
             val component = createComponent()

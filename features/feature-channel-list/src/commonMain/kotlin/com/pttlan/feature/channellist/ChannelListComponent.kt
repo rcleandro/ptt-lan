@@ -3,6 +3,7 @@ package com.pttlan.feature.channellist
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.backhandler.BackCallback
 import com.arkivanov.essenty.lifecycle.doOnDestroy
+import com.pttlan.core.common.MAX_CHANNEL_NAME_LENGTH
 import com.pttlan.domain.ptt.repository.ActiveChannelDomain
 import com.pttlan.domain.ptt.repository.ChannelDomain
 import com.pttlan.domain.ptt.repository.LocalServerHost
@@ -110,7 +111,7 @@ class ChannelListComponent(
     fun onIntent(intent: ChannelListIntent) {
         when (intent) {
             is ChannelListIntent.UpdateNewChannelName -> {
-                _state.update { it.copy(newChannelName = intent.name) }
+                _state.update { it.copy(newChannelName = intent.name.take(MAX_CHANNEL_NAME_LENGTH)) }
             }
 
             is ChannelListIntent.JoinChannel -> {
