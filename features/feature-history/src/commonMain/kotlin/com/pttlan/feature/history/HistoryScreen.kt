@@ -68,23 +68,27 @@ import kotlin.time.Instant
 
 @Composable
 fun HistoryScreen(component: HistoryComponent) {
+    val playback = component.playback
     val messages by component.messages.collectAsState()
-    val playingMessageId by component.playingMessageId.collectAsState()
-    val isPaused by component.isPaused.collectAsState()
-    val playbackPosition by component.playbackPosition.collectAsState()
-    val queue by component.queue.collectAsState()
+    val playingMessageId by playback.playingMessageId.collectAsState()
+    val isPaused by playback.isPaused.collectAsState()
+    val playbackPosition by playback.playbackPosition.collectAsState()
+    val playbackSpeed by playback.playbackSpeed.collectAsState()
+    val queue by playback.queue.collectAsState()
 
     HistoryScreenContent(
         messages = messages,
         playingMessageId = playingMessageId,
         isPaused = isPaused,
         playbackPosition = playbackPosition,
+        playbackSpeed = playbackSpeed,
         queue = queue,
-        onPlayClick = component::playMessage,
-        onPlayChannelClick = component::playChannel,
-        onPrevious = component::playPrevious,
-        onNext = component::playNext,
-        onSeek = component::seekTo,
+        onPlayClick = playback::playMessage,
+        onPlayChannelClick = playback::playChannel,
+        onPrevious = playback::playPrevious,
+        onNext = playback::playNext,
+        onSeek = playback::seekTo,
+        onCycleSpeed = playback::cycleSpeed,
         onClearCacheClick = component::clearAllMessages,
         onDeleteMessage = component::deleteMessage,
         onDeleteChannelClick = component::deleteChannelMessages,
@@ -98,12 +102,14 @@ fun HistoryScreenContent(
     playingMessageId: String?,
     isPaused: Boolean,
     playbackPosition: PlaybackPosition? = null,
+    playbackSpeed: Float = 1f,
     queue: List<VoiceMessage> = emptyList(),
     onPlayClick: (VoiceMessage) -> Unit,
     onPlayChannelClick: (String) -> Unit = {},
     onPrevious: () -> Unit = {},
     onNext: () -> Unit = {},
     onSeek: (Long) -> Unit = {},
+    onCycleSpeed: () -> Unit = {},
     onClearCacheClick: () -> Unit,
     onDeleteMessage: (VoiceMessage) -> Unit,
     onDeleteChannelClick: (String) -> Unit,
@@ -154,15 +160,14 @@ fun HistoryScreenContent(
         if (playingMessage != null) {
             MiniPlayer(
                 message = playingMessage,
-                isPaused = isPaused,
+                state = PlayerState(isPaused, playbackPosition?.takeIf { it.messageId == playingMessage.id }, playbackSpeed),
                 queue =
                     if (queueIndex >= 0) {
                         QueueControls("${queueIndex + 1} de ${queue.size}", queueIndex < queue.lastIndex, onPrevious, onNext)
                     } else {
                         null
                     },
-                position = playbackPosition?.takeIf { it.messageId == playingMessage.id },
-                actions = PlayerActions(onPlayPause = { onPlayClick(playingMessage) }, onSeek = onSeek),
+                actions = PlayerActions(onPlayPause = { onPlayClick(playingMessage) }, onSeek = onSeek, onCycleSpeed = onCycleSpeed),
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
         }

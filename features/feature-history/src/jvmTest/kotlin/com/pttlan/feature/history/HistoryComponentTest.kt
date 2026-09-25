@@ -99,26 +99,26 @@ class HistoryComponentTest {
             // but since playMessage is a suspend function that might just return immediately in mocks,
             // we'll just check that it calls the repository and then clears state.
 
-            component.playMessage(mockMessage)
+            component.playback.playMessage(mockMessage)
 
             // Since playMessage launches a coroutine, we can assert state if we step through,
             // but for now, we just advance to the end.
             advanceUntilIdle()
 
             coVerify(exactly = 1) { historyRepository.playMessage(mockMessage) }
-            assertEquals(null, component.playingMessageId.value)
+            assertEquals(null, component.playback.playingMessageId.value)
         }
 
     @Test
-    fun `stopPlaying stops playback and clears playing state`() =
+    fun `stop stops playback and clears playing state`() =
         runTest(testDispatcher) {
             val component = createComponent()
 
-            component.stopPlaying()
+            component.playback.stop()
             advanceUntilIdle()
 
             coVerify(exactly = 1) { historyRepository.stopPlayingMessage() }
-            assertEquals(null, component.playingMessageId.value)
+            assertEquals(null, component.playback.playingMessageId.value)
         }
 
     @Test
@@ -133,7 +133,7 @@ class HistoryComponentTest {
             coEvery { historyRepository.playMessage(any()) } coAnswers { awaitCancellation() }
             lifecycle.resume()
             val component = createComponent()
-            component.playMessage(mockk(relaxed = true))
+            component.playback.playMessage(mockk(relaxed = true))
             advanceUntilIdle()
 
             lifecycle.destroy()
@@ -166,12 +166,12 @@ class HistoryComponentTest {
             val component = createComponent()
             advanceUntilIdle()
 
-            component.playChannel("Geral")
+            component.playback.playChannel("Geral")
             advanceUntilIdle()
 
             assertEquals(listOf("a", "b", "c"), played)
-            assertEquals(null, component.playingMessageId.value)
-            assertEquals(emptyList(), component.queue.value)
+            assertEquals(null, component.playback.playingMessageId.value)
+            assertEquals(emptyList(), component.playback.queue.value)
         }
 
     @Test
@@ -185,14 +185,18 @@ class HistoryComponentTest {
             val component = createComponent()
             advanceUntilIdle()
 
-            component.playChannel("Geral")
+            component.playback.playChannel("Geral")
             advanceUntilIdle()
-            assertEquals("a", component.playingMessageId.value)
-            assertEquals(listOf("a", "b", "c"), component.queue.value.map { it.id })
+            assertEquals("a", component.playback.playingMessageId.value)
+            assertEquals(
+                listOf("a", "b", "c"),
+                component.playback.queue.value
+                    .map { it.id },
+            )
 
             ending.complete(Unit)
             advanceUntilIdle()
-            assertEquals(null, component.playingMessageId.value)
+            assertEquals(null, component.playback.playingMessageId.value)
         }
 
     @Test
@@ -207,11 +211,11 @@ class HistoryComponentTest {
             }
             val component = createComponent()
             advanceUntilIdle()
-            component.playChannel("Geral")
+            component.playback.playChannel("Geral")
             advanceUntilIdle()
 
             holding = false
-            component.playMessage(room[0])
+            component.playback.playMessage(room[0])
             advanceUntilIdle()
 
             assertEquals(listOf("a", "b", "c"), played)
@@ -229,15 +233,15 @@ class HistoryComponentTest {
             }
             val component = createComponent()
             advanceUntilIdle()
-            component.playChannel("Geral")
+            component.playback.playChannel("Geral")
             advanceUntilIdle()
 
             holding = false
-            component.playMessage(room[1])
+            component.playback.playMessage(room[1])
             advanceUntilIdle()
 
             assertEquals(listOf("a", "x"), played)
-            assertEquals(emptyList(), component.queue.value)
+            assertEquals(emptyList(), component.playback.queue.value)
         }
 
     @Test
@@ -251,15 +255,15 @@ class HistoryComponentTest {
             }
             val component = createComponent()
             advanceUntilIdle()
-            component.playChannel("Geral")
+            component.playback.playChannel("Geral")
             advanceUntilIdle()
 
-            component.stopPlaying()
+            component.playback.stop()
             advanceUntilIdle()
 
             assertEquals(listOf("a"), played)
-            assertEquals(null, component.playingMessageId.value)
-            assertEquals(emptyList(), component.queue.value)
+            assertEquals(null, component.playback.playingMessageId.value)
+            assertEquals(emptyList(), component.playback.queue.value)
         }
 
     /** Starts "Geral" with every message held until it is replaced, and returns what was played. */
@@ -273,7 +277,7 @@ class HistoryComponentTest {
         }
         val component = createComponent()
         advanceUntilIdle()
-        component.playChannel("Geral")
+        component.playback.playChannel("Geral")
         advanceUntilIdle()
         return component to played
     }
@@ -283,27 +287,27 @@ class HistoryComponentTest {
         runTest(testDispatcher) {
             val (component, played) = playRoomHeld(MutableStateFlow(null))
 
-            component.playNext()
+            component.playback.playNext()
             advanceUntilIdle()
 
             assertEquals(listOf("a", "b"), played)
-            assertEquals("b", component.playingMessageId.value)
+            assertEquals("b", component.playback.playingMessageId.value)
         }
 
     @Test
     fun `next on the last message keeps playing it`() =
         runTest(testDispatcher) {
             val (component, played) = playRoomHeld(MutableStateFlow(null))
-            component.playNext()
+            component.playback.playNext()
             advanceUntilIdle()
-            component.playNext()
+            component.playback.playNext()
             advanceUntilIdle()
 
-            component.playNext()
+            component.playback.playNext()
             advanceUntilIdle()
 
             assertEquals(listOf("a", "b", "c"), played)
-            assertEquals("c", component.playingMessageId.value)
+            assertEquals("c", component.playback.playingMessageId.value)
         }
 
     @Test
@@ -311,15 +315,15 @@ class HistoryComponentTest {
         runTest(testDispatcher) {
             val position = MutableStateFlow<PlaybackPosition?>(null)
             val (component, played) = playRoomHeld(position)
-            component.playNext()
+            component.playback.playNext()
             advanceUntilIdle()
             position.value = PlaybackPosition("b", positionMs = 1_000, durationMs = 9_000)
 
-            component.playPrevious()
+            component.playback.playPrevious()
             advanceUntilIdle()
 
             assertEquals(listOf("a", "b", "a"), played)
-            assertEquals("a", component.playingMessageId.value)
+            assertEquals("a", component.playback.playingMessageId.value)
         }
 
     @Test
@@ -327,15 +331,19 @@ class HistoryComponentTest {
         runTest(testDispatcher) {
             val position = MutableStateFlow<PlaybackPosition?>(null)
             val (component, played) = playRoomHeld(position)
-            component.playNext()
+            component.playback.playNext()
             advanceUntilIdle()
             position.value = PlaybackPosition("b", positionMs = 5_000, durationMs = 9_000)
 
-            component.playPrevious()
+            component.playback.playPrevious()
             advanceUntilIdle()
 
             assertEquals(listOf("a", "b", "b"), played)
-            assertEquals(listOf("a", "b", "c"), component.queue.value.map { it.id })
+            assertEquals(
+                listOf("a", "b", "c"),
+                component.playback.queue.value
+                    .map { it.id },
+            )
         }
 
     @Test
@@ -343,9 +351,27 @@ class HistoryComponentTest {
         runTest(testDispatcher) {
             val (component, played) = playRoomHeld(MutableStateFlow(null))
 
-            component.playPrevious()
+            component.playback.playPrevious()
             advanceUntilIdle()
 
             assertEquals(listOf("a", "a"), played)
+        }
+
+    @Test
+    fun `the speed button steps through 1x, 1_5x and 2x and back`() =
+        runTest(testDispatcher) {
+            val speed = MutableStateFlow(1f)
+            every { historyRepository.playbackSpeed } returns speed
+            coEvery { historyRepository.setPlaybackSpeed(any()) } coAnswers { speed.value = firstArg() }
+            val component = createComponent()
+
+            val seen =
+                List(3) {
+                    component.playback.cycleSpeed()
+                    advanceUntilIdle()
+                    speed.value
+                }
+
+            assertEquals(listOf(1.5f, 2f, 1f), seen)
         }
 }

@@ -181,4 +181,33 @@ class HistoryPlaybackTest {
                     .toByteArray()
             assertContentEquals(second.copyOfRange(48_000, second.size), afterSeek)
         }
+
+    @Test
+    fun doubleSpeedPlaysInHalfTheTimeAndStillReachesTheEnd() =
+        runTest {
+            val second = ByteArray(96_000) { (it % 251).toByte() }
+            fileSystem.write(MESSAGE_PATH.toPath()) { write(second) }
+            val repository =
+                HistoryRepositoryImpl(
+                    audioPlayer = player,
+                    database = database,
+                    settings = MapSettings(),
+                    storageInfoProvider = NoStorageInfoProvider(),
+                    fileSystem = fileSystem,
+                    dispatcher = StandardTestDispatcher(testScheduler),
+                )
+            val seen = mutableListOf<PlaybackPosition>()
+            backgroundScope.launch { repository.playbackPosition.collect { it?.let(seen::add) } }
+            repository.setPlaybackSpeed(2f)
+            val startedAt = testScheduler.currentTime
+
+            repository.playMessage(message)
+
+            val tookMs = testScheduler.currentTime - startedAt
+            assertTrue(tookMs in 450..550, "a second at 2x should take about half a second, took $tookMs ms")
+            val fedBytes = player.chunks.sumOf { it.first.size }
+            assertTrue(fedBytes in 45_000..51_000, "about half the audio reaches the player, got $fedBytes bytes")
+            assertTrue(seen.last().positionMs >= seen.last().durationMs - CHUNK_MS, "progress still reaches the end")
+            assertEquals(2f, repository.playbackSpeed.value)
+        }
 }

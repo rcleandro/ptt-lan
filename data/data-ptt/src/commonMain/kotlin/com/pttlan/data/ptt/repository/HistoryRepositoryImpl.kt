@@ -4,6 +4,7 @@ import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import co.touchlab.kermit.Logger
 import com.pttlan.core.audio.AudioPlayer
+import com.pttlan.core.audio.TimeStretcher
 import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.core.database.PttDatabase
 import com.pttlan.core.datastore.SettingsDefaults
@@ -52,6 +53,9 @@ class HistoryRepositoryImpl(
 
     private val _playbackPosition = MutableStateFlow<PlaybackPosition?>(null)
     override val playbackPosition: StateFlow<PlaybackPosition?> = _playbackPosition.asStateFlow()
+
+    private val _playbackSpeed = MutableStateFlow(1f)
+    override val playbackSpeed: StateFlow<Float> = _playbackSpeed.asStateFlow()
 
     private var playbackJob: Job? = null
     private var isPlaybackPaused = false
@@ -111,6 +115,7 @@ class HistoryRepositoryImpl(
                     _playbackPosition.value = PlaybackPosition(message.id, 0, totalMs)
 
                     var source = fileSystem.source(path).buffer()
+                    var stretcher = TimeStretcher()
                     val buffer = ByteArray(PLAYBACK_CHUNK_BYTES)
                     var sequenceNumber = 0
                     var playedBytes = 0L
@@ -126,6 +131,7 @@ class HistoryRepositoryImpl(
                             val targetBytes = targetMs * BYTES_PER_SECOND / MS_PER_SECOND
                             playedBytes = targetBytes.coerceIn(0L, sizeBytes ?: 0L) and 1L.inv()
                             source.skip(playedBytes)
+                            stretcher = TimeStretcher()
                             _playbackPosition.value =
                                 PlaybackPosition(message.id, playedBytes * MS_PER_SECOND / BYTES_PER_SECOND, totalMs)
                         }
@@ -134,17 +140,24 @@ class HistoryRepositoryImpl(
                             continue
                         }
                         val read = source.read(buffer)
-                        if (read == -1) break
+                        if (read == -1) {
+                            val rest = stretcher.flush()
+                            if (rest.isNotEmpty()) audioPlayer.play(rest, sequenceNumber = sequenceNumber++)
+                            break
+                        }
 
                         // The player keeps the array in its queue, so it has to be a copy: reusing `buffer`
                         // meant the next read overwrote audio that had not been played yet.
                         // The sequence number has to advance as well, or the jitter buffer treats every chunk
                         // after the first as a late duplicate of packet 0 and drops it.
-                        audioPlayer.play(buffer.copyOf(read), sequenceNumber = sequenceNumber++)
+                        stretcher.speed = _playbackSpeed.value
+                        val chunk = stretcher.process(buffer.copyOf(read))
+                        if (chunk.isNotEmpty()) audioPlayer.play(chunk, sequenceNumber = sequenceNumber++)
 
-                        // Feed at playback speed. Reading the whole file at disk speed and returning would hit
-                        // the `finally` below and stop the player while the queue was still full.
-                        delay((read * MS_PER_SECOND / BYTES_PER_SECOND).milliseconds)
+                        // Feed at playback speed, which is the length of what came out of the stretcher. Reading
+                        // the whole file at disk speed and returning would hit the `finally` below and stop the
+                        // player while the queue was still full.
+                        delay((chunk.size * MS_PER_SECOND / BYTES_PER_SECOND).milliseconds)
 
                         // Position comes from the bytes fed, not from a sum of per-chunk milliseconds:
                         // the integer division would drop a few ms per chunk and never reach the end.
@@ -181,6 +194,10 @@ class HistoryRepositoryImpl(
         if (currentPlaybackMessageId != null) {
             seekRequestMs = positionMs
         }
+    }
+
+    override suspend fun setPlaybackSpeed(speed: Float) {
+        _playbackSpeed.value = speed
     }
 
     override suspend fun stopPlayingMessage() {

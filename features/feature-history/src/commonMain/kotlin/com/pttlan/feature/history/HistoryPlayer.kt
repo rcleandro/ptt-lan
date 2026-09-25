@@ -26,6 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,7 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.pttlan.core.designsystem.components.SectionLabel
@@ -52,10 +52,18 @@ private const val PROGRESS_LABEL_ALPHA = 0.7f
 /** How far the rewind and forward buttons jump. */
 private const val SEEK_STEP_MS = 5_000L
 
+/** What the mini player shows about the message playing. */
+internal class PlayerState(
+    val isPaused: Boolean,
+    val position: PlaybackPosition?,
+    val speed: Float,
+)
+
 /** What the mini player's buttons and progress bar do. */
 internal class PlayerActions(
     val onPlayPause: () -> Unit,
     val onSeek: (positionMs: Long) -> Unit,
+    val onCycleSpeed: () -> Unit,
 )
 
 /** The mini player's controls while a room plays in sequence. */
@@ -69,9 +77,8 @@ internal class QueueControls(
 @Composable
 internal fun MiniPlayer(
     message: VoiceMessage,
-    isPaused: Boolean,
+    state: PlayerState,
     queue: QueueControls?,
-    position: PlaybackPosition?,
     actions: PlayerActions,
     modifier: Modifier = Modifier,
 ) {
@@ -95,12 +102,12 @@ internal fun MiniPlayer(
                     overflow = TextOverflow.Ellipsis,
                 )
                 // In a queue its position takes the state's place: the play button already shows it
-                val state = queue?.label ?: if (isPaused) "pausado" else "tocando"
-                SectionLabel(text = "# ${message.channelId} · $state")
+                val status = queue?.label ?: if (state.isPaused) "pausado" else "tocando"
+                SectionLabel(text = "# ${message.channelId} · $status")
             }
-            PlayButton(isPlaying = !isPaused, isActive = true, onClick = actions.onPlayPause, size = 52)
+            PlayButton(isPlaying = !state.isPaused, isActive = true, onClick = actions.onPlayPause, size = 52)
         }
-        PlaybackControls(position, fallbackDurationMs = message.durationMs, queue = queue, onSeek = actions.onSeek)
+        PlaybackControls(state, fallbackDurationMs = message.durationMs, queue = queue, actions = actions)
     }
 }
 
@@ -122,20 +129,16 @@ private fun SenderAvatar(nickname: String) {
     }
 }
 
-/**
- * A draggable progress bar over the transport row: previous, back 5 s, "elapsed / total", forward 5 s and next,
- * the skip buttons only while a room plays in sequence.
- */
+/** A draggable progress bar, elapsed and total time at its ends, and the transport row below. */
 @Composable
 private fun PlaybackControls(
-    position: PlaybackPosition?,
+    state: PlayerState,
     fallbackDurationMs: Long,
     queue: QueueControls?,
-    onSeek: (Long) -> Unit,
+    actions: PlayerActions,
 ) {
-    val totalMs = position?.durationMs ?: fallbackDurationMs
-    val playedMs = position?.positionMs ?: 0L
-    val fraction by animateFloatAsState(position?.fraction ?: 0f, label = "playbackProgress")
+    val totalMs = state.position?.durationMs ?: fallbackDurationMs
+    val fraction by animateFloatAsState(state.position?.fraction ?: 0f, label = "playbackProgress")
     // Held while dragging, so the reported position does not pull the thumb back from under the finger
     var dragFraction by remember { mutableStateOf<Float?>(null) }
 
@@ -143,25 +146,54 @@ private fun PlaybackControls(
         fraction = dragFraction ?: fraction,
         onDrag = { dragFraction = it },
         onDragEnd = {
-            dragFraction?.let { onSeek((it * totalMs).toLong()) }
+            dragFraction?.let { actions.onSeek((it * totalMs).toLong()) }
             dragFraction = null
         },
     )
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    val shownMs = dragFraction?.let { (it * totalMs).toLong() } ?: state.position?.positionMs ?: 0L
+    Row {
+        TimeLabel(formatPosition(shownMs), Modifier.weight(1f))
+        TimeLabel(formatDuration(totalMs))
+    }
+    TransportRow(shownMs = shownMs, speed = state.speed, queue = queue, actions = actions)
+}
+
+@Composable
+private fun TimeLabel(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onBackground.copy(alpha = PROGRESS_LABEL_ALPHA),
+        modifier = modifier,
+    )
+}
+
+/** Previous, back 5 s, the speed, forward 5 s and next; the skips only while a room plays in sequence. */
+@Composable
+private fun TransportRow(
+    shownMs: Long,
+    speed: Float,
+    queue: QueueControls?,
+    actions: PlayerActions,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceEvenly,
+    ) {
         if (queue != null) {
             IconButton(onClick = queue.onPrevious) { Icon(Icons.Default.SkipPrevious, contentDescription = "Anterior") }
         }
-        IconButton(onClick = { onSeek((playedMs - SEEK_STEP_MS).coerceAtLeast(0)) }) {
+        IconButton(onClick = { actions.onSeek((shownMs - SEEK_STEP_MS).coerceAtLeast(0)) }) {
             Icon(Icons.Default.Replay5, contentDescription = "Voltar 5 segundos")
         }
-        Text(
-            text = "${formatPosition(dragFraction?.let { (it * totalMs).toLong() } ?: playedMs)} / ${formatDuration(totalMs)}",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = PROGRESS_LABEL_ALPHA),
-            textAlign = TextAlign.Center,
-            modifier = Modifier.weight(1f),
-        )
-        IconButton(onClick = { onSeek(playedMs + SEEK_STEP_MS) }) {
+        TextButton(onClick = actions.onCycleSpeed) {
+            Text(formatSpeed(speed), style = MaterialTheme.typography.labelLarge, maxLines = 1)
+        }
+        IconButton(onClick = { actions.onSeek(shownMs + SEEK_STEP_MS) }) {
             Icon(Icons.Default.Forward5, contentDescription = "Avançar 5 segundos")
         }
         if (queue != null) {
@@ -205,6 +237,9 @@ private fun SeekBar(
         },
     )
 }
+
+/** "1×", "1,5×", "2×". */
+private fun formatSpeed(speed: Float): String = if (speed % 1f == 0f) "${speed.toInt()}×" else "${speed.toString().replace('.', ',')}×"
 
 internal fun formatDuration(durationMs: Long): String = formatPosition((durationMs / MS_PER_SECOND).coerceAtLeast(1) * MS_PER_SECOND)
 
