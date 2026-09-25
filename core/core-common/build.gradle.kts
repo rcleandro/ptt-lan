@@ -3,6 +3,9 @@ plugins {
 }
 
 kotlin {
+    android {
+        withHostTest {}
+    }
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines.core)
@@ -15,4 +18,7 @@ kotlin {
 
 dependencies {
     "androidMainImplementation"(libs.androidx.core.ktx)
+    "androidHostTestImplementation"(kotlin("test"))
+    "androidHostTestImplementation"(libs.robolectric)
+    "androidHostTestImplementation"(libs.androidx.junit)
 }

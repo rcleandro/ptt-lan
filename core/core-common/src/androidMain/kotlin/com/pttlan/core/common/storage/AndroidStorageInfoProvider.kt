@@ -1,6 +1,7 @@
 package com.pttlan.core.common.storage
 
 import android.content.Context
+import android.os.Build
 import android.os.Environment
 import android.os.StatFs
 import android.os.storage.StorageManager
@@ -9,7 +10,11 @@ import java.io.File
 class AndroidStorageInfoProvider(
     private val context: Context,
 ) : StorageInfoProvider {
-    override val isExternalStorageSupported: Boolean = true
+    /**
+     * Before Android 10 any app with the storage permission reads the external cache, and the history keeps
+     * recorded voice there (30.6). From 10 on it is private to the app.
+     */
+    override val isExternalStorageSupported: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
 
     override fun getAvailableStorageOptions(): List<StorageOption> {
         val options = mutableListOf<StorageOption>()
@@ -27,7 +32,7 @@ class AndroidStorageInfoProvider(
 
         // External Storage
         val externalDirs = context.getExternalFilesDirs(null)
-        if (externalDirs != null && externalDirs.size > 1) {
+        if (isExternalStorageSupported && externalDirs != null && externalDirs.size > 1) {
             val sdCardDir = externalDirs[1]
             if (sdCardDir != null && Environment.getExternalStorageState(sdCardDir) == Environment.MEDIA_MOUNTED) {
                 val externalAvailableBytes = getAvailableBytes(sdCardDir)
@@ -57,7 +62,8 @@ class AndroidStorageInfoProvider(
     }
 
     private fun getCacheDirForLocation(cacheLocationId: String): File? =
-        if (cacheLocationId == "Externo") {
+        // A setting saved as "Externo" before an update keeps to the private cache where external is not safe
+        if (cacheLocationId == "Externo" && isExternalStorageSupported) {
             context.externalCacheDir
         } else {
             context.cacheDir
