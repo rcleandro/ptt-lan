@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -64,6 +65,9 @@ import com.pttlan.domain.ptt.repository.ServerNode
 
 private val DockClearance = 150.dp
 
+/** Below this height (a Flip's cover screen) a floating dock would cover half the list, so it scrolls with it. */
+private val ShortHeight = 480.dp
+
 @Composable
 fun ConnectionScreen(
     component: ConnectionComponent,
@@ -101,7 +105,11 @@ fun ConnectionScreenContent(
     onOpenSettings: () -> Unit = {},
     onOpenHistory: (() -> Unit)? = null,
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val dockInList = maxHeight < ShortHeight
+        val dock = @Composable { dockModifier: Modifier ->
+            ManualConnectDock(manualIp = state.manualIp, onIntent = onIntent, modifier = dockModifier)
+        }
         AmbientGlow(
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(460.dp).offset((-140).dp, (-160).dp),
@@ -115,12 +123,8 @@ fun ConnectionScreenContent(
         if (state.status == ConnectionStatus.Connecting || state.status == ConnectionStatus.Reconnecting) {
             ConnectingIndicator(modifier = Modifier.align(Alignment.Center))
         } else {
-            ServerList(state, onIntent, onOpenSettings, onOpenHistory)
-            ManualConnectDock(
-                manualIp = state.manualIp,
-                onIntent = onIntent,
-                modifier = Modifier.align(Alignment.BottomCenter),
-            )
+            ServerList(state, onIntent, onOpenSettings, onOpenHistory, footer = if (dockInList) dock else null)
+            if (!dockInList) dock(Modifier.align(Alignment.BottomCenter))
         }
     }
 }
@@ -143,10 +147,12 @@ private fun ServerList(
     onIntent: (ConnectionIntent) -> Unit,
     onOpenSettings: () -> Unit,
     onOpenHistory: (() -> Unit)?,
+    footer: (@Composable (Modifier) -> Unit)?,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().readableWidth().windowInsetsPadding(WindowInsets.statusBars),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = DockClearance),
+        contentPadding =
+            PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = if (footer == null) DockClearance else 0.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { Header(onOpenSettings, onOpenHistory) }
@@ -176,6 +182,7 @@ private fun ServerList(
         items(state.discoveredServers) { server ->
             ServerCard(server = server) { onIntent(ConnectionIntent.ConnectToDiscovered(server)) }
         }
+        if (footer != null) item { footer(Modifier) }
     }
 }
 
