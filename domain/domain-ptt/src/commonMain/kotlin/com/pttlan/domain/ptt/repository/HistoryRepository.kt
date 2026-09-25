@@ -13,7 +13,7 @@ interface HistoryRepository {
     /** Progress of the message being replayed, or null when nothing is playing. */
     val playbackPosition: StateFlow<PlaybackPosition?>
 
-    /** Replay speed, 1 by default; it keeps the voice's pitch and lasts until changed. */
+    /** Replay speed, 1 by default; it keeps the voice's pitch and is kept for the next time the app opens. */
     val playbackSpeed: StateFlow<Float>
 
     fun getRecentMessages(channelId: String): Flow<List<VoiceMessage>>

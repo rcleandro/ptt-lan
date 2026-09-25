@@ -42,6 +42,10 @@ class HistoryRepositoryImpl(
             database.voiceMessageQueries.markPlayed(Clock.System.now().toEpochMilliseconds(), messageId)
         }
 
+    init {
+        replay.setSpeed(settings.getFloat(SettingsKeys.PLAYBACK_SPEED, SettingsDefaults.PLAYBACK_SPEED))
+    }
+
     override val playbackPosition: StateFlow<PlaybackPosition?> = replay.position
 
     override val playbackSpeed: StateFlow<Float> = replay.speed
@@ -68,7 +72,10 @@ class HistoryRepositoryImpl(
 
     override suspend fun seekTo(positionMs: Long) = replay.seekTo(positionMs)
 
-    override suspend fun setPlaybackSpeed(speed: Float) = replay.setSpeed(speed)
+    override suspend fun setPlaybackSpeed(speed: Float) {
+        replay.setSpeed(speed)
+        settings.putFloat(SettingsKeys.PLAYBACK_SPEED, speed)
+    }
 
     override suspend fun stopPlayingMessage() = replay.stop()
 

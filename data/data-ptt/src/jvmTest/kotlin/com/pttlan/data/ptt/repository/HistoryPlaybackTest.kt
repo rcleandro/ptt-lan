@@ -299,4 +299,25 @@ class HistoryPlaybackTest {
                     .toByteArray()
             assertContentEquals(second, resumed)
         }
+
+    @Test
+    fun theSpeedIsKeptForTheNextTimeTheAppOpens() =
+        runTest {
+            val settings = MapSettings()
+
+            fun openApp() =
+                HistoryRepositoryImpl(
+                    audioPlayer = player,
+                    database = database,
+                    settings = settings,
+                    storageInfoProvider = NoStorageInfoProvider(),
+                    fileSystem = fileSystem,
+                    dispatcher = StandardTestDispatcher(testScheduler),
+                )
+            assertEquals(1f, openApp().playbackSpeed.value)
+
+            openApp().setPlaybackSpeed(1.5f)
+
+            assertEquals(1.5f, openApp().playbackSpeed.value)
+        }
 }
