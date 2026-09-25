@@ -72,13 +72,16 @@ fun HistoryScreen(component: HistoryComponent) {
     val playingMessageId by component.playingMessageId.collectAsState()
     val isPaused by component.isPaused.collectAsState()
     val playbackPosition by component.playbackPosition.collectAsState()
+    val queue by component.queue.collectAsState()
 
     HistoryScreenContent(
         messages = messages,
         playingMessageId = playingMessageId,
         isPaused = isPaused,
         playbackPosition = playbackPosition,
+        queue = queue,
         onPlayClick = component::playMessage,
+        onPlayChannelClick = component::playChannel,
         onClearCacheClick = component::clearAllMessages,
         onDeleteMessage = component::deleteMessage,
         onDeleteChannelClick = component::deleteChannelMessages,
@@ -92,7 +95,9 @@ fun HistoryScreenContent(
     playingMessageId: String?,
     isPaused: Boolean,
     playbackPosition: PlaybackPosition? = null,
+    queue: List<VoiceMessage> = emptyList(),
     onPlayClick: (VoiceMessage) -> Unit,
+    onPlayChannelClick: (String) -> Unit = {},
     onClearCacheClick: () -> Unit,
     onDeleteMessage: (VoiceMessage) -> Unit,
     onDeleteChannelClick: (String) -> Unit,
@@ -103,6 +108,7 @@ fun HistoryScreenContent(
     var messageToDelete by remember { mutableStateOf<VoiceMessage?>(null) }
     var channelToDelete by remember { mutableStateOf<String?>(null) }
     val playingMessage = messages.find { it.id == playingMessageId }
+    val queueIndex = queue.indexOfFirst { it.id == playingMessageId }
 
     Box(modifier = modifier.fillMaxSize()) {
         AmbientGlow(
@@ -120,7 +126,7 @@ fun HistoryScreenContent(
                 isPaused = isPaused,
                 onPlayClick = onPlayClick,
                 onDeleteMessage = { messageToDelete = it },
-                onDeleteChannel = { channelToDelete = it },
+                channelActions = ChannelActions(onPlay = onPlayChannelClick, onDelete = { channelToDelete = it }),
             )
         }
 
@@ -143,6 +149,7 @@ fun HistoryScreenContent(
             MiniPlayer(
                 message = playingMessage,
                 isPaused = isPaused,
+                queueLabel = if (queueIndex >= 0) "${queueIndex + 1} de ${queue.size}" else null,
                 position = playbackPosition?.takeIf { it.messageId == playingMessage.id },
                 onPlayPause = { onPlayClick(playingMessage) },
                 modifier = Modifier.align(Alignment.BottomCenter),

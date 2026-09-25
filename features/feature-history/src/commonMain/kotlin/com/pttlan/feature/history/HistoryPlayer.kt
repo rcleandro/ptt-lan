@@ -39,6 +39,7 @@ private const val PROGRESS_LABEL_ALPHA = 0.7f
 internal fun MiniPlayer(
     message: VoiceMessage,
     isPaused: Boolean,
+    queueLabel: String?,
     position: PlaybackPosition?,
     onPlayPause: () -> Unit,
     modifier: Modifier = Modifier,
@@ -54,20 +55,7 @@ internal fun MiniPlayer(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(52.dp)
-                    .clip(CircleShape)
-                    .background(PttTheme.customColors.primaryGlow),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = message.senderNickname.firstOrNull()?.uppercase() ?: "?",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-        }
+        SenderAvatar(message.senderNickname)
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = message.senderNickname,
@@ -76,10 +64,29 @@ internal fun MiniPlayer(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            SectionLabel(text = "# ${message.channelId} · ${if (isPaused) "pausado" else "tocando"}")
+            val state = if (isPaused) "pausado" else "tocando"
+            SectionLabel(text = listOfNotNull("# ${message.channelId}", queueLabel, state).joinToString(" · "))
             PlaybackProgress(position = position, fallbackDurationMs = message.durationMs)
         }
         PlayButton(isPlaying = !isPaused, isActive = true, onClick = onPlayPause, size = 52)
+    }
+}
+
+@Composable
+private fun SenderAvatar(nickname: String) {
+    Box(
+        modifier =
+            Modifier
+                .size(52.dp)
+                .clip(CircleShape)
+                .background(PttTheme.customColors.primaryGlow),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = nickname.firstOrNull()?.uppercase() ?: "?",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
     }
 }
 

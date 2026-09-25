@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -51,6 +52,12 @@ import kotlin.time.Instant
 private val TopBarClearance = 72.dp
 private val PlayerClearance = 110.dp
 
+/** What a room header does: play the room in sequence, or (long press) delete it. */
+internal class ChannelActions(
+    val onPlay: (String) -> Unit,
+    val onDelete: (String) -> Unit,
+)
+
 @Composable
 internal fun MessageList(
     messages: List<VoiceMessage>,
@@ -58,7 +65,7 @@ internal fun MessageList(
     isPaused: Boolean,
     onPlayClick: (VoiceMessage) -> Unit,
     onDeleteMessage: (VoiceMessage) -> Unit,
-    onDeleteChannel: (String) -> Unit,
+    channelActions: ChannelActions,
 ) {
     var collapsedChannels by remember { mutableStateOf(setOf<String>()) }
     val topInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -92,7 +99,8 @@ internal fun MessageList(
                     onToggle = {
                         collapsedChannels = if (isCollapsed) collapsedChannels - channelId else collapsedChannels + channelId
                     },
-                    onLongClick = { onDeleteChannel(channelId) },
+                    onLongClick = { channelActions.onDelete(channelId) },
+                    onPlayAll = { channelActions.onPlay(channelId) },
                 )
             }
             if (!isCollapsed) {
@@ -126,6 +134,7 @@ private fun ChannelHeader(
     isCollapsed: Boolean,
     onToggle: () -> Unit,
     onLongClick: () -> Unit,
+    onPlayAll: () -> Unit,
 ) {
     Row(
         modifier =
@@ -137,6 +146,13 @@ private fun ChannelHeader(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SectionLabel(text = "# $channelId", modifier = Modifier.weight(1f))
+        IconButton(onClick = onPlayAll) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.PlaylistPlay,
+                contentDescription = "Tocar a sala",
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
         Icon(
             imageVector = if (isCollapsed) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
             contentDescription = if (isCollapsed) "Expandir" else "Recolher",

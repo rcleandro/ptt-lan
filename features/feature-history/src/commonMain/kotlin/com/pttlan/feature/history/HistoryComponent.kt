@@ -7,6 +7,7 @@ import com.pttlan.domain.ptt.model.VoiceMessage
 import com.pttlan.domain.ptt.repository.HistoryRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,6 +31,13 @@ class HistoryComponent(
     private val _isPaused = MutableStateFlow<Boolean>(false)
     val isPaused: StateFlow<Boolean> = _isPaused.asStateFlow()
 
+    private val _queue = MutableStateFlow<List<VoiceMessage>>(emptyList())
+
+    /** The room being played in sequence, oldest first; empty when a single message is playing. */
+    val queue: StateFlow<List<VoiceMessage>> = _queue.asStateFlow()
+
+    private var playJob: Job? = null
+
     /** Progress of the message being replayed, straight from the repository. */
     val playbackPosition: StateFlow<PlaybackPosition?> = historyRepository.playbackPosition
 
@@ -37,8 +45,11 @@ class HistoryComponent(
         val feed =
             historyRepository
                 .getAllMessages()
-                .onEach { _messages.value = it }
-                .launchIn(scope)
+                .onEach { messages ->
+                    _messages.value = messages
+                    // A deleted message leaves the queue too; deleting the one playing ends the queue.
+                    _queue.value = _queue.value.filter { queued -> messages.any { it.id == queued.id } }
+                }.launchIn(scope)
 
         // Not scope.cancel(): a delete the user just asked for has to finish. Only what outlives the screen
         // stops: the feed, and a replay that would go on with no controls over the live channel audio.
@@ -52,9 +63,17 @@ class HistoryComponent(
         onBackClicked()
     }
 
+    /** Plays every message of the room in the order it was recorded, one after the other. */
+    fun playChannel(channelId: String) {
+        val queue = _messages.value.filter { it.channelId == channelId }.sortedBy { it.recordedAt }
+        if (queue.isEmpty()) return
+        _queue.value = queue
+        playFrom(queue.first())
+    }
+
     fun playMessage(message: VoiceMessage) {
-        scope.launch {
-            if (_playingMessageId.value == message.id) {
+        if (_playingMessageId.value == message.id) {
+            scope.launch {
                 if (_isPaused.value) {
                     _isPaused.value = false
                     historyRepository.resumePlayingMessage()
@@ -62,19 +81,37 @@ class HistoryComponent(
                     _isPaused.value = true
                     historyRepository.pausePlayingMessage()
                 }
-            } else {
-                _playingMessageId.value = message.id
-                _isPaused.value = false
-                historyRepository.playMessage(message)
-                if (_playingMessageId.value == message.id) {
-                    _playingMessageId.value = null
-                    _isPaused.value = false
-                }
             }
+            return
         }
+        // A message of the room being played goes on from there; any other one plays alone.
+        if (_queue.value.none { it.id == message.id }) _queue.value = emptyList()
+        playFrom(message)
+    }
+
+    private fun playFrom(first: VoiceMessage) {
+        playJob?.cancel()
+        playJob =
+            scope.launch {
+                var next: VoiceMessage? = first
+                while (next != null) {
+                    val current: VoiceMessage = next
+                    _playingMessageId.value = current.id
+                    _isPaused.value = false
+                    historyRepository.playMessage(current)
+                    val queue = _queue.value
+                    val index = queue.indexOfFirst { it.id == current.id }
+                    next = if (index >= 0) queue.getOrNull(index + 1) else null
+                }
+                _playingMessageId.value = null
+                _isPaused.value = false
+                _queue.value = emptyList()
+            }
     }
 
     fun stopPlaying() {
+        playJob?.cancel()
+        _queue.value = emptyList()
         scope.launch {
             historyRepository.stopPlayingMessage()
             _playingMessageId.value = null

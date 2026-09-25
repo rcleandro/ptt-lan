@@ -11,6 +11,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
@@ -136,5 +137,124 @@ class HistoryComponentTest {
 
             coVerify(exactly = 1) { historyRepository.stopPlayingMessage() }
             assertFalse(feeding)
+        }
+
+    private fun message(
+        id: String,
+        channelId: String,
+        recordedAt: Long,
+    ) = VoiceMessage(id, channelId, "Ana", "/$id.pcm", 1_000, recordedAt)
+
+    private val room =
+        listOf(
+            message("b", "Geral", recordedAt = 20),
+            message("x", "Obra", recordedAt = 15),
+            message("a", "Geral", recordedAt = 10),
+            message("c", "Geral", recordedAt = 30),
+        )
+
+    @Test
+    fun `playing a room plays its messages in recording order and stops at the end`() =
+        runTest(testDispatcher) {
+            coEvery { historyRepository.getAllMessages() } returns flowOf(room)
+            val played = mutableListOf<String>()
+            coEvery { historyRepository.playMessage(any()) } coAnswers { played += firstArg<VoiceMessage>().id }
+            val component = createComponent()
+            advanceUntilIdle()
+
+            component.playChannel("Geral")
+            advanceUntilIdle()
+
+            assertEquals(listOf("a", "b", "c"), played)
+            assertEquals(null, component.playingMessageId.value)
+            assertEquals(emptyList(), component.queue.value)
+        }
+
+    @Test
+    fun `the queue advances only when the current message ends`() =
+        runTest(testDispatcher) {
+            coEvery { historyRepository.getAllMessages() } returns flowOf(room)
+            val ending = CompletableDeferred<Unit>()
+            coEvery { historyRepository.playMessage(any()) } coAnswers {
+                if (firstArg<VoiceMessage>().id == "a") ending.await()
+            }
+            val component = createComponent()
+            advanceUntilIdle()
+
+            component.playChannel("Geral")
+            advanceUntilIdle()
+            assertEquals("a", component.playingMessageId.value)
+            assertEquals(listOf("a", "b", "c"), component.queue.value.map { it.id })
+
+            ending.complete(Unit)
+            advanceUntilIdle()
+            assertEquals(null, component.playingMessageId.value)
+        }
+
+    @Test
+    fun `tapping a message of the active queue goes on from it`() =
+        runTest(testDispatcher) {
+            coEvery { historyRepository.getAllMessages() } returns flowOf(room)
+            val played = mutableListOf<String>()
+            var holding = true
+            coEvery { historyRepository.playMessage(any()) } coAnswers {
+                played += firstArg<VoiceMessage>().id
+                if (holding) awaitCancellation()
+            }
+            val component = createComponent()
+            advanceUntilIdle()
+            component.playChannel("Geral")
+            advanceUntilIdle()
+
+            holding = false
+            component.playMessage(room[0])
+            advanceUntilIdle()
+
+            assertEquals(listOf("a", "b", "c"), played)
+        }
+
+    @Test
+    fun `tapping a message outside the queue plays only that message`() =
+        runTest(testDispatcher) {
+            coEvery { historyRepository.getAllMessages() } returns flowOf(room)
+            val played = mutableListOf<String>()
+            var holding = true
+            coEvery { historyRepository.playMessage(any()) } coAnswers {
+                played += firstArg<VoiceMessage>().id
+                if (holding) awaitCancellation()
+            }
+            val component = createComponent()
+            advanceUntilIdle()
+            component.playChannel("Geral")
+            advanceUntilIdle()
+
+            holding = false
+            component.playMessage(room[1])
+            advanceUntilIdle()
+
+            assertEquals(listOf("a", "x"), played)
+            assertEquals(emptyList(), component.queue.value)
+        }
+
+    @Test
+    fun `stopping ends the queue`() =
+        runTest(testDispatcher) {
+            coEvery { historyRepository.getAllMessages() } returns flowOf(room)
+            val played = mutableListOf<String>()
+            coEvery { historyRepository.playMessage(any()) } coAnswers {
+                played += firstArg<VoiceMessage>().id
+                awaitCancellation()
+            }
+            val component = createComponent()
+            advanceUntilIdle()
+            component.playChannel("Geral")
+            advanceUntilIdle()
+
+            component.stopPlaying()
+            advanceUntilIdle()
+
+            assertEquals(listOf("a"), played)
+            assertEquals(null, component.playingMessageId.value)
+            assertEquals(emptyList(), component.queue.value)
         }
 }
