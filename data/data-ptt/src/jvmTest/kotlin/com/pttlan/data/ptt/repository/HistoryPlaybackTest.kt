@@ -10,6 +10,7 @@ import com.pttlan.domain.ptt.model.PlaybackPosition
 import com.pttlan.domain.ptt.model.VoiceMessage
 import com.russhwolf.settings.MapSettings
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
@@ -259,5 +260,43 @@ class HistoryPlaybackTest {
             playing.join()
 
             assertEquals(null, storedPlayedAt())
+        }
+
+    @Test
+    fun liveSpeechPausesTheReplayAndItResumesOnceTheChannelIsFree() =
+        runTest {
+            val second = ByteArray(96_000) { (it % 251).toByte() }
+            fileSystem.write(MESSAGE_PATH.toPath()) { write(second) }
+            val live = MutableSharedFlow<Boolean>()
+            val repository =
+                HistoryRepositoryImpl(
+                    audioPlayer = player,
+                    database = database,
+                    settings = MapSettings(),
+                    storageInfoProvider = NoStorageInfoProvider(),
+                    fileSystem = fileSystem,
+                    dispatcher = StandardTestDispatcher(testScheduler),
+                    liveSpeaking = live,
+                )
+            val playing = launch { repository.playMessage(message) }
+            runCurrent()
+
+            live.emit(true)
+            runCurrent()
+            assertTrue(player.stopped, "the replay queued in the player must not play over the live audio")
+            val fedBeforeLive = player.chunks.size
+            advanceTimeBy(2_000)
+            assertEquals(fedBeforeLive, player.chunks.size, "nothing of the replay is fed while someone speaks")
+
+            live.emit(false)
+            playing.join()
+
+            // Back a second from where it paused, which at 43 ms in is the start
+            val resumed =
+                player.chunks
+                    .drop(fedBeforeLive)
+                    .flatMap { it.first.toList() }
+                    .toByteArray()
+            assertContentEquals(second, resumed)
         }
 }
