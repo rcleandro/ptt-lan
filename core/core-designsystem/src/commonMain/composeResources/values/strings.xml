@@ -18,4 +18,42 @@
     <string name="ptt_button_transmitting">Transmitindo: solte para encerrar</string>
     <string name="ptt_button_receiving">Canal ocupado: aguarde para falar</string>
     <string name="participant_self">Você</string>
+
+    <!-- Shared -->
+    <string name="common_cancel">Cancelar</string>
+    <string name="common_history">Histórico</string>
+    <string name="common_settings">Configurações</string>
+
+    <!-- Connection screen -->
+    <string name="connection_title">Conectar</string>
+    <string name="connection_subtitle">Escolha um servidor na rede ou digite o endereço.</string>
+    <string name="connection_connecting">Conectando…</string>
+    <string name="connection_nickname">Seu nome</string>
+    <string name="connection_pin">PIN da sala (opcional)</string>
+    <string name="connection_host_title">Hospedar neste aparelho</string>
+    <string name="connection_host_description">Os outros encontram o canal na rede. Com PIN (%1$d ou mais caracteres), só entra quem souber.</string>
+    <string name="connection_host">Hospedar</string>
+    <string name="connection_on_network">Na rede</string>
+    <string name="connection_searching">procurando</string>
+    <string name="connection_search_again">Procurar novamente</string>
+    <string name="connection_server_address">%1$s : %2$d</string>
+    <string name="connection_server_lan">LAN</string>
+    <string name="connection_server_web">WEB</string>
+    <string name="connection_manual">Conectar manualmente</string>
+    <string name="connection_manual_hint">IP ou domínio</string>
+    <string name="connection_connect">Conectar</string>
+    <string name="connection_error_timeout_discovered">Tempo de conexão excedido. O servidor está offline?</string>
+    <string name="connection_error_timeout_manual">Tempo de conexão excedido. Verifique o IP e tente novamente.</string>
+    <string name="connection_error_timeout_own">Tempo de conexão excedido ao entrar no próprio canal.</string>
+    <string name="connection_error_host">Não foi possível hospedar: %1$s</string>
+    <string name="connection_error_nickname">Por favor, preencha o seu Nome</string>
+    <string name="connection_error_failed">Falha ao conectar: %1$s</string>
+    <string name="connection_error_wrong_pin">PIN da sala incorreto</string>
+    <string name="connection_error_too_many_attempts">Muitas tentativas. Se o PIN errou várias vezes, a sala ficou travada: espere alguns minutos e tente de novo</string>
+    <string name="connection_error_pin_too_short">O PIN precisa ter pelo menos %1$d caracteres</string>
+    <string name="connection_disconnected">Servidor desconectado</string>
+    <string name="connection_server_message">%1$s</string>
+    <string name="certificate_changed_title">O certificado deste servidor mudou</string>
+    <string name="certificate_changed_text">Antes: %1$s\nAgora: %2$s\n\nSe quem hospeda reinstalou o app, confira com ele o código que aparece na lista de canais: sendo o novo, pode confiar. Se não, alguém na rede pode estar se passando pelo servidor.</string>
+    <string name="certificate_trust">Confiar no novo</string>
 </resources>

@@ -5,6 +5,9 @@ import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.pttlan.core.datastore.SettingsKeys
+import com.pttlan.core.designsystem.generated.resources.Res
+import com.pttlan.core.designsystem.generated.resources.connection_error_host
+import com.pttlan.core.designsystem.generated.resources.connection_error_timeout_manual
 import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.domain.ptt.repository.LocalServerHost
 import com.pttlan.domain.ptt.repository.ServerEndpoint
@@ -155,7 +158,7 @@ class ConnectionComponentTest {
             // Assert
             val effect = component.effects.first()
             assertTrue(effect is ConnectionEffect.ShowError)
-            assertTrue(effect.message.contains("Tempo de conexão excedido"))
+            assertEquals(Res.string.connection_error_timeout_manual, effect.message)
         }
 
     @Test
@@ -255,7 +258,8 @@ class ConnectionComponentTest {
 
             val effect = component.effects.first()
             assertTrue(effect is ConnectionEffect.ShowError)
-            assertTrue(effect.message.contains("Address already in use"))
+            assertEquals(Res.string.connection_error_host, effect.message)
+            assertEquals(listOf("Address already in use"), effect.args)
             coVerify(exactly = 0) { connectToServerUseCase(any(), any()) }
         }
 
@@ -264,31 +268,31 @@ class ConnectionComponentTest {
         runTest {
             val host: LocalServerHost = mockk()
             val hostEndpoint = ServerEndpoint("localhost", 9443, isLocal = true)
-            coEvery { host.start("PTT-LAN-User1", "4821") } returns Result.success(hostEndpoint)
-            coEvery { connectToServerUseCase(hostEndpoint, "User1", "4821") } returns Result.success(Unit)
+            coEvery { host.start("PTT-LAN-User1", "482193") } returns Result.success(hostEndpoint)
+            coEvery { connectToServerUseCase(hostEndpoint, "User1", "482193") } returns Result.success(Unit)
             val component = createComponent(host)
 
             component.onIntent(ConnectionIntent.UpdateNickname("User1"))
-            component.onIntent(ConnectionIntent.UpdatePin(" 4821 "))
+            component.onIntent(ConnectionIntent.UpdatePin(" 482193 "))
             component.onIntent(ConnectionIntent.HostServer)
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { connectToServerUseCase(hostEndpoint, "User1", "4821") }
+            coVerify(exactly = 1) { connectToServerUseCase(hostEndpoint, "User1", "482193") }
         }
 
     @Test
     fun `joining a server sends the pin typed on the screen`() =
         runTest {
             val endpoint = ServerEndpoint("192.168.0.20", 9443, isLocal = true)
-            coEvery { connectToServerUseCase(endpoint, "User1", "4821") } returns Result.success(Unit)
+            coEvery { connectToServerUseCase(endpoint, "User1", "482193") } returns Result.success(Unit)
             val component = createComponent()
 
             component.onIntent(ConnectionIntent.UpdateNickname("User1"))
-            component.onIntent(ConnectionIntent.UpdatePin("4821"))
+            component.onIntent(ConnectionIntent.UpdatePin("482193"))
             component.onIntent(ConnectionIntent.ConnectToDiscovered(ServerNode("PTT-LAN-Host", endpoint)))
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { connectToServerUseCase(endpoint, "User1", "4821") }
+            coVerify(exactly = 1) { connectToServerUseCase(endpoint, "User1", "482193") }
         }
 
     @Test

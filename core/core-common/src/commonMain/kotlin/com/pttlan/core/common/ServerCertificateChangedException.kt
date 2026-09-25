@@ -10,4 +10,4 @@ class ServerCertificateChangedException(
     val port: Int,
     val previousCode: String,
     val newCode: String,
-) : IllegalStateException("O certificado deste servidor mudou")
+) : IllegalStateException("Server certificate changed")

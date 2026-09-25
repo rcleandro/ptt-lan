@@ -1,6 +1,8 @@
 package com.pttlan.core.network
 
 import co.touchlab.kermit.Logger
+import com.pttlan.core.common.RoomPinRejectedException
+import com.pttlan.core.common.TooManyAttemptsException
 import com.pttlan.core.network.protocol.AudioEnvelope
 import com.pttlan.core.network.protocol.ControlMessage
 import com.pttlan.core.network.protocol.LoginRequest
@@ -11,7 +13,6 @@ import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
@@ -38,6 +39,21 @@ import kotlin.time.Duration.Companion.seconds
 class ServerRefusedException(
     val reason: String,
 ) : IllegalStateException(reason)
+
+/** Opening the socket: a LAN server answers fast, one on the internet gets more room. */
+private val LAN_CONNECT_TIMEOUT = 5.seconds
+private val INTERNET_CONNECT_TIMEOUT = 15.seconds
+
+/**
+ * Typed, so the app shows its own text: the only 401 at login is a room PIN that does not match (host mode, 24.3),
+ * and a 429 is the rate limit or a room locked after wrong PINs (30.3).
+ */
+private fun loginFailure(status: HttpStatusCode): Exception? =
+    when (status) {
+        HttpStatusCode.Unauthorized -> RoomPinRejectedException()
+        HttpStatusCode.TooManyRequests -> TooManyAttemptsException()
+        else -> null
+    }
 
 /** Default from the technical plan: give up after 10 failed reconnection attempts. */
 const val DEFAULT_MAX_RECONNECT_ATTEMPTS = 10
@@ -98,12 +114,7 @@ class PttWebSocketClient(
                 // A handshake refused for a changed certificate surfaces as a generic TLS error: say what it was
                 throw pins?.changeFor(cleanHost, port) ?: e
             }
-        // The only 401 at login is a room PIN that does not match (host mode, 24.3)
-        check(response.status != HttpStatusCode.Unauthorized) { "PIN da sala incorreto" }
-        // A room locked after wrong PINs says so in the body (30.3); the per-IP rate limit sends none
-        check(response.status != HttpStatusCode.TooManyRequests) {
-            response.bodyAsText().ifBlank { "Muitas tentativas. Espere um minuto e tente de novo" }
-        }
+        loginFailure(response.status)?.let { throw it }
         return response.body()
     }
 
@@ -126,7 +137,7 @@ class PttWebSocketClient(
                 sessionMutex.withLock {
                     if (session != null) return@withLock
                     logger.d { "Connecting to wss://$cleanHost:$port/ws" }
-                    val timeout = if (isLocal) 5.seconds else 15.seconds
+                    val timeout = if (isLocal) LAN_CONNECT_TIMEOUT else INTERNET_CONNECT_TIMEOUT
                     session =
                         withTimeout(timeout) {
                             httpClient.webSocketSession(

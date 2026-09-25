@@ -1,6 +1,8 @@
 package com.pttlan.server
 
+import com.pttlan.core.common.RoomPinRejectedException
 import com.pttlan.core.common.ServerCertificateChangedException
+import com.pttlan.core.common.TooManyAttemptsException
 import com.pttlan.core.network.CertificatePins
 import com.pttlan.core.network.PttWebSocketClient
 import com.pttlan.core.network.ServerRefusedException
@@ -110,9 +112,7 @@ class PttHostServerTest {
             server.start("PTT-LAN-host", pin = "482193")
             val client = PttWebSocketClient(createHttpClient())
 
-            val wrongPin =
-                assertFailsWith<IllegalStateException> { client.login("localhost", port, true, "guest", "d2", "000000") }
-            assertEquals("PIN da sala incorreto", wrongPin.message)
+            assertFailsWith<RoomPinRejectedException> { client.login("localhost", port, true, "guest", "d2", "000000") }
             assertTrue(client.login("localhost", port, true, "guest", "d2", "482193").token.isNotBlank())
         }
 
@@ -179,16 +179,15 @@ class PttHostServerTest {
 
     @Test
     fun `five wrong pins in a row lock the room and the app says so`() =
-        runBlocking {
+        runBlocking<Unit> {
             server.start("PTT-LAN-host", pin = "482193")
             val client = PttWebSocketClient(createHttpClient())
 
             repeat(4) {
-                assertFailsWith<IllegalStateException> { client.login("localhost", port, true, "guest", "d2", "000000") }
+                assertFailsWith<RoomPinRejectedException> { client.login("localhost", port, true, "guest", "d2", "000000") }
             }
-            val locked = assertFailsWith<IllegalStateException> { client.login("localhost", port, true, "guest", "d2", "000000") }
 
-            assertTrue(locked.message.orEmpty().contains("travada"), "got: ${locked.message}")
+            assertFailsWith<TooManyAttemptsException> { client.login("localhost", port, true, "guest", "d2", "000000") }
         }
 
     @Test

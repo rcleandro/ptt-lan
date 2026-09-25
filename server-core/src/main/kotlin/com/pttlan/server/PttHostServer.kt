@@ -1,5 +1,7 @@
 package com.pttlan.server
 
+import com.pttlan.core.common.DEFAULT_SERVER_PORT
+import com.pttlan.core.common.MIN_ROOM_PIN_LENGTH
 import com.pttlan.server.auth.JwtConfig
 import com.pttlan.server.channel.ChannelRegistry
 import io.ktor.network.tls.certificates.buildKeyStore
@@ -16,15 +18,12 @@ import org.koin.ktor.ext.getKoin
 import java.io.File
 import java.security.KeyStore
 
-const val PTT_PORT = 9443
+const val PTT_PORT = DEFAULT_SERVER_PORT
 
 private const val KEY_ALIAS = "pttlan"
 
 // The file sits in the app's private storage, which is what protects it; the password only satisfies the format
 private const val KEY_STORE_PASSWORD = "pttlan-host"
-
-/** Shortest room PIN host mode accepts: 6 digits take years to guess at the lockout's pace (30.3). */
-const val MIN_PIN_LENGTH = 6
 
 /**
  * The server running inside a client app (host mode, ADR 0010). Same module as `serverApp`, but with no
@@ -47,7 +46,7 @@ class PttHostServer(
 
     /**
      * Starts the server and announces it on the LAN. Does nothing when it is already running — the PIN of
-     * the running room stays. A blank [pin] makes an open room; a shorter one than [MIN_PIN_LENGTH] is refused,
+     * the running room stays. A blank [pin] makes an open room; a shorter one than [MIN_ROOM_PIN_LENGTH] is refused,
      * because it falls to guessing (30.3).
      */
     @Synchronized
@@ -56,7 +55,7 @@ class PttHostServer(
         pin: String? = null,
     ) {
         if (server != null) return
-        require(pin.isNullOrBlank() || pin.length >= MIN_PIN_LENGTH) { "O PIN precisa ter pelo menos $MIN_PIN_LENGTH caracteres" }
+        require(pin.isNullOrBlank() || pin.length >= MIN_ROOM_PIN_LENGTH) { "Room PIN shorter than $MIN_ROOM_PIN_LENGTH characters" }
         // Tokens of an earlier room, with another PIN or none, must not open this one
         JwtConfig.rotateKey()
 
