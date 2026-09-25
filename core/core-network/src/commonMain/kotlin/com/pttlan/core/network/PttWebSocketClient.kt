@@ -11,6 +11,7 @@ import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
@@ -92,6 +93,10 @@ class PttWebSocketClient(
             }
         // The only 401 at login is a room PIN that does not match (host mode, 24.3)
         check(response.status != HttpStatusCode.Unauthorized) { "PIN da sala incorreto" }
+        // A room locked after wrong PINs says so in the body (30.3); the per-IP rate limit sends none
+        check(response.status != HttpStatusCode.TooManyRequests) {
+            response.bodyAsText().ifBlank { "Muitas tentativas. Espere um minuto e tente de novo" }
+        }
         return response.body()
     }
 

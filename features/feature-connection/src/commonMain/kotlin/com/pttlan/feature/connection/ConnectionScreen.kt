@@ -226,7 +226,7 @@ private fun HostCard(onHost: () -> Unit) {
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Text(
-                text = "Os outros encontram o canal na rede. Com PIN, só entra quem souber.",
+                text = "Os outros encontram o canal na rede. Com PIN (6 ou mais caracteres), só entra quem souber.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

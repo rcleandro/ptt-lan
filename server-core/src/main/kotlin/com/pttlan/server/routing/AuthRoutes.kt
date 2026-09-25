@@ -3,6 +3,7 @@ package com.pttlan.server.routing
 import com.pttlan.core.network.protocol.LoginRequest
 import com.pttlan.core.network.protocol.LoginResponse
 import com.pttlan.server.auth.JwtConfig
+import com.pttlan.server.auth.PinGuard
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
@@ -13,7 +14,6 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
-import java.security.MessageDigest
 import java.util.UUID
 
 /** Room PIN from `ptt.roomPin`, set by the host mode (24.3). Null means an open room. */
@@ -24,6 +24,7 @@ fun Application.roomPin(): String? =
         ?.takeIf { it.isNotBlank() }
 
 fun Route.authRoutes(roomPin: String? = null) {
+    val pinGuard = roomPin?.let(::PinGuard)
     route("/api/auth") {
         rateLimit(RateLimitName("login")) {
             post("/login") {
@@ -33,12 +34,23 @@ fun Route.authRoutes(roomPin: String? = null) {
                     return@post
                 }
 
-                val pinMatches =
-                    roomPin == null ||
-                        MessageDigest.isEqual(request.pin.orEmpty().toByteArray(), roomPin.toByteArray())
-                if (!pinMatches) {
-                    call.respond(HttpStatusCode.Unauthorized, "PIN da sala incorreto")
-                    return@post
+                when (pinGuard?.check(request.pin)) {
+                    PinGuard.Result.REJECTED -> {
+                        call.respond(HttpStatusCode.Unauthorized, "PIN da sala incorreto")
+                        return@post
+                    }
+
+                    PinGuard.Result.LOCKED -> {
+                        call.respond(
+                            HttpStatusCode.TooManyRequests,
+                            "PIN errado muitas vezes seguidas: a sala ficou travada por alguns minutos",
+                        )
+                        return@post
+                    }
+
+                    PinGuard.Result.ACCEPTED, null -> {
+                        Unit
+                    }
                 }
 
                 val userId = UUID.randomUUID().toString()

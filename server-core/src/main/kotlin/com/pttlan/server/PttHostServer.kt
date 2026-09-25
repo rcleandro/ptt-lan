@@ -17,6 +17,9 @@ const val PTT_PORT = 9443
 
 private const val KEY_ALIAS = "pttlan"
 
+/** Shortest room PIN host mode accepts: 6 digits take years to guess at the lockout's pace (30.3). */
+const val MIN_PIN_LENGTH = 6
+
 /**
  * The server running inside a client app (host mode, ADR 0010). Same module as `serverApp`, but with no
  * `application.conf` and no admin panel: the panel's metrics need JVM management beans that Android lacks, and its
@@ -34,7 +37,8 @@ class PttHostServer(
 
     /**
      * Starts the server and announces it on the LAN. Does nothing when it is already running — the PIN of
-     * the running room stays. A blank [pin] makes an open room.
+     * the running room stays. A blank [pin] makes an open room; a shorter one than [MIN_PIN_LENGTH] is refused,
+     * because it falls to guessing (30.3).
      */
     @Synchronized
     fun start(
@@ -42,6 +46,7 @@ class PttHostServer(
         pin: String? = null,
     ) {
         if (server != null) return
+        require(pin.isNullOrBlank() || pin.length >= MIN_PIN_LENGTH) { "O PIN precisa ter pelo menos $MIN_PIN_LENGTH caracteres" }
 
         val password = UUID.randomUUID().toString()
         val keyStore =

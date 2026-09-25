@@ -94,22 +94,22 @@ class PttHostServerTest {
 
     @Test
     fun `a room with a pin only lets in who knows it`() {
-        server.start("PTT-LAN-host", pin = "4821")
+        server.start("PTT-LAN-host", pin = "482193")
 
         assertEquals(401, post("/api/auth/login").responseCode)
-        assertEquals(200, post("/api/auth/login", """{"nickname":"host","deviceId":"d1","pin":"4821"}""").responseCode)
+        assertEquals(200, post("/api/auth/login", """{"nickname":"host","deviceId":"d1","pin":"482193"}""").responseCode)
     }
 
     @Test
     fun `the app client sends the pin and reads a wrong one as a clear error`() =
         runBlocking {
-            server.start("PTT-LAN-host", pin = "4821")
+            server.start("PTT-LAN-host", pin = "482193")
             val client = PttWebSocketClient(createHttpClient())
 
             val wrongPin =
-                assertFailsWith<IllegalStateException> { client.login("localhost", port, true, "guest", "d2", "0000") }
+                assertFailsWith<IllegalStateException> { client.login("localhost", port, true, "guest", "d2", "000000") }
             assertEquals("PIN da sala incorreto", wrongPin.message)
-            assertTrue(client.login("localhost", port, true, "guest", "d2", "4821").token.isNotBlank())
+            assertTrue(client.login("localhost", port, true, "guest", "d2", "482193").token.isNotBlank())
         }
 
     @Test
@@ -164,4 +164,26 @@ class PttHostServerTest {
             stopKoin()
         }
     }
+
+    @Test
+    fun `a pin shorter than six characters is refused when hosting`() {
+        val error = assertFailsWith<IllegalArgumentException> { server.start("PTT-LAN-host", pin = "4821") }
+
+        assertTrue(error.message.orEmpty().contains("6"), "the message says how long it has to be: ${error.message}")
+        assertEquals(false, server.isRunning)
+    }
+
+    @Test
+    fun `five wrong pins in a row lock the room and the app says so`() =
+        runBlocking {
+            server.start("PTT-LAN-host", pin = "482193")
+            val client = PttWebSocketClient(createHttpClient())
+
+            repeat(4) {
+                assertFailsWith<IllegalStateException> { client.login("localhost", port, true, "guest", "d2", "000000") }
+            }
+            val locked = assertFailsWith<IllegalStateException> { client.login("localhost", port, true, "guest", "d2", "000000") }
+
+            assertTrue(locked.message.orEmpty().contains("travada"), "got: ${locked.message}")
+        }
 }
