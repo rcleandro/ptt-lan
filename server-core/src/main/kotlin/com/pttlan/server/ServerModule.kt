@@ -40,10 +40,15 @@ private fun Application.longConfig(
         ?.getString()
         ?.toLongOrNull() ?: default
 
+/** The biggest frame a client may send: live audio goes in 20 ms chunks of about 2 KB, control messages are smaller. */
+private const val MAX_FRAME_BYTES = 64 * 1024L
+
 @Suppress("LongMethod")
 fun Application.module() {
     install(WebSockets) {
         pingPeriod = 20.seconds
+        // Ktor's default is no limit: one huge frame from anyone with a token was buffered whole (30.1)
+        maxFrameSize = MAX_FRAME_BYTES
     }
 
     install(ContentNegotiation) {
