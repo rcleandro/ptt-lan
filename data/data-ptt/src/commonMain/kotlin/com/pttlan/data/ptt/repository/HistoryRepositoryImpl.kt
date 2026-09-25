@@ -28,6 +28,7 @@ import okio.FileSystem
 import okio.Path.Companion.toPath
 import okio.SYSTEM
 import okio.buffer
+import kotlin.concurrent.Volatile
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val PLAYBACK_CHUNK_BYTES = 4096
@@ -55,6 +56,9 @@ class HistoryRepositoryImpl(
     private var playbackJob: Job? = null
     private var isPlaybackPaused = false
     private var currentPlaybackMessageId: String? = null
+
+    @Volatile
+    private var seekRequestMs: Long? = null
 
     override fun getRecentMessages(channelId: String): Flow<List<VoiceMessage>> =
         database.voiceMessageQueries
@@ -101,21 +105,30 @@ class HistoryRepositoryImpl(
             scope.launch {
                 try {
                     val path = message.filePath.toPath()
+                    val sizeBytes = fileSystem.metadataOrNull(path)?.size
                     // The recorded file is the honest total: `durationMs` is wall clock of the talk spurt
-                    val totalMs =
-                        fileSystem
-                            .metadataOrNull(path)
-                            ?.size
-                            ?.let { it * MS_PER_SECOND / BYTES_PER_SECOND }
-                            ?: message.durationMs
+                    val totalMs = sizeBytes?.let { it * MS_PER_SECOND / BYTES_PER_SECOND } ?: message.durationMs
                     _playbackPosition.value = PlaybackPosition(message.id, 0, totalMs)
 
-                    val source = fileSystem.source(path).buffer()
+                    var source = fileSystem.source(path).buffer()
                     val buffer = ByteArray(PLAYBACK_CHUNK_BYTES)
                     var sequenceNumber = 0
                     var playedBytes = 0L
 
                     while (isActive) {
+                        seekRequestMs?.let { targetMs ->
+                            seekRequestMs = null
+                            // Drop what the player queued at the old position, then read on from the new one,
+                            // on a whole 16 bit sample.
+                            audioPlayer.stop()
+                            source.close()
+                            source = fileSystem.source(path).buffer()
+                            val targetBytes = targetMs * BYTES_PER_SECOND / MS_PER_SECOND
+                            playedBytes = targetBytes.coerceIn(0L, sizeBytes ?: 0L) and 1L.inv()
+                            source.skip(playedBytes)
+                            _playbackPosition.value =
+                                PlaybackPosition(message.id, playedBytes * MS_PER_SECOND / BYTES_PER_SECOND, totalMs)
+                        }
                         if (isPlaybackPaused) {
                             delay(PAUSE_POLL_MS.milliseconds)
                             continue
@@ -164,11 +177,18 @@ class HistoryRepositoryImpl(
         }
     }
 
+    override suspend fun seekTo(positionMs: Long) {
+        if (currentPlaybackMessageId != null) {
+            seekRequestMs = positionMs
+        }
+    }
+
     override suspend fun stopPlayingMessage() {
         _playbackPosition.value = null
         playbackJob?.cancel()
         playbackJob = null
         isPlaybackPaused = false
+        seekRequestMs = null
         currentPlaybackMessageId = null
         audioPlayer.stop()
     }

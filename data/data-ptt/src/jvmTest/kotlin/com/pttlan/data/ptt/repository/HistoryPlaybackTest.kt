@@ -12,6 +12,8 @@ import com.russhwolf.settings.MapSettings
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import okio.Path.Companion.toPath
 import okio.fakefilesystem.FakeFileSystem
@@ -144,4 +146,39 @@ class HistoryPlaybackTest {
 
         assertEquals(4, played)
     }
+
+    @Test
+    fun seekingGoesOnFromTheNewPosition() =
+        runTest {
+            // One second at 48 kHz mono 16 bit: 96 bytes per ms
+            val second = ByteArray(96_000) { (it % 251).toByte() }
+            fileSystem.write(MESSAGE_PATH.toPath()) { write(second) }
+            val repository =
+                HistoryRepositoryImpl(
+                    audioPlayer = player,
+                    database = database,
+                    settings = MapSettings(),
+                    storageInfoProvider = NoStorageInfoProvider(),
+                    fileSystem = fileSystem,
+                    dispatcher = StandardTestDispatcher(testScheduler),
+                )
+            val playing = launch { repository.playMessage(message) }
+            runCurrent()
+            assertEquals(1, player.chunks.size)
+
+            repository.seekTo(500)
+            // The seek applies once the chunk being fed is done
+            advanceTimeBy(CHUNK_MS)
+            runCurrent()
+            assertTrue(player.stopped, "what was queued at the old position must not play")
+            assertEquals(500, repository.playbackPosition.value?.positionMs)
+            playing.join()
+
+            val afterSeek =
+                player.chunks
+                    .drop(1)
+                    .flatMap { it.first.toList() }
+                    .toByteArray()
+            assertContentEquals(second.copyOfRange(48_000, second.size), afterSeek)
+        }
 }

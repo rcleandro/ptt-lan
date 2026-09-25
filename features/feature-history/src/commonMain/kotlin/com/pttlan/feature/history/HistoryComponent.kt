@@ -18,6 +18,8 @@ import kotlinx.coroutines.launch
 /** Going back after this much of a message restarts it instead of going to the previous one. */
 private const val RESTART_AFTER_MS = 3_000L
 
+private fun List<VoiceMessage>.indexOfId(id: String?): Int = indexOfFirst { it.id == id }
+
 class HistoryComponent(
     componentContext: ComponentContext,
     private val historyRepository: HistoryRepository,
@@ -94,19 +96,17 @@ class HistoryComponent(
 
     fun playNext() {
         val queue = _queue.value
-        queue.getOrNull(playingIndex(queue) + 1)?.let(::playFrom)
+        queue.getOrNull(queue.indexOfId(_playingMessageId.value) + 1)?.let(::playFrom)
     }
 
     /** Like a music player: the previous message in the first seconds, otherwise the current one from the start. */
     fun playPrevious() {
         val queue = _queue.value
-        val index = playingIndex(queue)
+        val index = queue.indexOfId(_playingMessageId.value)
         if (index < 0) return
         val elapsedMs = playbackPosition.value?.takeIf { it.messageId == queue[index].id }?.positionMs ?: 0L
         playFrom(if (elapsedMs < RESTART_AFTER_MS && index > 0) queue[index - 1] else queue[index])
     }
-
-    private fun playingIndex(queue: List<VoiceMessage>): Int = queue.indexOfFirst { it.id == _playingMessageId.value }
 
     private fun playFrom(first: VoiceMessage) {
         playJob?.cancel()
@@ -126,6 +126,10 @@ class HistoryComponent(
                 _isPaused.value = false
                 _queue.value = emptyList()
             }
+    }
+
+    fun seekTo(positionMs: Long) {
+        scope.launch { historyRepository.seekTo(positionMs) }
     }
 
     fun stopPlaying() {

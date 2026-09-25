@@ -25,6 +25,9 @@ interface HistoryRepository {
 
     suspend fun stopPlayingMessage()
 
+    /** Moves the replay to [positionMs], clamped to the message; does nothing when nothing is playing. */
+    suspend fun seekTo(positionMs: Long)
+
     suspend fun clearAllMessages()
 
     suspend fun deleteMessage(message: VoiceMessage)

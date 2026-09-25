@@ -50,7 +50,7 @@ import com.pttlan.feature.history.util.toRelativeDisplay
 import kotlin.time.Instant
 
 private val TopBarClearance = 72.dp
-private val PlayerClearance = 110.dp
+private val PlayerClearance = 160.dp
 
 /** What a room header does: play the room in sequence, or (long press) delete it. */
 internal class ChannelActions(
