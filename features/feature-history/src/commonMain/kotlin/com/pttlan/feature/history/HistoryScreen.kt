@@ -85,6 +85,7 @@ fun HistoryScreen(component: HistoryComponent) {
         queue = queue,
         onPlayClick = playback::playMessage,
         onPlayChannelClick = playback::playChannel,
+        onPlayUnheardClick = playback::playUnheard,
         onPrevious = playback::playPrevious,
         onNext = playback::playNext,
         onSeek = playback::seekTo,
@@ -106,6 +107,7 @@ fun HistoryScreenContent(
     queue: List<VoiceMessage> = emptyList(),
     onPlayClick: (VoiceMessage) -> Unit,
     onPlayChannelClick: (String) -> Unit = {},
+    onPlayUnheardClick: (String) -> Unit = {},
     onPrevious: () -> Unit = {},
     onNext: () -> Unit = {},
     onSeek: (Long) -> Unit = {},
@@ -138,7 +140,12 @@ fun HistoryScreenContent(
                 isPaused = isPaused,
                 onPlayClick = onPlayClick,
                 onDeleteMessage = { messageToDelete = it },
-                channelActions = ChannelActions(onPlay = onPlayChannelClick, onDelete = { channelToDelete = it }),
+                channelActions =
+                    ChannelActions(
+                        onPlay = onPlayChannelClick,
+                        onPlayUnheard = onPlayUnheardClick,
+                        onDelete = { channelToDelete = it },
+                    ),
             )
         }
 

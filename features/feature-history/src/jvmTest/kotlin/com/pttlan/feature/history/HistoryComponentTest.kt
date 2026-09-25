@@ -374,4 +374,20 @@ class HistoryComponentTest {
 
             assertEquals(listOf(1.5f, 2f, 1f), seen)
         }
+
+    @Test
+    fun `playing the unheard messages of a room skips the ones already heard`() =
+        runTest(testDispatcher) {
+            val heardB = room.map { if (it.id == "b") it.copy(playedAt = 99) else it }
+            coEvery { historyRepository.getAllMessages() } returns flowOf(heardB)
+            val played = mutableListOf<String>()
+            coEvery { historyRepository.playMessage(any()) } coAnswers { played += firstArg<VoiceMessage>().id }
+            val component = createComponent()
+            advanceUntilIdle()
+
+            component.playback.playUnheard("Geral")
+            advanceUntilIdle()
+
+            assertEquals(listOf("a", "c"), played)
+        }
 }

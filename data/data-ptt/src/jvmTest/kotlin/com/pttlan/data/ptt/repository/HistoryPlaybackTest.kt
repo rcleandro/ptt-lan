@@ -210,4 +210,54 @@ class HistoryPlaybackTest {
             assertTrue(seen.last().positionMs >= seen.last().durationMs - CHUNK_MS, "progress still reaches the end")
             assertEquals(2f, repository.playbackSpeed.value)
         }
+
+    private fun storedPlayedAt() =
+        database.voiceMessageQueries
+            .getAllMessages()
+            .executeAsOne()
+            .playedAt
+
+    @Test
+    fun aMessagePlayedToTheEndIsMarkedAsHeard() =
+        runTest {
+            fileSystem.write(MESSAGE_PATH.toPath()) { write(recorded) }
+            database.voiceMessageQueries.insert(message.id, message.channelId, "Tester", MESSAGE_PATH, 1_000, 1)
+            val repository =
+                HistoryRepositoryImpl(
+                    audioPlayer = player,
+                    database = database,
+                    settings = MapSettings(),
+                    storageInfoProvider = NoStorageInfoProvider(),
+                    fileSystem = fileSystem,
+                    dispatcher = StandardTestDispatcher(testScheduler),
+                )
+            assertEquals(null, storedPlayedAt())
+
+            repository.playMessage(message)
+
+            assertTrue(storedPlayedAt() != null, "played to the end, so it is no longer unheard")
+        }
+
+    @Test
+    fun aMessageStoppedHalfwayStaysUnheard() =
+        runTest {
+            fileSystem.write(MESSAGE_PATH.toPath()) { write(recorded) }
+            database.voiceMessageQueries.insert(message.id, message.channelId, "Tester", MESSAGE_PATH, 1_000, 1)
+            val repository =
+                HistoryRepositoryImpl(
+                    audioPlayer = player,
+                    database = database,
+                    settings = MapSettings(),
+                    storageInfoProvider = NoStorageInfoProvider(),
+                    fileSystem = fileSystem,
+                    dispatcher = StandardTestDispatcher(testScheduler),
+                )
+            val playing = launch { repository.playMessage(message) }
+            runCurrent()
+
+            repository.stopPlayingMessage()
+            playing.join()
+
+            assertEquals(null, storedPlayedAt())
+        }
 }

@@ -49,7 +49,16 @@ class HistoryPlayback internal constructor(
 
     /** Plays every message of the room in the order it was recorded, one after the other. */
     fun playChannel(channelId: String) {
-        val queue = messages.value.filter { it.channelId == channelId }.sortedBy { it.recordedAt }
+        playInOrder(messages.value.filter { it.channelId == channelId })
+    }
+
+    /** Like [playChannel], with only the messages not yet replayed to the end. */
+    fun playUnheard(channelId: String) {
+        playInOrder(messages.value.filter { it.channelId == channelId && it.playedAt == null })
+    }
+
+    private fun playInOrder(messages: List<VoiceMessage>) {
+        val queue = messages.sortedBy { it.recordedAt }
         if (queue.isEmpty()) return
         _queue.value = queue
         playFrom(queue.first())

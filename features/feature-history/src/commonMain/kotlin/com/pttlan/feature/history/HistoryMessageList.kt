@@ -30,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,9 +53,10 @@ import kotlin.time.Instant
 private val TopBarClearance = 72.dp
 private val PlayerClearance = 160.dp
 
-/** What a room header does: play the room in sequence, or (long press) delete it. */
+/** What a room header does: play the room or its unheard messages in sequence, or (long press) delete it. */
 internal class ChannelActions(
     val onPlay: (String) -> Unit,
+    val onPlayUnheard: (String) -> Unit,
     val onDelete: (String) -> Unit,
 )
 
@@ -95,12 +97,12 @@ internal fun MessageList(
             item(key = "header_$channelId") {
                 ChannelHeader(
                     channelId = channelId,
+                    unheardCount = channelMessages.count { it.playedAt == null },
                     isCollapsed = isCollapsed,
                     onToggle = {
                         collapsedChannels = if (isCollapsed) collapsedChannels - channelId else collapsedChannels + channelId
                     },
-                    onLongClick = { channelActions.onDelete(channelId) },
-                    onPlayAll = { channelActions.onPlay(channelId) },
+                    actions = channelActions,
                 )
             }
             if (!isCollapsed) {
@@ -131,22 +133,27 @@ internal fun MessageList(
 @Composable
 private fun ChannelHeader(
     channelId: String,
+    unheardCount: Int,
     isCollapsed: Boolean,
     onToggle: () -> Unit,
-    onLongClick: () -> Unit,
-    onPlayAll: () -> Unit,
+    actions: ChannelActions,
 ) {
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .clip(CircleShape)
-                .combinedClickable(onClick = onToggle, onLongClick = onLongClick)
+                .combinedClickable(onClick = onToggle, onLongClick = { actions.onDelete(channelId) })
                 .padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SectionLabel(text = "# $channelId", modifier = Modifier.weight(1f))
-        IconButton(onClick = onPlayAll) {
+        if (unheardCount > 0) {
+            TextButton(onClick = { actions.onPlayUnheard(channelId) }) {
+                Text(if (unheardCount == 1) "1 nova" else "$unheardCount novas", style = MaterialTheme.typography.labelLarge)
+            }
+        }
+        IconButton(onClick = { actions.onPlay(channelId) }) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.PlaylistPlay,
                 contentDescription = "Tocar a sala",

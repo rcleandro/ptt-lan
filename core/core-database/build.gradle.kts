@@ -12,6 +12,9 @@ kotlin {
         jvmMain.dependencies {
             implementation(libs.sqldelight.sqlite)
         }
+        jvmTest.dependencies {
+            implementation(kotlin("test"))
+        }
         iosMain.dependencies {
             implementation(libs.sqldelight.native)
         }

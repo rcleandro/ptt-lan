@@ -30,6 +30,7 @@ import okio.Path.Companion.toPath
 import okio.SYSTEM
 import okio.buffer
 import kotlin.concurrent.Volatile
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val PLAYBACK_CHUNK_BYTES = 4096
@@ -78,6 +79,7 @@ class HistoryRepositoryImpl(
                         filePath = it.filePath,
                         durationMs = it.durationMs,
                         recordedAt = it.recordedAt,
+                        playedAt = it.playedAt,
                     )
                 }
             }
@@ -96,6 +98,7 @@ class HistoryRepositoryImpl(
                         filePath = it.filePath,
                         durationMs = it.durationMs,
                         recordedAt = it.recordedAt,
+                        playedAt = it.playedAt,
                     )
                 }
             }
@@ -143,6 +146,7 @@ class HistoryRepositoryImpl(
                         if (read == -1) {
                             val rest = stretcher.flush()
                             if (rest.isNotEmpty()) audioPlayer.play(rest, sequenceNumber = sequenceNumber++)
+                            database.voiceMessageQueries.markPlayed(Clock.System.now().toEpochMilliseconds(), message.id)
                             break
                         }
 
