@@ -6,6 +6,9 @@ const val DEFAULT_SERVER_PORT = 9443
 /** Shortest room PIN: 6 characters take years to guess at the pace the room lockout allows (30.3). */
 const val MIN_ROOM_PIN_LENGTH = 6
 
+/** The channel every server keeps open, listed first. */
+const val DEFAULT_CHANNEL_ID = "Geral"
+
 /** Longest channel name: the app cuts it while typing and the server refuses longer ones (30.10). */
 const val MAX_CHANNEL_NAME_LENGTH = 40
 

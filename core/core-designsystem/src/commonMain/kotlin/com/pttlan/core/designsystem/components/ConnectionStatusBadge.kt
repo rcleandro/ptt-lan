@@ -39,7 +39,7 @@ fun ConnectionStatusBadge(
     Row(
         modifier =
             modifier
-                .height(GlassControlSize)
+                .height(Dimens.GlassControl)
                 .glass(CircleShape)
                 .padding(start = Dimens.SpaceLg, end = Dimens.SpaceXl),
         verticalAlignment = Alignment.CenterVertically,

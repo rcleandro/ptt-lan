@@ -40,13 +40,20 @@ private fun Application.longConfig(
         ?.getString()
         ?.toLongOrNull() ?: default
 
+private val WEBSOCKET_PING_PERIOD = 20.seconds
+
+/** Requests per address and minute: all routes, and logins, which guess PINs (30.3). */
+private const val GLOBAL_REQUESTS_PER_MINUTE = 100
+private const val LOGINS_PER_MINUTE = 5
+private val RATE_LIMIT_PERIOD = 60.seconds
+
 /** The biggest frame a client may send: live audio goes in 20 ms chunks of about 2 KB, control messages are smaller. */
 private const val MAX_FRAME_BYTES = 64 * 1024L
 
 @Suppress("LongMethod")
 fun Application.module() {
     install(WebSockets) {
-        pingPeriod = 20.seconds
+        pingPeriod = WEBSOCKET_PING_PERIOD
         // Ktor's default is no limit: one huge frame from anyone with a token was buffered whole (30.1)
         maxFrameSize = MAX_FRAME_BYTES
     }
@@ -114,13 +121,13 @@ fun Application.module() {
 
     install(RateLimit) {
         global {
-            rateLimiter(limit = 100, refillPeriod = 60.seconds)
+            rateLimiter(limit = GLOBAL_REQUESTS_PER_MINUTE, refillPeriod = RATE_LIMIT_PERIOD)
             requestKey { call -> call.request.origin.remoteHost }
         }
         register(
             RateLimitName("login"),
         ) {
-            rateLimiter(limit = 5, refillPeriod = 60.seconds)
+            rateLimiter(limit = LOGINS_PER_MINUTE, refillPeriod = RATE_LIMIT_PERIOD)
             requestKey { call -> call.request.origin.remoteHost }
         }
     }

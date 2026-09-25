@@ -21,6 +21,9 @@ object Dimens {
     val Space3xl = 24.dp
     val Space4xl = 32.dp
 
+    /** Round glass controls, toolbars and the status badge. */
+    val GlassControl = 44.dp
+
     /** Smallest touch area a control gets, whatever it draws. */
     val TouchTarget = 48.dp
 }

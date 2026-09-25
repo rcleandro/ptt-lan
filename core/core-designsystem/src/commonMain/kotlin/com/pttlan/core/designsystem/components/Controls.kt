@@ -40,8 +40,6 @@ import com.pttlan.core.designsystem.theme.PttTheme
 private const val DISABLED_ALPHA = 0.45f
 private const val DESTRUCTIVE_FILL_ALPHA = 0.14f
 
-/** Round glass controls and the status badge share this height. */
-internal val GlassControlSize = 44.dp
 private val GlassIconSize = 22.dp
 private val PillPaddingHorizontal = 22.dp
 private val PillIconSize = 18.dp
@@ -60,7 +58,7 @@ fun GlassIconButton(
     Box(
         modifier =
             modifier
-                .size(GlassControlSize)
+                .size(Dimens.GlassControl)
                 .glass(CircleShape)
                 .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,

@@ -50,12 +50,39 @@ import com.pttlan.core.designsystem.components.PttTextField
 import com.pttlan.core.designsystem.components.PttTopBar
 import com.pttlan.core.designsystem.components.glass
 import com.pttlan.core.designsystem.components.readableWidth
+import com.pttlan.core.designsystem.generated.resources.Res
+import com.pttlan.core.designsystem.generated.resources.channels_disconnect
+import com.pttlan.core.designsystem.generated.resources.channels_empty
+import com.pttlan.core.designsystem.generated.resources.channels_join
+import com.pttlan.core.designsystem.generated.resources.channels_new_hint
+import com.pttlan.core.designsystem.generated.resources.channels_server_code
+import com.pttlan.core.designsystem.generated.resources.channels_subtitle
+import com.pttlan.core.designsystem.generated.resources.channels_title
+import com.pttlan.core.designsystem.generated.resources.common_cancel
+import com.pttlan.core.designsystem.generated.resources.common_history
+import com.pttlan.core.designsystem.generated.resources.common_settings
+import com.pttlan.core.designsystem.generated.resources.stop_host_confirm
+import com.pttlan.core.designsystem.generated.resources.stop_host_text
+import com.pttlan.core.designsystem.generated.resources.stop_host_title
 import com.pttlan.core.designsystem.theme.AppTheme
+import com.pttlan.core.designsystem.theme.Dimens
 import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.domain.ptt.repository.ActiveChannelDomain
+import org.jetbrains.compose.resources.stringResource
 
 private val TopBarClearance = 72.dp
 private val DockClearance = 120.dp
+private const val TOP_GLOW_INTENSITY = 0.22f
+private val TopGlowSize = 440.dp
+private val TopGlowOffsetX = 160.dp
+private val TopGlowOffsetY = (-120).dp
+private const val BOTTOM_GLOW_INTENSITY = 0.2f
+private val BottomGlowSize = 420.dp
+private val BottomGlowOffsetX = (-180).dp
+private val BottomGlowOffsetY = 80.dp
+private val ToolbarIconWidth = 42.dp
+private val ToolbarIconHeight = 40.dp
+private val ToolbarIconSize = 20.dp
 
 @Composable
 fun ChannelListScreen(
@@ -89,13 +116,13 @@ fun ChannelListScreenContent(
     Box(modifier = modifier.fillMaxSize()) {
         AmbientGlow(
             color = PttTheme.customColors.statusOnline,
-            intensity = 0.22f,
-            modifier = Modifier.size(440.dp).align(Alignment.TopEnd).offset(160.dp, (-120).dp),
+            intensity = TOP_GLOW_INTENSITY,
+            modifier = Modifier.size(TopGlowSize).align(Alignment.TopEnd).offset(TopGlowOffsetX, TopGlowOffsetY),
         )
         AmbientGlow(
             color = MaterialTheme.colorScheme.primary,
-            intensity = 0.2f,
-            modifier = Modifier.size(420.dp).align(Alignment.BottomStart).offset((-180).dp, 80.dp),
+            intensity = BOTTOM_GLOW_INTENSITY,
+            modifier = Modifier.size(BottomGlowSize).align(Alignment.BottomStart).offset(BottomGlowOffsetX, BottomGlowOffsetY),
         )
 
         ChannelList(state = state, onIntent = onIntent)
@@ -105,7 +132,7 @@ fun ChannelListScreenContent(
             navigation = {
                 GlassIconButton(
                     icon = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Desconectar",
+                    contentDescription = stringResource(Res.string.channels_disconnect),
                     onClick = { onIntent(ChannelListIntent.Leave) },
                 )
             },
@@ -129,16 +156,16 @@ fun ChannelListScreenContent(
 private fun StopHostDialog(onIntent: (ChannelListIntent) -> Unit) {
     AlertDialog(
         onDismissRequest = { onIntent(ChannelListIntent.DismissStopHost) },
-        title = { Text("Encerrar a sala?") },
-        text = { Text("Você está hospedando esta sala. Ao sair, ela será encerrada e todos serão desconectados.") },
+        title = { Text(stringResource(Res.string.stop_host_title)) },
+        text = { Text(stringResource(Res.string.stop_host_text)) },
         shape = MaterialTheme.shapes.large,
         confirmButton = {
             TextButton(onClick = { onIntent(ChannelListIntent.ConfirmStopHost) }) {
-                Text("Encerrar", color = PttTheme.customColors.statusOffline)
+                Text(stringResource(Res.string.stop_host_confirm), color = PttTheme.customColors.statusOffline)
             }
         },
         dismissButton = {
-            TextButton(onClick = { onIntent(ChannelListIntent.DismissStopHost) }) { Text("Cancelar") }
+            TextButton(onClick = { onIntent(ChannelListIntent.DismissStopHost) }) { Text(stringResource(Res.string.common_cancel)) }
         },
     )
 }
@@ -152,8 +179,8 @@ private fun ChannelList(
     LazyColumn(
         modifier = Modifier.fillMaxSize().readableWidth(),
         contentPadding =
-            PaddingValues(start = 20.dp, end = 20.dp, top = topInset + TopBarClearance, bottom = DockClearance),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+            PaddingValues(start = Dimens.Space2xl, end = Dimens.Space2xl, top = topInset + TopBarClearance, bottom = DockClearance),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
     ) {
         item { ChannelListHeader(state) }
         items(state.activeChannels, key = { it.id }) { channel ->
@@ -172,13 +199,13 @@ private fun ToolbarGroup(
     onOpenHistory: (() -> Unit)?,
 ) {
     Row(
-        modifier = Modifier.height(44.dp).glass(CircleShape).padding(horizontal = 2.dp),
+        modifier = Modifier.height(Dimens.GlassControl).glass(CircleShape).padding(horizontal = Dimens.Space2xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (onOpenHistory != null) {
-            ToolbarIcon(Icons.Default.History, "Histórico", onOpenHistory)
+            ToolbarIcon(Icons.Default.History, stringResource(Res.string.common_history), onOpenHistory)
         }
-        ToolbarIcon(Icons.Default.Tune, "Configurações", onOpenSettings)
+        ToolbarIcon(Icons.Default.Tune, stringResource(Res.string.common_settings), onOpenSettings)
     }
 }
 
@@ -191,7 +218,7 @@ private fun ToolbarIcon(
     Box(
         modifier =
             Modifier
-                .size(width = 42.dp, height = 40.dp)
+                .size(width = ToolbarIconWidth, height = ToolbarIconHeight)
                 .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -199,7 +226,7 @@ private fun ToolbarIcon(
             imageVector = icon,
             contentDescription = contentDescription,
             tint = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(ToolbarIconSize),
         )
     }
 }
@@ -216,20 +243,20 @@ private fun NewChannelDock(
                 .readableWidth()
                 .windowInsetsPadding(WindowInsets.navigationBars)
                 .imePadding()
-                .padding(horizontal = 12.dp, vertical = 16.dp)
+                .padding(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceXl)
                 .glass(MaterialTheme.shapes.extraLarge)
-                .padding(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                .padding(Dimens.SpaceXl),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         PttTextField(
             value = name,
             onValueChange = { onIntent(ChannelListIntent.UpdateNewChannelName(it)) },
-            placeholder = "Nome do canal",
+            placeholder = stringResource(Res.string.channels_new_hint),
             modifier = Modifier.weight(1f),
         )
         PillButton(
-            text = "Entrar",
+            text = stringResource(Res.string.channels_join),
             onClick = { onIntent(ChannelListIntent.CreateChannel) },
             enabled = name.isNotBlank(),
         )
@@ -268,18 +295,18 @@ private fun ChannelListScreenPreviewLight() {
 
 @Composable
 private fun ChannelListHeader(state: ChannelListState) {
-    Column(modifier = Modifier.padding(bottom = 4.dp)) {
+    Column(modifier = Modifier.padding(bottom = Dimens.SpaceXs)) {
         Text(
-            text = "Canais",
+            text = stringResource(Res.string.channels_title),
             style = MaterialTheme.typography.displayLarge,
             color = MaterialTheme.colorScheme.onBackground,
         )
         Text(
             text =
                 if (state.activeChannels.isEmpty()) {
-                    "Nenhuma sala ativa no momento. Crie uma abaixo."
+                    stringResource(Res.string.channels_empty)
                 } else {
-                    "Salas ativas neste servidor"
+                    stringResource(Res.string.channels_subtitle)
                 },
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -287,10 +314,10 @@ private fun ChannelListHeader(state: ChannelListState) {
         state.serverCode?.let { code ->
             // The host and everyone in its room see the same code; a different one means another server
             Text(
-                text = "Código do servidor: $code",
+                text = stringResource(Res.string.channels_server_code, code),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp),
+                modifier = Modifier.padding(top = Dimens.SpaceXs),
             )
         }
     }

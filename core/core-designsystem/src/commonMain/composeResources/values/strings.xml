@@ -56,4 +56,16 @@
     <string name="certificate_changed_title">O certificado deste servidor mudou</string>
     <string name="certificate_changed_text">Antes: %1$s\nAgora: %2$s\n\nSe quem hospeda reinstalou o app, confira com ele o código que aparece na lista de canais: sendo o novo, pode confiar. Se não, alguém na rede pode estar se passando pelo servidor.</string>
     <string name="certificate_trust">Confiar no novo</string>
+
+    <!-- Channel list -->
+    <string name="channels_title">Canais</string>
+    <string name="channels_subtitle">Salas ativas neste servidor</string>
+    <string name="channels_empty">Nenhuma sala ativa no momento. Crie uma abaixo.</string>
+    <string name="channels_server_code">Código do servidor: %1$s</string>
+    <string name="channels_disconnect">Desconectar</string>
+    <string name="channels_new_hint">Nome do canal</string>
+    <string name="channels_join">Entrar</string>
+    <string name="stop_host_title">Encerrar a sala?</string>
+    <string name="stop_host_text">Você está hospedando esta sala. Ao sair, ela será encerrada e todos serão desconectados.</string>
+    <string name="stop_host_confirm">Encerrar</string>
 </resources>
