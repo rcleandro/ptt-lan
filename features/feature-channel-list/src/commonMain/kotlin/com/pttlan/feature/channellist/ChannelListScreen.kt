@@ -63,12 +63,14 @@ fun ChannelListScreen(
     onOpenSettings: () -> Unit,
     onOpenHistory: (() -> Unit)?,
     connectionStatus: ConnectionStatus = ConnectionStatus.Online,
+    modifier: Modifier = Modifier,
 ) {
     val state by component.state.collectAsState()
 
     ChannelListScreenContent(
         state = state,
         onIntent = component::onIntent,
+        modifier = modifier,
         onOpenSettings = onOpenSettings,
         onOpenHistory = onOpenHistory,
         connectionStatus = connectionStatus,

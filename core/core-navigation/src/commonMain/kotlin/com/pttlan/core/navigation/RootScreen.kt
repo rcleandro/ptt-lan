@@ -1,10 +1,12 @@
 package com.pttlan.core.navigation
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
@@ -17,10 +19,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.slide
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
+import com.pttlan.core.designsystem.components.ExpandedWidth
 import com.pttlan.core.designsystem.components.snackbar.PttSnackbarHost
 import com.pttlan.core.designsystem.components.snackbar.PttSnackbarType
 import com.pttlan.core.designsystem.components.snackbar.SnackbarController
@@ -32,6 +36,8 @@ import com.pttlan.feature.history.HistoryScreen
 import com.pttlan.feature.ptt.PttScreen
 import com.pttlan.feature.settings.SettingsScreen
 import com.pttlan.core.designsystem.components.ConnectionStatus as BadgeStatus
+
+private val ChannelPaneWidth = 360.dp
 
 /**
  * App root: applies the theme and hosts the screens. Each screen draws its own floating glass
@@ -69,10 +75,13 @@ private fun RootContent(component: RootComponent) {
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        // Open Fold, tablet, Desktop: the channel list stays beside the open channel (27.2). Without the slide, so
+        // switching channels does not slide the list out and back in with it.
+        val channelsBeside = maxWidth >= ExpandedWidth
         Children(
             stack = childStack,
-            animation = stackAnimation(slide()),
+            animation = if (channelsBeside) null else stackAnimation(slide()),
         ) { child ->
             when (val instance = child.instance) {
                 is RootComponent.Child.ConnectionChild -> {
@@ -93,12 +102,25 @@ private fun RootContent(component: RootComponent) {
                 }
 
                 is RootComponent.Child.PttChild -> {
-                    PttScreen(
-                        component = instance.component,
-                        onBack = component::goBack,
-                        showHistory = isCacheEnabled,
-                        connectionStatus = badgeStatus,
-                    )
+                    val channels = childStack.backStack.lastOrNull()?.instance as? RootComponent.Child.ChannelListChild
+                    Row {
+                        if (channelsBeside && channels != null) {
+                            ChannelListScreen(
+                                component = channels.component,
+                                onOpenSettings = component::navigateToSettings,
+                                onOpenHistory = openHistory,
+                                connectionStatus = badgeStatus,
+                                modifier = Modifier.width(ChannelPaneWidth),
+                            )
+                        }
+                        PttScreen(
+                            component = instance.component,
+                            onBack = component::goBack,
+                            showHistory = isCacheEnabled,
+                            connectionStatus = badgeStatus,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
 
                 is RootComponent.Child.HistoryChild -> {

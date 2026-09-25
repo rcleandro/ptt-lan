@@ -64,6 +64,7 @@ fun PttScreen(
     onBack: () -> Unit,
     showHistory: Boolean,
     connectionStatus: ConnectionStatus = ConnectionStatus.Online,
+    modifier: Modifier = Modifier,
 ) {
     val state by component.state.collectAsState()
 
@@ -86,6 +87,7 @@ fun PttScreen(
         onBack = onBack,
         showHistory = showHistory,
         connectionStatus = connectionStatus,
+        modifier = modifier,
     )
 }
 
