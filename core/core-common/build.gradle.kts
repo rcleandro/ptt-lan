@@ -12,3 +12,7 @@ kotlin {
         }
     }
 }
+
+dependencies {
+    "androidMainImplementation"(libs.androidx.core.ktx)
+}

@@ -1,6 +1,8 @@
 package com.pttlan.data.ptt.di
 
 import com.pttlan.core.common.storage.StorageInfoProvider
+import com.pttlan.core.network.PttWebSocketClient
+import com.pttlan.core.network.protocol.ControlMessage
 import com.pttlan.data.ptt.repository.ChannelRepositoryImpl
 import com.pttlan.data.ptt.repository.ChannelSessionRepositoryImpl
 import com.pttlan.data.ptt.repository.ConnectionRepositoryImpl
@@ -13,6 +15,8 @@ import com.pttlan.domain.ptt.repository.ChannelSessionRepository
 import com.pttlan.domain.ptt.repository.ConnectionRepository
 import com.pttlan.domain.ptt.repository.HistoryRepository
 import com.pttlan.domain.ptt.repository.VoiceRepository
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.map
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
@@ -48,6 +52,11 @@ val dataModule =
                 database = get(),
                 settings = get(),
                 storageInfoProvider = get<StorageInfoProvider>(),
+                liveSpeaking =
+                    get<PttWebSocketClient>()
+                        .controlMessages
+                        .filterIsInstance<ControlMessage.SpeakerChanged>()
+                        .map { message -> message.isSpeaking },
             )
         }
     }

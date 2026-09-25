@@ -2,7 +2,7 @@ package com.pttlan.feature.history
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
-import com.pttlan.domain.ptt.model.PlaybackPosition
+import com.pttlan.core.common.share.FileSharer
 import com.pttlan.domain.ptt.model.VoiceMessage
 import com.pttlan.domain.ptt.repository.HistoryRepository
 import kotlinx.coroutines.CoroutineScope
@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 class HistoryComponent(
     componentContext: ComponentContext,
     private val historyRepository: HistoryRepository,
+    private val fileSharer: FileSharer,
     private val onBackClicked: () -> Unit,
 ) : ComponentContext by componentContext {
     private val scope = CoroutineScope(Dispatchers.Main)
@@ -24,27 +25,22 @@ class HistoryComponent(
     private val _messages = MutableStateFlow<List<VoiceMessage>>(emptyList())
     val messages: StateFlow<List<VoiceMessage>> = _messages.asStateFlow()
 
-    private val _playingMessageId = MutableStateFlow<String?>(null)
-    val playingMessageId: StateFlow<String?> = _playingMessageId.asStateFlow()
-
-    private val _isPaused = MutableStateFlow<Boolean>(false)
-    val isPaused: StateFlow<Boolean> = _isPaused.asStateFlow()
-
-    /** Progress of the message being replayed, straight from the repository. */
-    val playbackPosition: StateFlow<PlaybackPosition?> = historyRepository.playbackPosition
+    val playback = HistoryPlayback(historyRepository, scope, messages)
 
     init {
         val feed =
             historyRepository
                 .getAllMessages()
-                .onEach { _messages.value = it }
-                .launchIn(scope)
+                .onEach { messages ->
+                    _messages.value = messages
+                    playback.onMessagesChanged(messages)
+                }.launchIn(scope)
 
         // Not scope.cancel(): a delete the user just asked for has to finish. Only what outlives the screen
         // stops: the feed, and a replay that would go on with no controls over the live channel audio.
         lifecycle.doOnDestroy {
             feed.cancel()
-            if (_playingMessageId.value != null) stopPlaying()
+            if (playback.playingMessageId.value != null) playback.stop()
         }
     }
 
@@ -52,33 +48,11 @@ class HistoryComponent(
         onBackClicked()
     }
 
-    fun playMessage(message: VoiceMessage) {
+    /** Hands the message to the system's share sheet as a `.wav`. */
+    fun shareMessage(message: VoiceMessage) {
         scope.launch {
-            if (_playingMessageId.value == message.id) {
-                if (_isPaused.value) {
-                    _isPaused.value = false
-                    historyRepository.resumePlayingMessage()
-                } else {
-                    _isPaused.value = true
-                    historyRepository.pausePlayingMessage()
-                }
-            } else {
-                _playingMessageId.value = message.id
-                _isPaused.value = false
-                historyRepository.playMessage(message)
-                if (_playingMessageId.value == message.id) {
-                    _playingMessageId.value = null
-                    _isPaused.value = false
-                }
-            }
-        }
-    }
-
-    fun stopPlaying() {
-        scope.launch {
-            historyRepository.stopPlayingMessage()
-            _playingMessageId.value = null
-            _isPaused.value = false
+            val path = historyRepository.exportAsWav(message, fileSharer.shareDirectory)
+            if (path != null) fileSharer.share(path, "audio/wav")
         }
     }
 

@@ -4,6 +4,7 @@ import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import co.touchlab.kermit.Logger
 import com.pttlan.core.audio.AudioPlayer
+import com.pttlan.core.audio.wavHeader
 import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.core.database.PttDatabase
 import com.pttlan.core.datastore.SettingsDefaults
@@ -15,163 +16,84 @@ import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okio.FileSystem
+import okio.IOException
 import okio.Path.Companion.toPath
 import okio.SYSTEM
-import okio.buffer
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Clock
 
-private const val PLAYBACK_CHUNK_BYTES = 4096
-private const val PAUSE_POLL_MS = 100L
-private const val MS_PER_SECOND = 1000L
-
-/** Mono 16 bit PCM at 48 kHz, the format the recorder writes. */
-private const val BYTES_PER_SECOND = 48_000L * 2
-
-/** Reading, replaying and deleting recorded messages. Writing them is [HistoryRecorder]. */
+/** Reading, replaying and deleting recorded messages. Writing them is [HistoryRecorder]; replay is [HistoryReplay]. */
 class HistoryRepositoryImpl(
-    private val audioPlayer: AudioPlayer,
+    audioPlayer: AudioPlayer,
     private val database: PttDatabase,
     private val settings: Settings,
     private val storageInfoProvider: StorageInfoProvider,
     private val fileSystem: FileSystem = FileSystem.SYSTEM,
-    dispatcher: CoroutineDispatcher = Dispatchers.Default,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
+    /** Whether someone is speaking in the channel; live audio shares [audioPlayer] and goes first. */
+    liveSpeaking: Flow<Boolean> = emptyFlow(),
 ) : HistoryRepository {
     private val logger = Logger.withTag("audio")
-    private val scope = CoroutineScope(dispatcher)
 
-    private val _playbackPosition = MutableStateFlow<PlaybackPosition?>(null)
-    override val playbackPosition: StateFlow<PlaybackPosition?> = _playbackPosition.asStateFlow()
+    private val replay =
+        HistoryReplay(audioPlayer, fileSystem, CoroutineScope(dispatcher), liveSpeaking) { messageId ->
+            database.voiceMessageQueries.markPlayed(Clock.System.now().toEpochMilliseconds(), messageId)
+        }
 
-    private var playbackJob: Job? = null
-    private var isPlaybackPaused = false
-    private var currentPlaybackMessageId: String? = null
+    init {
+        replay.setSpeed(settings.getFloat(SettingsKeys.PLAYBACK_SPEED, SettingsDefaults.PLAYBACK_SPEED))
+    }
 
-    override fun getRecentMessages(channelId: String): Flow<List<VoiceMessage>> =
-        database.voiceMessageQueries
-            .getRecentMessagesByChannel(channelId)
-            .asFlow()
-            .mapToList(Dispatchers.Default)
-            .map { list ->
-                list.map {
-                    VoiceMessage(
-                        id = it.id,
-                        channelId = it.channelId,
-                        senderNickname = it.senderNickname,
-                        filePath = it.filePath,
-                        durationMs = it.durationMs,
-                        recordedAt = it.recordedAt,
-                    )
-                }
-            }
+    override val playbackPosition: StateFlow<PlaybackPosition?> = replay.position
+
+    override val playbackSpeed: StateFlow<Float> = replay.speed
 
     override fun getAllMessages(): Flow<List<VoiceMessage>> =
         database.voiceMessageQueries
             .getAllMessages()
             .asFlow()
             .mapToList(Dispatchers.Default)
-            .map { list ->
-                list.map {
-                    VoiceMessage(
-                        id = it.id,
-                        channelId = it.channelId,
-                        senderNickname = it.senderNickname,
-                        filePath = it.filePath,
-                        durationMs = it.durationMs,
-                        recordedAt = it.recordedAt,
-                    )
+            .map { list -> list.map { it.toDomain() } }
+
+    override suspend fun playMessage(message: VoiceMessage) = replay.play(message)
+
+    override suspend fun pausePlayingMessage() = replay.pause()
+
+    override suspend fun resumePlayingMessage() = replay.resume()
+
+    override suspend fun seekTo(positionMs: Long) = replay.seekTo(positionMs)
+
+    override suspend fun setPlaybackSpeed(speed: Float) {
+        replay.setSpeed(speed)
+        settings.putFloat(SettingsKeys.PLAYBACK_SPEED, speed)
+    }
+
+    override suspend fun stopPlayingMessage() = replay.stop()
+
+    override suspend fun exportAsWav(
+        message: VoiceMessage,
+        directory: String,
+    ): String? =
+        withContext(dispatcher) {
+            val source = message.filePath.toPath()
+            val target = directory.toPath() / "${source.name.substringBeforeLast('.')}.wav"
+            try {
+                val pcm = fileSystem.read(source) { readByteArray() }
+                fileSystem.write(target) {
+                    write(wavHeader(pcm.size))
+                    write(pcm)
                 }
+                target.toString()
+            } catch (e: IOException) {
+                logger.w(e) { "Failed to export a message as wav" }
+                null
             }
-
-    override suspend fun playMessage(message: VoiceMessage) {
-        stopPlayingMessage()
-        currentPlaybackMessageId = message.id
-        isPlaybackPaused = false
-
-        playbackJob =
-            scope.launch {
-                try {
-                    val path = message.filePath.toPath()
-                    // The recorded file is the honest total: `durationMs` is wall clock of the talk spurt
-                    val totalMs =
-                        fileSystem
-                            .metadataOrNull(path)
-                            ?.size
-                            ?.let { it * MS_PER_SECOND / BYTES_PER_SECOND }
-                            ?: message.durationMs
-                    _playbackPosition.value = PlaybackPosition(message.id, 0, totalMs)
-
-                    val source = fileSystem.source(path).buffer()
-                    val buffer = ByteArray(PLAYBACK_CHUNK_BYTES)
-                    var sequenceNumber = 0
-                    var playedBytes = 0L
-
-                    while (isActive) {
-                        if (isPlaybackPaused) {
-                            delay(PAUSE_POLL_MS.milliseconds)
-                            continue
-                        }
-                        val read = source.read(buffer)
-                        if (read == -1) break
-
-                        // The player keeps the array in its queue, so it has to be a copy: reusing `buffer`
-                        // meant the next read overwrote audio that had not been played yet.
-                        // The sequence number has to advance as well, or the jitter buffer treats every chunk
-                        // after the first as a late duplicate of packet 0 and drops it.
-                        audioPlayer.play(buffer.copyOf(read), sequenceNumber = sequenceNumber++)
-
-                        // Feed at playback speed. Reading the whole file at disk speed and returning would hit
-                        // the `finally` below and stop the player while the queue was still full.
-                        delay((read * MS_PER_SECOND / BYTES_PER_SECOND).milliseconds)
-
-                        // Position comes from the bytes fed, not from a sum of per-chunk milliseconds:
-                        // the integer division would drop a few ms per chunk and never reach the end.
-                        playedBytes += read
-                        val positionMs = (playedBytes * MS_PER_SECOND / BYTES_PER_SECOND).coerceAtMost(totalMs)
-                        _playbackPosition.value = PlaybackPosition(message.id, positionMs, totalMs)
-                    }
-                    source.close()
-                } catch (e: Exception) {
-                    logger.w(e) { "Failed to play a message from the history" }
-                } finally {
-                    audioPlayer.stop()
-                    currentPlaybackMessageId = null
-                    isPlaybackPaused = false
-                    _playbackPosition.value = null
-                }
-            }
-        playbackJob?.join()
-    }
-
-    override suspend fun pausePlayingMessage() {
-        if (currentPlaybackMessageId != null) {
-            isPlaybackPaused = true
         }
-    }
-
-    override suspend fun resumePlayingMessage() {
-        if (currentPlaybackMessageId != null) {
-            isPlaybackPaused = false
-        }
-    }
-
-    override suspend fun stopPlayingMessage() {
-        _playbackPosition.value = null
-        playbackJob?.cancel()
-        playbackJob = null
-        isPlaybackPaused = false
-        currentPlaybackMessageId = null
-        audioPlayer.stop()
-    }
 
     override suspend fun clearAllMessages() {
         stopPlayingMessage()
@@ -191,7 +113,7 @@ class HistoryRepositoryImpl(
     }
 
     override suspend fun deleteMessage(message: VoiceMessage) {
-        if (currentPlaybackMessageId == message.id) {
+        if (replay.currentMessageId == message.id) {
             stopPlayingMessage()
         }
         database.voiceMessageQueries.deleteById(message.id)
@@ -206,7 +128,7 @@ class HistoryRepositoryImpl(
     override suspend fun deleteChannelMessages(channelId: String) {
         val messages = database.voiceMessageQueries.getRecentMessagesByChannel(channelId).executeAsList()
         messages.forEach { message ->
-            if (currentPlaybackMessageId == message.id) {
+            if (replay.currentMessageId == message.id) {
                 stopPlayingMessage()
             }
             try {
@@ -219,3 +141,14 @@ class HistoryRepositoryImpl(
         database.voiceMessageQueries.deleteAllByChannel(channelId)
     }
 }
+
+private fun com.pttlan.core.database.VoiceMessage.toDomain() =
+    VoiceMessage(
+        id = id,
+        channelId = channelId,
+        senderNickname = senderNickname,
+        filePath = filePath,
+        durationMs = durationMs,
+        recordedAt = recordedAt,
+        playedAt = playedAt,
+    )

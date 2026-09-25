@@ -68,19 +68,31 @@ import kotlin.time.Instant
 
 @Composable
 fun HistoryScreen(component: HistoryComponent) {
+    val playback = component.playback
     val messages by component.messages.collectAsState()
-    val playingMessageId by component.playingMessageId.collectAsState()
-    val isPaused by component.isPaused.collectAsState()
-    val playbackPosition by component.playbackPosition.collectAsState()
+    val playingMessageId by playback.playingMessageId.collectAsState()
+    val isPaused by playback.isPaused.collectAsState()
+    val playbackPosition by playback.playbackPosition.collectAsState()
+    val playbackSpeed by playback.playbackSpeed.collectAsState()
+    val queue by playback.queue.collectAsState()
 
     HistoryScreenContent(
         messages = messages,
         playingMessageId = playingMessageId,
         isPaused = isPaused,
         playbackPosition = playbackPosition,
-        onPlayClick = component::playMessage,
+        playbackSpeed = playbackSpeed,
+        queue = queue,
+        onPlayClick = playback::playMessage,
+        onPlayChannelClick = playback::playChannel,
+        onPlayUnheardClick = playback::playUnheard,
+        onPrevious = playback::playPrevious,
+        onNext = playback::playNext,
+        onSeek = playback::seekTo,
+        onCycleSpeed = playback::cycleSpeed,
         onClearCacheClick = component::clearAllMessages,
         onDeleteMessage = component::deleteMessage,
+        onShareMessage = component::shareMessage,
         onDeleteChannelClick = component::deleteChannelMessages,
         onBack = component::onBack,
     )
@@ -92,9 +104,18 @@ fun HistoryScreenContent(
     playingMessageId: String?,
     isPaused: Boolean,
     playbackPosition: PlaybackPosition? = null,
+    playbackSpeed: Float = 1f,
+    queue: List<VoiceMessage> = emptyList(),
     onPlayClick: (VoiceMessage) -> Unit,
+    onPlayChannelClick: (String) -> Unit = {},
+    onPlayUnheardClick: (String) -> Unit = {},
+    onPrevious: () -> Unit = {},
+    onNext: () -> Unit = {},
+    onSeek: (Long) -> Unit = {},
+    onCycleSpeed: () -> Unit = {},
     onClearCacheClick: () -> Unit,
     onDeleteMessage: (VoiceMessage) -> Unit,
+    onShareMessage: (VoiceMessage) -> Unit = {},
     onDeleteChannelClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
@@ -103,6 +124,7 @@ fun HistoryScreenContent(
     var messageToDelete by remember { mutableStateOf<VoiceMessage?>(null) }
     var channelToDelete by remember { mutableStateOf<String?>(null) }
     val playingMessage = messages.find { it.id == playingMessageId }
+    val queueIndex = queue.indexOfFirst { it.id == playingMessageId }
 
     Box(modifier = modifier.fillMaxSize()) {
         AmbientGlow(
@@ -118,9 +140,13 @@ fun HistoryScreenContent(
                 messages = messages,
                 playingMessageId = playingMessageId,
                 isPaused = isPaused,
-                onPlayClick = onPlayClick,
-                onDeleteMessage = { messageToDelete = it },
-                onDeleteChannel = { channelToDelete = it },
+                messageActions = MessageActions(onPlay = onPlayClick, onShare = onShareMessage, onDelete = { messageToDelete = it }),
+                channelActions =
+                    ChannelActions(
+                        onPlay = onPlayChannelClick,
+                        onPlayUnheard = onPlayUnheardClick,
+                        onDelete = { channelToDelete = it },
+                    ),
             )
         }
 
@@ -142,9 +168,14 @@ fun HistoryScreenContent(
         if (playingMessage != null) {
             MiniPlayer(
                 message = playingMessage,
-                isPaused = isPaused,
-                position = playbackPosition?.takeIf { it.messageId == playingMessage.id },
-                onPlayPause = { onPlayClick(playingMessage) },
+                state = PlayerState(isPaused, playbackPosition?.takeIf { it.messageId == playingMessage.id }, playbackSpeed),
+                queue =
+                    if (queueIndex >= 0) {
+                        QueueControls("${queueIndex + 1} de ${queue.size}", queueIndex < queue.lastIndex, onPrevious, onNext)
+                    } else {
+                        null
+                    },
+                actions = PlayerActions(onPlayPause = { onPlayClick(playingMessage) }, onSeek = onSeek, onCycleSpeed = onCycleSpeed),
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
         }

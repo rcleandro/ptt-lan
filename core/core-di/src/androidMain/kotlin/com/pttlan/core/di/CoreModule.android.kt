@@ -2,6 +2,8 @@ package com.pttlan.core.di
 
 import com.pttlan.core.audio.AndroidHeadsetMicRoute
 import com.pttlan.core.audio.HeadsetMicRoute
+import com.pttlan.core.common.share.AndroidFileSharer
+import com.pttlan.core.common.share.FileSharer
 import com.pttlan.core.common.storage.AndroidStorageInfoProvider
 import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.core.database.DatabaseDriverFactory
@@ -15,4 +17,5 @@ actual val platformModule: Module =
         single { SettingsFactory(get()) }
         single<StorageInfoProvider> { AndroidStorageInfoProvider(get()) }
         single<HeadsetMicRoute> { AndroidHeadsetMicRoute(get()) }
+        single<FileSharer> { AndroidFileSharer(get()) }
     }

@@ -3,6 +3,7 @@ package com.pttlan.data.ptt.repository
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.pttlan.core.audio.AudioPlayer
 import com.pttlan.core.audio.JitterBufferPolicy
+import com.pttlan.core.audio.wavHeader
 import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.core.common.storage.StorageOption
 import com.pttlan.core.database.PttDatabase
@@ -10,8 +11,11 @@ import com.pttlan.domain.ptt.model.PlaybackPosition
 import com.pttlan.domain.ptt.model.VoiceMessage
 import com.russhwolf.settings.MapSettings
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import okio.Path.Companion.toPath
 import okio.fakefilesystem.FakeFileSystem
@@ -144,4 +148,199 @@ class HistoryPlaybackTest {
 
         assertEquals(4, played)
     }
+
+    @Test
+    fun seekingGoesOnFromTheNewPosition() =
+        runTest {
+            // One second at 48 kHz mono 16 bit: 96 bytes per ms
+            val second = ByteArray(96_000) { (it % 251).toByte() }
+            fileSystem.write(MESSAGE_PATH.toPath()) { write(second) }
+            val repository =
+                HistoryRepositoryImpl(
+                    audioPlayer = player,
+                    database = database,
+                    settings = MapSettings(),
+                    storageInfoProvider = NoStorageInfoProvider(),
+                    fileSystem = fileSystem,
+                    dispatcher = StandardTestDispatcher(testScheduler),
+                )
+            val playing = launch { repository.playMessage(message) }
+            runCurrent()
+            assertEquals(1, player.chunks.size)
+
+            repository.seekTo(500)
+            // The seek applies once the chunk being fed is done
+            advanceTimeBy(CHUNK_MS)
+            runCurrent()
+            assertTrue(player.stopped, "what was queued at the old position must not play")
+            assertEquals(500, repository.playbackPosition.value?.positionMs)
+            playing.join()
+
+            val afterSeek =
+                player.chunks
+                    .drop(1)
+                    .flatMap { it.first.toList() }
+                    .toByteArray()
+            assertContentEquals(second.copyOfRange(48_000, second.size), afterSeek)
+        }
+
+    @Test
+    fun doubleSpeedPlaysInHalfTheTimeAndStillReachesTheEnd() =
+        runTest {
+            val second = ByteArray(96_000) { (it % 251).toByte() }
+            fileSystem.write(MESSAGE_PATH.toPath()) { write(second) }
+            val repository =
+                HistoryRepositoryImpl(
+                    audioPlayer = player,
+                    database = database,
+                    settings = MapSettings(),
+                    storageInfoProvider = NoStorageInfoProvider(),
+                    fileSystem = fileSystem,
+                    dispatcher = StandardTestDispatcher(testScheduler),
+                )
+            val seen = mutableListOf<PlaybackPosition>()
+            backgroundScope.launch { repository.playbackPosition.collect { it?.let(seen::add) } }
+            repository.setPlaybackSpeed(2f)
+            val startedAt = testScheduler.currentTime
+
+            repository.playMessage(message)
+
+            val tookMs = testScheduler.currentTime - startedAt
+            assertTrue(tookMs in 450..550, "a second at 2x should take about half a second, took $tookMs ms")
+            val fedBytes = player.chunks.sumOf { it.first.size }
+            assertTrue(fedBytes in 45_000..51_000, "about half the audio reaches the player, got $fedBytes bytes")
+            assertTrue(seen.last().positionMs >= seen.last().durationMs - CHUNK_MS, "progress still reaches the end")
+            assertEquals(2f, repository.playbackSpeed.value)
+        }
+
+    private fun storedPlayedAt() =
+        database.voiceMessageQueries
+            .getAllMessages()
+            .executeAsOne()
+            .playedAt
+
+    @Test
+    fun aMessagePlayedToTheEndIsMarkedAsHeard() =
+        runTest {
+            fileSystem.write(MESSAGE_PATH.toPath()) { write(recorded) }
+            database.voiceMessageQueries.insert(message.id, message.channelId, "Tester", MESSAGE_PATH, 1_000, 1)
+            val repository =
+                HistoryRepositoryImpl(
+                    audioPlayer = player,
+                    database = database,
+                    settings = MapSettings(),
+                    storageInfoProvider = NoStorageInfoProvider(),
+                    fileSystem = fileSystem,
+                    dispatcher = StandardTestDispatcher(testScheduler),
+                )
+            assertEquals(null, storedPlayedAt())
+
+            repository.playMessage(message)
+
+            assertTrue(storedPlayedAt() != null, "played to the end, so it is no longer unheard")
+        }
+
+    @Test
+    fun aMessageStoppedHalfwayStaysUnheard() =
+        runTest {
+            fileSystem.write(MESSAGE_PATH.toPath()) { write(recorded) }
+            database.voiceMessageQueries.insert(message.id, message.channelId, "Tester", MESSAGE_PATH, 1_000, 1)
+            val repository =
+                HistoryRepositoryImpl(
+                    audioPlayer = player,
+                    database = database,
+                    settings = MapSettings(),
+                    storageInfoProvider = NoStorageInfoProvider(),
+                    fileSystem = fileSystem,
+                    dispatcher = StandardTestDispatcher(testScheduler),
+                )
+            val playing = launch { repository.playMessage(message) }
+            runCurrent()
+
+            repository.stopPlayingMessage()
+            playing.join()
+
+            assertEquals(null, storedPlayedAt())
+        }
+
+    @Test
+    fun liveSpeechPausesTheReplayAndItResumesOnceTheChannelIsFree() =
+        runTest {
+            val second = ByteArray(96_000) { (it % 251).toByte() }
+            fileSystem.write(MESSAGE_PATH.toPath()) { write(second) }
+            val live = MutableSharedFlow<Boolean>()
+            val repository =
+                HistoryRepositoryImpl(
+                    audioPlayer = player,
+                    database = database,
+                    settings = MapSettings(),
+                    storageInfoProvider = NoStorageInfoProvider(),
+                    fileSystem = fileSystem,
+                    dispatcher = StandardTestDispatcher(testScheduler),
+                    liveSpeaking = live,
+                )
+            val playing = launch { repository.playMessage(message) }
+            runCurrent()
+
+            live.emit(true)
+            runCurrent()
+            assertTrue(player.stopped, "the replay queued in the player must not play over the live audio")
+            val fedBeforeLive = player.chunks.size
+            advanceTimeBy(2_000)
+            assertEquals(fedBeforeLive, player.chunks.size, "nothing of the replay is fed while someone speaks")
+
+            live.emit(false)
+            playing.join()
+
+            // Back a second from where it paused, which at 43 ms in is the start
+            val resumed =
+                player.chunks
+                    .drop(fedBeforeLive)
+                    .flatMap { it.first.toList() }
+                    .toByteArray()
+            assertContentEquals(second, resumed)
+        }
+
+    @Test
+    fun theSpeedIsKeptForTheNextTimeTheAppOpens() =
+        runTest {
+            val settings = MapSettings()
+
+            fun openApp() =
+                HistoryRepositoryImpl(
+                    audioPlayer = player,
+                    database = database,
+                    settings = settings,
+                    storageInfoProvider = NoStorageInfoProvider(),
+                    fileSystem = fileSystem,
+                    dispatcher = StandardTestDispatcher(testScheduler),
+                )
+            assertEquals(1f, openApp().playbackSpeed.value)
+
+            openApp().setPlaybackSpeed(1.5f)
+
+            assertEquals(1.5f, openApp().playbackSpeed.value)
+        }
+
+    @Test
+    fun exportingWritesTheMessageAsAWav() =
+        runTest {
+            fileSystem.write(MESSAGE_PATH.toPath()) { write(recorded) }
+            val repository =
+                HistoryRepositoryImpl(
+                    audioPlayer = player,
+                    database = database,
+                    settings = MapSettings(),
+                    storageInfoProvider = NoStorageInfoProvider(),
+                    fileSystem = fileSystem,
+                    dispatcher = StandardTestDispatcher(testScheduler),
+                )
+            fileSystem.createDirectories("/shared".toPath())
+
+            val path = repository.exportAsWav(message, "/shared")
+
+            assertEquals("/shared/c1_1.wav", path)
+            val wav = fileSystem.read("/shared/c1_1.wav".toPath()) { readByteArray() }
+            assertContentEquals(wavHeader(recorded.size) + recorded, wav)
+        }
 }

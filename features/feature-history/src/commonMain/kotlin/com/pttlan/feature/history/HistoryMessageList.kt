@@ -13,22 +13,26 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,24 +53,41 @@ import com.pttlan.feature.history.util.toRelativeDisplay
 import kotlin.time.Instant
 
 private val TopBarClearance = 72.dp
-private val PlayerClearance = 110.dp
+
+/** The mini player's height above the navigation bar: 16 + 10 padding on each side, 52 + 24 + 16 + 48 of rows. */
+private val PlayerClearance = 200.dp
+
+/** What a room header does: play the room or its unheard messages in sequence, or (long press) delete it. */
+internal class ChannelActions(
+    val onPlay: (String) -> Unit,
+    val onPlayUnheard: (String) -> Unit,
+    val onDelete: (String) -> Unit,
+)
+
+/** What a message row does: play or pause it, share it as a `.wav`, or delete it. */
+internal class MessageActions(
+    val onPlay: (VoiceMessage) -> Unit,
+    val onShare: (VoiceMessage) -> Unit,
+    val onDelete: (VoiceMessage) -> Unit,
+)
 
 @Composable
 internal fun MessageList(
     messages: List<VoiceMessage>,
     playingMessageId: String?,
     isPaused: Boolean,
-    onPlayClick: (VoiceMessage) -> Unit,
-    onDeleteMessage: (VoiceMessage) -> Unit,
-    onDeleteChannel: (String) -> Unit,
+    messageActions: MessageActions,
+    channelActions: ChannelActions,
 ) {
     var collapsedChannels by remember { mutableStateOf(setOf<String>()) }
     val topInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    // The mini player sits above the navigation bar, so the last message has to clear both
+    val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().readableWidth(),
         contentPadding =
-            PaddingValues(start = 20.dp, end = 20.dp, top = topInset + TopBarClearance, bottom = PlayerClearance),
+            PaddingValues(start = 20.dp, end = 20.dp, top = topInset + TopBarClearance, bottom = bottomInset + PlayerClearance),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         item {
@@ -88,11 +109,12 @@ internal fun MessageList(
             item(key = "header_$channelId") {
                 ChannelHeader(
                     channelId = channelId,
+                    unheardCount = channelMessages.count { it.playedAt == null },
                     isCollapsed = isCollapsed,
                     onToggle = {
                         collapsedChannels = if (isCollapsed) collapsedChannels - channelId else collapsedChannels + channelId
                     },
-                    onLongClick = { onDeleteChannel(channelId) },
+                    actions = channelActions,
                 )
             }
             if (!isCollapsed) {
@@ -109,8 +131,7 @@ internal fun MessageList(
                                 message = message,
                                 isPlaying = message.id == playingMessageId,
                                 isPaused = message.id == playingMessageId && isPaused,
-                                onPlayClick = { onPlayClick(message) },
-                                onDeleteClick = { onDeleteMessage(message) },
+                                actions = messageActions,
                             )
                         }
                     }
@@ -123,20 +144,33 @@ internal fun MessageList(
 @Composable
 private fun ChannelHeader(
     channelId: String,
+    unheardCount: Int,
     isCollapsed: Boolean,
     onToggle: () -> Unit,
-    onLongClick: () -> Unit,
+    actions: ChannelActions,
 ) {
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .clip(CircleShape)
-                .combinedClickable(onClick = onToggle, onLongClick = onLongClick)
+                .combinedClickable(onClick = onToggle, onLongClick = { actions.onDelete(channelId) })
                 .padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SectionLabel(text = "# $channelId", modifier = Modifier.weight(1f))
+        if (unheardCount > 0) {
+            TextButton(onClick = { actions.onPlayUnheard(channelId) }) {
+                Text(if (unheardCount == 1) "1 nova" else "$unheardCount novas", style = MaterialTheme.typography.labelLarge)
+            }
+        }
+        IconButton(onClick = { actions.onPlay(channelId) }) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.PlaylistPlay,
+                contentDescription = "Tocar a sala",
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
         Icon(
             imageVector = if (isCollapsed) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
             contentDescription = if (isCollapsed) "Expandir" else "Recolher",
@@ -146,12 +180,11 @@ private fun ChannelHeader(
 }
 
 @Composable
-fun VoiceMessageItem(
+internal fun VoiceMessageItem(
     message: VoiceMessage,
     isPlaying: Boolean,
     isPaused: Boolean,
-    onPlayClick: () -> Unit,
-    onDeleteClick: () -> Unit,
+    actions: MessageActions,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -159,7 +192,7 @@ fun VoiceMessageItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        PlayButton(isPlaying = isPlaying && !isPaused, isActive = isPlaying, onClick = onPlayClick, size = 40)
+        PlayButton(isPlaying = isPlaying && !isPaused, isActive = isPlaying, onClick = { actions.onPlay(message) }, size = 40)
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = message.senderNickname,
@@ -169,26 +202,20 @@ fun VoiceMessageItem(
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                text =
-                    when {
-                        isPlaying && isPaused -> {
-                            "pausado · ${formatDuration(message.durationMs)}"
-                        }
-
-                        isPlaying -> {
-                            "tocando · ${formatDuration(message.durationMs)}"
-                        }
-
-                        else -> {
-                            "${Instant.fromEpochMilliseconds(message.recordedAt).toRelativeDisplay()} · " +
-                                formatDuration(message.durationMs)
-                        }
-                    },
+                text = messageStatus(message, isPlaying, isPaused),
                 style = MaterialTheme.typography.labelSmall,
                 color = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        IconButton(onClick = onDeleteClick) {
+        IconButton(onClick = { actions.onShare(message) }) {
+            Icon(
+                imageVector = Icons.Default.Share,
+                contentDescription = "Compartilhar áudio",
+                tint = PttTheme.customColors.textTertiary,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+        IconButton(onClick = { actions.onDelete(message) }) {
             Icon(
                 imageVector = Icons.Default.Delete,
                 contentDescription = "Apagar áudio",
@@ -196,6 +223,20 @@ fun VoiceMessageItem(
                 modifier = Modifier.size(20.dp),
             )
         }
+    }
+}
+
+/** "tocando · 0:12", "pausado · 0:12", or when it was recorded and how long it is. */
+private fun messageStatus(
+    message: VoiceMessage,
+    isPlaying: Boolean,
+    isPaused: Boolean,
+): String {
+    val duration = formatDuration(message.durationMs)
+    return when {
+        isPlaying && isPaused -> "pausado · $duration"
+        isPlaying -> "tocando · $duration"
+        else -> "${Instant.fromEpochMilliseconds(message.recordedAt).toRelativeDisplay()} · $duration"
     }
 }
 

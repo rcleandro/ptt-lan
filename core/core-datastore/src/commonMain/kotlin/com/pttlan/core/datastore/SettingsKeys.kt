@@ -22,6 +22,8 @@ object SettingsKeys {
     const val USE_OPUS = "use_opus"
     const val ALWAYS_LISTENING = "always_listening"
     const val USE_HEADSET_MIC = "use_headset_mic"
+
+    const val PLAYBACK_SPEED = "playback_speed"
 }
 
 /** Defaults for the keys that have one, so reader and writer cannot disagree. */
@@ -36,4 +38,7 @@ object SettingsDefaults {
 
     /** Off: the headset's microphone drops all audio to phone quality (ADR 0012). */
     const val USE_HEADSET_MIC = false
+
+    /** The history's replay speed. */
+    const val PLAYBACK_SPEED = 1f
 }

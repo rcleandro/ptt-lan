@@ -1,0 +1,1 @@
+ALTER TABLE VoiceMessage ADD COLUMN playedAt INTEGER;

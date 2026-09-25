@@ -13,7 +13,8 @@ interface HistoryRepository {
     /** Progress of the message being replayed, or null when nothing is playing. */
     val playbackPosition: StateFlow<PlaybackPosition?>
 
-    fun getRecentMessages(channelId: String): Flow<List<VoiceMessage>>
+    /** Replay speed, 1 by default; it keeps the voice's pitch and is kept for the next time the app opens. */
+    val playbackSpeed: StateFlow<Float>
 
     fun getAllMessages(): Flow<List<VoiceMessage>>
 
@@ -24,6 +25,18 @@ interface HistoryRepository {
     suspend fun resumePlayingMessage()
 
     suspend fun stopPlayingMessage()
+
+    /** Moves the replay to [positionMs], clamped to the message; does nothing when nothing is playing. */
+    suspend fun seekTo(positionMs: Long)
+
+    /** Applies to the message playing and to the ones after it. */
+    suspend fun setPlaybackSpeed(speed: Float)
+
+    /** Writes [message] as a `.wav` in [directory] and returns its path, for sharing; null if its audio is gone. */
+    suspend fun exportAsWav(
+        message: VoiceMessage,
+        directory: String,
+    ): String?
 
     suspend fun clearAllMessages()
 

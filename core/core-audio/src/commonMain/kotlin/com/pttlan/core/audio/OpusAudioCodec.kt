@@ -60,24 +60,29 @@ class OpusAudioCodec(
             ByteArray(0)
         }
     }
+}
 
-    private fun ByteArray.toShortArray(): ShortArray {
-        val result = ShortArray(this.size / 2)
-        for (i in result.indices) {
-            val low = this[i * 2].toInt() and 0xFF
-            val high = this[i * 2 + 1].toInt() and 0xFF
-            result[i] = ((high shl 8) or low).toShort()
-        }
-        return result
-    }
+private const val BYTE_MASK = 0xFF
+private const val BITS_PER_BYTE = 8
 
-    private fun ShortArray.toByteArray(): ByteArray {
-        val result = ByteArray(this.size * 2)
-        for (i in this.indices) {
-            val value = this[i].toInt()
-            result[i * 2] = (value and 0xFF).toByte()
-            result[i * 2 + 1] = ((value ushr 8) and 0xFF).toByte()
-        }
-        return result
+/** 16 bit little-endian PCM to samples, the layout every platform records and plays. */
+internal fun ByteArray.toShortArray(): ShortArray {
+    val result = ShortArray(this.size / 2)
+    for (i in result.indices) {
+        val low = this[i * 2].toInt() and BYTE_MASK
+        val high = this[i * 2 + 1].toInt() and BYTE_MASK
+        result[i] = ((high shl BITS_PER_BYTE) or low).toShort()
     }
+    return result
+}
+
+/** Samples back to 16 bit little-endian PCM. */
+internal fun ShortArray.toByteArray(): ByteArray {
+    val result = ByteArray(this.size * 2)
+    for (i in this.indices) {
+        val value = this[i].toInt()
+        result[i * 2] = (value and BYTE_MASK).toByte()
+        result[i * 2 + 1] = ((value ushr BITS_PER_BYTE) and BYTE_MASK).toByte()
+    }
+    return result
 }

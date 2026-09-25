@@ -4,7 +4,9 @@ CREATE TABLE VoiceMessage (
     senderNickname TEXT NOT NULL,
     filePath TEXT NOT NULL,
     durationMs INTEGER NOT NULL,
-    recordedAt INTEGER NOT NULL
+    recordedAt INTEGER NOT NULL,
+    -- When it was replayed to the end; null while not heard (28.5, migration 1)
+    playedAt INTEGER
 );
 
 insert:
@@ -52,4 +54,9 @@ DELETE FROM VoiceMessage;
 
 deleteById:
 DELETE FROM VoiceMessage
+WHERE id = :id;
+
+markPlayed:
+UPDATE VoiceMessage
+SET playedAt = :playedAt
 WHERE id = :id;
