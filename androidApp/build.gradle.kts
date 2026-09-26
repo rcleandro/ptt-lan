@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.androidApplication)
+    alias(libs.plugins.baselineProfile)
 
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
@@ -56,6 +57,8 @@ dependencies {
     }
 
     implementation(libs.androidx.window)
+    implementation(libs.androidx.profileinstaller)
+    baselineProfile(projects.baselineprofile)
 
     testImplementation(kotlin("test-junit"))
     testImplementation(libs.robolectric)
