@@ -69,7 +69,7 @@ class VoiceRepositoryImpl(
                     sequenceNumber = envelope?.sequenceNumber ?: 0,
                     timestampMs = envelope?.timestampMs ?: 0L,
                 )
-                recorder.write(decoded)
+                record(isOpus = envelope?.codec == AudioCodecType.OPUS, pcm = decoded, wire = chunk)
             }.launchIn(scope)
     }
 
@@ -127,10 +127,17 @@ class VoiceRepositoryImpl(
                             ),
                             encoded,
                         )
-                        recorder.write(chunk)
+                        record(isOpus = useOpus, pcm = chunk, wire = encoded)
                     }
             }
     }
+
+    /** A whole 20 ms Opus frame goes to the history as it went over the wire; anything else is encoded there. */
+    private suspend fun record(
+        isOpus: Boolean,
+        pcm: ByteArray,
+        wire: ByteArray,
+    ) = if (isOpus && pcm.size == OPUS_FRAME_BYTES) recorder.writeOpusFrame(wire) else recorder.write(pcm)
 
     override suspend fun stopTransmitting() {
         transmissionJob?.cancel()

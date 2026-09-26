@@ -21,24 +21,16 @@ import okio.FileSystem
 import okio.IOException
 import okio.Path
 import okio.Path.Companion.toPath
-import okio.buffer
 import kotlin.concurrent.Volatile
 import kotlin.time.Duration.Companion.milliseconds
 
-private const val PLAYBACK_CHUNK_BYTES = 4096
 private const val PAUSE_POLL_MS = 100L
-private const val MS_PER_SECOND = 1000L
 
 /** How far back the replay resumes after live speech interrupted it, for context. */
 private const val LIVE_REWIND_MS = 1_000L
 
 /** How long after the channel frees up the replay waits, so the end of the live audio plays alone. */
 private const val LIVE_TAIL_MS = 500L
-
-/** Mono 16 bit PCM at 48 kHz, the format the recorder writes. */
-private const val BYTES_PER_SECOND = 48_000L * 2
-
-private fun bytesToMs(bytes: Long) = bytes * MS_PER_SECOND / BYTES_PER_SECOND
 
 /**
  * Replays one recorded message at a time into [audioPlayer]: pause, seek, speed, and giving way to live
@@ -132,7 +124,7 @@ internal class HistoryReplay(
                 if (chunk.isNotEmpty()) audioPlayer.play(chunk, sequenceNumber = sequenceNumber++)
                 // Feed at playback speed, which is the length of what came out of the stretcher. Reading the
                 // whole file at disk speed and returning would stop the player while its queue was still full.
-                delay(bytesToMs(chunk.size.toLong()).milliseconds)
+                delay(pcmMs(chunk.size.toLong()).milliseconds)
                 _position.value = PlaybackPosition(message.id, file.positionMs, file.totalMs)
             }
             return false
@@ -189,45 +181,31 @@ internal class HistoryReplay(
     }
 }
 
-/** A recorded file being read for replay: where it is in the original audio, stretched to the speed asked. */
+/** A recording being replayed: its PCM, whatever the format, stretched to the speed asked. */
 private class ReplayFile(
-    private val fileSystem: FileSystem,
-    private val path: Path,
+    fileSystem: FileSystem,
+    path: Path,
     fallbackDurationMs: Long,
 ) {
-    private val sizeBytes = fileSystem.metadataOrNull(path)?.size
-
-    /** The recorded file is the honest total: a message's `durationMs` is wall clock of the talk spurt. */
-    val totalMs = sizeBytes?.let(::bytesToMs) ?: fallbackDurationMs
-
-    private var source = fileSystem.source(path).buffer()
+    private val recording = openRecording(fileSystem, path, fallbackDurationMs)
     private var stretcher = TimeStretcher()
-    private val buffer = ByteArray(PLAYBACK_CHUNK_BYTES)
 
-    // From the bytes read, not a sum of per-chunk milliseconds, whose rounding would never reach the end
-    private var readBytes = 0L
-    val positionMs get() = bytesToMs(readBytes).coerceAtMost(totalMs)
+    val totalMs get() = recording.totalMs
+    val positionMs get() = recording.positionMs
 
-    /** The next chunk at [speed], maybe empty while the stretcher fills up; null at the end of the file. */
+    /** The next chunk at [speed], maybe empty while the stretcher fills up; null at the end of the recording. */
     fun read(speed: Float): ByteArray? {
-        val read = source.read(buffer)
-        if (read == -1) return null
-        readBytes += read
+        val pcm = recording.read() ?: return null
         stretcher.speed = speed
-        // A copy: the player keeps the array in its queue, and the next read would overwrite it
-        return stretcher.process(buffer.copyOf(read))
+        return stretcher.process(pcm)
     }
 
     fun flush(): ByteArray = stretcher.flush()
 
-    /** Reads on from [targetMs], on a whole 16 bit sample. */
     fun seek(targetMs: Long) {
-        source.close()
-        source = fileSystem.source(path).buffer()
-        readBytes = (targetMs * BYTES_PER_SECOND / MS_PER_SECOND).coerceIn(0L, sizeBytes ?: 0L) and 1L.inv()
-        source.skip(readBytes)
+        recording.seek(targetMs)
         stretcher = TimeStretcher()
     }
 
-    fun close() = source.close()
+    fun close() = recording.close()
 }

@@ -25,12 +25,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 private const val CACHE_DIR = "/cache"
-private const val MESSAGE_PATH = "/cache/c1_1.pcm"
+internal const val MESSAGE_PATH = "/cache/c1_1.pcm"
 
 /** One 4096 byte chunk at 48 kHz mono 16 bit. */
 private const val CHUNK_MS = 43L
 
-private class RecordingAudioPlayer : AudioPlayer {
+internal class RecordingAudioPlayer : AudioPlayer {
     val chunks = mutableListOf<Pair<ByteArray, Int>>()
     var stopped = false
 
@@ -48,7 +48,7 @@ private class RecordingAudioPlayer : AudioPlayer {
     }
 }
 
-private class NoStorageInfoProvider : StorageInfoProvider {
+internal class NoStorageInfoProvider : StorageInfoProvider {
     override val isExternalStorageSupported = false
 
     override fun getAvailableStorageOptions(): List<StorageOption> = emptyList()
