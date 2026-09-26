@@ -24,8 +24,7 @@ class AndroidStorageInfoProvider(
         val internalAvailableBytes = getAvailableBytes(internalDir)
         options.add(
             StorageOption(
-                id = "Interno",
-                title = "Armazenamento interno",
+                id = STORAGE_INTERNAL,
                 availableSpaceBytes = internalAvailableBytes,
             ),
         )
@@ -38,8 +37,7 @@ class AndroidStorageInfoProvider(
                 val externalAvailableBytes = getAvailableBytes(sdCardDir)
                 options.add(
                     StorageOption(
-                        id = "Externo",
-                        title = "Armazenamento externo",
+                        id = STORAGE_EXTERNAL,
                         availableSpaceBytes = externalAvailableBytes,
                     ),
                 )
@@ -63,7 +61,7 @@ class AndroidStorageInfoProvider(
 
     private fun getCacheDirForLocation(cacheLocationId: String): File? =
         // A setting saved as "Externo" before an update keeps to the private cache where external is not safe
-        if (cacheLocationId == "Externo" && isExternalStorageSupported) {
+        if (cacheLocationId == STORAGE_EXTERNAL && isExternalStorageSupported) {
             context.externalCacheDir
         } else {
             context.cacheDir

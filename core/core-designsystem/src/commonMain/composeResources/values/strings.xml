@@ -145,4 +145,41 @@
     <string name="history_delete_channel_text">Tem certeza que deseja apagar todos os áudios do canal #%1$s?</string>
     <string name="history_clear_text">Tem certeza que deseja apagar todos os áudios gravados? Esta ação não pode ser desfeita.</string>
     <string name="history_clear_confirm">Limpar</string>
+
+    <!-- Settings screen -->
+    <string name="settings_title">Configurações</string>
+    <string name="settings_back">Voltar</string>
+    <string name="settings_appearance">Aparência</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_theme_system">Sistema</string>
+    <string name="settings_theme_light">Claro</string>
+    <string name="settings_theme_dark">Escuro</string>
+    <string name="settings_reduce_transparency">Reduzir transparência</string>
+    <string name="settings_reduce_transparency_detail">Troca o vidro por superfícies sólidas</string>
+    <string name="settings_audio">Áudio</string>
+    <string name="settings_opus">Codec Opus</string>
+    <string name="settings_opus_detail">Usa menos banda; recomendado fora da LAN</string>
+    <string name="settings_headset_mic">Microfone do fone Bluetooth</string>
+    <string name="settings_headset_mic_detail">Fala pelo fone; o áudio fica com qualidade de telefone e o relógio pareado fica mudo. Vale na próxima conexão</string>
+    <string name="settings_always_listening">Sempre ouvindo</string>
+    <string name="settings_always_listening_detail">Recebe áudio com o app em segundo plano</string>
+    <string name="settings_history">Histórico</string>
+    <string name="settings_save_audio">Salvar áudios recebidos</string>
+    <string name="settings_location">Local</string>
+    <string name="settings_storage_internal">Armazenamento interno</string>
+    <string name="settings_storage_external">Armazenamento externo</string>
+    <string name="settings_space_limit">Limite de espaço</string>
+    <string name="settings_size_mb">%1$d MB</string>
+    <string name="settings_usage">%1$d MB de %2$d MB usados</string>
+    <string name="settings_location_title">Local de armazenamento</string>
+    <string name="settings_location_option">%1$s (%2$s livre)</string>
+    <string name="settings_sd_unavailable">O armazenamento SD não está disponível. Insira um cartão SD para usar essa opção.</string>
+    <string name="settings_clear_history">Limpar histórico</string>
+    <string name="settings_clear_history_text">Tem certeza que deseja apagar todos os áudios gravados? Esta ação não pode ser desfeita.</string>
+    <string name="settings_clear_confirm">Limpar</string>
+    <string name="common_ok">OK</string>
+    <string name="size_bytes">%1$d B</string>
+    <string name="size_kb">%1$d KB</string>
+    <string name="size_mb">%1$d MB</string>
+    <string name="size_gb">%1$d GB</string>
 </resources>

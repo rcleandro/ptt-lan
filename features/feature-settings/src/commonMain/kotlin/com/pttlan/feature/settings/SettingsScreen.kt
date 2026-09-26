@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.pttlan.core.common.storage.STORAGE_EXTERNAL
 import com.pttlan.core.designsystem.components.AmbientGlow
 import com.pttlan.core.designsystem.components.GlassIconButton
 import com.pttlan.core.designsystem.components.PillButton
@@ -63,8 +64,47 @@ import com.pttlan.core.designsystem.components.SectionLabel
 import com.pttlan.core.designsystem.components.SegmentedControl
 import com.pttlan.core.designsystem.components.contentCard
 import com.pttlan.core.designsystem.components.readableWidth
+import com.pttlan.core.designsystem.generated.resources.Res
+import com.pttlan.core.designsystem.generated.resources.common_cancel
+import com.pttlan.core.designsystem.generated.resources.common_ok
+import com.pttlan.core.designsystem.generated.resources.settings_always_listening
+import com.pttlan.core.designsystem.generated.resources.settings_always_listening_detail
+import com.pttlan.core.designsystem.generated.resources.settings_appearance
+import com.pttlan.core.designsystem.generated.resources.settings_audio
+import com.pttlan.core.designsystem.generated.resources.settings_back
+import com.pttlan.core.designsystem.generated.resources.settings_clear_confirm
+import com.pttlan.core.designsystem.generated.resources.settings_clear_history
+import com.pttlan.core.designsystem.generated.resources.settings_clear_history_text
+import com.pttlan.core.designsystem.generated.resources.settings_headset_mic
+import com.pttlan.core.designsystem.generated.resources.settings_headset_mic_detail
+import com.pttlan.core.designsystem.generated.resources.settings_history
+import com.pttlan.core.designsystem.generated.resources.settings_location
+import com.pttlan.core.designsystem.generated.resources.settings_location_option
+import com.pttlan.core.designsystem.generated.resources.settings_location_title
+import com.pttlan.core.designsystem.generated.resources.settings_opus
+import com.pttlan.core.designsystem.generated.resources.settings_opus_detail
+import com.pttlan.core.designsystem.generated.resources.settings_reduce_transparency
+import com.pttlan.core.designsystem.generated.resources.settings_reduce_transparency_detail
+import com.pttlan.core.designsystem.generated.resources.settings_save_audio
+import com.pttlan.core.designsystem.generated.resources.settings_sd_unavailable
+import com.pttlan.core.designsystem.generated.resources.settings_size_mb
+import com.pttlan.core.designsystem.generated.resources.settings_space_limit
+import com.pttlan.core.designsystem.generated.resources.settings_storage_external
+import com.pttlan.core.designsystem.generated.resources.settings_storage_internal
+import com.pttlan.core.designsystem.generated.resources.settings_theme
+import com.pttlan.core.designsystem.generated.resources.settings_theme_dark
+import com.pttlan.core.designsystem.generated.resources.settings_theme_light
+import com.pttlan.core.designsystem.generated.resources.settings_theme_system
+import com.pttlan.core.designsystem.generated.resources.settings_title
+import com.pttlan.core.designsystem.generated.resources.settings_usage
+import com.pttlan.core.designsystem.generated.resources.size_bytes
+import com.pttlan.core.designsystem.generated.resources.size_gb
+import com.pttlan.core.designsystem.generated.resources.size_kb
+import com.pttlan.core.designsystem.generated.resources.size_mb
 import com.pttlan.core.designsystem.theme.AppTheme
+import com.pttlan.core.designsystem.theme.Dimens
 import com.pttlan.core.designsystem.theme.PttTheme
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
 private const val BYTES_PER_KB = 1024L
@@ -73,16 +113,30 @@ private const val MAX_CACHE_MB = 2000f
 private const val CACHE_SLIDER_STEPS = 18
 private val TopBarClearance = 64.dp
 
+private const val GLOW_INTENSITY = 0.24f
+private val GlowSize = 440.dp
+private val GlowOffsetX = 180.dp
+private val GlowOffsetY = (-140).dp
+private val SettingsSpacing = 10.dp
+private val UsageBarHeight = 6.dp
+private val StorageOptionHeight = 56.dp
+
+@Composable
 private fun formatBytes(bytes: Long): String {
     val mb = BYTES_PER_KB * BYTES_PER_KB
     val gb = mb * BYTES_PER_KB
     return when {
-        bytes >= gb -> "${(bytes.toDouble() / gb).roundToInt()} GB"
-        bytes >= mb -> "${(bytes.toDouble() / mb).roundToInt()} MB"
-        bytes >= BYTES_PER_KB -> "${(bytes.toDouble() / BYTES_PER_KB).roundToInt()} KB"
-        else -> "$bytes B"
+        bytes >= gb -> stringResource(Res.string.size_gb, (bytes.toDouble() / gb).roundToInt())
+        bytes >= mb -> stringResource(Res.string.size_mb, (bytes.toDouble() / mb).roundToInt())
+        bytes >= BYTES_PER_KB -> stringResource(Res.string.size_kb, (bytes.toDouble() / BYTES_PER_KB).roundToInt())
+        else -> stringResource(Res.string.size_bytes, bytes)
     }
 }
+
+/** The name of a storage place, from its id. */
+@Composable
+private fun storageName(id: String): String =
+    stringResource(if (id == STORAGE_EXTERNAL) Res.string.settings_storage_external else Res.string.settings_storage_internal)
 
 @Composable
 fun SettingsScreen(
@@ -111,8 +165,8 @@ fun SettingsScreenContent(
     Box(modifier = modifier.fillMaxSize()) {
         AmbientGlow(
             color = MaterialTheme.colorScheme.primary,
-            intensity = 0.24f,
-            modifier = Modifier.size(440.dp).align(Alignment.TopEnd).offset(180.dp, (-140).dp),
+            intensity = GLOW_INTENSITY,
+            modifier = Modifier.size(GlowSize).align(Alignment.TopEnd).offset(GlowOffsetX, GlowOffsetY),
         )
 
         Column(
@@ -123,11 +177,11 @@ fun SettingsScreenContent(
                     .verticalScroll(rememberScrollState())
                     .windowInsetsPadding(WindowInsets.statusBars)
                     .windowInsetsPadding(WindowInsets.navigationBars)
-                    .padding(start = 20.dp, end = 20.dp, top = TopBarClearance, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+                    .padding(start = Dimens.Space2xl, end = Dimens.Space2xl, top = TopBarClearance, bottom = Dimens.Space3xl),
+            verticalArrangement = Arrangement.spacedBy(SettingsSpacing),
         ) {
             Text(
-                text = "Configurações",
+                text = stringResource(Res.string.settings_title),
                 style = MaterialTheme.typography.displayLarge,
                 color = MaterialTheme.colorScheme.onBackground,
             )
@@ -143,7 +197,7 @@ fun SettingsScreenContent(
 
         PttTopBar(
             modifier = Modifier.readableWidth(),
-            navigation = { GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, "Voltar", onBack) },
+            navigation = { GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, stringResource(Res.string.settings_back), onBack) },
         )
     }
 
@@ -163,13 +217,13 @@ private fun SettingsGroup(
     title: String,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    SectionLabel(text = title, modifier = Modifier.padding(start = 16.dp, top = 10.dp))
+    SectionLabel(text = title, modifier = Modifier.padding(start = Dimens.SpaceXl, top = SettingsSpacing))
     Column(modifier = Modifier.fillMaxWidth().contentCard(), content = content)
 }
 
 @Composable
 private fun GroupDivider() {
-    HorizontalDivider(modifier = Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outline)
+    HorizontalDivider(modifier = Modifier.padding(start = Dimens.SpaceXl), color = MaterialTheme.colorScheme.outline)
 }
 
 @Composable
@@ -184,9 +238,9 @@ private fun SwitchRow(
             Modifier
                 .fillMaxWidth()
                 .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = Dimens.SpaceXl, vertical = Dimens.SpaceLg),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onBackground)
@@ -203,22 +257,31 @@ private fun AppearanceSection(
     state: SettingsState,
     onIntent: (SettingsIntent) -> Unit,
 ) {
-    SettingsGroup(title = "Aparência") {
+    SettingsGroup(title = stringResource(Res.string.settings_appearance)) {
         Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.padding(horizontal = Dimens.SpaceXl, vertical = Dimens.SpaceLg),
+            verticalArrangement = Arrangement.spacedBy(SettingsSpacing),
         ) {
-            Text("Tema", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onBackground)
+            Text(
+                stringResource(Res.string.settings_theme),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
             SegmentedControl(
-                options = listOf(AppTheme.SYSTEM to "Sistema", AppTheme.LIGHT to "Claro", AppTheme.DARK to "Escuro"),
+                options =
+                    listOf(
+                        AppTheme.SYSTEM to stringResource(Res.string.settings_theme_system),
+                        AppTheme.LIGHT to stringResource(Res.string.settings_theme_light),
+                        AppTheme.DARK to stringResource(Res.string.settings_theme_dark),
+                    ),
                 selected = state.appTheme,
                 onSelect = { onIntent(SettingsIntent.ChangeTheme(it)) },
             )
         }
         GroupDivider()
         SwitchRow(
-            title = "Reduzir transparência",
-            subtitle = "Troca o vidro por superfícies sólidas",
+            title = stringResource(Res.string.settings_reduce_transparency),
+            subtitle = stringResource(Res.string.settings_reduce_transparency_detail),
             checked = state.reduceTransparency,
             onCheckedChange = { onIntent(SettingsIntent.ToggleReduceTransparency(it)) },
         )
@@ -230,24 +293,24 @@ private fun AudioSection(
     state: SettingsState,
     onIntent: (SettingsIntent) -> Unit,
 ) {
-    SettingsGroup(title = "Áudio") {
+    SettingsGroup(title = stringResource(Res.string.settings_audio)) {
         SwitchRow(
-            title = "Codec Opus",
-            subtitle = "Usa menos banda; recomendado fora da LAN",
+            title = stringResource(Res.string.settings_opus),
+            subtitle = stringResource(Res.string.settings_opus_detail),
             checked = state.useOpus,
             onCheckedChange = { onIntent(SettingsIntent.ToggleOpus(it)) },
         )
         GroupDivider()
         SwitchRow(
-            title = "Microfone do fone Bluetooth",
-            subtitle = "Fala pelo fone; o áudio fica com qualidade de telefone e o relógio pareado fica mudo. Vale na próxima conexão",
+            title = stringResource(Res.string.settings_headset_mic),
+            subtitle = stringResource(Res.string.settings_headset_mic_detail),
             checked = state.useHeadsetMic,
             onCheckedChange = { onIntent(SettingsIntent.ToggleHeadsetMic(it)) },
         )
         GroupDivider()
         SwitchRow(
-            title = "Sempre ouvindo",
-            subtitle = "Recebe áudio com o app em segundo plano",
+            title = stringResource(Res.string.settings_always_listening),
+            subtitle = stringResource(Res.string.settings_always_listening_detail),
             checked = state.alwaysListening,
             onCheckedChange = { onIntent(SettingsIntent.ToggleAlwaysListening(it)) },
         )
@@ -261,9 +324,9 @@ private fun HistorySection(
     onPickLocation: () -> Unit,
     onClear: () -> Unit,
 ) {
-    SettingsGroup(title = "Histórico") {
+    SettingsGroup(title = stringResource(Res.string.settings_history)) {
         SwitchRow(
-            title = "Salvar áudios recebidos",
+            title = stringResource(Res.string.settings_save_audio),
             checked = state.allowCache,
             onCheckedChange = { onIntent(SettingsIntent.ToggleAllowCache(it)) },
         )
@@ -278,11 +341,11 @@ private fun HistorySection(
     }
     AnimatedVisibility(visible = state.allowCache, enter = expandVertically(), exit = shrinkVertically()) {
         PillButton(
-            text = "Limpar histórico",
+            text = stringResource(Res.string.settings_clear_history),
             onClick = onClear,
             style = PillButtonStyle.Destructive,
             icon = Icons.Default.Delete,
-            modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = Dimens.SpaceSm),
         )
     }
 }
@@ -294,18 +357,18 @@ private fun LocationRow(
 ) {
     val selected = state.storageOptions.find { it.id == state.cacheLocation }
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = Dimens.SpaceXl, vertical = Dimens.SpaceLg),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
     ) {
         Text(
-            "Local",
+            stringResource(Res.string.settings_location),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.weight(1f),
         )
         Text(
-            selected?.title ?: state.cacheLocation,
+            storageName(selected?.id ?: state.cacheLocation),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -325,40 +388,52 @@ private fun CacheLimit(
     val usage =
         if (state.maxCacheSizeMb == 0) 0f else (state.currentCacheUsageMb.toFloat() / state.maxCacheSizeMb).coerceIn(0f, 1f)
 
-    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+    Column(modifier = Modifier.padding(horizontal = Dimens.SpaceXl, vertical = Dimens.SpaceLg)) {
         Row(modifier = Modifier.fillMaxWidth()) {
             Text(
-                "Limite de espaço",
+                stringResource(Res.string.settings_space_limit),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.weight(1f),
             )
-            Text("${state.maxCacheSizeMb} MB", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+            Text(
+                stringResource(Res.string.settings_size_mb, state.maxCacheSizeMb),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
         }
-        Slider(
-            value = state.maxCacheSizeMb.toFloat(),
-            onValueChange = { onIntent(SettingsIntent.ChangeMaxCacheSize(it.roundToInt())) },
-            valueRange = MIN_CACHE_MB..MAX_CACHE_MB,
-            steps = CACHE_SLIDER_STEPS,
-            colors =
-                SliderDefaults.colors(
-                    thumbColor = MaterialTheme.colorScheme.primary,
-                    activeTrackColor = MaterialTheme.colorScheme.primary,
-                    inactiveTrackColor = PttTheme.customColors.surface3,
-                    activeTickColor = Color.Transparent,
-                    inactiveTickColor = Color.Transparent,
-                ),
-        )
+        CacheSizeSlider(state.maxCacheSizeMb, onIntent)
         LinearProgressIndicator(
             progress = { usage },
-            modifier = Modifier.fillMaxWidth().height(6.dp).clip(CircleShape),
+            modifier = Modifier.fillMaxWidth().height(UsageBarHeight).clip(CircleShape),
             color = MaterialTheme.colorScheme.primary,
             trackColor = PttTheme.customColors.surface3,
             drawStopIndicator = {},
         )
-        Spacer(modifier = Modifier.height(6.dp))
-        SectionLabel(text = "${state.currentCacheUsageMb} MB de ${state.maxCacheSizeMb} MB usados")
+        Spacer(modifier = Modifier.height(UsageBarHeight))
+        SectionLabel(text = stringResource(Res.string.settings_usage, state.currentCacheUsageMb, state.maxCacheSizeMb))
     }
+}
+
+@Composable
+private fun CacheSizeSlider(
+    maxCacheSizeMb: Int,
+    onIntent: (SettingsIntent) -> Unit,
+) {
+    Slider(
+        value = maxCacheSizeMb.toFloat(),
+        onValueChange = { onIntent(SettingsIntent.ChangeMaxCacheSize(it.roundToInt())) },
+        valueRange = MIN_CACHE_MB..MAX_CACHE_MB,
+        steps = CACHE_SLIDER_STEPS,
+        colors =
+            SliderDefaults.colors(
+                thumbColor = MaterialTheme.colorScheme.primary,
+                activeTrackColor = MaterialTheme.colorScheme.primary,
+                inactiveTrackColor = PttTheme.customColors.surface3,
+                activeTickColor = Color.Transparent,
+                inactiveTickColor = Color.Transparent,
+            ),
+    )
 }
 
 @Composable
@@ -369,7 +444,7 @@ private fun CacheLocationDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = "Local de armazenamento") },
+        title = { Text(text = stringResource(Res.string.settings_location_title)) },
         shape = MaterialTheme.shapes.large,
         text = {
             Column {
@@ -377,7 +452,7 @@ private fun CacheLocationDialog(
                     Row(
                         Modifier
                             .fillMaxWidth()
-                            .height(56.dp)
+                            .height(StorageOptionHeight)
                             .selectable(
                                 selected = option.id == state.cacheLocation,
                                 onClick = {
@@ -385,28 +460,33 @@ private fun CacheLocationDialog(
                                     onDismiss()
                                 },
                                 role = Role.RadioButton,
-                            ).padding(horizontal = 16.dp),
+                            ).padding(horizontal = Dimens.SpaceXl),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         RadioButton(selected = option.id == state.cacheLocation, onClick = null)
                         Text(
-                            text = "${option.title} (${formatBytes(option.availableSpaceBytes)} livre)",
+                            text =
+                                stringResource(
+                                    Res.string.settings_location_option,
+                                    storageName(option.id),
+                                    formatBytes(option.availableSpaceBytes),
+                                ),
                             style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(start = 16.dp),
+                            modifier = Modifier.padding(start = Dimens.SpaceXl),
                         )
                     }
                 }
                 if (state.isExternalStorageSupported && state.storageOptions.size == 1) {
                     Text(
-                        text = "O armazenamento SD não está disponível. Insira um cartão SD para usar essa opção.",
+                        text = stringResource(Res.string.settings_sd_unavailable),
                         style = MaterialTheme.typography.bodySmall,
                         color = PttTheme.customColors.statusOffline,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+                        modifier = Modifier.padding(horizontal = Dimens.SpaceXl, vertical = Dimens.SpaceXl),
                     )
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("OK") } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.common_ok)) } },
     )
 }
 
@@ -417,8 +497,8 @@ private fun ClearHistoryDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Limpar histórico") },
-        text = { Text("Tem certeza que deseja apagar todos os áudios gravados? Esta ação não pode ser desfeita.") },
+        title = { Text(stringResource(Res.string.settings_clear_history)) },
+        text = { Text(stringResource(Res.string.settings_clear_history_text)) },
         shape = MaterialTheme.shapes.large,
         confirmButton = {
             TextButton(
@@ -427,10 +507,10 @@ private fun ClearHistoryDialog(
                     onDismiss()
                 },
             ) {
-                Text("Limpar", color = PttTheme.customColors.statusOffline)
+                Text(stringResource(Res.string.settings_clear_confirm), color = PttTheme.customColors.statusOffline)
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.common_cancel)) } },
     )
 }
 

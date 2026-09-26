@@ -30,8 +30,7 @@ class IosStorageInfoProvider : StorageInfoProvider {
 
         return listOf(
             StorageOption(
-                id = "Interno",
-                title = "Armazenamento local",
+                id = STORAGE_INTERNAL,
                 availableSpaceBytes = availableSpace,
             ),
         )

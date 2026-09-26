@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+private const val BYTES_PER_MB = 1024L * 1024
+
 data class SettingsState(
     val nickname: String = "",
     val useOpus: Boolean = SettingsDefaults.USE_OPUS,
@@ -24,7 +26,7 @@ data class SettingsState(
     val reduceTransparency: Boolean = false,
     val alwaysListening: Boolean = true,
     val allowCache: Boolean = false,
-    val cacheLocation: String = "Interno",
+    val cacheLocation: String = SettingsDefaults.CACHE_LOCATION,
     val maxCacheSizeMb: Int = 500,
     val currentCacheUsageMb: Int = 0,
     val storageOptions: List<StorageOption> = emptyList(),
@@ -97,8 +99,7 @@ class SettingsComponent(
                     (
                         storageInfoProvider.getCacheUsageBytes(
                             settings.getString(SettingsKeys.CACHE_LOCATION, SettingsDefaults.CACHE_LOCATION),
-                        ) /
-                            (1024 * 1024)
+                        ) / BYTES_PER_MB
                     ).toInt(),
                 storageOptions = storageInfoProvider.getAvailableStorageOptions(),
                 isExternalStorageSupported = storageInfoProvider.isExternalStorageSupported,
@@ -148,7 +149,7 @@ class SettingsComponent(
                 _state.update {
                     it.copy(
                         cacheLocation = intent.location,
-                        currentCacheUsageMb = (storageInfoProvider.getCacheUsageBytes(intent.location) / (1024 * 1024)).toInt(),
+                        currentCacheUsageMb = (storageInfoProvider.getCacheUsageBytes(intent.location) / BYTES_PER_MB).toInt(),
                     )
                 }
             }
