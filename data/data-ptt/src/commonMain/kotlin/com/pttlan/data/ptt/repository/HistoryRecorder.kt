@@ -10,7 +10,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.withContext
-import okio.BufferedSink
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import okio.SYSTEM
@@ -40,7 +39,7 @@ class HistoryRecorder(
     private var speakerNickname: String? = null
     private var channelId: String? = null
     private var startedAtMs: Long = 0
-    private var sink: BufferedSink? = null
+    private var writer: OpusFrameWriter? = null
     private var filePath: String? = null
 
     /** Opens a file for the new talk spurt, when the user enabled the cache. */
@@ -58,10 +57,10 @@ class HistoryRecorder(
 
         val cacheLocation = settings.getString(SettingsKeys.CACHE_LOCATION, SettingsDefaults.CACHE_LOCATION)
         val dirPath = storageInfoProvider.getCacheDirPath(cacheLocation) ?: return@withContext
-        val path = "$dirPath/${channelId}_$startedAtMs.pcm".toPath()
+        val path = "$dirPath/${channelId}_$startedAtMs.$OPUS_EXTENSION".toPath()
         filePath = path.toString()
         try {
-            sink = fileSystem.sink(path).buffer()
+            writer = OpusFrameWriter(fileSystem.sink(path).buffer())
         } catch (e: Exception) {
             logger.w(e) { "Failed to open the recording file" }
         }
@@ -70,8 +69,8 @@ class HistoryRecorder(
     /** Closes the file and records the message, unless nothing was actually written. */
     suspend fun onSpeakerStopped(userId: String) =
         withContext(dispatcher) {
-            sink?.close()
-            sink = null
+            writer?.close()
+            writer = null
 
             val path = filePath
             val channel = channelId
@@ -89,11 +88,11 @@ class HistoryRecorder(
             channelId = null
         }
 
-    /** Appends a decoded frame to the open file, if there is one. */
+    /** Appends decoded audio to the open recording, encoded to Opus as whole frames fill up. */
     suspend fun write(chunk: ByteArray) =
         withContext(dispatcher) {
             try {
-                sink?.write(chunk)
+                writer?.write(chunk)
             } catch (e: Exception) {
                 logger.w(e) { "Failed to store audio" }
             }
@@ -140,7 +139,7 @@ class HistoryRecorder(
             val cacheLocation = settings.getString(SettingsKeys.CACHE_LOCATION, SettingsDefaults.CACHE_LOCATION)
             val dirPath = storageInfoProvider.getCacheDirPath(cacheLocation) ?: return
 
-            val files = fileSystem.list(dirPath.toPath()).filter { it.name.endsWith(".pcm") }
+            val files = fileSystem.list(dirPath.toPath()).filter(::isRecording)
             var totalSize = files.sumOf { fileSystem.metadata(it).size ?: 0L }
             if (totalSize <= limitBytes) return
 

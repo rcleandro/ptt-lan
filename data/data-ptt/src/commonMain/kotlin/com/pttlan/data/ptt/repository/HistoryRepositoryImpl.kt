@@ -83,7 +83,7 @@ class HistoryRepositoryImpl(
             val source = message.filePath.toPath()
             val target = directory.toPath() / "${source.name.substringBeforeLast('.')}.wav"
             try {
-                val pcm = fileSystem.read(source) { readByteArray() }
+                val pcm = readAllPcm(fileSystem, source)
                 fileSystem.write(target) {
                     write(wavHeader(pcm.size))
                     write(pcm)
@@ -103,7 +103,7 @@ class HistoryRepositoryImpl(
             val cacheLocation = settings.getString(SettingsKeys.CACHE_LOCATION, SettingsDefaults.CACHE_LOCATION)
             val dirPath = storageInfoProvider.getCacheDirPath(cacheLocation) ?: return
             val dir = dirPath.toPath()
-            val files = fileSystem.list(dir).filter { it.name.endsWith(".pcm") }
+            val files = fileSystem.list(dir).filter(::isRecording)
             for (file in files) {
                 fileSystem.delete(file)
             }
