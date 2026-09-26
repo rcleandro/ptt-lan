@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
+private const val WAV_MIME_TYPE = "audio/wav"
+
 class HistoryComponent(
     componentContext: ComponentContext,
     private val historyRepository: HistoryRepository,
@@ -52,7 +54,7 @@ class HistoryComponent(
     fun shareMessage(message: VoiceMessage) {
         scope.launch {
             val path = historyRepository.exportAsWav(message, fileSharer.shareDirectory)
-            if (path != null) fileSharer.share(path, "audio/wav")
+            if (path != null) fileSharer.share(path, WAV_MIME_TYPE)
         }
     }
 

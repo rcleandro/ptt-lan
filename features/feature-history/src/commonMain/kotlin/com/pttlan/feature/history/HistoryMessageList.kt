@@ -41,21 +41,48 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.pttlan.core.designsystem.components.SectionLabel
 import com.pttlan.core.designsystem.components.contentCard
 import com.pttlan.core.designsystem.components.readableWidth
+import com.pttlan.core.designsystem.generated.resources.Res
+import com.pttlan.core.designsystem.generated.resources.channel_name
+import com.pttlan.core.designsystem.generated.resources.history_collapse
+import com.pttlan.core.designsystem.generated.resources.history_delete
+import com.pttlan.core.designsystem.generated.resources.history_expand
+import com.pttlan.core.designsystem.generated.resources.history_pause
+import com.pttlan.core.designsystem.generated.resources.history_play
+import com.pttlan.core.designsystem.generated.resources.history_play_room
+import com.pttlan.core.designsystem.generated.resources.history_share
+import com.pttlan.core.designsystem.generated.resources.history_status_paused
+import com.pttlan.core.designsystem.generated.resources.history_status_playing
+import com.pttlan.core.designsystem.generated.resources.history_status_recorded
+import com.pttlan.core.designsystem.generated.resources.history_subtitle
+import com.pttlan.core.designsystem.generated.resources.history_title
+import com.pttlan.core.designsystem.generated.resources.history_unheard
+import com.pttlan.core.designsystem.theme.Dimens
 import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.domain.ptt.model.VoiceMessage
-import com.pttlan.feature.history.util.toRelativeDisplay
+import com.pttlan.feature.history.util.relativeTimeText
+import com.pttlan.feature.history.util.toRelativeTime
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Instant
 
 private val TopBarClearance = 72.dp
 
 /** The mini player's height above the navigation bar: 16 + 10 padding on each side, 52 + 24 + 16 + 48 of rows. */
 private val PlayerClearance = 200.dp
+
+/** The divider between messages starts after the play button. */
+private val DividerInset = 64.dp
+private val MessagePaddingVertical = 10.dp
+private val MessagePlayButtonSize = 40.dp
+private val MessageActionIconSize = 20.dp
 
 /** What a room header does: play the room or its unheard messages in sequence, or (long press) delete it. */
 internal class ChannelActions(
@@ -87,18 +114,24 @@ internal fun MessageList(
     LazyColumn(
         modifier = Modifier.fillMaxSize().readableWidth(),
         contentPadding =
-            PaddingValues(start = 20.dp, end = 20.dp, top = topInset + TopBarClearance, bottom = bottomInset + PlayerClearance),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            PaddingValues(
+                start = Dimens.Space2xl,
+                end = Dimens.Space2xl,
+                top = topInset + TopBarClearance,
+                bottom =
+                    bottomInset + PlayerClearance,
+            ),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
     ) {
         item {
-            Column(modifier = Modifier.padding(bottom = 8.dp)) {
+            Column(modifier = Modifier.padding(bottom = Dimens.SpaceMd)) {
                 Text(
-                    text = "Histórico",
+                    text = stringResource(Res.string.history_title),
                     style = MaterialTheme.typography.displayLarge,
                     color = MaterialTheme.colorScheme.onBackground,
                 )
                 Text(
-                    text = "Áudios recebidos, salvos só neste aparelho",
+                    text = stringResource(Res.string.history_subtitle),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -123,7 +156,7 @@ internal fun MessageList(
                         channelMessages.forEachIndexed { index, message ->
                             if (index > 0) {
                                 HorizontalDivider(
-                                    modifier = Modifier.padding(start = 64.dp),
+                                    modifier = Modifier.padding(start = DividerInset),
                                     color = MaterialTheme.colorScheme.outline,
                                 )
                             }
@@ -155,25 +188,28 @@ private fun ChannelHeader(
                 .fillMaxWidth()
                 .clip(CircleShape)
                 .combinedClickable(onClick = onToggle, onLongClick = { actions.onDelete(channelId) })
-                .padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
+                .padding(start = Dimens.SpaceXl, end = Dimens.SpaceMd, top = Dimens.SpaceMd, bottom = Dimens.SpaceXs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        SectionLabel(text = "# $channelId", modifier = Modifier.weight(1f))
+        SectionLabel(text = stringResource(Res.string.channel_name, channelId), modifier = Modifier.weight(1f))
         if (unheardCount > 0) {
             TextButton(onClick = { actions.onPlayUnheard(channelId) }) {
-                Text(if (unheardCount == 1) "1 nova" else "$unheardCount novas", style = MaterialTheme.typography.labelLarge)
+                Text(
+                    pluralStringResource(Res.plurals.history_unheard, unheardCount, unheardCount),
+                    style = MaterialTheme.typography.labelLarge,
+                )
             }
         }
         IconButton(onClick = { actions.onPlay(channelId) }) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.PlaylistPlay,
-                contentDescription = "Tocar a sala",
+                contentDescription = stringResource(Res.string.history_play_room),
                 tint = MaterialTheme.colorScheme.primary,
             )
         }
         Icon(
             imageVector = if (isCollapsed) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
-            contentDescription = if (isCollapsed) "Expandir" else "Recolher",
+            contentDescription = stringResource(if (isCollapsed) Res.string.history_expand else Res.string.history_collapse),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
@@ -188,11 +224,16 @@ internal fun VoiceMessageItem(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+        modifier = modifier.fillMaxWidth().padding(horizontal = Dimens.SpaceLg, vertical = MessagePaddingVertical),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
     ) {
-        PlayButton(isPlaying = isPlaying && !isPaused, isActive = isPlaying, onClick = { actions.onPlay(message) }, size = 40)
+        PlayButton(
+            isPlaying = isPlaying && !isPaused,
+            isActive = isPlaying,
+            onClick = { actions.onPlay(message) },
+            size = MessagePlayButtonSize,
+        )
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = message.senderNickname,
@@ -207,26 +248,29 @@ internal fun VoiceMessageItem(
                 color = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        IconButton(onClick = { actions.onShare(message) }) {
-            Icon(
-                imageVector = Icons.Default.Share,
-                contentDescription = "Compartilhar áudio",
-                tint = PttTheme.customColors.textTertiary,
-                modifier = Modifier.size(20.dp),
-            )
-        }
-        IconButton(onClick = { actions.onDelete(message) }) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = "Apagar áudio",
-                tint = PttTheme.customColors.textTertiary,
-                modifier = Modifier.size(20.dp),
-            )
-        }
+        MessageActionButton(Icons.Default.Share, stringResource(Res.string.history_share)) { actions.onShare(message) }
+        MessageActionButton(Icons.Default.Delete, stringResource(Res.string.history_delete)) { actions.onDelete(message) }
+    }
+}
+
+@Composable
+private fun MessageActionButton(
+    icon: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit,
+) {
+    IconButton(onClick = onClick) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = PttTheme.customColors.textTertiary,
+            modifier = Modifier.size(MessageActionIconSize),
+        )
     }
 }
 
 /** "tocando · 0:12", "pausado · 0:12", or when it was recorded and how long it is. */
+@Composable
 private fun messageStatus(
     message: VoiceMessage,
     isPlaying: Boolean,
@@ -234,9 +278,21 @@ private fun messageStatus(
 ): String {
     val duration = formatDuration(message.durationMs)
     return when {
-        isPlaying && isPaused -> "pausado · $duration"
-        isPlaying -> "tocando · $duration"
-        else -> "${Instant.fromEpochMilliseconds(message.recordedAt).toRelativeDisplay()} · $duration"
+        isPlaying && isPaused -> {
+            stringResource(Res.string.history_status_paused, duration)
+        }
+
+        isPlaying -> {
+            stringResource(Res.string.history_status_playing, duration)
+        }
+
+        else -> {
+            stringResource(
+                Res.string.history_status_recorded,
+                relativeTimeText(Instant.fromEpochMilliseconds(message.recordedAt).toRelativeTime()),
+                duration,
+            )
+        }
     }
 }
 
@@ -245,23 +301,23 @@ internal fun PlayButton(
     isPlaying: Boolean,
     isActive: Boolean,
     onClick: () -> Unit,
-    size: Int,
+    size: Dp,
 ) {
     val background = if (isActive) MaterialTheme.colorScheme.primary else PttTheme.customColors.surface3
     val tint = if (isActive) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground
     Box(
         modifier =
             Modifier
-                .size(size.dp)
+                .size(size)
                 .clip(CircleShape)
                 .background(background)
-                .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                .border(Dimens.Hairline, MaterialTheme.colorScheme.outline, CircleShape)
                 .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-            contentDescription = if (isPlaying) "Pausar" else "Ouvir",
+            contentDescription = stringResource(if (isPlaying) Res.string.history_pause else Res.string.history_play),
             tint = tint,
         )
     }

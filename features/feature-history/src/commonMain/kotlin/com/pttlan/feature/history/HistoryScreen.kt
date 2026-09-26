@@ -59,12 +59,31 @@ import com.pttlan.core.designsystem.components.SectionLabel
 import com.pttlan.core.designsystem.components.contentCard
 import com.pttlan.core.designsystem.components.glass
 import com.pttlan.core.designsystem.components.readableWidth
+import com.pttlan.core.designsystem.generated.resources.Res
+import com.pttlan.core.designsystem.generated.resources.history_back
+import com.pttlan.core.designsystem.generated.resources.history_clear
+import com.pttlan.core.designsystem.generated.resources.history_clear_confirm
+import com.pttlan.core.designsystem.generated.resources.history_clear_text
+import com.pttlan.core.designsystem.generated.resources.history_delete_channel_text
+import com.pttlan.core.designsystem.generated.resources.history_delete_channel_title
+import com.pttlan.core.designsystem.generated.resources.history_delete_confirm
+import com.pttlan.core.designsystem.generated.resources.history_delete_text
+import com.pttlan.core.designsystem.generated.resources.history_delete_title
+import com.pttlan.core.designsystem.generated.resources.history_empty
+import com.pttlan.core.designsystem.generated.resources.history_queue_position
 import com.pttlan.core.designsystem.theme.AppTheme
+import com.pttlan.core.designsystem.theme.Dimens
 import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.domain.ptt.model.PlaybackPosition
 import com.pttlan.domain.ptt.model.VoiceMessage
-import com.pttlan.feature.history.util.toRelativeDisplay
+import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Instant
+
+private const val GLOW_INTENSITY = 0.26f
+private val GlowSize = 460.dp
+private val GlowOffsetX = (-160).dp
+private val GlowOffsetY = 120.dp
+private val EmptyIconSize = 64.dp
 
 @Composable
 fun HistoryScreen(component: HistoryComponent) {
@@ -129,8 +148,8 @@ fun HistoryScreenContent(
     Box(modifier = modifier.fillMaxSize()) {
         AmbientGlow(
             color = MaterialTheme.colorScheme.primary,
-            intensity = 0.26f,
-            modifier = Modifier.size(460.dp).align(Alignment.BottomStart).offset((-160).dp, 120.dp),
+            intensity = GLOW_INTENSITY,
+            modifier = Modifier.size(GlowSize).align(Alignment.BottomStart).offset(GlowOffsetX, GlowOffsetY),
         )
 
         if (messages.isEmpty()) {
@@ -152,12 +171,12 @@ fun HistoryScreenContent(
 
         PttTopBar(
             modifier = Modifier.readableWidth(),
-            navigation = { GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, "Voltar", onBack) },
+            navigation = { GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, stringResource(Res.string.history_back), onBack) },
             actions = {
                 if (messages.isNotEmpty()) {
                     GlassIconButton(
                         icon = Icons.Default.Delete,
-                        contentDescription = "Limpar histórico",
+                        contentDescription = stringResource(Res.string.history_clear),
                         onClick = { showClearDialog = true },
                         tint = PttTheme.customColors.statusOffline,
                     )
@@ -171,7 +190,12 @@ fun HistoryScreenContent(
                 state = PlayerState(isPaused, playbackPosition?.takeIf { it.messageId == playingMessage.id }, playbackSpeed),
                 queue =
                     if (queueIndex >= 0) {
-                        QueueControls("${queueIndex + 1} de ${queue.size}", queueIndex < queue.lastIndex, onPrevious, onNext)
+                        QueueControls(
+                            stringResource(Res.string.history_queue_position, queueIndex + 1, queue.size),
+                            queueIndex < queue.lastIndex,
+                            onPrevious,
+                            onNext,
+                        )
                     } else {
                         null
                     },
@@ -183,27 +207,27 @@ fun HistoryScreenContent(
 
     messageToDelete?.let { message ->
         ConfirmDialog(
-            title = "Apagar áudio",
-            text = "Tem certeza que deseja apagar este áudio?",
-            confirmLabel = "Apagar",
+            title = stringResource(Res.string.history_delete_title),
+            text = stringResource(Res.string.history_delete_text),
+            confirmLabel = stringResource(Res.string.history_delete_confirm),
             onConfirm = { onDeleteMessage(message) },
             onDismiss = { messageToDelete = null },
         )
     }
     channelToDelete?.let { channelId ->
         ConfirmDialog(
-            title = "Apagar canal",
-            text = "Tem certeza que deseja apagar todos os áudios do canal #$channelId?",
-            confirmLabel = "Apagar",
+            title = stringResource(Res.string.history_delete_channel_title),
+            text = stringResource(Res.string.history_delete_channel_text, channelId),
+            confirmLabel = stringResource(Res.string.history_delete_confirm),
             onConfirm = { onDeleteChannelClick(channelId) },
             onDismiss = { channelToDelete = null },
         )
     }
     if (showClearDialog) {
         ConfirmDialog(
-            title = "Limpar histórico",
-            text = "Tem certeza que deseja apagar todos os áudios gravados? Esta ação não pode ser desfeita.",
-            confirmLabel = "Limpar",
+            title = stringResource(Res.string.history_clear),
+            text = stringResource(Res.string.history_clear_text),
+            confirmLabel = stringResource(Res.string.history_clear_confirm),
             onConfirm = onClearCacheClick,
             onDismiss = { showClearDialog = false },
         )
@@ -213,18 +237,18 @@ fun HistoryScreenContent(
 @Composable
 private fun EmptyHistory(modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier.padding(32.dp),
+        modifier = modifier.padding(Dimens.Space4xl),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceXl),
     ) {
         Icon(
             imageVector = Icons.Default.History,
             contentDescription = null,
-            modifier = Modifier.size(64.dp),
+            modifier = Modifier.size(EmptyIconSize),
             tint = PttTheme.customColors.textTertiary,
         )
         Text(
-            text = "Nenhum áudio salvo ainda.",
+            text = stringResource(Res.string.history_empty),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,

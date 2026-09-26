@@ -89,4 +89,60 @@
     <string name="ptt_hint_receiving">aguarde a sua vez para falar</string>
     <string name="ptt_channel_busy">Canal ocupado</string>
     <string name="default_nickname">User-%1$s</string>
+
+    <!-- Relative time (history) -->
+    <string name="time_just_now">agora mesmo</string>
+    <string name="time_ago">há %1$s</string>
+    <string name="time_ago_hours_minutes">há %1$s e %2$s</string>
+    <plurals name="time_seconds">
+        <item quantity="one">%1$d segundo</item>
+        <item quantity="other">%1$d segundos</item>
+    </plurals>
+    <plurals name="time_minutes">
+        <item quantity="one">%1$d minuto</item>
+        <item quantity="other">%1$d minutos</item>
+    </plurals>
+    <plurals name="time_hours">
+        <item quantity="one">%1$d hora</item>
+        <item quantity="other">%1$d horas</item>
+    </plurals>
+    <string name="time_full_date">%1$s/%2$s/%3$d às %4$s:%5$s</string>
+
+    <!-- History screen -->
+    <string name="history_title">Histórico</string>
+    <string name="history_subtitle">Áudios recebidos, salvos só neste aparelho</string>
+    <string name="history_empty">Nenhum áudio salvo ainda.</string>
+    <plurals name="history_unheard">
+        <item quantity="one">%1$d nova</item>
+        <item quantity="other">%1$d novas</item>
+    </plurals>
+    <string name="history_play_room">Tocar a sala</string>
+    <string name="history_expand">Expandir</string>
+    <string name="history_collapse">Recolher</string>
+    <string name="history_share">Compartilhar áudio</string>
+    <string name="history_delete">Apagar áudio</string>
+    <string name="history_play">Ouvir</string>
+    <string name="history_pause">Pausar</string>
+    <string name="history_status_paused">pausado · %1$s</string>
+    <string name="history_status_playing">tocando · %1$s</string>
+    <string name="history_status_recorded">%1$s · %2$s</string>
+    <string name="history_paused">pausado</string>
+    <string name="history_playing">tocando</string>
+    <string name="history_player_subtitle">%1$s · %2$s</string>
+    <string name="history_queue_position">%1$d de %2$d</string>
+    <string name="history_previous">Anterior</string>
+    <string name="history_next">Próxima</string>
+    <string name="history_back_5">Voltar 5 segundos</string>
+    <string name="history_forward_5">Avançar 5 segundos</string>
+    <string name="history_speed">%1$s×</string>
+    <string name="decimal_separator">,</string>
+    <string name="history_back">Voltar</string>
+    <string name="history_clear">Limpar histórico</string>
+    <string name="history_delete_title">Apagar áudio</string>
+    <string name="history_delete_text">Tem certeza que deseja apagar este áudio?</string>
+    <string name="history_delete_confirm">Apagar</string>
+    <string name="history_delete_channel_title">Apagar canal</string>
+    <string name="history_delete_channel_text">Tem certeza que deseja apagar todos os áudios do canal #%1$s?</string>
+    <string name="history_clear_text">Tem certeza que deseja apagar todos os áudios gravados? Esta ação não pode ser desfeita.</string>
+    <string name="history_clear_confirm">Limpar</string>
 </resources>
