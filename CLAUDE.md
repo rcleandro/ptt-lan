@@ -41,8 +41,10 @@ classes or modules goes to a common place, e.g. `core-common`'s `ChannelLimits.k
 
 - **Spacing** (margins, paddings, gaps, borders): `Dimens` in `core-designsystem` (`Dimens.SpaceXl`,
   `Dimens.Hairline`); **shared control sizes** too (`Dimens.TouchTarget`, `Dimens.GlassControl`).
-- **A size that belongs to one component** (an icon, an avatar, a glow): a named `private val` at the top of that file
-  (`private val AvatarSize = 48.dp`), not an inline `48.dp`.
+- **A size that belongs to one composable** (an icon, a glow): a named `val` inside that composable
+  (`val iconSize = 20.dp`), not an inline `20.dp`. Kover leaves composables out of coverage, but a top-level `Dp`
+  is initialiser code that counts against the file's logic; so only a size several composables share goes to the top
+  of the file (`private val AvatarSize = 48.dp`).
 
 ### Enforcement
 
@@ -53,8 +55,9 @@ rule for strings: grep for quoted text in `commonMain` before committing a scree
 ## Checks before a commit
 
 The pre-commit hook runs `./gradlew jvmTest :server-core:test detekt ktlintCheck`. It does **not** compile the apps nor
-the iOS targets: after touching a shared module, also run `./gradlew :androidApp:assembleDebug :wearApp:assembleDebug
-:desktopApp:compileKotlinJvm iosSimulatorArm64Test`, and `xcodebuild` for the iOS app when iOS code changed.
+the iOS targets, nor checks the coverage floors: after touching a shared module, also run `./gradlew koverVerify
+:androidApp:assembleDebug :wearApp:assembleDebug :desktopApp:compileKotlinJvm iosSimulatorArm64Test`, and
+`xcodebuild` for the iOS app when iOS code changed. A new class with logic needs its test, or `koverVerify` fails.
 
 Design system snapshots (`:core:core-designsystem:verifyRoborazziAndroidHostTest`) are recorded on Linux by the
 "Record snapshots" workflow; images recorded on a Mac never match the CI runner.

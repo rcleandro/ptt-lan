@@ -610,7 +610,8 @@ style:
     ignoreHashCodeFunction: true
     # A named property is what the rule asks for (e.g. the palette in Color.kt).
     ignorePropertyDeclaration: true
-    ignoreLocalVariableDeclaration: false
+    # A named local val is a named constant too: sizes used by one composable live inside it (see CLAUDE.md).
+    ignoreLocalVariableDeclaration: true
     ignoreConstantDeclaration: true
     ignoreCompanionObjectPropertyDeclaration: true
     ignoreAnnotation: false

@@ -9,6 +9,7 @@ import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -50,4 +51,20 @@ class VoiceAndConnectionUseCasesTest {
             assertEquals(ConnectionStatus.Connected, ObserveConnectionStatusUseCase(connectionRepository)().first())
             assertEquals(listOf(node), DiscoverServersUseCase(connectionRepository)().first())
         }
+
+    @Test
+    fun `trusting a changed certificate goes to the repository for that server`() {
+        val endpoint = ServerEndpoint("192.168.0.50", 9443, true)
+
+        TrustServerCertificateUseCase(connectionRepository)(endpoint)
+
+        verify { connectionRepository.trustServerCertificate(endpoint) }
+    }
+
+    @Test
+    fun `the server certificate code comes from the repository`() {
+        every { connectionRepository.serverCertificateCode } returns "A1B2-C3D4"
+
+        assertEquals("A1B2-C3D4", GetServerCertificateCodeUseCase(connectionRepository)())
+    }
 }
