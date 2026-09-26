@@ -32,4 +32,9 @@ dependencies {
     implementation(libs.androidx.junit)
     implementation(libs.androidx.benchmark.macro.junit4)
     implementation(libs.androidx.uiautomator)
+    constraints {
+        implementation(libs.wire.runtime) {
+            because("Macrobenchmark brings 6.4.0, vulnerable to GHSA-9rm7-3qhh-h2mc")
+        }
+    }
 }

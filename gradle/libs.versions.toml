@@ -46,6 +46,7 @@ androidxTestRunner = "1.7.0"
 androidxBenchmark = "1.5.0"
 androidxUiautomator = "2.4.0"
 androidxProfileinstaller = "1.4.1"
+wire = "6.4.7"
 uiTestJunit4 = "1.12.1"
 robolectric = "4.17"
 roborazzi = "1.75.0"
@@ -139,6 +140,7 @@ androidx-test-runner = { module = "androidx.test:runner", version.ref = "android
 androidx-benchmark-macro-junit4 = { module = "androidx.benchmark:benchmark-macro-junit4", version.ref = "androidxBenchmark" }
 androidx-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "androidxUiautomator" }
 androidx-profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "androidxProfileinstaller" }
+wire-runtime = { module = "com.squareup.wire:wire-runtime", version.ref = "wire" }
 androidx-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4", version.ref = "uiTestJunit4" }
 androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "uiTestJunit4" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
