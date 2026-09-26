@@ -14,6 +14,7 @@ import okio.FileSystem
 import okio.Path.Companion.toPath
 import okio.SYSTEM
 import okio.buffer
+import kotlin.concurrent.Volatile
 import kotlin.time.Clock
 
 private const val BYTES_PER_MB = 1024L * 1024L
@@ -42,6 +43,13 @@ class HistoryRecorder(
     private var writer: OpusFrameWriter? = null
     private var filePath: String? = null
 
+    /**
+     * Read outside [dispatcher]: every 20 ms chunk used to hop onto it only to find no file open, which is the
+     * common case (the history is off by default) and cost the speaker about six points of a core.
+     */
+    @Volatile
+    private var isRecording = false
+
     /** Opens a file for the new talk spurt, when the user enabled the cache. */
     suspend fun onSpeakerStarted(
         channelId: String,
@@ -61,6 +69,7 @@ class HistoryRecorder(
         filePath = path.toString()
         try {
             writer = OpusFrameWriter(fileSystem.sink(path).buffer())
+            isRecording = true
         } catch (e: Exception) {
             logger.w(e) { "Failed to open the recording file" }
         }
@@ -69,6 +78,7 @@ class HistoryRecorder(
     /** Closes the file and records the message, unless nothing was actually written. */
     suspend fun onSpeakerStopped(userId: String) =
         withContext(dispatcher) {
+            isRecording = false
             writer?.close()
             writer = null
 
@@ -89,7 +99,8 @@ class HistoryRecorder(
         }
 
     /** Appends decoded audio to the open recording, encoded to Opus as whole frames fill up. */
-    suspend fun write(chunk: ByteArray) =
+    suspend fun write(chunk: ByteArray) {
+        if (!isRecording) return
         withContext(dispatcher) {
             try {
                 writer?.write(chunk)
@@ -97,6 +108,19 @@ class HistoryRecorder(
                 logger.w(e) { "Failed to store audio" }
             }
         }
+    }
+
+    /** Appends a 20 ms Opus frame to the open recording without encoding it again. */
+    suspend fun writeOpusFrame(frame: ByteArray) {
+        if (!isRecording) return
+        withContext(dispatcher) {
+            try {
+                writer?.writeEncoded(frame)
+            } catch (e: Exception) {
+                logger.w(e) { "Failed to store audio" }
+            }
+        }
+    }
 
     private fun recordedSize(path: String): Long =
         try {

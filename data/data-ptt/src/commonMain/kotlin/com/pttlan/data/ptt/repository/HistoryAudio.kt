@@ -47,6 +47,15 @@ internal class OpusFrameWriter(
         }
     }
 
+    /**
+     * A 20 ms frame that is already Opus (what went out or came in on the wire), stored as is: encoding its PCM
+     * again cost about a fifth of the CPU of whoever was speaking.
+     */
+    fun writeEncoded(frame: ByteArray) {
+        sink.writeShort(frame.size)
+        sink.write(frame)
+    }
+
     /** The last partial frame, completed with silence, so the end of the speech is kept. */
     fun close() {
         if (pending.isNotEmpty()) writeFrame(pending.copyOf(OPUS_FRAME_BYTES))

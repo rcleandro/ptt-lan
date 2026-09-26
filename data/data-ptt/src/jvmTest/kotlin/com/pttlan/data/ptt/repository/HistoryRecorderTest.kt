@@ -1,6 +1,7 @@
 package com.pttlan.data.ptt.repository
 
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
+import com.pttlan.core.audio.OpusAudioCodec
 import com.pttlan.core.common.storage.StorageInfoProvider
 import com.pttlan.core.common.storage.StorageOption
 import com.pttlan.core.database.PttDatabase
@@ -8,11 +9,13 @@ import com.pttlan.core.datastore.SettingsKeys
 import com.russhwolf.settings.MapSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
+import okio.Buffer
 import okio.Path.Companion.toPath
 import okio.fakefilesystem.FakeFileSystem
 import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -108,6 +111,27 @@ class HistoryRecorderTest {
             assertTrue(path.endsWith(".opf"), "got $path")
             val size = fileSystem.metadata(path.toPath()).size!!
             assertTrue(size < second.size / 5, "expected well under a fifth of ${second.size} bytes, got $size")
+        }
+
+    @Test
+    fun storesAnOpusFrameAsItCameInsteadOfEncodingItAgain() =
+        runTest {
+            // The wire frame already is the Opus the history keeps: encoding its PCM again cost the speaker's CPU
+            settings.putBoolean(SettingsKeys.ALLOW_CACHE, true)
+            val recorder = recorder()
+            val frame = OpusAudioCodec().encode(toneSecond().copyOf(PCM_FRAME_BYTES))
+
+            recorder.onSpeakerStarted(channelId = "c1", userId = "u1", nickname = "Tester")
+            recorder.writeOpusFrame(frame)
+            recorder.onSpeakerStopped("u1")
+
+            val path =
+                database.voiceMessageQueries
+                    .getRecentMessagesByChannel("c1")
+                    .executeAsOne()
+                    .filePath
+            val expected = Buffer().writeShort(frame.size).write(frame).readByteArray()
+            assertContentEquals(expected, fileSystem.read(path.toPath()) { readByteArray() })
         }
 }
 
