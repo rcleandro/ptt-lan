@@ -20,9 +20,16 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.pttlan.core.designsystem.generated.resources.Res
+import com.pttlan.core.designsystem.generated.resources.participant_self
+import com.pttlan.core.designsystem.theme.Dimens
 import com.pttlan.core.designsystem.theme.PttTheme
+import org.jetbrains.compose.resources.stringResource
 
 private const val HIGHLIGHT_FILL_ALPHA = 0.22f
+private val AvatarColumnWidth = 64.dp
+private val AvatarSize = 48.dp
+private val HighlightHaloWidth = 4.dp
 
 /**
  * Round avatar with the name below. Blue ring = someone else speaking,
@@ -49,21 +56,21 @@ fun ParticipantAvatar(
     val fillColor by animateColorAsState(highlight?.copy(alpha = HIGHLIGHT_FILL_ALPHA) ?: colors.surface3)
 
     Column(
-        modifier = modifier.width(64.dp),
+        modifier = modifier.width(AvatarColumnWidth),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
     ) {
         Box(
             modifier =
                 Modifier
-                    .size(48.dp)
+                    .size(AvatarSize)
                     .drawBehind {
                         if (highlight != null) {
-                            drawCircle(fillColor, radius = size.minDimension / 2 + 4.dp.toPx())
+                            drawCircle(fillColor, radius = size.minDimension / 2 + HighlightHaloWidth.toPx())
                         }
                     }.clip(CircleShape)
                     .background(fillColor)
-                    .border(1.dp, ringColor, CircleShape),
+                    .border(Dimens.Hairline, ringColor, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -75,7 +82,7 @@ fun ParticipantAvatar(
 
         if (showDetails) {
             Text(
-                text = if (isSelf) "Você" else name,
+                text = if (isSelf) stringResource(Res.string.participant_self) else name,
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = if (highlight != null) FontWeight.SemiBold else null,
                 color = highlight ?: MaterialTheme.colorScheme.onSurfaceVariant,

@@ -57,7 +57,7 @@ class PttComponentTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
 
-        every { settings.getString(any(), any()) } returns "TestUser"
+        every { settings.getStringOrNull(any()) } returns "TestUser"
 
         startKoin {
             modules(

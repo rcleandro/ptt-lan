@@ -10,10 +10,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
+import java.io.File
 
 /** Host mode on the desktop: the server runs in this process and the app connects to it over loopback. */
 class DesktopServerHost(
-    private val server: PttHostServer = PttHostServer(),
+    // One certificate for good: clients trust it on first use and refuse a different one (30.5)
+    private val server: PttHostServer =
+        PttHostServer(
+            keyStoreFile = File(System.getProperty("user.home"), ".pttlan/host-certificate.keystore").apply { parentFile.mkdirs() },
+        ),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : LocalServerHost {
     private val _isHosting = MutableStateFlow(false)

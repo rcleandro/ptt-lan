@@ -53,7 +53,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
       - name: Run Unit Tests
         # `test` does not run KMP `jvmTest` source sets, so they are listed explicitly
-        run: ./gradlew jvmTest :server-core:test
+        run: ./gradlew jvmTest :server-core:test :core:core-common:testAndroidHostTest
       - name: Verify design system snapshots
         run: ./gradlew :core:core-designsystem:verifyRoborazziAndroidHostTest
       - name: Upload snapshot diffs

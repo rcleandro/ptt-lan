@@ -57,6 +57,9 @@ internal fun sessionOptions() =
 private const val FRAME_SAMPLES = 960
 private const val FRAME_BYTES = FRAME_SAMPLES * 2
 
+/** Frames per microphone callback; the capture re-cuts them into Opus frames of [FRAME_SAMPLES]. */
+private const val TAP_BUFFER_FRAMES = 2048
+
 class IosAudioRecorder : AudioRecorder {
     private var audioEngine: AVAudioEngine? = null
     private var isRecording = false
@@ -97,7 +100,7 @@ class IosAudioRecorder : AudioRecorder {
                 pending = ByteArray(0)
                 inputNode.installTapOnBus(
                     bus = 0.toULong(),
-                    bufferSize = 2048.toUInt(),
+                    bufferSize = TAP_BUFFER_FRAMES.toUInt(),
                     format = inputFormat,
                 ) { buffer, _ ->
                     if (buffer == null) return@installTapOnBus

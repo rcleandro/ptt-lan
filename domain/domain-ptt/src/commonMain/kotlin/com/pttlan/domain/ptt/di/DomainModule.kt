@@ -4,6 +4,7 @@ import com.pttlan.domain.ptt.usecase.ConnectToServerUseCase
 import com.pttlan.domain.ptt.usecase.CreateChannelUseCase
 import com.pttlan.domain.ptt.usecase.DiscoverServersUseCase
 import com.pttlan.domain.ptt.usecase.GetRecentChannelsUseCase
+import com.pttlan.domain.ptt.usecase.GetServerCertificateCodeUseCase
 import com.pttlan.domain.ptt.usecase.JoinChannelUseCase
 import com.pttlan.domain.ptt.usecase.JoinChannelUseCaseImpl
 import com.pttlan.domain.ptt.usecase.LeaveChannelUseCase
@@ -14,6 +15,7 @@ import com.pttlan.domain.ptt.usecase.ObserveParticipantsUseCase
 import com.pttlan.domain.ptt.usecase.ObserveSpeakerUseCase
 import com.pttlan.domain.ptt.usecase.StartTransmittingUseCase
 import com.pttlan.domain.ptt.usecase.StopTransmittingUseCase
+import com.pttlan.domain.ptt.usecase.TrustServerCertificateUseCase
 import org.koin.dsl.module
 
 val domainModule =
@@ -29,6 +31,8 @@ val domainModule =
         factory { ObserveConnectionStatusUseCase(get()) }
         factory { DiscoverServersUseCase(get()) }
         factory { ConnectToServerUseCase(get()) }
+        factory { TrustServerCertificateUseCase(get()) }
+        factory { GetServerCertificateCodeUseCase(get()) }
 
         factory { GetRecentChannelsUseCase(get()) }
         factory { ObserveActiveChannelsUseCase(get()) }

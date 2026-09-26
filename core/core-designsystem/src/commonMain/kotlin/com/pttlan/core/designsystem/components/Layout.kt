@@ -24,8 +24,14 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pttlan.core.designsystem.theme.Dimens
 
 private const val HALO_ALPHA = 0.22f
+private val LabelLetterSpacing = 1.3.sp
+private val StatusDotSize = 16.dp
+private val HollowDotRadius = 3.dp
+private val HollowDotStroke = 2.dp
+private val FilledDotRadius = 4.dp
 
 /** Widest a list, form or dock gets before it stops stretching (open Fold, tablet, Desktop). */
 val ReadableWidth: Dp = 600.dp
@@ -55,15 +61,15 @@ fun PttTopBar(
             modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = Dimens.SpaceXl, vertical = Dimens.SpaceMd),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
     ) {
         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) { navigation() }
         center()
         Row(
             modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd, Alignment.End),
             verticalAlignment = Alignment.CenterVertically,
             content = actions,
         )
@@ -80,7 +86,7 @@ fun SectionLabel(
     Text(
         text = text.uppercase(),
         modifier = modifier,
-        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.3.sp),
+        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = LabelLetterSpacing),
         color = color,
     )
 }
@@ -96,13 +102,13 @@ fun StatusDot(
     Box(
         modifier =
             modifier
-                .size(16.dp)
+                .size(StatusDotSize)
                 .drawBehind {
                     if (halo) drawCircle(color.copy(alpha = HALO_ALPHA))
                     if (hollow) {
-                        drawCircle(color, radius = 3.dp.toPx(), style = Stroke(width = 2.dp.toPx()))
+                        drawCircle(color, radius = HollowDotRadius.toPx(), style = Stroke(width = HollowDotStroke.toPx()))
                     } else {
-                        drawCircle(color, radius = 4.dp.toPx())
+                        drawCircle(color, radius = FilledDotRadius.toPx())
                     }
                 },
     )

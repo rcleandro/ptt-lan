@@ -19,7 +19,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.pttlan.core.designsystem.theme.Dimens
 import com.pttlan.core.designsystem.theme.PttTheme
+
+private val SnackbarIconSize = 24.dp
 
 private const val SNACKBAR_TEXT_MAX_LINES_COUNT = 3
 
@@ -38,7 +41,7 @@ private fun BaseNewSnackbar(
     val contentColor = MaterialTheme.colorScheme.onBackground
 
     Snackbar(
-        modifier = Modifier.padding(16.dp),
+        modifier = Modifier.padding(Dimens.SpaceXl),
         containerColor = containerColor,
     ) {
         Row(
@@ -49,12 +52,13 @@ private fun BaseNewSnackbar(
             type.icon?.let { icon ->
                 Icon(
                     imageVector = icon,
-                    contentDescription = "Icon",
+                    // Decorative: the message beside it says what happened
+                    contentDescription = null,
                     tint = contentColor,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(SnackbarIconSize),
                 )
 
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(Dimens.SpaceMd))
             }
 
             Text(

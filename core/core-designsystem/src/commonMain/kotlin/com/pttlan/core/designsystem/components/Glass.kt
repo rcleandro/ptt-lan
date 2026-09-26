@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
+import com.pttlan.core.designsystem.theme.Dimens
 import com.pttlan.core.designsystem.theme.PttTheme
 
 private const val GLOW_FADE_STOP = 0.66f
@@ -26,13 +27,13 @@ fun Modifier.glass(shape: Shape): Modifier {
     if (PttTheme.reduceTransparency) {
         return clip(shape)
             .background(colors.surface2, shape)
-            .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+            .border(Dimens.Hairline, MaterialTheme.colorScheme.outline, shape)
     }
     // ponytail: translucent layers without backdrop blur; real blur needs Haze on Compose MP 1.12+ (ADR 0006)
     return clip(shape)
         .background(colors.glassBase, shape)
         .background(Brush.verticalGradient(listOf(colors.glassTop, colors.glassBottom)), shape)
-        .border(1.dp, Brush.verticalGradient(listOf(colors.glassHighlight, colors.glassStroke)), shape)
+        .border(Dimens.Hairline, Brush.verticalGradient(listOf(colors.glassHighlight, colors.glassStroke)), shape)
 }
 
 /** Calm, solid surface for content that scrolls under the glass layer. */
@@ -40,7 +41,7 @@ fun Modifier.glass(shape: Shape): Modifier {
 fun Modifier.contentCard(shape: Shape = MaterialTheme.shapes.medium): Modifier =
     clip(shape)
         .background(MaterialTheme.colorScheme.surface, shape)
-        .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+        .border(Dimens.Hairline, MaterialTheme.colorScheme.outline, shape)
 
 /**
  * Soft ambient light behind the glass. Its color carries state (free, transmitting, receiving),

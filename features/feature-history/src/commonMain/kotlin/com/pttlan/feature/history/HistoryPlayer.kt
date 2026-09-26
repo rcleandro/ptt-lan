@@ -40,9 +40,22 @@ import androidx.compose.ui.unit.dp
 import com.pttlan.core.designsystem.components.SectionLabel
 import com.pttlan.core.designsystem.components.glass
 import com.pttlan.core.designsystem.components.readableWidth
+import com.pttlan.core.designsystem.generated.resources.Res
+import com.pttlan.core.designsystem.generated.resources.channel_name
+import com.pttlan.core.designsystem.generated.resources.decimal_separator
+import com.pttlan.core.designsystem.generated.resources.history_back_5
+import com.pttlan.core.designsystem.generated.resources.history_forward_5
+import com.pttlan.core.designsystem.generated.resources.history_next
+import com.pttlan.core.designsystem.generated.resources.history_paused
+import com.pttlan.core.designsystem.generated.resources.history_player_subtitle
+import com.pttlan.core.designsystem.generated.resources.history_playing
+import com.pttlan.core.designsystem.generated.resources.history_previous
+import com.pttlan.core.designsystem.generated.resources.history_speed
+import com.pttlan.core.designsystem.theme.Dimens
 import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.domain.ptt.model.PlaybackPosition
 import com.pttlan.domain.ptt.model.VoiceMessage
+import org.jetbrains.compose.resources.stringResource
 
 private const val MS_PER_SECOND = 1000L
 private const val SECONDS_PER_MINUTE = 60L
@@ -51,6 +64,13 @@ private const val PROGRESS_LABEL_ALPHA = 0.7f
 
 /** How far the rewind and forward buttons jump. */
 private const val SEEK_STEP_MS = 5_000L
+
+/** The sender's avatar and the play button of the mini player. */
+private val PlayerControlSize = 52.dp
+private val PlayerPadding = 10.dp
+private val SeekBarHeight = 24.dp
+private val SeekThumbSize = 12.dp
+private val SeekTrackHeight = 4.dp
 
 /** What the mini player shows about the message playing. */
 internal class PlayerState(
@@ -87,11 +107,11 @@ internal fun MiniPlayer(
             modifier
                 .readableWidth()
                 .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(horizontal = 12.dp, vertical = 16.dp)
+                .padding(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceXl)
                 .glass(MaterialTheme.shapes.extraLarge)
-                .padding(10.dp),
+                .padding(PlayerPadding),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceLg)) {
             SenderAvatar(message.senderNickname)
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -102,10 +122,17 @@ internal fun MiniPlayer(
                     overflow = TextOverflow.Ellipsis,
                 )
                 // In a queue its position takes the state's place: the play button already shows it
-                val status = queue?.label ?: if (state.isPaused) "pausado" else "tocando"
-                SectionLabel(text = "# ${message.channelId} · $status")
+                val status = queue?.label ?: stringResource(if (state.isPaused) Res.string.history_paused else Res.string.history_playing)
+                SectionLabel(
+                    text =
+                        stringResource(
+                            Res.string.history_player_subtitle,
+                            stringResource(Res.string.channel_name, message.channelId),
+                            status,
+                        ),
+                )
             }
-            PlayButton(isPlaying = !state.isPaused, isActive = true, onClick = actions.onPlayPause, size = 52)
+            PlayButton(isPlaying = !state.isPaused, isActive = true, onClick = actions.onPlayPause, size = PlayerControlSize)
         }
         PlaybackControls(state, fallbackDurationMs = message.durationMs, queue = queue, actions = actions)
     }
@@ -116,7 +143,7 @@ private fun SenderAvatar(nickname: String) {
     Box(
         modifier =
             Modifier
-                .size(52.dp)
+                .size(PlayerControlSize)
                 .clip(CircleShape)
                 .background(PttTheme.customColors.primaryGlow),
         contentAlignment = Alignment.Center,
@@ -185,20 +212,22 @@ private fun TransportRow(
         horizontalArrangement = Arrangement.SpaceEvenly,
     ) {
         if (queue != null) {
-            IconButton(onClick = queue.onPrevious) { Icon(Icons.Default.SkipPrevious, contentDescription = "Anterior") }
+            IconButton(onClick = queue.onPrevious) {
+                Icon(Icons.Default.SkipPrevious, contentDescription = stringResource(Res.string.history_previous))
+            }
         }
         IconButton(onClick = { actions.onSeek((shownMs - SEEK_STEP_MS).coerceAtLeast(0)) }) {
-            Icon(Icons.Default.Replay5, contentDescription = "Voltar 5 segundos")
+            Icon(Icons.Default.Replay5, contentDescription = stringResource(Res.string.history_back_5))
         }
         TextButton(onClick = actions.onCycleSpeed) {
             Text(formatSpeed(speed), style = MaterialTheme.typography.labelLarge, maxLines = 1)
         }
         IconButton(onClick = { actions.onSeek(shownMs + SEEK_STEP_MS) }) {
-            Icon(Icons.Default.Forward5, contentDescription = "Avançar 5 segundos")
+            Icon(Icons.Default.Forward5, contentDescription = stringResource(Res.string.history_forward_5))
         }
         if (queue != null) {
             IconButton(onClick = queue.onNext, enabled = queue.hasNext) {
-                Icon(Icons.Default.SkipNext, contentDescription = "Próxima")
+                Icon(Icons.Default.SkipNext, contentDescription = stringResource(Res.string.history_next))
             }
         }
     }
@@ -221,15 +250,15 @@ private fun SeekBar(
         value = fraction,
         onValueChange = onDrag,
         onValueChangeFinished = onDragEnd,
-        modifier = Modifier.fillMaxWidth().height(24.dp),
+        modifier = Modifier.fillMaxWidth().height(SeekBarHeight),
         colors = colors,
         thumb = {
-            Box(Modifier.size(12.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary))
+            Box(Modifier.size(SeekThumbSize).clip(CircleShape).background(MaterialTheme.colorScheme.primary))
         },
         track = { state ->
             SliderDefaults.Track(
                 sliderState = state,
-                modifier = Modifier.height(4.dp),
+                modifier = Modifier.height(SeekTrackHeight),
                 colors = colors,
                 drawStopIndicator = null,
                 thumbTrackGapSize = 0.dp,
@@ -239,7 +268,18 @@ private fun SeekBar(
 }
 
 /** "1×", "1,5×", "2×". */
-private fun formatSpeed(speed: Float): String = if (speed % 1f == 0f) "${speed.toInt()}×" else "${speed.toString().replace('.', ',')}×"
+@Composable
+private fun formatSpeed(speed: Float): String {
+    val number =
+        if (speed % 1f ==
+            0f
+        ) {
+            speed.toInt().toString()
+        } else {
+            speed.toString().replace(".", stringResource(Res.string.decimal_separator))
+        }
+    return stringResource(Res.string.history_speed, number)
+}
 
 internal fun formatDuration(durationMs: Long): String = formatPosition((durationMs / MS_PER_SECOND).coerceAtLeast(1) * MS_PER_SECOND)
 

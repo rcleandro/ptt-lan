@@ -34,11 +34,11 @@ class RoomPinTest {
     @Test
     fun `with a pin, login needs the right one`() =
         testApplication {
-            withRoomPin("4821")
+            withRoomPin("482193")
 
             assertEquals(HttpStatusCode.Unauthorized, login(""))
             assertEquals(HttpStatusCode.Unauthorized, login(""","pin":"0000""""))
-            assertEquals(HttpStatusCode.OK, login(""","pin":"4821""""))
+            assertEquals(HttpStatusCode.OK, login(""","pin":"482193""""))
         }
 
     @Test

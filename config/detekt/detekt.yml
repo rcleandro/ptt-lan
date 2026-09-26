@@ -599,7 +599,9 @@ style:
     maxJumpCount: 1
   MagicNumber:
     active: true
-    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/*.kts']
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/androidHostTest/**', '**/jsTest/**', '**/iosTest/**', '**/*.kts', '**/Previews.kt']
+    # Previews only show sample data in the IDE (and Previews.kt holds nothing else).
+    ignoreAnnotated: ['Preview']
     ignoreNumbers:
       - '-1'
       - '0'
@@ -608,14 +610,17 @@ style:
     ignoreHashCodeFunction: true
     # A named property is what the rule asks for (e.g. the palette in Color.kt).
     ignorePropertyDeclaration: true
-    ignoreLocalVariableDeclaration: false
+    # A named local val is a named constant too: sizes used by one composable live inside it (see CLAUDE.md).
+    ignoreLocalVariableDeclaration: true
     ignoreConstantDeclaration: true
     ignoreCompanionObjectPropertyDeclaration: true
     ignoreAnnotation: false
-    ignoreNamedArgument: true
+    # Named arguments too (alpha = 0.3f, delay(timeMillis = …)): a value in logic or layout gets a name.
+    ignoreNamedArgument: false
     ignoreEnums: false
     ignoreRanges: false
-    ignoreExtensionFunctions: true
+    # Receivers of extensions too, so `16.dp` is flagged: spacing comes from Dimens, sizes from named vals.
+    ignoreExtensionFunctions: false
   MandatoryBracesLoops:
     active: false
   MaxChainedCallsOnSameLine:

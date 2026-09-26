@@ -13,6 +13,7 @@ val channelListFeatureModule =
                 observeActiveChannelsUseCase = get(),
                 joinChannelUseCase = get(),
                 createChannelUseCase = get(),
+                getServerCertificateCodeUseCase = get(),
                 localServerHost = getOrNull(),
             )
         }

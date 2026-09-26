@@ -19,6 +19,15 @@ import com.pttlan.core.designsystem.components.GlassIconButton
 import com.pttlan.core.designsystem.components.PttTopBar
 import com.pttlan.core.designsystem.components.SectionLabel
 import com.pttlan.core.designsystem.components.glass
+import com.pttlan.core.designsystem.generated.resources.Res
+import com.pttlan.core.designsystem.generated.resources.channel_name
+import com.pttlan.core.designsystem.generated.resources.common_history
+import com.pttlan.core.designsystem.generated.resources.ptt_back_to_channels
+import com.pttlan.core.designsystem.generated.resources.ptt_participants
+import org.jetbrains.compose.resources.stringResource
+
+private val TitlePaddingHorizontal = 22.dp
+private val TitlePaddingVertical = 5.dp
 
 @Composable
 internal fun ChannelTopBar(
@@ -29,7 +38,7 @@ internal fun ChannelTopBar(
     connectionStatus: ConnectionStatus,
 ) {
     PttTopBar(
-        navigation = { GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, "Voltar para canais", onBack) },
+        navigation = { GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, stringResource(Res.string.ptt_back_to_channels), onBack) },
         center = { ChannelTitle(channelId = state.channelId, participantCount = state.participants.size) },
         actions = {
             // Only while the connection is not healthy: the channel title owns the center slot
@@ -37,7 +46,7 @@ internal fun ChannelTopBar(
                 ConnectionStatusBadge(status = connectionStatus)
             }
             if (showHistory) {
-                GlassIconButton(Icons.Default.History, "Histórico", { onIntent(PttIntent.GoToHistory) })
+                GlassIconButton(Icons.Default.History, stringResource(Res.string.common_history), { onIntent(PttIntent.GoToHistory) })
             }
         },
     )
@@ -49,16 +58,16 @@ private fun ChannelTitle(
     participantCount: Int,
 ) {
     Column(
-        modifier = Modifier.glass(CircleShape).padding(horizontal = 22.dp, vertical = 5.dp),
+        modifier = Modifier.glass(CircleShape).padding(horizontal = TitlePaddingHorizontal, vertical = TitlePaddingVertical),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = "# $channelId",
+            text = stringResource(Res.string.channel_name, channelId),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onBackground,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        SectionLabel(text = "$participantCount no canal")
+        SectionLabel(text = stringResource(Res.string.ptt_participants, participantCount))
     }
 }

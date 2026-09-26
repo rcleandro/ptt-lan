@@ -10,6 +10,9 @@ import com.pttlan.core.audio.createAudioRecorder
 import com.pttlan.core.database.DatabaseDriverFactory
 import com.pttlan.core.database.PttDatabase
 import com.pttlan.core.datastore.SettingsFactory
+import com.pttlan.core.datastore.SettingsKeys
+import com.pttlan.core.network.CertificatePins
+import com.pttlan.core.network.PinStore
 import com.pttlan.core.network.PttWebSocketClient
 import com.pttlan.core.network.createHttpClient
 import com.pttlan.core.network.discovery.ServerDiscoveryService
@@ -20,15 +23,30 @@ import com.pttlan.feature.connection.di.connectionFeatureModule
 import com.pttlan.feature.history.di.historyFeatureModule
 import com.pttlan.feature.ptt.di.pttFeatureModule
 import com.pttlan.feature.settings.di.settingsFeatureModule
+import com.russhwolf.settings.Settings
 import org.koin.core.module.Module
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 val coreModule =
     module {
-        single { createHttpClient() }
+        // LAN certificates trusted on first use, kept in the settings by host and port (30.5)
         single {
-            PttWebSocketClient(get())
+            val settings = get<Settings>()
+            CertificatePins(
+                object : PinStore {
+                    override fun get(key: String) = settings.getStringOrNull(SettingsKeys.CERTIFICATE_PIN_PREFIX + key)
+
+                    override fun set(
+                        key: String,
+                        value: String,
+                    ) = settings.putString(SettingsKeys.CERTIFICATE_PIN_PREFIX + key, value)
+                },
+            )
+        }
+        single { createHttpClient(get()) }
+        single {
+            PttWebSocketClient(get(), pins = get())
         }
         single {
             ServerDiscoveryService()

@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Every text the user sees (pt-BR). Kept here, never in Kotlin, so the app can be translated by adding a
+     values-<language>/strings.xml. Grouped by screen. -->
+<resources>
+
+    <!-- Design system components -->
+    <string name="channel_name"># %1$s</string>
+    <string name="channel_card_empty">vazia</string>
+    <plurals name="channel_card_people">
+        <item quantity="one">%1$d pessoa</item>
+        <item quantity="other">%1$d pessoas</item>
+    </plurals>
+    <string name="status_online">conectado</string>
+    <string name="status_reconnecting">reconectando</string>
+    <string name="status_offline">offline</string>
+    <string name="ptt_button_idle">Falar: segure para transmitir</string>
+    <string name="ptt_button_requesting">Pedindo a palavra: solte para cancelar</string>
+    <string name="ptt_button_transmitting">Transmitindo: solte para encerrar</string>
+    <string name="ptt_button_receiving">Canal ocupado: aguarde para falar</string>
+    <string name="participant_self">Você</string>
+
+    <!-- Shared -->
+    <string name="common_cancel">Cancelar</string>
+    <string name="common_history">Histórico</string>
+    <string name="common_settings">Configurações</string>
+
+    <!-- Connection screen -->
+    <string name="connection_title">Conectar</string>
+    <string name="connection_subtitle">Escolha um servidor na rede ou digite o endereço.</string>
+    <string name="connection_connecting">Conectando…</string>
+    <string name="connection_nickname">Seu nome</string>
+    <string name="connection_pin">PIN da sala (opcional)</string>
+    <string name="connection_host_title">Hospedar neste aparelho</string>
+    <string name="connection_host_description">Os outros encontram o canal na rede. Com PIN (%1$d ou mais caracteres), só entra quem souber.</string>
+    <string name="connection_host">Hospedar</string>
+    <string name="connection_on_network">Na rede</string>
+    <string name="connection_searching">procurando</string>
+    <string name="connection_search_again">Procurar novamente</string>
+    <string name="connection_server_address">%1$s : %2$d</string>
+    <string name="connection_server_lan">LAN</string>
+    <string name="connection_server_web">WEB</string>
+    <string name="connection_manual">Conectar manualmente</string>
+    <string name="connection_manual_hint">IP ou domínio</string>
+    <string name="connection_connect">Conectar</string>
+    <string name="connection_error_timeout_discovered">Tempo de conexão excedido. O servidor está offline?</string>
+    <string name="connection_error_timeout_manual">Tempo de conexão excedido. Verifique o IP e tente novamente.</string>
+    <string name="connection_error_timeout_own">Tempo de conexão excedido ao entrar no próprio canal.</string>
+    <string name="connection_error_host">Não foi possível hospedar: %1$s</string>
+    <string name="connection_error_nickname">Por favor, preencha o seu Nome</string>
+    <string name="connection_error_failed">Falha ao conectar: %1$s</string>
+    <string name="connection_error_wrong_pin">PIN da sala incorreto</string>
+    <string name="connection_error_too_many_attempts">Muitas tentativas. Se o PIN errou várias vezes, a sala ficou travada: espere alguns minutos e tente de novo</string>
+    <string name="connection_error_pin_too_short">O PIN precisa ter pelo menos %1$d caracteres</string>
+    <string name="connection_disconnected">Servidor desconectado</string>
+    <string name="connection_server_message">%1$s</string>
+    <string name="certificate_changed_title">O certificado deste servidor mudou</string>
+    <string name="certificate_changed_text">Antes: %1$s\nAgora: %2$s\n\nSe quem hospeda reinstalou o app, confira com ele o código que aparece na lista de canais: sendo o novo, pode confiar. Se não, alguém na rede pode estar se passando pelo servidor.</string>
+    <string name="certificate_trust">Confiar no novo</string>
+
+    <!-- Channel list -->
+    <string name="channels_title">Canais</string>
+    <string name="channels_subtitle">Salas ativas neste servidor</string>
+    <string name="channels_empty">Nenhuma sala ativa no momento. Crie uma abaixo.</string>
+    <string name="channels_server_code">Código do servidor: %1$s</string>
+    <string name="channels_disconnect">Desconectar</string>
+    <string name="channels_new_hint">Nome do canal</string>
+    <string name="channels_join">Entrar</string>
+    <string name="stop_host_title">Encerrar a sala?</string>
+    <string name="stop_host_text">Você está hospedando esta sala. Ao sair, ela será encerrada e todos serão desconectados.</string>
+    <string name="stop_host_confirm">Encerrar</string>
+
+    <!-- Push-to-talk screen -->
+    <string name="ptt_back_to_channels">Voltar para canais</string>
+    <string name="ptt_participants">%1$d no canal</string>
+    <string name="ptt_leave">Sair do canal</string>
+    <string name="ptt_in_channel">No canal</string>
+    <string name="ptt_status_free">Canal livre</string>
+    <string name="ptt_status_free_headline">Segure para falar</string>
+    <string name="ptt_status_requesting">Pedindo a palavra</string>
+    <string name="ptt_status_requesting_headline">Aguardando…</string>
+    <string name="ptt_status_transmitting">Transmitindo</string>
+    <string name="ptt_status_transmitting_headline">Você está no ar</string>
+    <string name="ptt_status_receiving">Recebendo</string>
+    <string name="ptt_status_receiving_headline">%1$s está falando</string>
+    <string name="ptt_someone">Alguém</string>
+    <string name="ptt_hint_idle">ou use o botão de mídia do fone ou do volante</string>
+    <string name="ptt_hint_requesting">solte para cancelar</string>
+    <string name="ptt_hint_transmitting">solte para encerrar</string>
+    <string name="ptt_hint_receiving">aguarde a sua vez para falar</string>
+    <string name="ptt_channel_busy">Canal ocupado</string>
+    <string name="default_nickname">User-%1$s</string>
+
+    <!-- Relative time (history) -->
+    <string name="time_just_now">agora mesmo</string>
+    <string name="time_ago">há %1$s</string>
+    <string name="time_ago_hours_minutes">há %1$s e %2$s</string>
+    <plurals name="time_seconds">
+        <item quantity="one">%1$d segundo</item>
+        <item quantity="other">%1$d segundos</item>
+    </plurals>
+    <plurals name="time_minutes">
+        <item quantity="one">%1$d minuto</item>
+        <item quantity="other">%1$d minutos</item>
+    </plurals>
+    <plurals name="time_hours">
+        <item quantity="one">%1$d hora</item>
+        <item quantity="other">%1$d horas</item>
+    </plurals>
+    <string name="time_full_date">%1$s/%2$s/%3$d às %4$s:%5$s</string>
+
+    <!-- History screen -->
+    <string name="history_title">Histórico</string>
+    <string name="history_subtitle">Áudios recebidos, salvos só neste aparelho</string>
+    <string name="history_empty">Nenhum áudio salvo ainda.</string>
+    <plurals name="history_unheard">
+        <item quantity="one">%1$d nova</item>
+        <item quantity="other">%1$d novas</item>
+    </plurals>
+    <string name="history_play_room">Tocar a sala</string>
+    <string name="history_expand">Expandir</string>
+    <string name="history_collapse">Recolher</string>
+    <string name="history_share">Compartilhar áudio</string>
+    <string name="history_delete">Apagar áudio</string>
+    <string name="history_play">Ouvir</string>
+    <string name="history_pause">Pausar</string>
+    <string name="history_status_paused">pausado · %1$s</string>
+    <string name="history_status_playing">tocando · %1$s</string>
+    <string name="history_status_recorded">%1$s · %2$s</string>
+    <string name="history_paused">pausado</string>
+    <string name="history_playing">tocando</string>
+    <string name="history_player_subtitle">%1$s · %2$s</string>
+    <string name="history_queue_position">%1$d de %2$d</string>
+    <string name="history_previous">Anterior</string>
+    <string name="history_next">Próxima</string>
+    <string name="history_back_5">Voltar 5 segundos</string>
+    <string name="history_forward_5">Avançar 5 segundos</string>
+    <string name="history_speed">%1$s×</string>
+    <string name="decimal_separator">,</string>
+    <string name="history_back">Voltar</string>
+    <string name="history_clear">Limpar histórico</string>
+    <string name="history_delete_title">Apagar áudio</string>
+    <string name="history_delete_text">Tem certeza que deseja apagar este áudio?</string>
+    <string name="history_delete_confirm">Apagar</string>
+    <string name="history_delete_channel_title">Apagar canal</string>
+    <string name="history_delete_channel_text">Tem certeza que deseja apagar todos os áudios do canal #%1$s?</string>
+    <string name="history_clear_text">Tem certeza que deseja apagar todos os áudios gravados? Esta ação não pode ser desfeita.</string>
+    <string name="history_clear_confirm">Limpar</string>
+
+    <!-- Settings screen -->
+    <string name="settings_title">Configurações</string>
+    <string name="settings_back">Voltar</string>
+    <string name="settings_appearance">Aparência</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_theme_system">Sistema</string>
+    <string name="settings_theme_light">Claro</string>
+    <string name="settings_theme_dark">Escuro</string>
+    <string name="settings_reduce_transparency">Reduzir transparência</string>
+    <string name="settings_reduce_transparency_detail">Troca o vidro por superfícies sólidas</string>
+    <string name="settings_audio">Áudio</string>
+    <string name="settings_opus">Codec Opus</string>
+    <string name="settings_opus_detail">Usa menos banda; recomendado fora da LAN</string>
+    <string name="settings_headset_mic">Microfone do fone Bluetooth</string>
+    <string name="settings_headset_mic_detail">Fala pelo fone; o áudio fica com qualidade de telefone e o relógio pareado fica mudo. Vale na próxima conexão</string>
+    <string name="settings_always_listening">Sempre ouvindo</string>
+    <string name="settings_always_listening_detail">Recebe áudio com o app em segundo plano</string>
+    <string name="settings_history">Histórico</string>
+    <string name="settings_save_audio">Salvar áudios recebidos</string>
+    <string name="settings_location">Local</string>
+    <string name="settings_storage_internal">Armazenamento interno</string>
+    <string name="settings_storage_external">Armazenamento externo</string>
+    <string name="settings_space_limit">Limite de espaço</string>
+    <string name="settings_size_mb">%1$d MB</string>
+    <string name="settings_usage">%1$d MB de %2$d MB usados</string>
+    <string name="settings_location_title">Local de armazenamento</string>
+    <string name="settings_location_option">%1$s (%2$s livre)</string>
+    <string name="settings_sd_unavailable">O armazenamento SD não está disponível. Insira um cartão SD para usar essa opção.</string>
+    <string name="settings_clear_history">Limpar histórico</string>
+    <string name="settings_clear_history_text">Tem certeza que deseja apagar todos os áudios gravados? Esta ação não pode ser desfeita.</string>
+    <string name="settings_clear_confirm">Limpar</string>
+    <string name="common_ok">OK</string>
+    <string name="size_bytes">%1$d B</string>
+    <string name="size_kb">%1$d KB</string>
+    <string name="size_mb">%1$d MB</string>
+    <string name="size_gb">%1$d GB</string>
+
+    <!-- App -->
+    <string name="app_name">PTT-LAN</string>
+
+    <!-- Watch -->
+    <string name="wear_set_name">Defina seu nome</string>
+    <string name="wear_name">Nome</string>
+    <string name="wear_no_pin">Sem PIN</string>
+    <string name="wear_room_pin">PIN da sala</string>
+    <string name="wear_server_ip">IP do servidor</string>
+    <string name="wear_searching">Procurando… tocar p/ repetir</string>
+    <string name="wear_search_again">Procurar de novo</string>
+    <string name="wear_enter_ip">Digitar IP</string>
+    <string name="wear_unavailable">Indisponível no relógio</string>
+    <string name="wear_permissions">Permita o microfone e a rede local para usar o PTT-LAN</string>
+    <string name="wear_leave_server">Sair do servidor</string>
+    <string name="wear_talking">Falando…</string>
+    <string name="wear_requesting">Pedindo a vez…</string>
+    <string name="wear_receiving">%1$s falando</string>
+    <string name="wear_leave">Sair</string>
+</resources>

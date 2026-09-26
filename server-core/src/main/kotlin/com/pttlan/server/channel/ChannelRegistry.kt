@@ -1,6 +1,9 @@
 
 package com.pttlan.server.channel
 
+import com.pttlan.core.common.DEFAULT_CHANNEL_ID
+import com.pttlan.core.common.MAX_CHANNELS
+import com.pttlan.core.common.MAX_CHANNEL_NAME_LENGTH
 import com.pttlan.core.network.PttJson
 import com.pttlan.core.network.protocol.ActiveChannelDto
 import com.pttlan.core.network.protocol.ControlMessage
@@ -77,7 +80,7 @@ class ChannelRegistry(
     }
 
     init {
-        getOrCreateChannel("Geral")
+        getOrCreateChannel(DEFAULT_CHANNEL_ID)
     }
 
     /**
@@ -112,6 +115,14 @@ class ChannelRegistry(
     fun removeGlobalConnection(session: DefaultWebSocketServerSession) {
         globalConnections.remove(session)
     }
+
+    /** Why [channelId] cannot be opened, or null when it can: an existing channel always can. */
+    fun refusalToOpen(channelId: String): String? =
+        when {
+            channelId.length > MAX_CHANNEL_NAME_LENGTH -> "Nome de canal longo demais (máximo $MAX_CHANNEL_NAME_LENGTH caracteres)"
+            !channels.containsKey(channelId) && channels.size >= MAX_CHANNELS -> "Este servidor já tem $MAX_CHANNELS canais abertos"
+            else -> null
+        }
 
     fun getOrCreateChannel(channelId: String): PttChannel {
         cleanupJobs.remove(channelId)?.cancel()
@@ -153,7 +164,7 @@ class ChannelRegistry(
     fun getChannel(channelId: String): PttChannel? = channels[channelId]
 
     fun scheduleCleanupIfEmpty(channelId: String) {
-        if (channelId == "Geral") {
+        if (channelId == DEFAULT_CHANNEL_ID) {
             broadcastActiveChannels()
             return
         }
@@ -331,7 +342,7 @@ class ChannelRegistry(
             timeSeriesMetrics.clear()
         }
 
-        getOrCreateChannel("Geral")
+        getOrCreateChannel(DEFAULT_CHANNEL_ID)
     }
 
     suspend fun broadcastGlobalAlert(message: String) {

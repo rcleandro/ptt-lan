@@ -24,6 +24,9 @@ object SettingsKeys {
     const val USE_HEADSET_MIC = "use_headset_mic"
 
     const val PLAYBACK_SPEED = "playback_speed"
+
+    /** Followed by `host:port`: the certificate fingerprint trusted on first use for that LAN server (30.5). */
+    const val CERTIFICATE_PIN_PREFIX = "cert_pin_"
 }
 
 /** Defaults for the keys that have one, so reader and writer cannot disagree. */

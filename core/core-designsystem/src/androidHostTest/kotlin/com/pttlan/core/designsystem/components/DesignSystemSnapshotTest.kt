@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.dp
@@ -14,6 +16,8 @@ import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.core.designsystem.theme.PttTheme
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.PreviewContextConfigurationEffect
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -26,6 +30,7 @@ private const val SNAPSHOT_DIR = "src/androidHostTest/snapshots"
  * One snapshot per design system component (23.5). They are the guardrail for the rules in ADR 0006:
  * amber only for the local user transmitting or requesting, blue for receiving, green for connected.
  */
+@OptIn(ExperimentalResourceApi::class)
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [34], qualifiers = RobolectricDeviceQualifiers.Pixel5)
@@ -38,6 +43,8 @@ class DesignSystemSnapshotTest {
         content: @Composable () -> Unit,
     ) {
         composeRule.setContent {
+            // Robolectric does not start the provider that hands the Android context to Compose resources
+            CompositionLocalProvider(LocalInspectionMode provides true) { PreviewContextConfigurationEffect() }
             PttTheme(appTheme = AppTheme.DARK) {
                 Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
                     content()

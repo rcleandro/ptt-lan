@@ -6,10 +6,13 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
+import com.pttlan.core.designsystem.generated.resources.Res
+import com.pttlan.core.designsystem.generated.resources.app_name
 import com.pttlan.core.di.appModules
 import com.pttlan.core.navigation.RootComponent
 import com.pttlan.core.navigation.RootScreen
 import com.pttlan.domain.ptt.repository.LocalServerHost
+import org.jetbrains.compose.resources.stringResource
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import java.awt.Taskbar
@@ -45,7 +48,7 @@ fun main() {
         Window(onCloseRequest = {
             serverHost.stop()
             exitApplication()
-        }, title = "PTT-LAN", icon = icon?.let { BitmapPainter(it.toComposeImageBitmap()) }) {
+        }, title = stringResource(Res.string.app_name), icon = icon?.let { BitmapPainter(it.toComposeImageBitmap()) }) {
             RootScreen(component = rootComponent!!)
         }
     }

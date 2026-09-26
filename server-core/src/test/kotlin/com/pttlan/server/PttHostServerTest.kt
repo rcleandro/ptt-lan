@@ -1,5 +1,9 @@
 package com.pttlan.server
 
+import com.pttlan.core.common.RoomPinRejectedException
+import com.pttlan.core.common.ServerCertificateChangedException
+import com.pttlan.core.common.TooManyAttemptsException
+import com.pttlan.core.network.CertificatePins
 import com.pttlan.core.network.PttWebSocketClient
 import com.pttlan.core.network.ServerRefusedException
 import com.pttlan.core.network.createHttpClient
@@ -8,10 +12,12 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
+import java.io.File
 import java.net.ConnectException
 import java.net.HttpURLConnection
 import java.net.ServerSocket
@@ -94,22 +100,20 @@ class PttHostServerTest {
 
     @Test
     fun `a room with a pin only lets in who knows it`() {
-        server.start("PTT-LAN-host", pin = "4821")
+        server.start("PTT-LAN-host", pin = "482193")
 
         assertEquals(401, post("/api/auth/login").responseCode)
-        assertEquals(200, post("/api/auth/login", """{"nickname":"host","deviceId":"d1","pin":"4821"}""").responseCode)
+        assertEquals(200, post("/api/auth/login", """{"nickname":"host","deviceId":"d1","pin":"482193"}""").responseCode)
     }
 
     @Test
     fun `the app client sends the pin and reads a wrong one as a clear error`() =
         runBlocking {
-            server.start("PTT-LAN-host", pin = "4821")
+            server.start("PTT-LAN-host", pin = "482193")
             val client = PttWebSocketClient(createHttpClient())
 
-            val wrongPin =
-                assertFailsWith<IllegalStateException> { client.login("localhost", port, true, "guest", "d2", "0000") }
-            assertEquals("PIN da sala incorreto", wrongPin.message)
-            assertTrue(client.login("localhost", port, true, "guest", "d2", "4821").token.isNotBlank())
+            assertFailsWith<RoomPinRejectedException> { client.login("localhost", port, true, "guest", "d2", "000000") }
+            assertTrue(client.login("localhost", port, true, "guest", "d2", "482193").token.isNotBlank())
         }
 
     @Test
@@ -164,4 +168,97 @@ class PttHostServerTest {
             stopKoin()
         }
     }
+
+    @Test
+    fun `a pin shorter than six characters is refused when hosting`() {
+        val error = assertFailsWith<IllegalArgumentException> { server.start("PTT-LAN-host", pin = "4821") }
+
+        assertTrue(error.message.orEmpty().contains("6"), "the message says how long it has to be: ${error.message}")
+        assertEquals(false, server.isRunning)
+    }
+
+    @Test
+    fun `five wrong pins in a row lock the room and the app says so`() =
+        runBlocking<Unit> {
+            server.start("PTT-LAN-host", pin = "482193")
+            val client = PttWebSocketClient(createHttpClient())
+
+            repeat(4) {
+                assertFailsWith<RoomPinRejectedException> { client.login("localhost", port, true, "guest", "d2", "000000") }
+            }
+
+            assertFailsWith<TooManyAttemptsException> { client.login("localhost", port, true, "guest", "d2", "000000") }
+        }
+
+    @Test
+    fun `a token from an earlier room does not open the next one`() =
+        runBlocking {
+            // The signing key lived as long as the app: hosting again with a new PIN still let old tokens in.
+            server.start("PTT-LAN-host", pin = "482193")
+            val oldToken = PttWebSocketClient(createHttpClient()).login("localhost", port, true, "guest", "d4", "482193").token
+            server.stop()
+            server.start("PTT-LAN-host", pin = "731905")
+
+            val client = PttWebSocketClient(createHttpClient())
+            try {
+                val outcome = withTimeoutOrNull(10.seconds) { runCatching { client.connect("localhost", port, true, oldToken) } }
+
+                assertTrue(outcome != null, "the old token got into the new room")
+                assertTrue(outcome.exceptionOrNull() is ServerRefusedException, "got ${outcome.exceptionOrNull()}")
+            } finally {
+                client.disconnect()
+            }
+        }
+
+    private fun hostWithCertificateIn(file: File) = PttHostServer(port, keyStoreFile = file) { _, _ -> null }
+
+    @Test
+    fun `the host keeps its certificate across rooms, so the clients still recognize it`() =
+        runBlocking {
+            val file = File.createTempFile("host-cert", ".p12").also { it.delete() }
+            val host = hostWithCertificateIn(file)
+            val pins = CertificatePins()
+            val client = PttWebSocketClient(createHttpClient(pins), pins = pins)
+            try {
+                host.start("PTT-LAN-host")
+                client.login("localhost", port, true, "guest", "d5")
+                host.stop()
+                host.start("PTT-LAN-host")
+
+                assertTrue(client.login("localhost", port, true, "guest", "d5").token.isNotBlank())
+            } finally {
+                host.stop()
+                file.delete()
+            }
+        }
+
+    @Test
+    fun `another certificate on a known host is refused with both codes until the user trusts it`() =
+        runBlocking {
+            val fileA = File.createTempFile("host-a", ".p12").also { it.delete() }
+            val fileB = File.createTempFile("host-b", ".p12").also { it.delete() }
+            val pins = CertificatePins()
+            val client = PttWebSocketClient(createHttpClient(pins), pins = pins)
+            val hostA = hostWithCertificateIn(fileA)
+            val hostB = hostWithCertificateIn(fileB)
+            try {
+                hostA.start("PTT-LAN-host")
+                client.login("localhost", port, true, "guest", "d6")
+                val trustedCode = pins.codeFor("localhost", port)
+                hostA.stop()
+                hostB.start("PTT-LAN-impostor")
+
+                val change = assertFailsWith<ServerCertificateChangedException> { client.login("localhost", port, true, "guest", "d6") }
+                assertEquals(trustedCode, change.previousCode)
+                assertTrue(change.newCode != change.previousCode)
+
+                pins.trustChanged("localhost", port)
+                assertTrue(client.login("localhost", port, true, "guest", "d6").token.isNotBlank())
+            } finally {
+                hostA.stop()
+                hostB.stop()
+                fileA.delete()
+                fileB.delete()
+            }
+        }
 }

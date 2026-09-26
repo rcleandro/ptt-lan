@@ -132,7 +132,7 @@ class RootComponent(
 
                     val activeChild = childStack.value.active.instance
                     if (activeChild is Child.ConnectionChild) {
-                        activeChild.component.showError(reason ?: "Servidor desconectado")
+                        activeChild.component.showDisconnected(reason)
                     }
                 }
             }

@@ -15,7 +15,7 @@ import javax.net.ssl.X509ExtendedTrustManager
 import javax.net.ssl.X509TrustManager
 
 @Suppress("TrustAllX509TrustManager", "CustomX509TrustManager")
-actual fun createPlatformHttpClient(): HttpClient =
+actual fun createPlatformHttpClient(pins: CertificatePins): HttpClient =
     HttpClient(OkHttp) {
         engine {
             val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
@@ -75,7 +75,14 @@ actual fun createPlatformHttpClient(): HttpClient =
             config {
                 sslSocketFactory(sslContext.socketFactory, conditionalTrustManager)
                 hostnameVerifier { hostname, session ->
-                    if (isLocalNetwork(hostname)) true else OkHostnameVerifier.verify(hostname, session)
+                    if (isLocalNetwork(hostname)) {
+                        // LAN servers are self-signed: trusted on first use, refused if the certificate changes.
+                        // Checked here, where OkHttp passes the host exactly as the URL has it.
+                        val leaf = session.peerCertificates.firstOrNull()
+                        leaf != null && pins.verify(hostname, session.peerPort, sha256Hex(leaf.encoded))
+                    } else {
+                        OkHostnameVerifier.verify(hostname, session)
+                    }
                 }
             }
         }

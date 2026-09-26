@@ -3,11 +3,14 @@ package com.pttlan.feature.channellist
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.backhandler.BackCallback
 import com.arkivanov.essenty.lifecycle.doOnDestroy
+import com.pttlan.core.common.DEFAULT_CHANNEL_ID
+import com.pttlan.core.common.MAX_CHANNEL_NAME_LENGTH
 import com.pttlan.domain.ptt.repository.ActiveChannelDomain
 import com.pttlan.domain.ptt.repository.ChannelDomain
 import com.pttlan.domain.ptt.repository.LocalServerHost
 import com.pttlan.domain.ptt.usecase.CreateChannelUseCase
 import com.pttlan.domain.ptt.usecase.GetRecentChannelsUseCase
+import com.pttlan.domain.ptt.usecase.GetServerCertificateCodeUseCase
 import com.pttlan.domain.ptt.usecase.JoinChannelUseCaseImpl
 import com.pttlan.domain.ptt.usecase.ObserveActiveChannelsUseCase
 import kotlinx.coroutines.CoroutineScope
@@ -28,6 +31,8 @@ data class ChannelListState(
     val newChannelName: String = "",
     /** Leaving while hosting ends the room for everyone, so it asks first. */
     val confirmingStopHost: Boolean = false,
+    /** Code of the server's certificate, the same on the host and on everyone who joined it (30.5). */
+    val serverCode: String? = null,
 )
 
 sealed interface ChannelListIntent {
@@ -70,9 +75,11 @@ class ChannelListComponent(
     private val observeActiveChannelsUseCase: ObserveActiveChannelsUseCase,
     private val joinChannelUseCase: JoinChannelUseCaseImpl,
     private val createChannelUseCase: CreateChannelUseCase,
+    getServerCertificateCodeUseCase: GetServerCertificateCodeUseCase,
     private val localServerHost: LocalServerHost? = null,
 ) : ComponentContext by componentContext {
-    private val _state = MutableStateFlow(ChannelListState())
+    // Explicit invoke: detekt's analysis misses the operator call here and flags the use case as unused
+    private val _state = MutableStateFlow(ChannelListState(serverCode = getServerCertificateCodeUseCase.invoke()))
     val state: StateFlow<ChannelListState> = _state.asStateFlow()
 
     private val _effects = MutableSharedFlow<ChannelListEffect>()
@@ -98,7 +105,7 @@ class ChannelListComponent(
                     it.copy(
                         activeChannels =
                             active.sortedWith(
-                                compareByDescending<ActiveChannelDomain> { ch -> ch.id == "Geral" }
+                                compareByDescending<ActiveChannelDomain> { ch -> ch.id == DEFAULT_CHANNEL_ID }
                                     .thenBy { ch -> ch.id },
                             ),
                     )
@@ -110,7 +117,7 @@ class ChannelListComponent(
     fun onIntent(intent: ChannelListIntent) {
         when (intent) {
             is ChannelListIntent.UpdateNewChannelName -> {
-                _state.update { it.copy(newChannelName = intent.name) }
+                _state.update { it.copy(newChannelName = intent.name.take(MAX_CHANNEL_NAME_LENGTH)) }
             }
 
             is ChannelListIntent.JoinChannel -> {

@@ -2,8 +2,26 @@ package com.pttlan.feature.connection
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
+import com.pttlan.core.common.DEFAULT_SERVER_PORT
+import com.pttlan.core.common.HOSTED_ROOM_PREFIX
+import com.pttlan.core.common.MIN_ROOM_PIN_LENGTH
+import com.pttlan.core.common.RoomPinRejectedException
+import com.pttlan.core.common.ServerCertificateChangedException
+import com.pttlan.core.common.TooManyAttemptsException
 import com.pttlan.core.common.network.isLocalNetwork
 import com.pttlan.core.datastore.SettingsKeys
+import com.pttlan.core.designsystem.generated.resources.Res
+import com.pttlan.core.designsystem.generated.resources.connection_disconnected
+import com.pttlan.core.designsystem.generated.resources.connection_error_failed
+import com.pttlan.core.designsystem.generated.resources.connection_error_host
+import com.pttlan.core.designsystem.generated.resources.connection_error_nickname
+import com.pttlan.core.designsystem.generated.resources.connection_error_pin_too_short
+import com.pttlan.core.designsystem.generated.resources.connection_error_timeout_discovered
+import com.pttlan.core.designsystem.generated.resources.connection_error_timeout_manual
+import com.pttlan.core.designsystem.generated.resources.connection_error_timeout_own
+import com.pttlan.core.designsystem.generated.resources.connection_error_too_many_attempts
+import com.pttlan.core.designsystem.generated.resources.connection_error_wrong_pin
+import com.pttlan.core.designsystem.generated.resources.connection_server_message
 import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.domain.ptt.repository.LocalServerHost
 import com.pttlan.domain.ptt.repository.ServerEndpoint
@@ -11,6 +29,7 @@ import com.pttlan.domain.ptt.repository.ServerNode
 import com.pttlan.domain.ptt.usecase.ConnectToServerUseCase
 import com.pttlan.domain.ptt.usecase.DiscoverServersUseCase
 import com.pttlan.domain.ptt.usecase.ObserveConnectionStatusUseCase
+import com.pttlan.domain.ptt.usecase.TrustServerCertificateUseCase
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -27,6 +46,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -39,6 +59,16 @@ data class ConnectionState(
     val pin: String = "",
     /** Whether this platform can host the channel itself (host mode). */
     val canHost: Boolean = false,
+    /** A LAN server showed another certificate than the trusted one: the user decides (30.5). */
+    val certificateChange: CertificateChange? = null,
+)
+
+/** What the certificate dialog shows, and where to connect again if the user trusts the new certificate. */
+data class CertificateChange(
+    val endpoint: ServerEndpoint,
+    val previousCode: String,
+    val newCode: String,
+    val timeoutMessage: StringResource,
 )
 
 sealed interface ConnectionIntent {
@@ -66,11 +96,18 @@ sealed interface ConnectionIntent {
 
     /** Starts the network search over, dropping hosts that already left. */
     data object RefreshServers : ConnectionIntent
+
+    /** The user compared the codes and trusts the server's new certificate. */
+    data object TrustNewCertificate : ConnectionIntent
+
+    data object DismissCertificateChange : ConnectionIntent
 }
 
 sealed interface ConnectionEffect {
+    /** [message] is a resource, resolved by the screen with [args]: no user text is built here. */
     data class ShowError(
-        val message: String,
+        val message: StringResource,
+        val args: List<Any> = emptyList(),
     ) : ConnectionEffect
 }
 
@@ -79,6 +116,7 @@ class ConnectionComponent(
     private val observeConnectionStatusUseCase: ObserveConnectionStatusUseCase,
     private val discoverServersUseCase: DiscoverServersUseCase,
     private val connectToServerUseCase: ConnectToServerUseCase,
+    private val trustServerCertificateUseCase: TrustServerCertificateUseCase,
     private val localServerHost: LocalServerHost? = null,
 ) : ComponentContext by componentContext,
     KoinComponent {
@@ -142,7 +180,7 @@ class ConnectionComponent(
     fun onIntent(intent: ConnectionIntent) {
         when (intent) {
             is ConnectionIntent.ConnectToDiscovered -> {
-                if (saveNickname()) connect(intent.server.endpoint, "Tempo de conexão excedido. O servidor está offline?")
+                if (saveNickname()) connect(intent.server.endpoint, Res.string.connection_error_timeout_discovered)
             }
 
             is ConnectionIntent.ConnectToManualIp -> {
@@ -150,8 +188,7 @@ class ConnectionComponent(
             }
 
             is ConnectionIntent.HostServer -> {
-                val host = localServerHost
-                if (host != null && saveNickname()) hostServer(host)
+                requestHosting()
             }
 
             is ConnectionIntent.RefreshServers -> {
@@ -169,7 +206,36 @@ class ConnectionComponent(
             is ConnectionIntent.UpdatePin -> {
                 _state.update { it.copy(pin = intent.pin.trim()) }
             }
+
+            is ConnectionIntent.TrustNewCertificate -> {
+                trustNewCertificate()
+            }
+
+            is ConnectionIntent.DismissCertificateChange -> {
+                _state.update { it.copy(certificateChange = null) }
+            }
         }
+    }
+
+    private fun requestHosting() {
+        val host = localServerHost
+        val pin = _state.value.pin
+        if (pin.isNotEmpty() && pin.length < MIN_ROOM_PIN_LENGTH) {
+            // The host server refuses it too; checked here so the message is the app's, in its language
+            scope.launch {
+                _effects.send(ConnectionEffect.ShowError(Res.string.connection_error_pin_too_short, listOf(MIN_ROOM_PIN_LENGTH)))
+            }
+        } else if (host != null && saveNickname()) {
+            hostServer(host)
+        }
+    }
+
+    private fun trustNewCertificate() {
+        val change = _state.value.certificateChange ?: return
+        _state.update { it.copy(certificateChange = null) }
+        // Explicit invoke: detekt's analysis misses the operator call here and flags the use case as unused
+        trustServerCertificateUseCase.invoke(change.endpoint)
+        connect(change.endpoint, change.timeoutMessage)
     }
 
     private fun connectToManualIp(ip: String) {
@@ -177,18 +243,18 @@ class ConnectionComponent(
         val endpoint =
             ServerEndpoint(
                 host = ip,
-                port = 9443,
+                port = DEFAULT_SERVER_PORT,
                 isLocal = isLocalNetwork(ip),
             )
-        connect(endpoint, "Tempo de conexão excedido. Verifique o IP e tente novamente.")
+        connect(endpoint, Res.string.connection_error_timeout_manual)
     }
 
     private fun hostServer(host: LocalServerHost) {
         scope.launch {
             host
-                .start(serviceName = "PTT-LAN-${_state.value.nickname}", pin = pinOrNull())
-                .onSuccess { endpoint -> connect(endpoint, "Tempo de conexão excedido ao entrar no próprio canal.") }
-                .onFailure { _effects.send(ConnectionEffect.ShowError("Não foi possível hospedar: ${it.message}")) }
+                .start(serviceName = HOSTED_ROOM_PREFIX + _state.value.nickname, pin = pinOrNull())
+                .onSuccess { endpoint -> connect(endpoint, Res.string.connection_error_timeout_own) }
+                .onFailure { _effects.send(ConnectionEffect.ShowError(Res.string.connection_error_host, listOf(it.message.orEmpty()))) }
         }
     }
 
@@ -199,7 +265,7 @@ class ConnectionComponent(
     private fun saveNickname(): Boolean {
         val nickname = _state.value.nickname.trim()
         if (nickname.isEmpty()) {
-            scope.launch { _effects.send(ConnectionEffect.ShowError("Por favor, preencha o seu Nome")) }
+            scope.launch { _effects.send(ConnectionEffect.ShowError(Res.string.connection_error_nickname)) }
             return false
         }
         _state.update { it.copy(nickname = nickname) }
@@ -211,19 +277,34 @@ class ConnectionComponent(
 
     private fun connect(
         endpoint: ServerEndpoint,
-        timeoutMessage: String,
+        timeoutMessage: StringResource,
     ) {
         scope.launch {
             val exception = connectToServerUseCase(endpoint, _state.value.nickname, pinOrNull()).exceptionOrNull() ?: return@launch
-            if (exception is TimeoutCancellationException) {
+            if (exception is ServerCertificateChangedException) {
+                _state.update {
+                    it.copy(certificateChange = CertificateChange(endpoint, exception.previousCode, exception.newCode, timeoutMessage))
+                }
+            } else if (exception is TimeoutCancellationException) {
                 _effects.send(ConnectionEffect.ShowError(timeoutMessage))
+            } else if (exception is RoomPinRejectedException) {
+                _effects.send(ConnectionEffect.ShowError(Res.string.connection_error_wrong_pin))
+            } else if (exception is TooManyAttemptsException) {
+                _effects.send(ConnectionEffect.ShowError(Res.string.connection_error_too_many_attempts))
             } else if (exception !is CancellationException) {
-                _effects.send(ConnectionEffect.ShowError("Falha ao conectar: ${exception.message}"))
+                _effects.send(ConnectionEffect.ShowError(Res.string.connection_error_failed, listOf(exception.message.orEmpty())))
             }
         }
     }
 
-    fun showError(message: String) {
-        scope.launch { _effects.send(ConnectionEffect.ShowError(message)) }
+    /** The session dropped: shows the reason the server gave, when there was one. */
+    fun showDisconnected(serverReason: String?) {
+        val error =
+            if (serverReason == null) {
+                ConnectionEffect.ShowError(Res.string.connection_disconnected)
+            } else {
+                ConnectionEffect.ShowError(Res.string.connection_server_message, listOf(serverReason))
+            }
+        scope.launch { _effects.send(error) }
     }
 }

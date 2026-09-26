@@ -1,6 +1,8 @@
 package com.pttlan.core.network
 
 import co.touchlab.kermit.Logger
+import com.pttlan.core.common.RoomPinRejectedException
+import com.pttlan.core.common.TooManyAttemptsException
 import com.pttlan.core.network.protocol.AudioEnvelope
 import com.pttlan.core.network.protocol.ControlMessage
 import com.pttlan.core.network.protocol.LoginRequest
@@ -38,12 +40,29 @@ class ServerRefusedException(
     val reason: String,
 ) : IllegalStateException(reason)
 
+/** Opening the socket: a LAN server answers fast, one on the internet gets more room. */
+private val LAN_CONNECT_TIMEOUT = 5.seconds
+private val INTERNET_CONNECT_TIMEOUT = 15.seconds
+
+/**
+ * Typed, so the app shows its own text: the only 401 at login is a room PIN that does not match (host mode, 24.3),
+ * and a 429 is the rate limit or a room locked after wrong PINs (30.3).
+ */
+private fun loginFailure(status: HttpStatusCode): Exception? =
+    when (status) {
+        HttpStatusCode.Unauthorized -> RoomPinRejectedException()
+        HttpStatusCode.TooManyRequests -> TooManyAttemptsException()
+        else -> null
+    }
+
 /** Default from the technical plan: give up after 10 failed reconnection attempts. */
 const val DEFAULT_MAX_RECONNECT_ATTEMPTS = 10
 
 class PttWebSocketClient(
     private val httpClient: HttpClient,
     private val maxReconnectAttempts: Int = DEFAULT_MAX_RECONNECT_ATTEMPTS,
+    /** The same pins [httpClient] checks, to tell a refused certificate apart from other failures. */
+    val pins: CertificatePins? = null,
 ) {
     private val logger = Logger.withTag("network")
     private var session: DefaultClientWebSocketSession? = null
@@ -86,12 +105,16 @@ class PttWebSocketClient(
         val cleanHost = normalizeHost(host)
         val url = "https://$cleanHost:$port/api/auth/login"
         val response =
-            httpClient.post(url) {
-                contentType(ContentType.Application.Json)
-                setBody(LoginRequest(nickname, deviceId, pin))
+            try {
+                httpClient.post(url) {
+                    contentType(ContentType.Application.Json)
+                    setBody(LoginRequest(nickname, deviceId, pin))
+                }
+            } catch (e: Exception) {
+                // A handshake refused for a changed certificate surfaces as a generic TLS error: say what it was
+                throw pins?.changeFor(cleanHost, port) ?: e
             }
-        // The only 401 at login is a room PIN that does not match (host mode, 24.3)
-        check(response.status != HttpStatusCode.Unauthorized) { "PIN da sala incorreto" }
+        loginFailure(response.status)?.let { throw it }
         return response.body()
     }
 
@@ -114,7 +137,7 @@ class PttWebSocketClient(
                 sessionMutex.withLock {
                     if (session != null) return@withLock
                     logger.d { "Connecting to wss://$cleanHost:$port/ws" }
-                    val timeout = if (isLocal) 5.seconds else 15.seconds
+                    val timeout = if (isLocal) LAN_CONNECT_TIMEOUT else INTERNET_CONNECT_TIMEOUT
                     session =
                         withTimeout(timeout) {
                             httpClient.webSocketSession(

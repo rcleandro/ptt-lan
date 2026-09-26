@@ -10,11 +10,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.pttlan.core.designsystem.theme.AppTheme
+import com.pttlan.core.designsystem.theme.Dimens
 import com.pttlan.core.designsystem.theme.PttTheme
 
 @Composable
 private fun PttButtonStatesSample() {
-    Row(horizontalArrangement = Arrangement.spacedBy(24.dp), modifier = Modifier.padding(48.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(Dimens.Space3xl), modifier = Modifier.padding(48.dp)) {
         PttButtonState.entries.forEach { state ->
             PttButton(state = state, onPressStart = {}, onPressEnd = {}, buttonSize = 120.dp)
         }
@@ -23,11 +24,11 @@ private fun PttButtonStatesSample() {
 
 @Composable
 private fun ControlsSample() {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(24.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceXl), modifier = Modifier.padding(Dimens.Space3xl)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd)) {
             ConnectionStatus.entries.forEach { ConnectionStatusBadge(status = it) }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd)) {
             PillButton(text = "Conectar", onClick = {})
             PillButton(text = "Cancelar", onClick = {}, style = PillButtonStyle.Glass)
             PillButton(text = "Limpar", onClick = {}, style = PillButtonStyle.Destructive)
