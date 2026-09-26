@@ -31,7 +31,7 @@ class WearSessionService : Service() {
         super.onCreate()
         lanNetwork.acquire()
         getSystemService(NotificationManager::class.java).createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "Sessão PTT", NotificationManager.IMPORTANCE_LOW),
+            NotificationChannel(CHANNEL_ID, getString(R.string.session_channel_name), NotificationManager.IMPORTANCE_LOW),
         )
         scope.launch {
             connectionRepository.connectionStatus.first { it == ConnectionStatus.Disconnected }
@@ -65,18 +65,18 @@ class WearSessionService : Service() {
         val notification =
             NotificationCompat
                 .Builder(this, CHANNEL_ID)
-                .setContentTitle("PTT-LAN")
-                .setContentText("Conectado")
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText(getString(R.string.session_connected))
                 .setSmallIcon(android.R.drawable.ic_btn_speak_now)
                 .setCategory(NotificationCompat.CATEGORY_CALL)
                 .setOngoing(true)
                 .setContentIntent(open)
-                .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Sair", leave)
+                .addAction(android.R.drawable.ic_menu_close_clear_cancel, getString(R.string.session_leave), leave)
         OngoingActivity
             .Builder(this, NOTIFICATION_ID, notification)
             .setStaticIcon(android.R.drawable.ic_btn_speak_now)
             .setTouchIntent(open)
-            .setStatus(Status.Builder().addTemplate("PTT-LAN conectado").build())
+            .setStatus(Status.Builder().addTemplate(getString(R.string.session_status)).build())
             .build()
             .apply(this)
         startForeground(NOTIFICATION_ID, notification.build())

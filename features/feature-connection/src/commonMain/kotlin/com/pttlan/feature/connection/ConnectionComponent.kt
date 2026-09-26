@@ -3,6 +3,7 @@ package com.pttlan.feature.connection
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.pttlan.core.common.DEFAULT_SERVER_PORT
+import com.pttlan.core.common.HOSTED_ROOM_PREFIX
 import com.pttlan.core.common.MIN_ROOM_PIN_LENGTH
 import com.pttlan.core.common.RoomPinRejectedException
 import com.pttlan.core.common.ServerCertificateChangedException
@@ -251,7 +252,7 @@ class ConnectionComponent(
     private fun hostServer(host: LocalServerHost) {
         scope.launch {
             host
-                .start(serviceName = "PTT-LAN-${_state.value.nickname}", pin = pinOrNull())
+                .start(serviceName = HOSTED_ROOM_PREFIX + _state.value.nickname, pin = pinOrNull())
                 .onSuccess { endpoint -> connect(endpoint, Res.string.connection_error_timeout_own) }
                 .onFailure { _effects.send(ConnectionEffect.ShowError(Res.string.connection_error_host, listOf(it.message.orEmpty()))) }
         }

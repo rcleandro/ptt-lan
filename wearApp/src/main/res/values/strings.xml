@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Texts of the watch parts outside Compose (launcher label, session service). The screens' texts are in
+     core-designsystem/src/commonMain/composeResources/values/strings.xml. -->
+<resources>
+    <string name="app_name">PTT-LAN</string>
+    <string name="session_channel_name">Sessão PTT</string>
+    <string name="session_connected">Conectado</string>
+    <string name="session_status">PTT-LAN conectado</string>
+    <string name="session_leave">Sair</string>
+</resources>

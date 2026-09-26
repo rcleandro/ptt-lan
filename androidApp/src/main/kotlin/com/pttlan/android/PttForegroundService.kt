@@ -40,10 +40,10 @@ class PttForegroundService : Service() {
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "PTT Background Audio",
+            getString(R.string.notification_channel_name),
             NotificationManager.IMPORTANCE_LOW
         ).apply {
-            description = "Keeps the connection active for receiving audio in the background."
+            description = getString(R.string.notification_channel_description)
         }
         val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         manager.createNotificationChannel(channel)
@@ -69,11 +69,11 @@ class PttForegroundService : Service() {
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("PTT-LAN")
-            .setContentText(if (serverHost.isHosting.value) "Hosting a channel on this device" else "Listening for incoming audio...")
+            .setContentTitle(getString(R.string.app_name))
+            .setContentText(getString(if (serverHost.isHosting.value) R.string.notification_hosting else R.string.notification_listening))
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .setContentIntent(pendingIntent)
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopIntent)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, getString(R.string.notification_stop), stopIntent)
             .setOngoing(true)
             .build()
     }

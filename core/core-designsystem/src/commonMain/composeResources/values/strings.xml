@@ -182,4 +182,24 @@
     <string name="size_kb">%1$d KB</string>
     <string name="size_mb">%1$d MB</string>
     <string name="size_gb">%1$d GB</string>
+
+    <!-- App -->
+    <string name="app_name">PTT-LAN</string>
+
+    <!-- Watch -->
+    <string name="wear_set_name">Defina seu nome</string>
+    <string name="wear_name">Nome</string>
+    <string name="wear_no_pin">Sem PIN</string>
+    <string name="wear_room_pin">PIN da sala</string>
+    <string name="wear_server_ip">IP do servidor</string>
+    <string name="wear_searching">Procurando… tocar p/ repetir</string>
+    <string name="wear_search_again">Procurar de novo</string>
+    <string name="wear_enter_ip">Digitar IP</string>
+    <string name="wear_unavailable">Indisponível no relógio</string>
+    <string name="wear_permissions">Permita o microfone e a rede local para usar o PTT-LAN</string>
+    <string name="wear_leave_server">Sair do servidor</string>
+    <string name="wear_talking">Falando…</string>
+    <string name="wear_requesting">Pedindo a vez…</string>
+    <string name="wear_receiving">%1$s falando</string>
+    <string name="wear_leave">Sair</string>
 </resources>

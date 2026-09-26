@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Texts of the Android parts outside Compose (launcher label, foreground service). The screens' texts are in
+     core-designsystem/src/commonMain/composeResources/values/strings.xml. -->
+<resources>
+    <string name="app_name">PTT-LAN</string>
+    <string name="notification_channel_name">Áudio em segundo plano</string>
+    <string name="notification_channel_description">Mantém a conexão ativa para receber áudio com o app em segundo plano.</string>
+    <string name="notification_hosting">Hospedando uma sala neste aparelho</string>
+    <string name="notification_listening">Ouvindo o canal</string>
+    <string name="notification_stop">Parar</string>
+</resources>

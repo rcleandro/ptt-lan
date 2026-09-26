@@ -1,5 +1,11 @@
 package com.pttlan.wear
 
+import com.pttlan.core.designsystem.generated.resources.wear_leave_server
+import com.pttlan.core.designsystem.generated.resources.channel_card_people
+import com.pttlan.core.designsystem.generated.resources.channels_title
+import com.pttlan.core.designsystem.generated.resources.Res
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -32,19 +38,19 @@ fun WearChannelListContent(
     val listState = rememberTransformingLazyColumnState()
     ScreenScaffold(scrollState = listState) { contentPadding ->
         TransformingLazyColumn(state = listState, contentPadding = contentPadding) {
-            item { ListHeader { Text("Canais") } }
+            item { ListHeader { Text(stringResource(Res.string.channels_title)) } }
             items(state.activeChannels.size) { index ->
                 val channel = state.activeChannels[index]
                 Button(
                     onClick = { onIntent(ChannelListIntent.JoinChannel(channel.id, channel.id)) },
                     label = { Text(channel.id) },
-                    secondaryLabel = { Text(if (channel.participantCount == 1) "1 pessoa" else "${channel.participantCount} pessoas") },
+                    secondaryLabel = { Text(pluralStringResource(Res.plurals.channel_card_people, channel.participantCount, channel.participantCount)) },
                 )
             }
             item {
                 FilledTonalButton(
                     onClick = { onIntent(ChannelListIntent.Leave) },
-                    label = { Text("Sair do servidor") },
+                    label = { Text(stringResource(Res.string.wear_leave_server)) },
                 )
             }
         }

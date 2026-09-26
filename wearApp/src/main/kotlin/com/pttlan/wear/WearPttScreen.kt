@@ -1,5 +1,14 @@
 package com.pttlan.wear
 
+import com.pttlan.core.designsystem.generated.resources.wear_leave
+import com.pttlan.core.designsystem.generated.resources.ptt_status_free_headline
+import com.pttlan.core.designsystem.generated.resources.ptt_someone
+import com.pttlan.core.designsystem.generated.resources.wear_receiving
+import com.pttlan.core.designsystem.generated.resources.wear_requesting
+import com.pttlan.core.designsystem.generated.resources.wear_talking
+import com.pttlan.core.designsystem.generated.resources.ptt_channel_busy
+import com.pttlan.core.designsystem.generated.resources.Res
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -46,8 +55,9 @@ private const val FLOOR_DENIED_VISIBLE_MS = 2_000L
 fun WearPttScreen(component: PttComponent) {
     val state by component.state.collectAsState()
     var denied by remember { mutableStateOf<String?>(null) }
+    val channelBusy = stringResource(Res.string.ptt_channel_busy)
     LaunchedEffect(component) {
-        component.effects.collect { if (it is PttEffect.ShowFloorDenied) denied = it.reason }
+        component.effects.collect { if (it is PttEffect.ShowFloorDenied) denied = it.serverReason ?: channelBusy }
     }
     LaunchedEffect(denied) {
         if (denied != null) {
@@ -69,10 +79,10 @@ fun WearPttContent(
     val buttonState = state.buttonState()
     val status =
         denied ?: when (buttonState) {
-            PttButtonState.Transmitting -> "Falando…"
-            PttButtonState.Requesting -> "Pedindo a vez…"
-            PttButtonState.Receiving -> "${state.currentSpeakerName ?: "Alguém"} falando"
-            PttButtonState.Idle -> "Segure para falar"
+            PttButtonState.Transmitting -> stringResource(Res.string.wear_talking)
+            PttButtonState.Requesting -> stringResource(Res.string.wear_requesting)
+            PttButtonState.Receiving -> stringResource(Res.string.wear_receiving, state.currentSpeakerName ?: stringResource(Res.string.ptt_someone))
+            PttButtonState.Idle -> stringResource(Res.string.ptt_status_free_headline)
         }
 
     // The channel goes along the curved edge next to the time, leaving the middle to the button
@@ -111,7 +121,7 @@ fun WearPttContent(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            CompactButton(onClick = { onIntent(PttIntent.LeaveChannel) }, label = { Text("Sair") })
+            CompactButton(onClick = { onIntent(PttIntent.LeaveChannel) }, label = { Text(stringResource(Res.string.wear_leave)) })
         }
     }
 }

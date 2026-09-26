@@ -1,5 +1,9 @@
 package com.pttlan.wear
 
+import com.pttlan.core.designsystem.generated.resources.wear_permissions
+import com.pttlan.core.designsystem.generated.resources.wear_unavailable
+import com.pttlan.core.designsystem.generated.resources.Res
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -42,7 +46,7 @@ private fun WearScreen(child: RootComponent.Child) {
         is RootComponent.Child.ChannelListChild -> WearChannelListScreen(child.component)
         is RootComponent.Child.PttChild -> WearPttScreen(child.component)
         // History and settings are phone-only (ADR 0011); nothing on the watch navigates there
-        else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Indisponível no relógio") }
+        else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(stringResource(Res.string.wear_unavailable)) }
     }
 }
 
@@ -63,7 +67,7 @@ fun WearPermissionWait() {
     WearPttTheme {
         AppScaffold {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Permita o microfone e a rede local para usar o PTT-LAN")
+                Text(stringResource(Res.string.wear_permissions))
             }
         }
     }
