@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.baselineProfile)
+    alias(libs.plugins.androidReleaseSigning)
 
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)

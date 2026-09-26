@@ -160,6 +160,7 @@ wear-tooling-preview = { module = "androidx.wear:wear-tooling-preview", version.
 [plugins]
 androidApplication = { id = "com.android.application" }
 androidTest = { id = "com.android.test" }
+androidReleaseSigning = { id = "ptt.android.release-signing" }
 baselineProfile = { id = "androidx.baselineprofile", version.ref = "androidxBenchmark" }
 multiplatformLibrary = { id = "com.android.kotlin.multiplatform.library" }
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm" }

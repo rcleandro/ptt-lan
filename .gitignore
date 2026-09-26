@@ -62,3 +62,8 @@ xcuserdata/
 *~
 *.zip
 *.tar.gz
+
+# Release signing (keystore.properties and the key it points to)
+keystore.properties
+*.jks
+*.keystore
