@@ -11,7 +11,7 @@ val BorderDark = Color(0xFF262C31)
 
 val TextPrimaryDark = Color(0xFFEEF1F4)
 val TextSecondaryDark = Color(0xFFA3ABB3)
-val TextTertiaryDark = Color(0xFF7F8890)
+val TextTertiaryDark = Color(0xFF8A939B)
 
 val PrimaryDark = Color(0xFF6FA3C0)
 val PrimaryDimDark = Color(0xFF4C7A94)
@@ -44,7 +44,7 @@ val BorderLight = Color(0xFFD5DBE1)
 
 val TextPrimaryLight = Color(0xFF12161A)
 val TextSecondaryLight = Color(0xFF4B5563)
-val TextTertiaryLight = Color(0xFF6B7280)
+val TextTertiaryLight = Color(0xFF5B6270)
 
 val PrimaryLight = Color(0xFF2B5B77)
 val PrimaryDimLight = Color(0xFF1A4259)

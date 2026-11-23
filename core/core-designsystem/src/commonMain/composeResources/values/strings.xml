@@ -17,6 +17,8 @@
     <string name="ptt_button_requesting">Pedindo a palavra: solte para cancelar</string>
     <string name="ptt_button_transmitting">Transmitindo: solte para encerrar</string>
     <string name="ptt_button_receiving">Canal ocupado: aguarde para falar</string>
+    <string name="ptt_action_start">começar a falar</string>
+    <string name="ptt_action_stop">parar de falar</string>
     <string name="participant_self">Você</string>
 
     <!-- Shared -->

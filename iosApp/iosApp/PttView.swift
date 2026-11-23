@@ -89,6 +89,7 @@ struct PttView: View {
     let besideChannels: Bool
     @StateObject private var model: PttModel
     @StateObject private var texts = Texts(["ptt_back_to_channels", "ptt_close_channel", "common_history", "ptt_leave", "ptt_in_channel"])
+    @State private var announcedCount: Int?
     @Environment(\.pttTheme) private var theme
 
     init(component: PttComponent, root: RootComponent, besideChannels: Bool = false) {
@@ -169,6 +170,14 @@ struct PttView: View {
             .font(.caption.weight(.semibold))
             .foregroundStyle(theme.textTertiary)
             .padding(.horizontal, PttTheme.dimens.space2xl)
+            .accessibilityElement(children: .combine)
+            // Announced when someone joins or leaves, like the live region of the Compose count (29.4)
+            .task(id: state.participants.count) {
+                let count = state.participants.count
+                defer { announcedCount = count }
+                guard announcedCount != nil else { return } // the count on opening is read with the screen, not announced
+                UIAccessibility.post(notification: .announcement, argument: await Texts.format("ptt_participants", [count]))
+            }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: PttTheme.dimens.spaceXs) {
                     ForEach(state.participants, id: \.userId) { participant in
@@ -232,6 +241,8 @@ private struct StatusBlock: View {
                 }
             }
             headline = (try? await SwiftBridgeKt.text(resource: copy.headline, args: args)) ?? ""
+            // Announced when it changes, like the live region of the Compose status (29.4)
+            UIAccessibility.post(notification: .announcement, argument: "\(eyebrow), \(headline)")
         }
     }
 
@@ -253,6 +264,7 @@ private struct PttLens: View {
     let onRelease: () -> Void
     @State private var isHeld = false
     @State private var label = ""
+    @State private var actionLabel = ""
     @Environment(\.pttTheme) private var theme
 
     private var isTinted: Bool { state == .transmitting || state == .receiving }
@@ -295,10 +307,23 @@ private struct PttLens: View {
         .animation(stateAnimation, value: state)
         .accessibilityElement()
         .accessibilityLabel(label)
+        .accessibilityHint(actionLabel)
         .accessibilityAddTraits(.isButton)
+        // VoiceOver's double tap cannot hold: it toggles the talk instead (29.4)
+        .accessibilityAction {
+            if SwiftBridgeKt.pttScreenReaderStartsTalking(state: state) {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                onPress()
+            } else {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                onRelease()
+            }
+        }
         .accessibilityIdentifier("ptt")
         .task(id: state) {
             label = (try? await SwiftBridgeKt.text(resource: SwiftBridgeKt.pttButtonLabel(state: state), args: [])) ?? ""
+            let starts = SwiftBridgeKt.pttScreenReaderStartsTalking(state: state)
+            actionLabel = await Texts.format(starts ? "ptt_action_start" : "ptt_action_stop", [])
         }
     }
 

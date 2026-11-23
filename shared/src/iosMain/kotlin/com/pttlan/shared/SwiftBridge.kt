@@ -6,6 +6,7 @@ import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.pttlan.core.designsystem.UiText
 import com.pttlan.core.designsystem.components.PttButtonState
 import com.pttlan.core.designsystem.components.accessibilityLabel
+import com.pttlan.core.designsystem.components.screenReaderStartsTalking
 import com.pttlan.core.designsystem.generated.resources.Res
 import com.pttlan.core.designsystem.generated.resources.allPluralStringResources
 import com.pttlan.core.designsystem.generated.resources.allStringResources
@@ -70,6 +71,9 @@ fun goBack(): Boolean = backDispatcher.back()
 
 /** What a screen reader says for the PTT button in [state], the same as on the Compose button. */
 fun pttButtonLabel(state: PttButtonState): StringResource = state.accessibilityLabel()
+
+/** Whether VoiceOver's double tap starts the talk in [state] or stops it (29.4), as on the Compose button. */
+fun pttScreenReaderStartsTalking(state: PttButtonState): Boolean = state.screenReaderStartsTalking()
 
 /** Text of a [UiText] a rule decided, e.g. a history message's status with its nested plural. */
 suspend fun text(uiText: UiText): String = uiText.resolve()

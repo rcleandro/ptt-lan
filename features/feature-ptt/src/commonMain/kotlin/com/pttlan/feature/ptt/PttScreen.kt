@@ -243,7 +243,14 @@ private fun ParticipantsPanel(
                 .padding(vertical = ParticipantsPaddingVertical),
         verticalArrangement = Arrangement.spacedBy(ParticipantsSpacing),
     ) {
-        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.Space2xl)) {
+        // Read as one and announced when someone joins or leaves (29.4)
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Dimens.Space2xl)
+                    .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+        ) {
             SectionLabel(text = stringResource(Res.string.ptt_in_channel), modifier = Modifier.weight(1f))
             SectionLabel(text = state.participants.size.toString())
         }
