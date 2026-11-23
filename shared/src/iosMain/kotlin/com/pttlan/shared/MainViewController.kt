@@ -23,4 +23,5 @@ fun MainViewController(root: RootComponent): UIViewController =
 fun isNativeScreen(child: RootComponent.Child): Boolean =
     child is RootComponent.Child.ConnectionChild ||
         child is RootComponent.Child.ChannelListChild ||
-        child is RootComponent.Child.PttChild
+        child is RootComponent.Child.PttChild ||
+        child is RootComponent.Child.SettingsChild

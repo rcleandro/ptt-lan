@@ -42,3 +42,15 @@ final class ValueObserver<T: AnyObject>: ObservableObject {
         cancellation?.cancel()
     }
 }
+
+/// Text of a resource the component hands over (a hint, a label), loaded from the Kotlin side.
+struct ResourceText: View {
+    let resource: LibraryStringResource
+    @State private var text = ""
+
+    var body: some View {
+        Text(text).task(id: ObjectIdentifier(resource)) {
+            text = (try? await SwiftBridgeKt.text(resource: resource, args: [])) ?? ""
+        }
+    }
+}

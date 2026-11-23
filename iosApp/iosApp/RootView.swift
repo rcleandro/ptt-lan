@@ -46,6 +46,8 @@ struct RootView: View {
             ChannelListView(component: channels.component, root: root)
         case let ptt as RootComponentChildPttChild:
             PttView(component: ptt.component, root: root)
+        case let settings as RootComponentChildSettingsChild:
+            SettingsView(component: settings.component, root: root)
         default:
             EmptyView()
         }

@@ -193,18 +193,6 @@ struct PttView: View {
     }
 }
 
-/// Text of a resource the component hands over (a hint, a label), loaded from the Kotlin side.
-private struct ResourceText: View {
-    let resource: LibraryStringResource
-    @State private var text = ""
-
-    var body: some View {
-        Text(text).task(id: ObjectIdentifier(resource)) {
-            text = (try? await SwiftBridgeKt.text(resource: resource, args: [])) ?? ""
-        }
-    }
-}
-
 /// Colored eyebrow and big headline above the lens; the copy and its tone come from `statusCopy()` in Kotlin.
 private struct StatusBlock: View {
     let copy: StatusCopy
