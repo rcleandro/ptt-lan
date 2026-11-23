@@ -19,6 +19,7 @@ kotlin {
             export(projects.features.featureChannelList)
             export(projects.features.featurePtt)
             export(projects.features.featureSettings)
+            export(projects.features.featureHistory)
             export(projects.domain.domainPtt)
             export(libs.decompose)
         }
@@ -33,9 +34,9 @@ kotlin {
             api(projects.features.featureChannelList)
             api(projects.features.featurePtt)
             api(projects.features.featureSettings)
+            api(projects.features.featureHistory)
             api(projects.domain.domainPtt)
             api(libs.decompose)
-            implementation(projects.features.featureHistory)
             implementation(libs.runtime)
             implementation(libs.foundation)
             implementation(libs.material3)

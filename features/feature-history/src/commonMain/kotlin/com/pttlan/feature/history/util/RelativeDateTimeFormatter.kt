@@ -1,6 +1,8 @@
 package com.pttlan.feature.history.util
 
 import androidx.compose.runtime.Composable
+import com.pttlan.core.designsystem.UiText
+import com.pttlan.core.designsystem.asString
 import com.pttlan.core.designsystem.generated.resources.Res
 import com.pttlan.core.designsystem.generated.resources.time_ago
 import com.pttlan.core.designsystem.generated.resources.time_ago_hours_minutes
@@ -12,8 +14,6 @@ import com.pttlan.core.designsystem.generated.resources.time_seconds
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.compose.resources.pluralStringResource
-import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
@@ -76,44 +76,38 @@ private fun Instant.fullDate(timeZone: TimeZone): RelativeTime.FullDate {
 }
 
 /** The text of a [RelativeTime], from the resources: "agora mesmo", "há 2 horas e 15 minutos", "16/07/2024 às 14:41". */
-@Composable
-fun relativeTimeText(time: RelativeTime): String =
-    when (time) {
+fun RelativeTime.toUiText(): UiText =
+    when (this) {
         RelativeTime.JustNow -> {
-            stringResource(Res.string.time_just_now)
+            UiText.Res(Res.string.time_just_now)
         }
 
         is RelativeTime.Seconds -> {
-            stringResource(Res.string.time_ago, pluralStringResource(Res.plurals.time_seconds, time.seconds.toInt(), time.seconds))
+            UiText.Res(Res.string.time_ago, listOf(UiText.Plural(Res.plurals.time_seconds, seconds.toInt(), listOf(seconds))))
         }
 
         is RelativeTime.Minutes -> {
-            stringResource(Res.string.time_ago, pluralStringResource(Res.plurals.time_minutes, time.minutes.toInt(), time.minutes))
+            UiText.Res(Res.string.time_ago, listOf(UiText.Plural(Res.plurals.time_minutes, minutes.toInt(), listOf(minutes))))
         }
 
         is RelativeTime.Hours -> {
-            val hours = pluralStringResource(Res.plurals.time_hours, time.hours.toInt(), time.hours)
-            if (time.minutes == 0L) {
-                stringResource(Res.string.time_ago, hours)
+            val hoursText = UiText.Plural(Res.plurals.time_hours, hours.toInt(), listOf(hours))
+            if (minutes == 0L) {
+                UiText.Res(Res.string.time_ago, listOf(hoursText))
             } else {
-                stringResource(
+                UiText.Res(
                     Res.string.time_ago_hours_minutes,
-                    hours,
-                    pluralStringResource(Res.plurals.time_minutes, time.minutes.toInt(), time.minutes),
+                    listOf(hoursText, UiText.Plural(Res.plurals.time_minutes, minutes.toInt(), listOf(minutes))),
                 )
             }
         }
 
         is RelativeTime.FullDate -> {
-            stringResource(
-                Res.string.time_full_date,
-                time.day.twoDigits(),
-                time.month.twoDigits(),
-                time.year,
-                time.hour.twoDigits(),
-                time.minute.twoDigits(),
-            )
+            UiText.Res(Res.string.time_full_date, listOf(day.twoDigits(), month.twoDigits(), year, hour.twoDigits(), minute.twoDigits()))
         }
     }
+
+@Composable
+fun relativeTimeText(time: RelativeTime): String = time.toUiText().asString()
 
 private fun Int.twoDigits() = toString().padStart(TWO_DIGITS, '0')

@@ -46,6 +46,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.pttlan.core.designsystem.asString
 import com.pttlan.core.designsystem.components.SectionLabel
 import com.pttlan.core.designsystem.components.contentCard
 import com.pttlan.core.designsystem.components.readableWidth
@@ -67,8 +68,6 @@ import com.pttlan.core.designsystem.generated.resources.history_unheard
 import com.pttlan.core.designsystem.theme.Dimens
 import com.pttlan.core.designsystem.theme.PttTheme
 import com.pttlan.domain.ptt.model.VoiceMessage
-import com.pttlan.feature.history.util.relativeTimeText
-import com.pttlan.feature.history.util.toRelativeTime
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Instant
@@ -137,12 +136,12 @@ internal fun MessageList(
                 )
             }
         }
-        messages.groupBy { it.channelId }.forEach { (channelId, channelMessages) ->
+        historyGroups(messages).forEach { (channelId, channelMessages, unheardCount) ->
             val isCollapsed = channelId in collapsedChannels
             item(key = "header_$channelId") {
                 ChannelHeader(
                     channelId = channelId,
-                    unheardCount = channelMessages.count { it.playedAt == null },
+                    unheardCount = unheardCount,
                     isCollapsed = isCollapsed,
                     onToggle = {
                         collapsedChannels = if (isCollapsed) collapsedChannels - channelId else collapsedChannels + channelId
@@ -243,7 +242,7 @@ internal fun VoiceMessageItem(
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                text = messageStatus(message, isPlaying, isPaused),
+                text = messageStatus(message, isPlaying, isPaused).asString(),
                 style = MaterialTheme.typography.labelSmall,
                 color = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -266,33 +265,6 @@ private fun MessageActionButton(
             tint = PttTheme.customColors.textTertiary,
             modifier = Modifier.size(MessageActionIconSize),
         )
-    }
-}
-
-/** "tocando · 0:12", "pausado · 0:12", or when it was recorded and how long it is. */
-@Composable
-private fun messageStatus(
-    message: VoiceMessage,
-    isPlaying: Boolean,
-    isPaused: Boolean,
-): String {
-    val duration = formatDuration(message.durationMs)
-    return when {
-        isPlaying && isPaused -> {
-            stringResource(Res.string.history_status_paused, duration)
-        }
-
-        isPlaying -> {
-            stringResource(Res.string.history_status_playing, duration)
-        }
-
-        else -> {
-            stringResource(
-                Res.string.history_status_recorded,
-                relativeTimeText(Instant.fromEpochMilliseconds(message.recordedAt).toRelativeTime()),
-                duration,
-            )
-        }
     }
 }
 

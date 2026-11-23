@@ -48,6 +48,8 @@ struct RootView: View {
             PttView(component: ptt.component, root: root)
         case let settings as RootComponentChildSettingsChild:
             SettingsView(component: settings.component, root: root)
+        case let history as RootComponentChildHistoryChild:
+            HistoryView(component: history.component)
         default:
             EmptyView()
         }

@@ -70,7 +70,6 @@ import com.pttlan.core.designsystem.generated.resources.history_delete_confirm
 import com.pttlan.core.designsystem.generated.resources.history_delete_text
 import com.pttlan.core.designsystem.generated.resources.history_delete_title
 import com.pttlan.core.designsystem.generated.resources.history_empty
-import com.pttlan.core.designsystem.generated.resources.history_queue_position
 import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.core.designsystem.theme.Dimens
 import com.pttlan.core.designsystem.theme.PttTheme
@@ -187,11 +186,16 @@ fun HistoryScreenContent(
         if (playingMessage != null) {
             MiniPlayer(
                 message = playingMessage,
-                state = PlayerState(isPaused, playbackPosition?.takeIf { it.messageId == playingMessage.id }, playbackSpeed),
+                state =
+                    PlayerState(
+                        isPaused = isPaused,
+                        subtitle = playerSubtitle(playingMessage, isPaused, queueIndex, queue.size),
+                        position = playbackPosition?.takeIf { it.messageId == playingMessage.id },
+                        speed = playbackSpeed,
+                    ),
                 queue =
                     if (queueIndex >= 0) {
                         QueueControls(
-                            stringResource(Res.string.history_queue_position, queueIndex + 1, queue.size),
                             queueIndex < queue.lastIndex,
                             onPrevious,
                             onNext,

@@ -37,6 +37,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.pttlan.core.designsystem.UiText
+import com.pttlan.core.designsystem.asString
 import com.pttlan.core.designsystem.components.SectionLabel
 import com.pttlan.core.designsystem.components.glass
 import com.pttlan.core.designsystem.components.readableWidth
@@ -57,13 +59,8 @@ import com.pttlan.domain.ptt.model.PlaybackPosition
 import com.pttlan.domain.ptt.model.VoiceMessage
 import org.jetbrains.compose.resources.stringResource
 
-private const val MS_PER_SECOND = 1000L
-private const val SECONDS_PER_MINUTE = 60L
 private const val PROGRESS_TRACK_ALPHA = 0.18f
 private const val PROGRESS_LABEL_ALPHA = 0.7f
-
-/** How far the rewind and forward buttons jump. */
-private const val SEEK_STEP_MS = 5_000L
 
 /** The sender's avatar and the play button of the mini player. */
 private val PlayerControlSize = 52.dp
@@ -75,6 +72,8 @@ private val SeekTrackHeight = 4.dp
 /** What the mini player shows about the message playing. */
 internal class PlayerState(
     val isPaused: Boolean,
+    /** The room and the queue position, or whether it is playing ([playerSubtitle]). */
+    val subtitle: UiText,
     val position: PlaybackPosition?,
     val speed: Float,
 )
@@ -88,7 +87,6 @@ internal class PlayerActions(
 
 /** The mini player's controls while a room plays in sequence. */
 internal class QueueControls(
-    val label: String,
     val hasNext: Boolean,
     val onPrevious: () -> Unit,
     val onNext: () -> Unit,
@@ -122,15 +120,7 @@ internal fun MiniPlayer(
                     overflow = TextOverflow.Ellipsis,
                 )
                 // In a queue its position takes the state's place: the play button already shows it
-                val status = queue?.label ?: stringResource(if (state.isPaused) Res.string.history_paused else Res.string.history_playing)
-                SectionLabel(
-                    text =
-                        stringResource(
-                            Res.string.history_player_subtitle,
-                            stringResource(Res.string.channel_name, message.channelId),
-                            status,
-                        ),
-                )
+                SectionLabel(text = state.subtitle.asString())
             }
             PlayButton(isPlaying = !state.isPaused, isActive = true, onClick = actions.onPlayPause, size = PlayerControlSize)
         }
@@ -179,8 +169,8 @@ private fun PlaybackControls(
     )
     val shownMs = dragFraction?.let { (it * totalMs).toLong() } ?: state.position?.positionMs ?: 0L
     Row {
-        TimeLabel(formatPosition(shownMs), Modifier.weight(1f))
-        TimeLabel(formatDuration(totalMs))
+        TimeLabel(positionText(shownMs), Modifier.weight(1f))
+        TimeLabel(durationText(totalMs))
     }
     TransportRow(shownMs = shownMs, speed = state.speed, queue = queue, actions = actions)
 }
@@ -220,7 +210,7 @@ private fun TransportRow(
             Icon(Icons.Default.Replay5, contentDescription = stringResource(Res.string.history_back_5))
         }
         TextButton(onClick = actions.onCycleSpeed) {
-            Text(formatSpeed(speed), style = MaterialTheme.typography.labelLarge, maxLines = 1)
+            Text(speedText(speed).asString(), style = MaterialTheme.typography.labelLarge, maxLines = 1)
         }
         IconButton(onClick = { actions.onSeek(shownMs + SEEK_STEP_MS) }) {
             Icon(Icons.Default.Forward5, contentDescription = stringResource(Res.string.history_forward_5))
@@ -265,27 +255,4 @@ private fun SeekBar(
             )
         },
     )
-}
-
-/** "1×", "1,5×", "2×". */
-@Composable
-private fun formatSpeed(speed: Float): String {
-    val number =
-        if (speed % 1f ==
-            0f
-        ) {
-            speed.toInt().toString()
-        } else {
-            speed.toString().replace(".", stringResource(Res.string.decimal_separator))
-        }
-    return stringResource(Res.string.history_speed, number)
-}
-
-internal fun formatDuration(durationMs: Long): String = formatPosition((durationMs / MS_PER_SECOND).coerceAtLeast(1) * MS_PER_SECOND)
-
-/** Like [formatDuration], but an elapsed time of zero shows as `0:00` instead of being rounded up. */
-private fun formatPosition(positionMs: Long): String {
-    val totalSeconds = positionMs / MS_PER_SECOND
-    val seconds = (totalSeconds % SECONDS_PER_MINUTE).toString().padStart(2, '0')
-    return "${totalSeconds / SECONDS_PER_MINUTE}:$seconds"
 }

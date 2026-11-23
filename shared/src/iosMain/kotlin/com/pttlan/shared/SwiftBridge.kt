@@ -2,13 +2,17 @@ package com.pttlan.shared
 
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
+import com.pttlan.core.designsystem.UiText
 import com.pttlan.core.designsystem.components.PttButtonState
 import com.pttlan.core.designsystem.components.accessibilityLabel
 import com.pttlan.core.designsystem.generated.resources.Res
 import com.pttlan.core.designsystem.generated.resources.allPluralStringResources
 import com.pttlan.core.designsystem.generated.resources.allStringResources
+import com.pttlan.core.designsystem.resolve
 import com.pttlan.core.designsystem.resolveString
 import com.pttlan.core.navigation.RootComponent
+import com.pttlan.domain.ptt.model.VoiceMessage
+import com.pttlan.feature.history.messageStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -56,3 +60,13 @@ fun createRootComponent(): RootComponent = RootComponent(componentContext = Defa
 
 /** What a screen reader says for the PTT button in [state], the same as on the Compose button. */
 fun pttButtonLabel(state: PttButtonState): StringResource = state.accessibilityLabel()
+
+/** Text of a [UiText] a rule decided, e.g. a history message's status with its nested plural. */
+suspend fun text(uiText: UiText): String = uiText.resolve()
+
+/** [messageStatus] at the current time and time zone: Swift does not see Kotlin's default arguments. */
+fun historyMessageStatus(
+    message: VoiceMessage,
+    isPlaying: Boolean,
+    isPaused: Boolean,
+): UiText = messageStatus(message, isPlaying, isPaused)
