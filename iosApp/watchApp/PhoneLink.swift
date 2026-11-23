@@ -1,0 +1,83 @@
+import Foundation
+import WatchConnectivity
+
+/// The watch side of the remote (33.2): the iPhone's latest state, whether the iPhone can be reached, and the
+/// commands the screens send it. The state only ever comes from the iPhone app running now (its messages and its
+/// reply to `sync`): a saved one could show a connection from an iPhone app closed since, and let the user tap it.
+final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
+    @Published private(set) var state = PhoneState()
+    @Published private(set) var isReachable = false
+    private var syncTimeout: DispatchWorkItem?
+    private let syncDeadline: TimeInterval = 5
+
+    override init() {
+        super.init()
+        guard WCSession.isSupported() else { return }
+        WCSession.default.delegate = self
+        WCSession.default.activate()
+    }
+
+    func press() { send([WatchKeys.command: WatchKeys.press]) }
+
+    func release() { send([WatchKeys.command: WatchKeys.release]) }
+
+    func leave() { send([WatchKeys.command: WatchKeys.leave]) }
+
+    func join(_ channel: String) { send([WatchKeys.command: WatchKeys.join, WatchKeys.channel: channel]) }
+
+    /// Asks for the iPhone's state now, when the watch app opens or the iPhone comes back in range: the saved one
+    /// may be from an iPhone app that has been closed since.
+    func sync() {
+        guard WCSession.default.isReachable else { return }
+        syncTimeout?.cancel()
+        // The session's own error comes only after minutes: without an answer by then, the iPhone is out of reach
+        // and it is asked again until it answers, while this app is open
+        let timeout = DispatchWorkItem {
+            self.isReachable = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + self.syncDeadline) { self.sync() }
+        }
+        syncTimeout = timeout
+        DispatchQueue.main.asyncAfter(deadline: .now() + syncDeadline, execute: timeout)
+        WCSession.default.sendMessage([WatchKeys.command: WatchKeys.sync], replyHandler: { reply in
+            DispatchQueue.main.async {
+                timeout.cancel()
+                self.state = PhoneState(message: reply)
+                self.isReachable = true
+            }
+        }, errorHandler: lostPhone)
+    }
+
+    /// Sent only while the iPhone answers: a command that arrives late (a press after the release) does more harm
+    /// than one that never arrives, and the screens disable themselves meanwhile (33.4). No reply: the state after
+    /// the command comes in the iPhone's next message, and a reply made before it applied would undo it here.
+    private func send(_ command: [String: Any]) {
+        guard WCSession.default.isReachable else { return }
+        WCSession.default.sendMessage(command, replyHandler: nil, errorHandler: lostPhone)
+    }
+
+    /// A message that did not get through means the iPhone is out of reach, even while the session still says it is
+    /// reachable (it lags, and the simulator never updates it): the screens disable themselves until a `sync` answers.
+    private func lostPhone(_ error: Error) {
+        DispatchQueue.main.async { self.isReachable = false }
+    }
+
+    func session(_ session: WCSession, activationDidCompleteWith state: WCSessionActivationState, error: Error?) {
+        let reachable = session.isReachable
+        DispatchQueue.main.async {
+            self.isReachable = reachable
+            self.sync()
+        }
+    }
+
+    func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
+        DispatchQueue.main.async { self.state = PhoneState(message: message) }
+    }
+
+    func sessionReachabilityDidChange(_ session: WCSession) {
+        let reachable = session.isReachable
+        DispatchQueue.main.async {
+            self.isReachable = reachable
+            self.sync()
+        }
+    }
+}

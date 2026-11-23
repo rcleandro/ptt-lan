@@ -233,10 +233,13 @@ jobs:
         run: cd iosApp && xcodegen
       - name: Run iOS Simulator Unit Tests
         run: ./gradlew iosSimulatorArm64Test
-      - name: Build iOS App
+      # Builds the embedded watch app too (33.5): a destination instead of -sdk lets each target use its own SDK
+      - name: Build iOS and watchOS Apps
         run: |
           cd iosApp
-          xcodebuild -project iosApp.xcodeproj -scheme iosApp -configuration Debug -sdk iphonesimulator -arch arm64 -derivedDataPath build build
+          xcodebuild -project iosApp.xcodeproj -scheme iosApp -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' ARCHS=arm64 -derivedDataPath build build
+          test -d "build/Build/Products/Debug-iphonesimulator/PTT-LAN.app/Watch/PTT-LAN.app"
       # The UI tests connect, talk and replay against a real server (32.5); it keeps running for the next steps
       - name: Start PTT Server
         run: |

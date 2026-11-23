@@ -1,0 +1,194 @@
+{
+  "sourceLanguage": "pt-BR",
+  "strings": {
+    "channel_card_people": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt-BR": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%1$lld pessoa"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%1$lld pessoas"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "channels_title": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canais"
+          }
+        }
+      }
+    },
+    "ptt_button_idle": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Falar: segure para transmitir"
+          }
+        }
+      }
+    },
+    "ptt_button_receiving": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canal ocupado: aguarde para falar"
+          }
+        }
+      }
+    },
+    "ptt_button_requesting": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pedindo a palavra: solte para cancelar"
+          }
+        }
+      }
+    },
+    "ptt_button_transmitting": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transmitindo: solte para encerrar"
+          }
+        }
+      }
+    },
+    "ptt_channel_busy": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canal ocupado"
+          }
+        }
+      }
+    },
+    "ptt_someone": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alguém"
+          }
+        }
+      }
+    },
+    "ptt_status_free_headline": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Segure para falar"
+          }
+        }
+      }
+    },
+    "watch_connect_on_iphone": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abra o PTT-LAN no iPhone e conecte a um servidor"
+          }
+        }
+      }
+    },
+    "watch_no_channels": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nenhuma sala ativa"
+          }
+        }
+      }
+    },
+    "watch_phone_unreachable": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone fora de alcance"
+          }
+        }
+      }
+    },
+    "wear_leave": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sair"
+          }
+        }
+      }
+    },
+    "wear_receiving": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ falando"
+          }
+        }
+      }
+    },
+    "wear_requesting": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pedindo a vez…"
+          }
+        }
+      }
+    },
+    "wear_talking": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Falando…"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

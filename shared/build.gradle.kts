@@ -45,11 +45,16 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
         }
+        // WatchStringsTest reads the watch's string catalog (JSON)
+        jvmTest.dependencies {
+            implementation(libs.kotlinx.serialization.json)
+        }
     }
 }
 
-// SwiftStringKeysTest reads the Swift screens: without this, editing only Swift would leave the test up to date
+// SwiftStringKeysTest and WatchPaletteTest read the Swift sources: without this, editing only Swift would leave the test up to date
 tasks.named<Test>("jvmTest") {
     inputs.dir(rootDir.resolve("iosApp/iosApp")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir(rootDir.resolve("iosApp/watchApp")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(rootDir.resolve("core/core-designsystem/src/commonMain/composeResources/values/strings.xml"))
 }
