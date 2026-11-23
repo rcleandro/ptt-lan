@@ -30,10 +30,28 @@ struct RootView: View {
         ZStack {
             ComposeRootView(root: root).ignoresSafeArea()
             if MainViewControllerKt.isNativeScreen(child: active) {
-                PttThemed(model: theme) { nativeScreen(active) }
-                    .id(ObjectIdentifier(active))
+                GeometryReader { geometry in
+                    PttThemed(model: theme) {
+                        HStack(spacing: 0) {
+                            // iPad: the channel list, still alive under the open channel, stays beside it (27.2)
+                            if let channels = channelsBeside(active, width: geometry.size.width) {
+                                ChannelListView(component: channels.component, root: root)
+                                    .frame(width: PttTheme.dimens.channelPaneWidth)
+                                    .id(ObjectIdentifier(channels))
+                            }
+                            nativeScreen(active)
+                                .id(ObjectIdentifier(active))
+                        }
+                    }
+                }
             }
         }
+    }
+
+    /// The channel list under the open channel, when the window is wide enough to show both, like the Compose root.
+    private func channelsBeside(_ active: RootComponentChild, width: CGFloat) -> RootComponentChildChannelListChild? {
+        guard active is RootComponentChildPttChild, width >= PttTheme.dimens.expandedWidth else { return nil }
+        return stack.value.backStack.last?.instance as? RootComponentChildChannelListChild
     }
 
     /// The SwiftUI screen for [child]; `isNativeScreen` (Kotlin) says which ones exist.

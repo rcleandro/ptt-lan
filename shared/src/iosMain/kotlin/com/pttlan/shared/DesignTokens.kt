@@ -2,6 +2,8 @@ package com.pttlan.shared
 
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
+import com.pttlan.core.designsystem.components.ChannelPaneWidth
+import com.pttlan.core.designsystem.components.ExpandedWidth
 import com.pttlan.core.designsystem.theme.AccentTxDark
 import com.pttlan.core.designsystem.theme.AccentTxGlowDark
 import com.pttlan.core.designsystem.theme.AccentTxGlowLight
@@ -121,6 +123,8 @@ object SwiftDimens {
     val space2xl: Double = Dimens.Space2xl.points
     val glassControl: Double = Dimens.GlassControl.points
     val touchTarget: Double = Dimens.TouchTarget.points
+    val expandedWidth: Double = ExpandedWidth.points
+    val channelPaneWidth: Double = ChannelPaneWidth.points
 }
 
 /** One dp is one point on iOS. */

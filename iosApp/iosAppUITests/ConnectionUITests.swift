@@ -71,6 +71,35 @@ final class ConnectionUITests: XCTestCase {
         app.buttons["leave"].tap()
     }
 
+    /// Only on a wide screen (iPad) where a server answers: the channel list stays beside the open channel (27.2), and
+    /// back leaves the list alone.
+    func testOnAWideScreenTheChannelListStaysBesideTheChannel() throws {
+        let wideScreen: CGFloat = 840 // ExpandedWidth in the design system
+        guard app.windows.firstMatch.frame.width >= wideScreen else {
+            throw XCTSkip("the screen is too narrow for two panes")
+        }
+        type("Teste UI", into: app.textFields["nickname"])
+        let server = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'PTT-LAN'")).firstMatch
+        guard server.waitForExistence(timeout: 8) else {
+            throw XCTSkip("no PTT-LAN server found on this network")
+        }
+        server.tap()
+        let channel = app.buttons["channel-Geral"]
+        XCTAssertTrue(channel.waitForExistence(timeout: 15))
+        channel.tap()
+
+        XCTAssertTrue(app.buttons["ptt"].waitForExistence(timeout: 10), "the channel should open the PTT screen")
+        XCTAssertTrue(channel.isHittable, "the channel list should stay beside the channel")
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "side-by-side"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+
+        app.buttons["backToChannels"].tap()
+        XCTAssertTrue(app.buttons["ptt"].waitForNonExistence(timeout: 10), "back should close the channel")
+        app.buttons["leave"].tap()
+    }
+
     private func type(_ text: String, into field: XCUIElement) {
         XCTAssertTrue(field.waitForExistence(timeout: 10))
         field.tap()

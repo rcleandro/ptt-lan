@@ -19,11 +19,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.slide
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
+import com.pttlan.core.designsystem.components.ChannelPaneWidth
 import com.pttlan.core.designsystem.components.ExpandedWidth
 import com.pttlan.core.designsystem.components.snackbar.PttSnackbarHost
 import com.pttlan.core.designsystem.components.snackbar.PttSnackbarType
@@ -34,8 +34,6 @@ import com.pttlan.feature.connection.ConnectionScreen
 import com.pttlan.feature.history.HistoryScreen
 import com.pttlan.feature.ptt.PttScreen
 import com.pttlan.feature.settings.SettingsScreen
-
-private val ChannelPaneWidth = 360.dp
 
 /**
  * App root: applies the theme and hosts the screens. Each screen draws its own floating glass
