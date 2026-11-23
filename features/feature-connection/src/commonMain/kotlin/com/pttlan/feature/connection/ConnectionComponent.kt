@@ -2,18 +2,19 @@ package com.pttlan.feature.connection
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
-import com.pttlan.core.common.DEFAULT_SERVER_PORT
 import com.pttlan.core.common.HOSTED_ROOM_PREFIX
 import com.pttlan.core.common.MIN_ROOM_PIN_LENGTH
 import com.pttlan.core.common.RoomPinRejectedException
 import com.pttlan.core.common.ServerCertificateChangedException
 import com.pttlan.core.common.TooManyAttemptsException
 import com.pttlan.core.common.network.isLocalNetwork
+import com.pttlan.core.common.network.parseHostAndPort
 import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.core.designsystem.generated.resources.Res
 import com.pttlan.core.designsystem.generated.resources.connection_disconnected
 import com.pttlan.core.designsystem.generated.resources.connection_error_failed
 import com.pttlan.core.designsystem.generated.resources.connection_error_host
+import com.pttlan.core.designsystem.generated.resources.connection_error_invalid_address
 import com.pttlan.core.designsystem.generated.resources.connection_error_nickname
 import com.pttlan.core.designsystem.generated.resources.connection_error_pin_too_short
 import com.pttlan.core.designsystem.generated.resources.connection_error_timeout_discovered
@@ -240,11 +241,16 @@ class ConnectionComponent(
 
     private fun connectToManualIp(ip: String) {
         settings.putString(SettingsKeys.MANUAL_IP, _state.value.manualIp)
+        val address = parseHostAndPort(ip)
+        if (address == null) {
+            scope.launch { _effects.send(ConnectionEffect.ShowError(Res.string.connection_error_invalid_address)) }
+            return
+        }
         val endpoint =
             ServerEndpoint(
-                host = ip,
-                port = DEFAULT_SERVER_PORT,
-                isLocal = isLocalNetwork(ip),
+                host = address.host,
+                port = address.port,
+                isLocal = isLocalNetwork(address.host),
             )
         connect(endpoint, Res.string.connection_error_timeout_manual)
     }

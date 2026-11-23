@@ -40,7 +40,8 @@
     <string name="connection_server_lan">LAN</string>
     <string name="connection_server_web">WEB</string>
     <string name="connection_manual">Conectar manualmente</string>
-    <string name="connection_manual_hint">IP ou domínio</string>
+    <string name="connection_manual_hint">IP ou domínio (:porta opcional)</string>
+    <string name="connection_error_invalid_address">Endereço inválido. Use IP, domínio ou endereço:porta (1 a 65535).</string>
     <string name="connection_connect">Conectar</string>
     <string name="connection_error_timeout_discovered">Tempo de conexão excedido. O servidor está offline?</string>
     <string name="connection_error_timeout_manual">Tempo de conexão excedido. Verifique o IP e tente novamente.</string>

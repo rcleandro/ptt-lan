@@ -17,3 +17,6 @@ const val MAX_CHANNEL_NAME_LENGTH = 40
 
 /** Most channels a server keeps open at once, so nobody floods everybody's list (30.10). */
 const val MAX_CHANNELS = 50
+
+/** Port the app connects to on an internet host when none is given: HTTPS's, the one reverse proxies and tunnels serve. */
+const val DEFAULT_INTERNET_PORT = 443
