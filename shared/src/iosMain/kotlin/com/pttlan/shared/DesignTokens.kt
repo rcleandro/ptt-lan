@@ -19,6 +19,8 @@ import com.pttlan.core.designsystem.theme.PrimaryDark
 import com.pttlan.core.designsystem.theme.PrimaryGlowDark
 import com.pttlan.core.designsystem.theme.PrimaryGlowLight
 import com.pttlan.core.designsystem.theme.PrimaryLight
+import com.pttlan.core.designsystem.theme.StatusIdleDark
+import com.pttlan.core.designsystem.theme.StatusIdleLight
 import com.pttlan.core.designsystem.theme.StatusOfflineDark
 import com.pttlan.core.designsystem.theme.StatusOfflineLight
 import com.pttlan.core.designsystem.theme.StatusOnlineDark
@@ -46,6 +48,7 @@ class SwiftPalette internal constructor(
     val accentTx: Int,
     val statusOnline: Int,
     val statusOffline: Int,
+    val statusIdle: Int,
 )
 
 private val DarkPalette =
@@ -62,6 +65,7 @@ private val DarkPalette =
         accentTx = AccentTxDark.toArgb(),
         statusOnline = StatusOnlineDark.toArgb(),
         statusOffline = StatusOfflineDark.toArgb(),
+        statusIdle = StatusIdleDark.toArgb(),
     )
 
 private val LightPalette =
@@ -78,6 +82,7 @@ private val LightPalette =
         accentTx = AccentTxLight.toArgb(),
         statusOnline = StatusOnlineLight.toArgb(),
         statusOffline = StatusOfflineLight.toArgb(),
+        statusIdle = StatusIdleLight.toArgb(),
     )
 
 fun swiftPalette(dark: Boolean): SwiftPalette = if (dark) DarkPalette else LightPalette
@@ -103,6 +108,8 @@ object SwiftDimens {
     val spaceMd: Double = Dimens.SpaceMd.points
     val spaceLg: Double = Dimens.SpaceLg.points
     val spaceXl: Double = Dimens.SpaceXl.points
+    val space2xl: Double = Dimens.Space2xl.points
+    val glassControl: Double = Dimens.GlassControl.points
     val touchTarget: Double = Dimens.TouchTarget.points
 }
 

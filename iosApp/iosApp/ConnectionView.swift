@@ -38,9 +38,6 @@ final class ConnectionModel: ObservableObject {
     }
 }
 
-/// The address field sits in a darker well inside the glass dock, so it reads as a field and not as more glass.
-private let fieldWellOpacity = 0.6
-
 /// Connection screen in SwiftUI (32.1), over the same `ConnectionComponent` as the Compose one.
 struct ConnectionView: View {
     let root: RootComponent

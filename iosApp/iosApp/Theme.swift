@@ -15,6 +15,9 @@ extension Color {
     }
 }
 
+/// A text field sits in a darker well inside a glass dock, so it reads as a field and not as more glass.
+let fieldWellOpacity = 0.6
+
 /// The design system for SwiftUI screens: the same palette, radii and spacings as Compose (ADR 0006, 32.3).
 struct PttTheme {
     let palette: SwiftPalette
@@ -29,6 +32,8 @@ struct PttTheme {
     var primary: Color { Color(argb: palette.primary) }
     var primaryGlow: Color { Color(argb: palette.primaryGlow) }
     var statusOnline: Color { Color(argb: palette.statusOnline) }
+    var statusOffline: Color { Color(argb: palette.statusOffline) }
+    var statusIdle: Color { Color(argb: palette.statusIdle) }
 
     static let dimens = SwiftDimens.shared
 }

@@ -29,13 +29,11 @@ import com.pttlan.core.designsystem.components.snackbar.PttSnackbarHost
 import com.pttlan.core.designsystem.components.snackbar.PttSnackbarType
 import com.pttlan.core.designsystem.components.snackbar.SnackbarController
 import com.pttlan.core.designsystem.theme.PttTheme
-import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.feature.channellist.ChannelListScreen
 import com.pttlan.feature.connection.ConnectionScreen
 import com.pttlan.feature.history.HistoryScreen
 import com.pttlan.feature.ptt.PttScreen
 import com.pttlan.feature.settings.SettingsScreen
-import com.pttlan.core.designsystem.components.ConnectionStatus as BadgeStatus
 
 private val ChannelPaneWidth = 360.dp
 
@@ -67,12 +65,7 @@ private fun RootContent(
     val childStack by component.childStack.subscribeAsState()
     val isCacheEnabled by component.isCacheEnabled.collectAsState()
     val connectionStatus by component.connectionStatus.collectAsState()
-    val badgeStatus =
-        when (connectionStatus) {
-            ConnectionStatus.Connected -> BadgeStatus.Online
-            ConnectionStatus.Connecting, ConnectionStatus.Reconnecting -> BadgeStatus.Reconnecting
-            ConnectionStatus.Disconnected -> BadgeStatus.Offline
-        }
+    val badgeStatus = badgeStatus(connectionStatus)
     val snackbarHostState = remember { SnackbarHostState() }
     var snackbarType by remember { mutableStateOf(PttSnackbarType.Generic) }
     val openHistory = if (isCacheEnabled) component::navigateToHistory else null

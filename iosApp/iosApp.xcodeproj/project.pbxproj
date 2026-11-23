@@ -14,6 +14,8 @@
 		6F34C72B8056938C3B931C12 /* ConnectionUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3573C217B14BC618571EA50 /* ConnectionUITests.swift */; };
 		78DA78A5874AE433AA7F5542 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5ADDE3F251BC82A237A5022 /* Theme.swift */; };
 		8742905C805C34453197DD21 /* ConnectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41A1EB0B500B405A1985274 /* ConnectionView.swift */; };
+		9BB844B7551672B779292647 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DC6FD1B8D41DDE5AE2A442B /* Components.swift */; };
+		E93F3DA5A78951A9B6F7EF24 /* ChannelListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75410908D79FE6ED50CD7D87 /* ChannelListView.swift */; };
 		F7C33B50A94DA01F2E82C280 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 245434685F34A9A15B1AC406 /* libsqlite3.tbd */; };
 		FFF93642A27B8411D7A8E6BE /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2925723D1B4AC9FBF45C9F3F /* RootView.swift */; };
 /* End PBXBuildFile section */
@@ -34,7 +36,9 @@
 		323906AFB18147ABEDEBDB38 /* iosAppUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = iosAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		668CECA83ACC03A83C85A623 /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
 		6F014C83FDDBC68304D230E9 /* shared.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = shared.framework; path = "${SRCROOT}/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)/shared.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		75410908D79FE6ED50CD7D87 /* ChannelListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelListView.swift; sourceTree = "<group>"; };
 		86038AE1032E284E79B32AD6 /* iosApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9DC6FD1B8D41DDE5AE2A442B /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		A5ADDE3F251BC82A237A5022 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		B41A1EB0B500B405A1985274 /* ConnectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionView.swift; sourceTree = "<group>"; };
 		C117AD187833E2513BD2F553 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -60,6 +64,8 @@
 			isa = PBXGroup;
 			children = (
 				F543015C899423D4B01CEB2E /* Assets.xcassets */,
+				75410908D79FE6ED50CD7D87 /* ChannelListView.swift */,
+				9DC6FD1B8D41DDE5AE2A442B /* Components.swift */,
 				B41A1EB0B500B405A1985274 /* ConnectionView.swift */,
 				C117AD187833E2513BD2F553 /* Info.plist */,
 				668CECA83ACC03A83C85A623 /* iOSApp.swift */,
@@ -226,6 +232,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E93F3DA5A78951A9B6F7EF24 /* ChannelListView.swift in Sources */,
+				9BB844B7551672B779292647 /* Components.swift in Sources */,
 				8742905C805C34453197DD21 /* ConnectionView.swift in Sources */,
 				660DD10CBCACF4429C371931 /* KotlinBridge.swift in Sources */,
 				FFF93642A27B8411D7A8E6BE /* RootView.swift in Sources */,

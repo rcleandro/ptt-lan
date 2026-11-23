@@ -16,6 +16,7 @@ kotlin {
             // Types the SwiftUI screens use, under their own names instead of prefixed ones (32.1)
             export(projects.core.coreNavigation)
             export(projects.features.featureConnection)
+            export(projects.features.featureChannelList)
             export(projects.domain.domainPtt)
             export(libs.decompose)
         }
@@ -27,9 +28,9 @@ kotlin {
             implementation(projects.core.coreDesignsystem)
             api(projects.core.coreNavigation)
             api(projects.features.featureConnection)
+            api(projects.features.featureChannelList)
             api(projects.domain.domainPtt)
             api(libs.decompose)
-            implementation(projects.features.featureChannelList)
             implementation(projects.features.featurePtt)
             implementation(projects.features.featureHistory)
             implementation(projects.features.featureSettings)

@@ -25,9 +25,9 @@ final class ConnectionUITests: XCTestCase {
         XCTAssertTrue(app.textFields["manualAddress"].exists, "an invalid address must not leave the screen")
     }
 
-    /// Only where a server answers on the network (not on CI): connecting hands over to the channel list, still in
-    /// Compose, through the shared navigation root.
-    func testConnectingToAServerOnTheNetworkOpensTheChannelList() throws {
+    /// Only where a server answers on the network (not on CI): connecting opens the channel list with the server's
+    /// default channel, and leaving goes back to this screen, all through the shared navigation root.
+    func testConnectingListsTheChannelsAndLeavingComesBack() throws {
         type("Teste UI", into: app.textFields["nickname"])
         let server = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'PTT-LAN'")).firstMatch
         guard server.waitForExistence(timeout: 8) else {
@@ -35,7 +35,14 @@ final class ConnectionUITests: XCTestCase {
         }
         server.tap()
 
-        XCTAssertTrue(app.textFields["nickname"].waitForNonExistence(timeout: 15), "the channel list should replace this screen")
+        XCTAssertTrue(app.buttons["channel-Geral"].waitForExistence(timeout: 15), "the channel list should show the default channel")
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "channel-list"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+
+        app.buttons["leave"].tap()
+        XCTAssertTrue(app.textFields["nickname"].waitForExistence(timeout: 10), "leaving should come back to the connection screen")
     }
 
     private func type(_ text: String, into field: XCUIElement) {

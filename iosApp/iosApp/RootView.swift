@@ -29,13 +29,23 @@ struct RootView: View {
         let active = stack.value.active.instance
         ZStack {
             ComposeRootView(root: root).ignoresSafeArea()
-            if MainViewControllerKt.isNativeScreen(child: active),
-               let connection = active as? RootComponentChildConnectionChild {
-                PttThemed(model: theme) {
-                    ConnectionView(component: connection.component, root: root)
-                }
-                .id(ObjectIdentifier(connection.component))
+            if MainViewControllerKt.isNativeScreen(child: active) {
+                PttThemed(model: theme) { nativeScreen(active) }
+                    .id(ObjectIdentifier(active))
             }
+        }
+    }
+
+    /// The SwiftUI screen for [child]; `isNativeScreen` (Kotlin) says which ones exist.
+    @ViewBuilder
+    private func nativeScreen(_ child: RootComponentChild) -> some View {
+        switch child {
+        case let connection as RootComponentChildConnectionChild:
+            ConnectionView(component: connection.component, root: root)
+        case let channels as RootComponentChildChannelListChild:
+            ChannelListView(component: channels.component, root: root)
+        default:
+            EmptyView()
         }
     }
 }
