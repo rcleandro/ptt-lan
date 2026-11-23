@@ -10,6 +10,8 @@
 		0A567656400ACC7B8C647DF7 /* watchApp.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 5BECFF0E49ADFA88E584CB14 /* watchApp.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		22EA1CB33A17DCC6FC82406D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F543015C899423D4B01CEB2E /* Assets.xcassets */; };
 		307C2654CD5972A25FB7FD87 /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 668CECA83ACC03A83C85A623 /* iOSApp.swift */; };
+		319117C5F5FD199FA49BFBFC /* PhoneLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53DDC586FAA9C38CC37CC001 /* PhoneLink.swift */; };
+		341880A8763B787A6022D0C3 /* WatchKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EEDF40EAEDE943262BA3AC7 /* WatchKeys.swift */; };
 		660DD10CBCACF4429C371931 /* KotlinBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = D99AD3DB49A4844CC1A32D42 /* KotlinBridge.swift */; };
 		6C480D7E5FB50456D1A53C94 /* shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F014C83FDDBC68304D230E9 /* shared.framework */; };
 		6DFE4AD2D9B32DFEE5E1239E /* PttView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6EFD1705BE9DD71853EC8FA /* PttView.swift */; };
@@ -19,6 +21,7 @@
 		85DE1BEE63014BBAF8D575AA /* WatchTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AAAB2D5BCA06DAB88A04906 /* WatchTheme.swift */; };
 		8742905C805C34453197DD21 /* ConnectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41A1EB0B500B405A1985274 /* ConnectionView.swift */; };
 		8C709DF8F44919B38BFE8D30 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3697ED1D911C0F0096760B9 /* HistoryView.swift */; };
+		959536FEAA705F42DCDC2150 /* WatchSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70C7011B4E86FD9F40AD9DD3 /* WatchSession.swift */; };
 		9BB844B7551672B779292647 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DC6FD1B8D41DDE5AE2A442B /* Components.swift */; };
 		BC176A83C0F9CCC0CA18F75B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E713B16C0AA6DFFD30001358 /* SettingsView.swift */; };
 		CB0EF950945238B2E30F6269 /* SettingsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46046658C8BE76C5FE2E83D4 /* SettingsUITests.swift */; };
@@ -69,9 +72,12 @@
 		3DF3E660589FF7E0301620F6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		424A0D99668970810882BCC5 /* HistoryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryUITests.swift; sourceTree = "<group>"; };
 		46046658C8BE76C5FE2E83D4 /* SettingsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsUITests.swift; sourceTree = "<group>"; };
+		4EEDF40EAEDE943262BA3AC7 /* WatchKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchKeys.swift; sourceTree = "<group>"; };
+		53DDC586FAA9C38CC37CC001 /* PhoneLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneLink.swift; sourceTree = "<group>"; };
 		5BECFF0E49ADFA88E584CB14 /* watchApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = watchApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		668CECA83ACC03A83C85A623 /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
 		6F014C83FDDBC68304D230E9 /* shared.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = shared.framework; path = "${SRCROOT}/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)/shared.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		70C7011B4E86FD9F40AD9DD3 /* WatchSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSession.swift; sourceTree = "<group>"; };
 		75410908D79FE6ED50CD7D87 /* ChannelListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelListView.swift; sourceTree = "<group>"; };
 		86038AE1032E284E79B32AD6 /* iosApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8FE0B6C902A77A3944F0C052 /* PttWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PttWatchApp.swift; sourceTree = "<group>"; };
@@ -117,6 +123,7 @@
 				2925723D1B4AC9FBF45C9F3F /* RootView.swift */,
 				E713B16C0AA6DFFD30001358 /* SettingsView.swift */,
 				A5ADDE3F251BC82A237A5022 /* Theme.swift */,
+				70C7011B4E86FD9F40AD9DD3 /* WatchSession.swift */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -156,7 +163,9 @@
 			children = (
 				9480292AB6518E14381E4CDD /* Assets.xcassets */,
 				3DF3E660589FF7E0301620F6 /* Info.plist */,
+				53DDC586FAA9C38CC37CC001 /* PhoneLink.swift */,
 				8FE0B6C902A77A3944F0C052 /* PttWatchApp.swift */,
+				4EEDF40EAEDE943262BA3AC7 /* WatchKeys.swift */,
 				1AAAB2D5BCA06DAB88A04906 /* WatchTheme.swift */,
 			);
 			path = watchApp;
@@ -353,6 +362,7 @@
 				FFF93642A27B8411D7A8E6BE /* RootView.swift in Sources */,
 				BC176A83C0F9CCC0CA18F75B /* SettingsView.swift in Sources */,
 				78DA78A5874AE433AA7F5542 /* Theme.swift in Sources */,
+				959536FEAA705F42DCDC2150 /* WatchSession.swift in Sources */,
 				307C2654CD5972A25FB7FD87 /* iOSApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -361,7 +371,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				319117C5F5FD199FA49BFBFC /* PhoneLink.swift in Sources */,
 				FE1B634859B8424725EEB6D0 /* PttWatchApp.swift in Sources */,
+				341880A8763B787A6022D0C3 /* WatchKeys.swift in Sources */,
 				85DE1BEE63014BBAF8D575AA /* WatchTheme.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
