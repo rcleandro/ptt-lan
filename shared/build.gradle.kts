@@ -13,6 +13,11 @@ kotlin {
             baseName = "shared"
             isStatic = true
             freeCompilerArgs += listOf("-Xbinary=bundleId=com.pttlan.shared")
+            // Types the SwiftUI screens use, under their own names instead of prefixed ones (32.1)
+            export(projects.core.coreNavigation)
+            export(projects.features.featureConnection)
+            export(projects.domain.domainPtt)
+            export(libs.decompose)
         }
     }
 
@@ -20,8 +25,10 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.core.coreDi)
             implementation(projects.core.coreDesignsystem)
-            implementation(projects.core.coreNavigation)
-            implementation(projects.features.featureConnection)
+            api(projects.core.coreNavigation)
+            api(projects.features.featureConnection)
+            api(projects.domain.domainPtt)
+            api(libs.decompose)
             implementation(projects.features.featureChannelList)
             implementation(projects.features.featurePtt)
             implementation(projects.features.featureHistory)
@@ -35,5 +42,15 @@ kotlin {
             implementation(libs.decompose)
             implementation(libs.decompose.extensions.compose)
         }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
+        }
     }
+}
+
+// SwiftStringKeysTest reads the Swift screens: without this, editing only Swift would leave the test up to date
+tasks.named<Test>("jvmTest") {
+    inputs.dir(rootDir.resolve("iosApp/iosApp")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(rootDir.resolve("core/core-designsystem/src/commonMain/composeResources/values/strings.xml"))
 }

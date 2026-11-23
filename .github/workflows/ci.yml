@@ -237,6 +237,12 @@ jobs:
         run: |
           cd iosApp
           xcodebuild -project iosApp.xcodeproj -scheme iosApp -configuration Debug -sdk iphonesimulator -arch arm64 -derivedDataPath build build
+      # SwiftUI screens over the Kotlin components (32.1); the test that needs a server on the network skips here
+      - name: Run iOS UI Tests
+        run: |
+          cd iosApp
+          SIMULATOR=$(xcrun simctl list devices available | grep -m1 -E '^ +iPhone' | grep -oE '[0-9A-F-]{36}')
+          xcodebuild -project iosApp.xcodeproj -scheme iosApp -configuration Debug -destination "id=$SIMULATOR" -derivedDataPath build test
       - name: Upload iOS Simulator Build
         if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v7
