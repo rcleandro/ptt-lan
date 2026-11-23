@@ -114,39 +114,57 @@ private fun statusCopy(
     buttonState: PttButtonState,
     speakerName: String?,
 ): Triple<String, Color, String> {
-    val colors = PttTheme.customColors
-    return when (buttonState) {
+    val copy = buttonState.statusCopy()
+    val color =
+        when (copy.tone) {
+            StatusTone.Free -> PttTheme.customColors.statusOnline
+            StatusTone.Own -> PttTheme.customColors.accentTx
+            StatusTone.Receiving -> MaterialTheme.colorScheme.primary
+        }
+    val headline =
+        if (copy.namesSpeaker) {
+            stringResource(copy.headline, speakerName ?: stringResource(Res.string.ptt_someone))
+        } else {
+            stringResource(copy.headline)
+        }
+    return Triple(stringResource(copy.eyebrow), color, headline)
+}
+
+/** Color the status speaks in: green for a free channel, amber for the user's own turn, blue for someone else's. */
+enum class StatusTone { Free, Own, Receiving }
+
+/**
+ * What the status above the button says in each state, shared by the Compose and SwiftUI screens (32.4).
+ * When [namesSpeaker], [headline] takes the speaker's name, or "Alguém" when the server did not send one.
+ */
+data class StatusCopy(
+    val eyebrow: StringResource,
+    val headline: StringResource,
+    val tone: StatusTone,
+    val namesSpeaker: Boolean = false,
+)
+
+fun PttButtonState.statusCopy(): StatusCopy =
+    when (this) {
         PttButtonState.Idle -> {
-            Triple(stringResource(Res.string.ptt_status_free), colors.statusOnline, stringResource(Res.string.ptt_status_free_headline))
+            StatusCopy(Res.string.ptt_status_free, Res.string.ptt_status_free_headline, StatusTone.Free)
         }
 
         PttButtonState.Requesting -> {
-            Triple(
-                stringResource(Res.string.ptt_status_requesting),
-                colors.accentTx,
-                stringResource(Res.string.ptt_status_requesting_headline),
-            )
+            StatusCopy(Res.string.ptt_status_requesting, Res.string.ptt_status_requesting_headline, StatusTone.Own)
         }
 
         PttButtonState.Transmitting -> {
-            Triple(
-                stringResource(Res.string.ptt_status_transmitting),
-                colors.accentTx,
-                stringResource(Res.string.ptt_status_transmitting_headline),
-            )
+            StatusCopy(Res.string.ptt_status_transmitting, Res.string.ptt_status_transmitting_headline, StatusTone.Own)
         }
 
         PttButtonState.Receiving -> {
-            Triple(
-                stringResource(Res.string.ptt_status_receiving),
-                MaterialTheme.colorScheme.primary,
-                stringResource(Res.string.ptt_status_receiving_headline, speakerName ?: stringResource(Res.string.ptt_someone)),
-            )
+            StatusCopy(Res.string.ptt_status_receiving, Res.string.ptt_status_receiving_headline, StatusTone.Receiving, namesSpeaker = true)
         }
     }
-}
 
-internal fun PttButtonState.hint(): StringResource =
+/** Line under the button: what holding or releasing it does now. */
+fun PttButtonState.hint(): StringResource =
     when (this) {
         PttButtonState.Idle -> Res.string.ptt_hint_idle
         PttButtonState.Requesting -> Res.string.ptt_hint_requesting

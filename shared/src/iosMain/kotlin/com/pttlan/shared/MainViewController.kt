@@ -21,4 +21,6 @@ fun MainViewController(root: RootComponent): UIViewController =
 
 /** Screens drawn in SwiftUI, the rest is still Compose: the Swift root asks this too, so both agree. */
 fun isNativeScreen(child: RootComponent.Child): Boolean =
-    child is RootComponent.Child.ConnectionChild || child is RootComponent.Child.ChannelListChild
+    child is RootComponent.Child.ConnectionChild ||
+        child is RootComponent.Child.ChannelListChild ||
+        child is RootComponent.Child.PttChild

@@ -2,6 +2,8 @@ package com.pttlan.shared
 
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
+import com.pttlan.core.designsystem.components.PttButtonState
+import com.pttlan.core.designsystem.components.accessibilityLabel
 import com.pttlan.core.designsystem.generated.resources.Res
 import com.pttlan.core.designsystem.generated.resources.allPluralStringResources
 import com.pttlan.core.designsystem.generated.resources.allStringResources
@@ -51,3 +53,6 @@ suspend fun text(
 
 /** The app's navigation root, shared by the SwiftUI screens and the Compose ones not migrated yet. */
 fun createRootComponent(): RootComponent = RootComponent(componentContext = DefaultComponentContext(lifecycle = LifecycleRegistry()))
+
+/** What a screen reader says for the PTT button in [state], the same as on the Compose button. */
+fun pttButtonLabel(state: PttButtonState): StringResource = state.accessibilityLabel()

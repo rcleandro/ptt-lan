@@ -31,6 +31,10 @@ struct PttTheme {
     var textTertiary: Color { Color(argb: palette.textTertiary) }
     var primary: Color { Color(argb: palette.primary) }
     var primaryGlow: Color { Color(argb: palette.primaryGlow) }
+    var onPrimary: Color { Color(argb: palette.onPrimary) }
+    var accentTx: Color { Color(argb: palette.accentTx) }
+    var accentTxGlow: Color { Color(argb: palette.accentTxGlow) }
+    var onAccentTx: Color { Color(argb: palette.onAccentTx) }
     var statusOnline: Color { Color(argb: palette.statusOnline) }
     var statusOffline: Color { Color(argb: palette.statusOffline) }
     var statusIdle: Color { Color(argb: palette.statusIdle) }

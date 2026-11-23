@@ -31,11 +31,6 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.pttlan.core.designsystem.generated.resources.Res
-import com.pttlan.core.designsystem.generated.resources.ptt_button_idle
-import com.pttlan.core.designsystem.generated.resources.ptt_button_receiving
-import com.pttlan.core.designsystem.generated.resources.ptt_button_requesting
-import com.pttlan.core.designsystem.generated.resources.ptt_button_transmitting
 import com.pttlan.core.designsystem.theme.Dimens
 import com.pttlan.core.designsystem.theme.PttTheme
 import org.jetbrains.compose.resources.stringResource
@@ -91,13 +86,7 @@ fun PttButton(
             PttButtonState.Receiving -> colors.iconOnPrimary
         },
     )
-    val label =
-        when (state) {
-            PttButtonState.Idle -> stringResource(Res.string.ptt_button_idle)
-            PttButtonState.Requesting -> stringResource(Res.string.ptt_button_requesting)
-            PttButtonState.Transmitting -> stringResource(Res.string.ptt_button_transmitting)
-            PttButtonState.Receiving -> stringResource(Res.string.ptt_button_receiving)
-        }
+    val label = stringResource(state.accessibilityLabel())
     val lens =
         LensColors(
             idleHighlight = colors.glassHighlight,

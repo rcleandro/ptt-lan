@@ -11,6 +11,7 @@
 		307C2654CD5972A25FB7FD87 /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 668CECA83ACC03A83C85A623 /* iOSApp.swift */; };
 		660DD10CBCACF4429C371931 /* KotlinBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = D99AD3DB49A4844CC1A32D42 /* KotlinBridge.swift */; };
 		6C480D7E5FB50456D1A53C94 /* shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F014C83FDDBC68304D230E9 /* shared.framework */; };
+		6DFE4AD2D9B32DFEE5E1239E /* PttView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6EFD1705BE9DD71853EC8FA /* PttView.swift */; };
 		6F34C72B8056938C3B931C12 /* ConnectionUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3573C217B14BC618571EA50 /* ConnectionUITests.swift */; };
 		78DA78A5874AE433AA7F5542 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5ADDE3F251BC82A237A5022 /* Theme.swift */; };
 		8742905C805C34453197DD21 /* ConnectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41A1EB0B500B405A1985274 /* ConnectionView.swift */; };
@@ -41,6 +42,7 @@
 		9DC6FD1B8D41DDE5AE2A442B /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		A5ADDE3F251BC82A237A5022 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		B41A1EB0B500B405A1985274 /* ConnectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionView.swift; sourceTree = "<group>"; };
+		B6EFD1705BE9DD71853EC8FA /* PttView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PttView.swift; sourceTree = "<group>"; };
 		C117AD187833E2513BD2F553 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		D99AD3DB49A4844CC1A32D42 /* KotlinBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KotlinBridge.swift; sourceTree = "<group>"; };
 		F3573C217B14BC618571EA50 /* ConnectionUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionUITests.swift; sourceTree = "<group>"; };
@@ -70,6 +72,7 @@
 				C117AD187833E2513BD2F553 /* Info.plist */,
 				668CECA83ACC03A83C85A623 /* iOSApp.swift */,
 				D99AD3DB49A4844CC1A32D42 /* KotlinBridge.swift */,
+				B6EFD1705BE9DD71853EC8FA /* PttView.swift */,
 				2925723D1B4AC9FBF45C9F3F /* RootView.swift */,
 				A5ADDE3F251BC82A237A5022 /* Theme.swift */,
 			);
@@ -236,6 +239,7 @@
 				9BB844B7551672B779292647 /* Components.swift in Sources */,
 				8742905C805C34453197DD21 /* ConnectionView.swift in Sources */,
 				660DD10CBCACF4429C371931 /* KotlinBridge.swift in Sources */,
+				6DFE4AD2D9B32DFEE5E1239E /* PttView.swift in Sources */,
 				FFF93642A27B8411D7A8E6BE /* RootView.swift in Sources */,
 				78DA78A5874AE433AA7F5542 /* Theme.swift in Sources */,
 				307C2654CD5972A25FB7FD87 /* iOSApp.swift in Sources */,

@@ -45,6 +45,32 @@ final class ConnectionUITests: XCTestCase {
         XCTAssertTrue(app.textFields["nickname"].waitForExistence(timeout: 10), "leaving should come back to the connection screen")
     }
 
+    /// Only where a server answers on the network (not on CI), with the microphone already allowed: the SwiftUI PTT
+    /// screen opens from the list, holding the lens talks, and back returns to the list.
+    func testTheChannelOpensThePttScreenAndHoldingTheLensTalks() throws {
+        type("Teste UI", into: app.textFields["nickname"])
+        let server = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'PTT-LAN'")).firstMatch
+        guard server.waitForExistence(timeout: 8) else {
+            throw XCTSkip("no PTT-LAN server found on this network")
+        }
+        server.tap()
+        let channel = app.buttons["channel-Geral"]
+        XCTAssertTrue(channel.waitForExistence(timeout: 15))
+        channel.tap()
+
+        let lens = app.buttons["ptt"]
+        XCTAssertTrue(lens.waitForExistence(timeout: 10), "the channel should open the PTT screen")
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "ptt"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+        lens.press(forDuration: 1)
+
+        app.buttons["backToChannels"].tap()
+        XCTAssertTrue(app.buttons["channel-Geral"].waitForExistence(timeout: 10), "back should return to the channel list")
+        app.buttons["leave"].tap()
+    }
+
     private func type(_ text: String, into field: XCUIElement) {
         XCTAssertTrue(field.waitForExistence(timeout: 10))
         field.tap()

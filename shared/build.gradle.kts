@@ -17,6 +17,7 @@ kotlin {
             export(projects.core.coreNavigation)
             export(projects.features.featureConnection)
             export(projects.features.featureChannelList)
+            export(projects.features.featurePtt)
             export(projects.domain.domainPtt)
             export(libs.decompose)
         }
@@ -29,9 +30,9 @@ kotlin {
             api(projects.core.coreNavigation)
             api(projects.features.featureConnection)
             api(projects.features.featureChannelList)
+            api(projects.features.featurePtt)
             api(projects.domain.domainPtt)
             api(libs.decompose)
-            implementation(projects.features.featurePtt)
             implementation(projects.features.featureHistory)
             implementation(projects.features.featureSettings)
             implementation(libs.runtime)

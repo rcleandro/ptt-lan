@@ -3,6 +3,8 @@ package com.pttlan.shared
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
 import com.pttlan.core.designsystem.theme.AccentTxDark
+import com.pttlan.core.designsystem.theme.AccentTxGlowDark
+import com.pttlan.core.designsystem.theme.AccentTxGlowLight
 import com.pttlan.core.designsystem.theme.AccentTxLight
 import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.core.designsystem.theme.BgDark
@@ -12,6 +14,8 @@ import com.pttlan.core.designsystem.theme.BorderLight
 import com.pttlan.core.designsystem.theme.CardRadius
 import com.pttlan.core.designsystem.theme.Dimens
 import com.pttlan.core.designsystem.theme.DockRadius
+import com.pttlan.core.designsystem.theme.IconOnAccentTxDark
+import com.pttlan.core.designsystem.theme.IconOnAccentTxLight
 import com.pttlan.core.designsystem.theme.IconOnPrimaryDark
 import com.pttlan.core.designsystem.theme.IconOnPrimaryLight
 import com.pttlan.core.designsystem.theme.PanelRadius
@@ -46,6 +50,8 @@ class SwiftPalette internal constructor(
     val primaryGlow: Int,
     val onPrimary: Int,
     val accentTx: Int,
+    val accentTxGlow: Int,
+    val onAccentTx: Int,
     val statusOnline: Int,
     val statusOffline: Int,
     val statusIdle: Int,
@@ -63,6 +69,8 @@ private val DarkPalette =
         primaryGlow = PrimaryGlowDark.toArgb(),
         onPrimary = IconOnPrimaryDark.toArgb(),
         accentTx = AccentTxDark.toArgb(),
+        accentTxGlow = AccentTxGlowDark.toArgb(),
+        onAccentTx = IconOnAccentTxDark.toArgb(),
         statusOnline = StatusOnlineDark.toArgb(),
         statusOffline = StatusOfflineDark.toArgb(),
         statusIdle = StatusIdleDark.toArgb(),
@@ -80,6 +88,8 @@ private val LightPalette =
         primaryGlow = PrimaryGlowLight.toArgb(),
         onPrimary = IconOnPrimaryLight.toArgb(),
         accentTx = AccentTxLight.toArgb(),
+        accentTxGlow = AccentTxGlowLight.toArgb(),
+        onAccentTx = IconOnAccentTxLight.toArgb(),
         statusOnline = StatusOnlineLight.toArgb(),
         statusOffline = StatusOfflineLight.toArgb(),
         statusIdle = StatusIdleLight.toArgb(),
