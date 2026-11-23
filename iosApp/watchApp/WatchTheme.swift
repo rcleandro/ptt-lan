@@ -20,6 +20,8 @@ enum WatchDimens {
     static let spaceSm: CGFloat = 4
     static let spaceMd: CGFloat = 8
     static let pressAnimation: Double = 0.12
+    /// What is left of a control the user cannot use while the iPhone is out of reach.
+    static let disabledOpacity: Double = 0.4
 }
 
 private let channelMax: Double = 255

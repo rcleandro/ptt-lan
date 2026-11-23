@@ -134,6 +134,17 @@
         }
       }
     },
+    "watch_phone_unreachable": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone fora de alcance"
+          }
+        }
+      }
+    },
     "wear_leave": {
       "extractionState": "manual",
       "localizations": {

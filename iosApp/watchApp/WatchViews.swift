@@ -17,6 +17,8 @@ struct WatchRootView: View {
             Group {
                 if link.state.connected {
                     ChannelsView(link: link)
+                } else if !link.isReachable {
+                    MessageView(systemImage: "iphone.slash", message: text("watch_phone_unreachable"))
                 } else {
                     MessageView(systemImage: "iphone", message: text("watch_connect_on_iphone"))
                 }
@@ -61,6 +63,12 @@ private struct ChannelsView: View {
 
     var body: some View {
         List {
+            // Out of reach, the last channels stay in sight but cannot be opened (33.4)
+            if !link.isReachable {
+                Label(text("watch_phone_unreachable"), systemImage: "iphone.slash")
+                    .font(.footnote)
+                    .foregroundStyle(WatchPalette.statusOffline)
+            }
             if link.state.channels.isEmpty {
                 Text(text("watch_no_channels")).foregroundStyle(WatchPalette.textSecondary)
             }
@@ -76,6 +84,7 @@ private struct ChannelsView: View {
                     }
                 }
                 .accessibilityIdentifier("channel-\(channel.id)")
+                .disabled(!link.isReachable)
             }
         }
         .navigationTitle(text("channels_title"))
@@ -92,21 +101,32 @@ private struct PttView: View {
     var body: some View {
         VStack(spacing: WatchDimens.spaceSm) {
             PttButton(state: button, isPressed: isPressed)
-                .gesture(holdToTalk)
+                .opacity(link.isReachable ? 1 : WatchDimens.disabledOpacity)
+                .gesture(holdToTalk, including: link.isReachable ? .all : .none)
                 .accessibilityLabel(text(accessibilityKey))
                 .accessibilityIdentifier("ptt")
             Text(status)
                 .font(.footnote)
                 .lineLimit(1)
-                .foregroundStyle(state.busy && button == .idle ? WatchPalette.statusOffline : WatchPalette.textSecondary)
+                .foregroundStyle(isWarning ? WatchPalette.statusOffline : WatchPalette.textSecondary)
             Button(text("wear_leave")) { link.leave() }
                 .controlSize(.mini)
+                .disabled(!link.isReachable)
                 .accessibilityIdentifier("leave")
         }
         // Channel and head count share the title, as the Wear OS app puts them next to the time
         .navigationTitle(state.channel.map { "# \($0) · \(state.people)" } ?? "")
-        .navigationBarBackButtonHidden(isPressed)
+        .navigationBarBackButtonHidden(isPressed || !link.isReachable)
+        .onChange(of: link.isReachable) { reachable in
+            // The iPhone lets go of the button itself when the watch drops out mid-press (WatchRemote.onUnreachable)
+            if !reachable, isPressed {
+                isPressed = false
+                WKInterfaceDevice.current().play(.failure)
+            }
+        }
     }
+
+    private var isWarning: Bool { !link.isReachable || (state.busy && button == .idle) }
 
     /// Press on touch, release on lift, with a tap on the wrist for each, like the Wear OS button.
     private var holdToTalk: some Gesture {
@@ -125,7 +145,8 @@ private struct PttView: View {
     }
 
     private var status: String {
-        switch button {
+        if !link.isReachable { return text("watch_phone_unreachable") }
+        return switch button {
         case .transmitting: text("wear_talking")
         case .requesting: text("wear_requesting")
         case .receiving: text("wear_receiving", state.speaker ?? text("ptt_someone"))

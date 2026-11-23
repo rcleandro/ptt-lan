@@ -31,21 +31,49 @@ fun RootComponent.watchMessages(): Flow<Map<String, Any>> =
         .map { it.toMessage() }
 
 /**
- * Does what [message] from the watch asks, through the same intents as the iPhone's own screens, and answers with the
- * iPhone's state right now. The answer keeps the watch honest about an iPhone app that was closed and launched again
- * (the system wakes it for the message): the watch's last saved state would still show the old connection.
+ * The iPhone end of the watch remote (33.2), one for the app: runs what the watch asks through the same intents as
+ * the iPhone's own screens, and remembers whether the watch's button is down, so a watch that goes out of reach
+ * mid-press (33.4) does not leave the microphone on.
  */
-fun RootComponent.onWatchMessage(message: Map<*, *>): Map<String, Any> {
-    val stack = childStack.value
-    when (val command = watchCommand(message)) {
-        WatchCommand.Press -> handlePttKey(isPressed = true)
-        WatchCommand.Release -> handlePttKey(isPressed = false)
-        WatchCommand.Leave -> stack.pttComponent()?.onIntent(PttIntent.LeaveChannel)
-        is WatchCommand.Join -> stack.listComponent()?.onIntent(ChannelListIntent.JoinChannel(command.channelId, command.channelId))
-        null -> Unit
+class WatchRemote(
+    private val root: RootComponent,
+) {
+    private var holding = false
+
+    /**
+     * Does what [message] asks and answers with the iPhone's state right now. The answer keeps the watch honest about
+     * an iPhone app that was closed and launched again (the system wakes it for the message).
+     */
+    fun onMessage(message: Map<*, *>): Map<String, Any> {
+        val command = watchCommand(message)
+        holding = holding.after(command)
+        val stack = root.childStack.value
+        when (command) {
+            WatchCommand.Press -> root.handlePttKey(isPressed = true)
+            WatchCommand.Release -> root.handlePttKey(isPressed = false)
+            WatchCommand.Leave -> stack.pttComponent()?.onIntent(PttIntent.LeaveChannel)
+            is WatchCommand.Join -> stack.listComponent()?.onIntent(ChannelListIntent.JoinChannel(command.channelId, command.channelId))
+            null -> Unit
+        }
+        return watchState(root.connectionStatus.value, stack.listComponent()?.state?.value, stack.pttComponent()?.state?.value).toMessage()
     }
-    return watchState(connectionStatus.value, stack.listComponent()?.state?.value, stack.pttComponent()?.state?.value).toMessage()
+
+    /** The watch went out of reach, or its app closed: with its button down, the release would never arrive. */
+    fun onUnreachable() {
+        if (holding) {
+            holding = false
+            root.handlePttKey(isPressed = false)
+        }
+    }
 }
+
+/** Whether the watch's button is down after [command]: leaving the channel lets go of it too. */
+internal fun Boolean.after(command: WatchCommand?): Boolean =
+    when (command) {
+        WatchCommand.Press -> true
+        WatchCommand.Release, WatchCommand.Leave -> false
+        is WatchCommand.Join, null -> this
+    }
 
 private inline fun <reified T : RootComponent.Child> ChildStack<*, RootComponent.Child>.component(): T? =
     items.firstNotNullOfOrNull { it.instance as? T }

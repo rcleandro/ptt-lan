@@ -205,4 +205,5 @@
     <string name="wear_leave">Sair</string>
     <string name="watch_connect_on_iphone">Abra o PTT-LAN no iPhone e conecte a um servidor</string>
     <string name="watch_no_channels">Nenhuma sala ativa</string>
+    <string name="watch_phone_unreachable">iPhone fora de alcance</string>
 </resources>

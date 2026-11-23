@@ -6,10 +6,12 @@ import WatchConnectivity
 /// commands back to Kotlin, which runs them through the same intents as the iPhone's screens.
 final class WatchSession: NSObject, WCSessionDelegate {
     private let root: RootComponent
+    private let remote: WatchRemote
     private var observation: Observation?
 
     init(root: RootComponent) {
         self.root = root
+        remote = WatchRemote(root: root)
         super.init()
         guard WCSession.isSupported() else { return }
         WCSession.default.delegate = self
@@ -40,12 +42,18 @@ final class WatchSession: NSObject, WCSessionDelegate {
     }
 
     func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
-        DispatchQueue.main.async { _ = self.root.onWatchMessage(message: message) }
+        DispatchQueue.main.async { _ = self.remote.onMessage(message: message) }
     }
 
     /// Only the watch's `sync` waits for a reply: the iPhone's state right now.
     func session(_ session: WCSession, didReceiveMessage message: [String: Any], replyHandler: @escaping ([String: Any]) -> Void) {
-        DispatchQueue.main.async { replyHandler(self.root.onWatchMessage(message: message)) }
+        DispatchQueue.main.async { replyHandler(self.remote.onMessage(message: message)) }
+    }
+
+    /// The watch went out of reach or closed its app, maybe with its button down (33.4).
+    func sessionReachabilityDidChange(_ session: WCSession) {
+        guard !session.isReachable else { return }
+        DispatchQueue.main.async { self.remote.onUnreachable() }
     }
 
     func sessionDidBecomeInactive(_ session: WCSession) {}

@@ -92,4 +92,14 @@ class WatchProtocolTest {
         assertNull(watchCommand(mapOf(WatchKeys.COMMAND to WatchKeys.SYNC)), "sync only asks for the state")
         assertNull(watchCommand(emptyMap<String, Any>()))
     }
+
+    @Test
+    fun theWatchsButtonIsDownFromPressUntilReleaseOrLeaving() {
+        assertEquals(true, false.after(WatchCommand.Press))
+        assertEquals(true, true.after(WatchCommand.Join("Obra")), "other commands keep it down")
+        assertEquals(true, true.after(null))
+        assertEquals(false, true.after(WatchCommand.Release))
+        assertEquals(false, true.after(WatchCommand.Leave))
+        assertEquals(false, false.after(null))
+    }
 }
