@@ -85,12 +85,15 @@ final class PttModel: ObservableObject {
 /// PTT screen in SwiftUI (32.4), over the same `PttComponent` as the Compose one. The lens is Liquid Glass.
 struct PttView: View {
     let root: RootComponent
+    /// Beside the channel list (iPad), whose back disconnects: this one shows as "close" so the two are not confused (29.3)
+    let besideChannels: Bool
     @StateObject private var model: PttModel
-    @StateObject private var texts = Texts(["ptt_back_to_channels", "common_history", "ptt_leave", "ptt_in_channel"])
+    @StateObject private var texts = Texts(["ptt_back_to_channels", "ptt_close_channel", "common_history", "ptt_leave", "ptt_in_channel"])
     @Environment(\.pttTheme) private var theme
 
-    init(component: PttComponent, root: RootComponent) {
+    init(component: PttComponent, root: RootComponent, besideChannels: Bool = false) {
         self.root = root
+        self.besideChannels = besideChannels
         _model = StateObject(wrappedValue: PttModel(component: component, root: root))
     }
 
@@ -132,7 +135,10 @@ struct PttView: View {
             .overlay(alignment: .top) { toast }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button(texts["ptt_back_to_channels"], systemImage: "chevron.backward") { root.goBack() }
+                    Button(
+                        texts[besideChannels ? "ptt_close_channel" : "ptt_back_to_channels"],
+                        systemImage: besideChannels ? "xmark" : "chevron.backward"
+                    ) { root.goBack() }
                         .accessibilityIdentifier("backToChannels")
                 }
                 ToolbarItem(placement: .principal) {

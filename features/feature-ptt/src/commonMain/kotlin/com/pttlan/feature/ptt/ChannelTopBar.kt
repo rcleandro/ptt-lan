@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,6 +24,7 @@ import com.pttlan.core.designsystem.generated.resources.Res
 import com.pttlan.core.designsystem.generated.resources.channel_name
 import com.pttlan.core.designsystem.generated.resources.common_history
 import com.pttlan.core.designsystem.generated.resources.ptt_back_to_channels
+import com.pttlan.core.designsystem.generated.resources.ptt_close_channel
 import com.pttlan.core.designsystem.generated.resources.ptt_participants
 import org.jetbrains.compose.resources.stringResource
 
@@ -36,9 +38,17 @@ internal fun ChannelTopBar(
     onBack: () -> Unit,
     showHistory: Boolean,
     connectionStatus: ConnectionStatus,
+    besideChannels: Boolean,
 ) {
     PttTopBar(
-        navigation = { GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, stringResource(Res.string.ptt_back_to_channels), onBack) },
+        navigation = {
+            // Beside the channel list, whose arrow disconnects, a second arrow would read the same: this one closes (29.3)
+            if (besideChannels) {
+                GlassIconButton(Icons.Default.Close, stringResource(Res.string.ptt_close_channel), onBack)
+            } else {
+                GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, stringResource(Res.string.ptt_back_to_channels), onBack)
+            }
+        },
         center = { ChannelTitle(channelId = state.channelId, participantCount = state.participants.size) },
         actions = {
             // Only while the connection is not healthy: the channel title owns the center slot

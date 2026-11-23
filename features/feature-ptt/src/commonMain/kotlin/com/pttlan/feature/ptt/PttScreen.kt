@@ -87,6 +87,7 @@ fun PttScreen(
     onBack: () -> Unit,
     showHistory: Boolean,
     connectionStatus: ConnectionStatus = ConnectionStatus.Online,
+    besideChannels: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val state by component.state.collectAsState()
@@ -110,6 +111,7 @@ fun PttScreen(
         onBack = onBack,
         showHistory = showHistory,
         connectionStatus = connectionStatus,
+        besideChannels = besideChannels,
         modifier = modifier,
     )
 }
@@ -130,6 +132,7 @@ fun PttScreenContent(
     onBack: () -> Unit = {},
     showHistory: Boolean = false,
     connectionStatus: ConnectionStatus = ConnectionStatus.Online,
+    besideChannels: Boolean = false,
 ) {
     val buttonState = state.buttonState()
 
@@ -137,7 +140,7 @@ fun PttScreenContent(
         val isWide = isSideBySide(maxWidth, maxHeight)
         val buttonSize = if (maxHeight < RegularHeight) CompactButtonSize else RegularButtonSize
         val tabletopFold = LocalTabletopFold.current
-        val topBar = @Composable { ChannelTopBar(state, onIntent, onBack, showHistory, connectionStatus) }
+        val topBar = @Composable { ChannelTopBar(state, onIntent, onBack, showHistory, connectionStatus, besideChannels) }
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             if (tabletopFold != null) {

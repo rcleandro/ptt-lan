@@ -92,7 +92,7 @@ struct RootView: View {
         case let channels as RootComponentChildChannelListChild:
             ChannelListView(component: channels.component, root: root)
         case let ptt as RootComponentChildPttChild:
-            PttView(component: ptt.component, root: root)
+            PttView(component: ptt.component, root: root, besideChannels: channelsBeside != nil)
         case let settings as RootComponentChildSettingsChild:
             SettingsView(component: settings.component, root: root)
         case let history as RootComponentChildHistoryChild:

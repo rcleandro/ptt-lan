@@ -72,6 +72,7 @@
 
     <!-- Push-to-talk screen -->
     <string name="ptt_back_to_channels">Voltar para canais</string>
+    <string name="ptt_close_channel">Fechar canal</string>
     <string name="ptt_participants">%1$d no canal</string>
     <string name="ptt_leave">Sair do canal</string>
     <string name="ptt_in_channel">No canal</string>
