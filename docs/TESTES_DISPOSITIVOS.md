@@ -128,46 +128,52 @@ técnico de erro na tela, nenhum texto cortado e nenhum travamento.
 Uma rodada por bloco. Resultado: `✅` passou, `❌` falhou (com o número do achado), `⚠️` passou com ressalva,
 `—` não se aplica, vazio = não testado.
 
-### Rodada 1 — aaaa-mm-dd — build x.y.z
+### Rodada 1 — 2026-11-23 — `feature/phase-29-device-tests` (3df6bb2), parcial: só simuladores
+
+Feita só nos simuladores do Xcode 27 (iPhone 18 Pro e iPad Pro 13", iOS 27), contra o `serverApp` local, com testes
+de UI temporários e um segundo participante simulado pelo `HostLoadTest` (`load1`, um tom em turnos de 30 s). Não
+cobre: áudio ouvido de verdade (o microfone do simulador grava menos de 1 s), rede real, fone, relógios, Android,
+Desktop (sem controle da tela do Mac) e hospedar. A rotação no iPhone ficou sem conclusão: o XCUITest devolveu as
+capturas em paisagem giradas.
 
 | Fluxo | AND | WEAR | MAC | IOS | IPAD | DUO | AW |
 |---|---|---|---|---|---|---|---|
 | C1 Primeira abertura | | | | | | | — |
-| C2 Descoberta | | | | | | | — |
-| C3 IP manual | | | | | | | — |
-| C4 Nome em uso | | | | | | | — |
+| C2 Descoberta | | | | ⚠️ 6 | | | — |
+| C3 IP manual | | | | ✅ | ✅ | | — |
+| C4 Nome em uso | | | | ✅ | | | — |
 | C5 Certificado mudou | | | | | | | — |
-| C6 Sair | | | | | | | — |
+| C6 Sair | | | | ✅ | ✅ | | — |
 | H1 Sem PIN | | — | | — | — | — | — |
 | H2 Com PIN | | — | | — | — | — | — |
 | H3 Tentativas | | — | | — | — | — | — |
 | H4 Tela bloqueada | | — | — | — | — | — | — |
 | H5 Parar de hospedar | | — | | — | — | — | — |
-| K1 Lista | | | | | | | |
-| K2 Criar | | | | | | | — |
-| K3 Trocar | | | | | | | |
-| P1 Falar | | | | | | | |
-| P2 Ouvir | | | | | | | |
-| P3 Disputa | | | | | | | |
-| P4 Quem cai | | | | | | | — |
+| K1 Lista | | | | ✅ | ✅ | | |
+| K2 Criar | | | | ✅ | | | — |
+| K3 Trocar | | | | ✅ | ✅ | | |
+| P1 Falar | | | | ✅ | ✅ | | |
+| P2 Ouvir | | | | ⚠️ 1 | | | |
+| P3 Disputa | | | | ✅ | | | |
+| P4 Quem cai | | | | ✅ | | | — |
 | P5 Botões físicos | — | | — | — | — | — | — |
-| R1 Gravação | | — | | | | | — |
-| R2 Tocar a sala | | — | | | | | — |
-| R3 Controles | | — | | | | | — |
+| R1 Gravação | | — | | ✅ | | | — |
+| R2 Tocar a sala | | — | | ⚠️ 7 | | | — |
+| R3 Controles | | — | | ✅ | | | — |
 | R4 Ao vivo durante o replay | | — | | | | | — |
 | R5 Tela apagada | | — | — | | | | — |
 | R6 Compartilhar e apagar | | — | | | | | — |
-| S1 Tema | | — | | | | | — |
-| S2 Histórico | | — | | | | | — |
+| S1 Tema | | — | | ✅ | | | — |
+| S2 Histórico | | — | | ✅ | | | — |
 | B1 Segundo plano | | | | | | | — |
 | B2 Queda curta | | | | | | | — |
-| B3 Servidor cai | | | | | | | — |
+| B3 Servidor cai | | | | ❌ 2, 3 | | | — |
 | F1 Saída no fone | | | | | | | — |
 | F2 Microfone do fone | | | — | | | | — |
 | W1 Wear sem o celular | — | | — | — | — | — | — |
 | W2 Apple Watch como controle | — | — | — | — | — | — | |
 | W3 iPhone fora de alcance | — | — | — | — | — | — | |
-| D1 Girar e redimensionar | | — | | | | | — |
+| D1 Girar e redimensionar | | — | | ⚠️ 4 | ⚠️ 5 | | — |
 | D2 Tela externa e postura mesa | | — | — | — | — | — | — |
 | D3 Dobrar falando | | — | — | — | — | — | — |
 
@@ -175,6 +181,14 @@ Uma rodada por bloco. Resultado: `✅` passou, `❌` falhou (com o número do ac
 
 | # | Fluxo | Aparelho | O que aconteceu | Destino |
 |---|---|---|---|---|
-| | | | | |
+| 1 | P2 | IOS (todas as plataformas) | Quem entra no canal no meio de uma fala vê "Canal livre" até o próximo turno começar: o estado de quem fala só vem do `SpeakerChanged`, e o `PttComponent` ignora o `isSpeaking` da lista de participantes que chega ao entrar | Correção nesta fase |
+| 2 | B3 | IOS | Durante a reconexão a tela diz "Canal livre / Segure para falar", embora não dê para falar | Correção nesta fase |
+| 3 | B3 | IOS (todas as plataformas) | O servidor reiniciado sem `PTT_JWT_SECRET` recusa o token antigo e o app volta para a conexão com "Token JWT inválido ou expirado" (texto técnico), em vez de fazer login de novo sozinho. Vale também para o modo host, quando quem hospeda reabre o app | Correção nesta fase |
+| 4 | D1 | IOS | Com a fonte de acessibilidade (`accessibility-extra-large`): no PTT, o título, a dica e o nome do participante saem cortados ("Segure para f…", "Vo…"); na conexão, o cartão do servidor fica atrás do dock e o botão quebra em "Co-nectar"; o seletor de tema e os campos (endereço, nome do canal) não crescem com a fonte | 29.3 |
+| 5 | D1 | IPAD | As telas SwiftUI (conexão, canais, configurações) ocupam a largura toda; o Compose limita a leitura a 600 dp desde a 27.1 | 29.3 |
+| 6 | C2 | IOS | Na primeira vez, tocar no servidor achado pela descoberta não conectou (o servidor não registrou a tentativa); na segunda passou. Conferir no aparelho | 29.6 |
+| 7 | R2 | IOS | "Tocar a sala" mostrou "21 de 21" logo depois de começar. As 20 mensagens anteriores eram falas do simulador com menos de 1 s, então podem ter passado em segundos; conferir no aparelho se a fila começa na primeira | 29.6 |
+
+Observação: um canal criado como "Matriz" aparece como "matriz" (o nome vai em minúsculas).
 
 O destino é a correção nesta fase (pequena) ou o item do roadmap que foi criado para ela.
