@@ -41,10 +41,14 @@ graph LR
     F28 --> F29[29 Testes nos dispositivos]
     F29 --> F30[30 Segurança do app e do host]
     F29 --> F31[31 Desempenho e eficiência]
+    F29 --> F32[32 Telas nativas no iOS]
+    F32 --> F33[33 App Apple Watch]
+    F25 --> F33
 ```
 
 A fase 18 vem primeiro porque é barata e deixa o CI confiável para as próximas. A 19 vem antes da 20 porque
 a 20 depende de a identidade vir do JWT. A 22 pode rodar em paralelo com a 19–21, desde que não mexa nos mesmos arquivos.
+A 33 depende da ponte Kotlin–Swift da 32 e reaproveita as decisões de produto da 25 (Wear OS).
 
 Cada fase segue a regra 22.4 do plano: testes novos ou atualizados, nenhuma regressão, `ktlintFormat` + `detekt` limpos.
 
@@ -494,6 +498,56 @@ revisto na 21.3, então o foco aqui é o app.
 
 **Critério de conclusão:** os números da 31.1 registrados antes e depois de cada otimização; nenhuma regressão na
 rodada da 29.2; o APK de release com R8 passando no roteiro da 29.1.
+
+---
+
+## Fase 32 — Telas nativas no iOS (SwiftUI)
+
+**Objetivo:** no iPhone, trocar as telas em Compose por SwiftUI sobre os mesmos componentes Decompose, como decidido
+na [ADR 0013](adr/0013-ios-swiftui-e-apple-watch.md). A lógica continua em Kotlin. O Compose segue no Android, no
+Wear OS e no Desktop.
+
+**Viabilidade:** alta. Toda decisão de tela já está nos componentes (`state`, `effects`, `onIntent`), e rede,
+áudio, Opus, banco e settings já compilam para iOS. O custo é a ponte entre Kotlin e Swift e manter duas interfaces.
+
+| Item | Status | Evidência | Ação | Esforço |
+|---|---|---|---|---|
+| 32.1 Spike da ponte Kotlin–Swift | a fazer | `ContentView.swift` só embrulha o `MainViewController` do Compose; o framework `shared` não exporta os componentes | Tela de conexão em SwiftUI sobre o `ConnectionComponent`. Comparar o plugin SKIE (`Flow` → `AsyncSequence`, selada → `enum`; conferir se acompanha o Kotlin 2.4) com um adaptador à mão (`observe(onEach:)` que devolve um `Closeable`). **Passa se** estado e efeitos chegam ao SwiftUI na main thread, a tela some sem vazar o componente (Instruments) e um teste de UI roda no CI | M (prazo de 1–2 dias) |
+| 32.2 Framework para Swift | a fazer | `shared/build.gradle.kts` só exporta o `MainViewController` e o Koin | Exportar no framework os componentes das features, o `RootComponent` e os modelos de domínio que as telas mostram. Child stack do Decompose → `NavigationStack`. Ciclo de vida do componente amarrado ao da tela | M |
+| 32.3 Textos e tokens | a fazer | Strings em Compose resources (`core-designsystem`); cores e `Dimens` em Kotlin | Um `Strings` exportado que resolve `StringResource` + args (`getString` não depende de Compose UI), para o Swift não duplicar textos em `Localizable`. Cores, espaçamentos e tipografia (IBM Plex Sans) expostos ao Swift a partir dos mesmos tokens | M |
+| 32.4 Telas | a fazer | Conexão, canais, PTT, histórico (com o player da 28), configurações e diálogos (certificado mudou, PIN) | Uma tela por vez, cada uma substituindo a versão Compose no iOS, com paridade de estados. Vidro nativo do iOS 26 (`glassEffect`) no lugar da imitação da ADR 0006, VoiceOver e Dynamic Type | G |
+| 32.5 Testes e CI | a fazer | O CI compila o iOS e roda `iosSimulatorArm64Test`, mas não testa telas | Testes de UI (XCUITest) do fluxo conectar → canal → PTT contra um servidor local, no job `build-ios` | M |
+| 32.6 Tirar o Compose do iOS | a fazer | O app embute o runtime do Compose | Quando a última tela migrar, o framework do iOS deixa de depender de Compose; medir o tamanho do `.ipa` antes e depois, como na 31.2 | P |
+| 32.7 PushToTalk (opcional) | a fazer | ADR 0004: sem recebimento em segundo plano no iOS | Framework PushToTalk (iOS 16+): botão de falar na tela bloqueada e áudio recebido em segundo plano. Exige push pela APNs a partir do servidor (agora alcançável pelo túnel) e conta de desenvolvedor Apple. Spike próprio antes de entrar | G |
+
+**Critério de conclusão:** o roteiro da 29.1 passa no iPhone com as telas em SwiftUI, sem nenhuma tela em Compose
+no iOS, e as mesmas mudanças de componente atualizam as duas interfaces.
+
+---
+
+## Fase 33 — App Apple Watch
+
+**Objetivo:** o botão de falar no pulso, como na fase 25. Segundo a [ADR 0013](adr/0013-ios-swiftui-e-apple-watch.md),
+primeiro como controle remoto do iPhone; cliente independente só depois de um spike.
+
+**Viabilidade:**
+
+| Caminho | Viável? | Por quê |
+|---|---|---|
+| Controle remoto do iPhone (WatchConnectivity) | Sim | Só SwiftUI e mensagens curtas. O iPhone já faz conexão, microfone e áudio |
+| Cliente independente | Arriscado | No watchOS, WebSocket e Bonjour só com sessão de áudio *long-form* (fone Bluetooth) ou como app VoIP com CallKit (Apple TN3135); o kopus não publica watchOS; Compose não roda no relógio e os módulos de feature misturam componente e tela |
+
+| Item | Status | Ação | Esforço |
+|---|---|---|---|
+| 33.1 Target watchOS | a fazer | App watchOS em SwiftUI no `project.yml` (XcodeGen), embutido no app do iPhone, com o ícone e o tema da 25.8 | P |
+| 33.2 Protocolo relógio ↔ iPhone | a fazer | `WCSession`: o iPhone manda estado (canal, quem fala, participantes, conectado ou não) e o relógio manda comandos (apertar, soltar, trocar de canal). O lado do iPhone traduz para `onIntent` do `PttComponent` e do `ChannelListComponent`. Testes do mapeamento estado ↔ mensagem | M |
+| 33.3 Telas do relógio | a fazer | Canais e PTT (botão de segurar, vibração ao apertar e soltar, quem fala), como nas telas da 25.3. Sem histórico nem configurações | M |
+| 33.4 Fora de alcance | a fazer | Sem o iPhone alcançável, o relógio mostra o estado e desabilita o botão, em vez de falhar calado | P |
+| 33.5 CI | a fazer | Build do target watchOS no job `build-ios` | P |
+| 33.6 Spike do cliente independente | a fazer | Só se o controle remoto não bastar. Validar no relógio: WebSocket com CallKit ou com sessão *long-form*, Opus por AudioToolbox (ou libopus compilada para watchOS), e módulos de feature separados em lógica e tela para compilar `watchosArm64`. Passa com o critério da 25.1 (canal por 30 min, sem o iPhone) | G |
+
+**Critério de conclusão:** com o iPhone no bolso, o relógio entra e troca de canal, fala e mostra quem está
+falando, e avisa quando o iPhone está fora de alcance.
 
 ---
 
