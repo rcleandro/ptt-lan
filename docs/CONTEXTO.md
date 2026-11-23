@@ -42,7 +42,7 @@ Todas as 17 fases do roadmap estão marcadas como concluídas no plano.
 ```
 androidApp/  desktopApp/  iosApp/ (Xcode + shared.framework)   serverApp/ (Ktor JVM)
      │            │             │
-     └────────────┴──── shared (só iOS: MainViewController) ───┘
+     └────────────┴──── shared (só iOS: ponte p/ SwiftUI) ────┘
                          │
           core-navigation (RootComponent)   core-di (appModules)
                          │                        │
@@ -57,8 +57,8 @@ androidApp/  desktopApp/  iosApp/ (Xcode + shared.framework)   serverApp/ (Ktor 
 |---|---|
 | `androidApp` | `MainActivity` (permissões, teclas do volante/mídia → PTT, liga/desliga o foreground service), `PttApplication` (startKoin), `PttForegroundService`, `AndroidServerHost` + `announceWithNsd` (modo host, 24.5), metadados Android Automotive |
 | `desktopApp` | `Main.kt`: startKoin + `RootComponent` + janela Compose; empacota DMG/MSI/DEB. `DesktopServerHost` liga o modo host (24.2) |
-| `iosApp` | Shell SwiftUI (`ContentView` → `MainViewControllerKt.MainViewController()`); `project.yml` para XcodeGen |
-| `shared` | Só `iosMain`: gera `shared.framework` estático e expõe `MainViewController` |
+| `iosApp` | Telas em SwiftUI (`RootView` → uma view por filho do `RootComponent`), sem Compose (32.6); `project.yml` para XcodeGen |
+| `shared` | Só `iosMain`: gera `shared.framework` estático, exporta componentes e modelos e a ponte para o Swift (`observe`, `text`, tokens) |
 | `serverApp` | Executável do servidor: `main`, keystore, Netty, anúncio mDNS e `application.conf` |
 | `server-core` | Núcleo do servidor (24.1, [ADR 0010](adr/0010-modo-host-no-app.md)): `module()` com `/ws`, `/api/auth/login`, painel `/admin` + `/api/admin/*`, `ChannelRegistry`/`PttChannel`, anúncio mDNS (`announceOnLan`), `PttHostServer` (modo host, 24.2) e os testes |
 | `core-common` | `isLocalNetwork()`, `StorageInfoProvider` expect/actual |

@@ -37,14 +37,9 @@ kotlin {
             api(projects.features.featureHistory)
             api(projects.domain.domainPtt)
             api(libs.decompose)
-            implementation(libs.runtime)
-            implementation(libs.foundation)
-            implementation(libs.material3)
+            // Colors (toArgb) and sizes (Dp) of the design tokens; no Compose screen runs on iOS (32.6)
             implementation(libs.ui)
             implementation(libs.compose.components.resources)
-            implementation(libs.compose.components.uiToolingPreview)
-            implementation(libs.decompose)
-            implementation(libs.decompose.extensions.compose)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

@@ -38,28 +38,19 @@ import com.pttlan.feature.settings.SettingsScreen
 /**
  * App root: applies the theme and hosts the screens. Each screen draws its own floating glass
  * controls (ADR 0006), so there is no Scaffold, top app bar or FAB here.
- *
- * [isNative] marks the screens another UI draws instead (SwiftUI on iOS, 32.1): they are left empty here, so their
- * component's effects keep a single collector.
  */
 @Composable
-fun RootScreen(
-    component: RootComponent,
-    isNative: (RootComponent.Child) -> Boolean = { false },
-) {
+fun RootScreen(component: RootComponent) {
     val appTheme by component.appTheme.collectAsState()
     val reduceTransparency by component.reduceTransparency.collectAsState()
 
     PttTheme(appTheme = appTheme, reduceTransparency = reduceTransparency) {
-        RootContent(component, isNative)
+        RootContent(component)
     }
 }
 
 @Composable
-private fun RootContent(
-    component: RootComponent,
-    isNative: (RootComponent.Child) -> Boolean,
-) {
+private fun RootContent(component: RootComponent) {
     val childStack by component.childStack.subscribeAsState()
     val isCacheEnabled by component.isCacheEnabled.collectAsState()
     val connectionStatus by component.connectionStatus.collectAsState()
@@ -83,7 +74,6 @@ private fun RootContent(
             stack = childStack,
             animation = if (channelsBeside) null else stackAnimation(slide()),
         ) { child ->
-            if (isNative(child.instance)) return@Children
             when (val instance = child.instance) {
                 is RootComponent.Child.ConnectionChild -> {
                     ConnectionScreen(

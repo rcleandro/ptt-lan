@@ -1,19 +1,7 @@
 import SwiftUI
 import shared
 
-/// The Compose screens not migrated yet, over the same navigation root as the SwiftUI ones.
-private struct ComposeRootView: UIViewControllerRepresentable {
-    let root: RootComponent
-
-    func makeUIViewController(context: Context) -> UIViewController {
-        MainViewControllerKt.MainViewController(root: root)
-    }
-
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
-}
-
-/// App root during the migration (32.4): Compose stays underneath, kept alive across screens, and the screens drawn in
-/// SwiftUI cover it while they are the active one. Compose leaves those screens empty (`isNativeScreen`).
+/// App root: the SwiftUI screen of the active child of the shared navigation root (32.4); no Compose on iOS (32.6).
 struct RootView: View {
     let root: RootComponent
     @StateObject private var stack: ValueObserver<ChildStack<AnyObject, RootComponentChild>>
@@ -27,22 +15,17 @@ struct RootView: View {
 
     var body: some View {
         let active = stack.value.active.instance
-        ZStack {
-            ComposeRootView(root: root).ignoresSafeArea()
-            if MainViewControllerKt.isNativeScreen(child: active) {
-                GeometryReader { geometry in
-                    PttThemed(model: theme) {
-                        HStack(spacing: 0) {
-                            // iPad: the channel list, still alive under the open channel, stays beside it (27.2)
-                            if let channels = channelsBeside(active, width: geometry.size.width) {
-                                ChannelListView(component: channels.component, root: root)
-                                    .frame(width: PttTheme.dimens.channelPaneWidth)
-                                    .id(ObjectIdentifier(channels))
-                            }
-                            nativeScreen(active)
-                                .id(ObjectIdentifier(active))
-                        }
+        GeometryReader { geometry in
+            PttThemed(model: theme) {
+                HStack(spacing: 0) {
+                    // iPad: the channel list, still alive under the open channel, stays beside it (27.2)
+                    if let channels = channelsBeside(active, width: geometry.size.width) {
+                        ChannelListView(component: channels.component, root: root)
+                            .frame(width: PttTheme.dimens.channelPaneWidth)
+                            .id(ObjectIdentifier(channels))
                     }
+                    nativeScreen(active)
+                        .id(ObjectIdentifier(active))
                 }
             }
         }
@@ -54,7 +37,7 @@ struct RootView: View {
         return stack.value.backStack.last?.instance as? RootComponentChildChannelListChild
     }
 
-    /// The SwiftUI screen for [child]; `isNativeScreen` (Kotlin) says which ones exist.
+    /// The SwiftUI screen for [child].
     @ViewBuilder
     private func nativeScreen(_ child: RootComponentChild) -> some View {
         switch child {
