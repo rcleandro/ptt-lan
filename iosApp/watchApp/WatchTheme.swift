@@ -15,6 +15,13 @@ enum WatchPalette {
     static let iconOnPrimary = Color(hex: 0x0B1820) // IconOnPrimaryDark
 }
 
+/// Spacings of the watch's screens, smaller than the iPhone's `Dimens` for the small screen.
+enum WatchDimens {
+    static let spaceSm: CGFloat = 4
+    static let spaceMd: CGFloat = 8
+    static let pressAnimation: Double = 0.12
+}
+
 private let channelMax: Double = 255
 
 extension Color {

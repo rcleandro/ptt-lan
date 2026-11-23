@@ -6,10 +6,7 @@ import SwiftUI
 struct PttWatchApp: App {
     var body: some Scene {
         WindowGroup {
-            Image(systemName: "mic.fill")
-                .font(.largeTitle)
-                .foregroundStyle(WatchPalette.primary)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            WatchRootView()
                 .background(WatchPalette.background)
         }
     }

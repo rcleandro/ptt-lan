@@ -89,6 +89,7 @@ class WatchProtocolTest {
         assertNull(watchCommand(mapOf(WatchKeys.COMMAND to WatchKeys.JOIN)), "joining needs a channel")
         assertNull(watchCommand(mapOf(WatchKeys.COMMAND to WatchKeys.JOIN, WatchKeys.CHANNEL to " ")))
         assertNull(watchCommand(mapOf(WatchKeys.COMMAND to "dance")))
+        assertNull(watchCommand(mapOf(WatchKeys.COMMAND to WatchKeys.SYNC)), "sync only asks for the state")
         assertNull(watchCommand(emptyMap<String, Any>()))
     }
 }

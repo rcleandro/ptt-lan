@@ -203,4 +203,6 @@
     <string name="wear_requesting">Pedindo a vez…</string>
     <string name="wear_receiving">%1$s falando</string>
     <string name="wear_leave">Sair</string>
+    <string name="watch_connect_on_iphone">Abra o PTT-LAN no iPhone e conecte a um servidor</string>
+    <string name="watch_no_channels">Nenhuma sala ativa</string>
 </resources>

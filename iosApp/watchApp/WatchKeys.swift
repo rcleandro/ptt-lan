@@ -13,6 +13,7 @@ enum WatchKeys {
     static let release = "release"
     static let join = "join"
     static let leave = "leave"
+    static let sync = "sync"
 }
 
 /// The PTT button's state, named like Kotlin's `PttButtonState`, which decides it on the iPhone.

@@ -7,7 +7,6 @@ import WatchConnectivity
 final class WatchSession: NSObject, WCSessionDelegate {
     private let root: RootComponent
     private var observation: Observation?
-    private var lastMessage: [String: Any] = [:]
 
     init(root: RootComponent) {
         self.root = root
@@ -27,30 +26,26 @@ final class WatchSession: NSObject, WCSessionDelegate {
             guard self.observation == nil else { return }
             self.observation = SwiftBridgeKt.observe(flow: self.root.watchMessages()) { [weak self] value in
                 guard let message = value as? [String: Any] else { return }
-                self?.lastMessage = message
                 self?.send(message)
             }
         }
     }
 
-    /// The application context keeps the latest state for when the watch app opens; a message reaches it right away
-    /// while it is open.
+    /// Only while the watch app is open: when it opens, or the iPhone comes back in range, it asks for the state
+    /// itself (`sync`), so nothing saved and possibly stale is ever shown there.
     private func send(_ message: [String: Any]) {
         let session = WCSession.default
-        guard session.activationState == .activated, session.isPaired, session.isWatchAppInstalled else { return }
-        try? session.updateApplicationContext(message)
-        if session.isReachable {
-            session.sendMessage(message, replyHandler: nil, errorHandler: nil)
-        }
+        guard session.activationState == .activated, session.isReachable else { return }
+        session.sendMessage(message, replyHandler: nil, errorHandler: nil)
     }
 
     func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
-        DispatchQueue.main.async { self.root.onWatchMessage(message: message) }
+        DispatchQueue.main.async { _ = self.root.onWatchMessage(message: message) }
     }
 
-    func sessionReachabilityDidChange(_ session: WCSession) {
-        guard session.isReachable else { return }
-        DispatchQueue.main.async { self.send(self.lastMessage) }
+    /// Only the watch's `sync` waits for a reply: the iPhone's state right now.
+    func session(_ session: WCSession, didReceiveMessage message: [String: Any], replyHandler: @escaping ([String: Any]) -> Void) {
+        DispatchQueue.main.async { replyHandler(self.root.onWatchMessage(message: message)) }
     }
 
     func sessionDidBecomeInactive(_ session: WCSession) {}

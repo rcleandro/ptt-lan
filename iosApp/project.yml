@@ -1,6 +1,8 @@
 name: iosApp
 options:
   bundleIdPrefix: com.pttlan
+  # The app is in Portuguese; the watch's string catalog is written in it (33.3)
+  developmentLanguage: pt-BR
   deploymentTarget:
     iOS: 16.0
 targets:
@@ -89,6 +91,20 @@ targets:
         CURRENT_PROJECT_VERSION: "1"
         MARKETING_VERSION: "1.0"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    scheme:
+      testTargets:
+        - watchAppUITests
+  watchAppUITests:
+    type: bundle.ui-testing
+    platform: watchOS
+    sources:
+      - path: watchAppUITests
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: watchApp
+    dependencies:
+      - target: watchApp
   iosAppUITests:
     type: bundle.ui-testing
     platform: iOS

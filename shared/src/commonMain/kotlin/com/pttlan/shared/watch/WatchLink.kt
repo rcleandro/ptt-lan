@@ -30,8 +30,12 @@ fun RootComponent.watchMessages(): Flow<Map<String, Any>> =
         }.distinctUntilChanged()
         .map { it.toMessage() }
 
-/** Does what [message] from the watch asks, through the same intents as the iPhone's own screens. */
-fun RootComponent.onWatchMessage(message: Map<*, *>) {
+/**
+ * Does what [message] from the watch asks, through the same intents as the iPhone's own screens, and answers with the
+ * iPhone's state right now. The answer keeps the watch honest about an iPhone app that was closed and launched again
+ * (the system wakes it for the message): the watch's last saved state would still show the old connection.
+ */
+fun RootComponent.onWatchMessage(message: Map<*, *>): Map<String, Any> {
     val stack = childStack.value
     when (val command = watchCommand(message)) {
         WatchCommand.Press -> handlePttKey(isPressed = true)
@@ -40,6 +44,7 @@ fun RootComponent.onWatchMessage(message: Map<*, *>) {
         is WatchCommand.Join -> stack.listComponent()?.onIntent(ChannelListIntent.JoinChannel(command.channelId, command.channelId))
         null -> Unit
     }
+    return watchState(connectionStatus.value, stack.listComponent()?.state?.value, stack.pttComponent()?.state?.value).toMessage()
 }
 
 private inline fun <reified T : RootComponent.Child> ChildStack<*, RootComponent.Child>.component(): T? =

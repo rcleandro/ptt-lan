@@ -45,6 +45,10 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
         }
+        // WatchStringsTest reads the watch's string catalog (JSON)
+        jvmTest.dependencies {
+            implementation(libs.kotlinx.serialization.json)
+        }
     }
 }
 

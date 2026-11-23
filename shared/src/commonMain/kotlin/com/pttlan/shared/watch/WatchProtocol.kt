@@ -55,6 +55,9 @@ object WatchKeys {
     const val RELEASE = "release"
     const val JOIN = "join"
     const val LEAVE = "leave"
+
+    /** Asks only for the iPhone's current state, which every command gets as its answer. */
+    const val SYNC = "sync"
 }
 
 /** The watch's view of the iPhone: connected while the client is (or is reconnecting), with the open channel. */
