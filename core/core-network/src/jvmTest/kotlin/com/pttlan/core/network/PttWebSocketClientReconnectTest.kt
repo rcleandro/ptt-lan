@@ -33,6 +33,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 private const val KEYSTORE_PASSWORD = "test-password"
@@ -207,8 +208,9 @@ class PttWebSocketClientReconnectTest {
                 withTimeout(10.seconds) { client.isConnected.first { it } }
                 server.stop(0, 0)
 
-                // Without the attempt limit this loop would retry forever and the UI would never be told
-                withTimeout(30.seconds) { connectLoop.join() }
+                // Without the attempt limit this loop would retry forever and the UI would never be told.
+                // A stopped Netty server may not close the socket, so the drop is only seen after the socket timeout
+                withTimeout(SOCKET_TIMEOUT_MS.milliseconds + 15.seconds) { connectLoop.join() }
                 assertEquals(false, client.isConnected.value)
             } finally {
                 client.disconnect()
