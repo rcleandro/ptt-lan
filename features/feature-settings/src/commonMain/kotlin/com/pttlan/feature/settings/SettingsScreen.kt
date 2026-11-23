@@ -89,28 +89,20 @@ import com.pttlan.core.designsystem.generated.resources.settings_save_audio
 import com.pttlan.core.designsystem.generated.resources.settings_sd_unavailable
 import com.pttlan.core.designsystem.generated.resources.settings_size_mb
 import com.pttlan.core.designsystem.generated.resources.settings_space_limit
-import com.pttlan.core.designsystem.generated.resources.settings_storage_external
-import com.pttlan.core.designsystem.generated.resources.settings_storage_internal
 import com.pttlan.core.designsystem.generated.resources.settings_theme
 import com.pttlan.core.designsystem.generated.resources.settings_theme_dark
 import com.pttlan.core.designsystem.generated.resources.settings_theme_light
 import com.pttlan.core.designsystem.generated.resources.settings_theme_system
 import com.pttlan.core.designsystem.generated.resources.settings_title
 import com.pttlan.core.designsystem.generated.resources.settings_usage
-import com.pttlan.core.designsystem.generated.resources.size_bytes
-import com.pttlan.core.designsystem.generated.resources.size_gb
-import com.pttlan.core.designsystem.generated.resources.size_kb
-import com.pttlan.core.designsystem.generated.resources.size_mb
 import com.pttlan.core.designsystem.theme.AppTheme
 import com.pttlan.core.designsystem.theme.Dimens
 import com.pttlan.core.designsystem.theme.PttTheme
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
-private const val BYTES_PER_KB = 1024L
-private const val MIN_CACHE_MB = 100f
-private const val MAX_CACHE_MB = 2000f
-private const val CACHE_SLIDER_STEPS = 18
+/** Ticks between the ends of the slider, one per [CACHE_SIZE_STEP_MB]. */
+private const val CACHE_SLIDER_STEPS = (CACHE_SIZE_MAX_MB - CACHE_SIZE_MIN_MB) / CACHE_SIZE_STEP_MB - 1
 private val TopBarClearance = 64.dp
 
 private const val GLOW_INTENSITY = 0.24f
@@ -123,20 +115,13 @@ private val StorageOptionHeight = 56.dp
 
 @Composable
 private fun formatBytes(bytes: Long): String {
-    val mb = BYTES_PER_KB * BYTES_PER_KB
-    val gb = mb * BYTES_PER_KB
-    return when {
-        bytes >= gb -> stringResource(Res.string.size_gb, (bytes.toDouble() / gb).roundToInt())
-        bytes >= mb -> stringResource(Res.string.size_mb, (bytes.toDouble() / mb).roundToInt())
-        bytes >= BYTES_PER_KB -> stringResource(Res.string.size_kb, (bytes.toDouble() / BYTES_PER_KB).roundToInt())
-        else -> stringResource(Res.string.size_bytes, bytes)
-    }
+    val size = sizeText(bytes)
+    return stringResource(size.resource, size.value)
 }
 
 /** The name of a storage place, from its id. */
 @Composable
-private fun storageName(id: String): String =
-    stringResource(if (id == STORAGE_EXTERNAL) Res.string.settings_storage_external else Res.string.settings_storage_internal)
+private fun storageLabel(id: String): String = stringResource(storageName(id))
 
 @Composable
 fun SettingsScreen(
@@ -368,7 +353,7 @@ private fun LocationRow(
             modifier = Modifier.weight(1f),
         )
         Text(
-            storageName(selected?.id ?: state.cacheLocation),
+            storageLabel(selected?.id ?: state.cacheLocation),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -385,8 +370,7 @@ private fun CacheLimit(
     state: SettingsState,
     onIntent: (SettingsIntent) -> Unit,
 ) {
-    val usage =
-        if (state.maxCacheSizeMb == 0) 0f else (state.currentCacheUsageMb.toFloat() / state.maxCacheSizeMb).coerceIn(0f, 1f)
+    val usage = state.cacheUsage()
 
     Column(modifier = Modifier.padding(horizontal = Dimens.SpaceXl, vertical = Dimens.SpaceLg)) {
         Row(modifier = Modifier.fillMaxWidth()) {
@@ -423,7 +407,7 @@ private fun CacheSizeSlider(
     Slider(
         value = maxCacheSizeMb.toFloat(),
         onValueChange = { onIntent(SettingsIntent.ChangeMaxCacheSize(it.roundToInt())) },
-        valueRange = MIN_CACHE_MB..MAX_CACHE_MB,
+        valueRange = CACHE_SIZE_MIN_MB.toFloat()..CACHE_SIZE_MAX_MB.toFloat(),
         steps = CACHE_SLIDER_STEPS,
         colors =
             SliderDefaults.colors(
@@ -468,7 +452,7 @@ private fun CacheLocationDialog(
                             text =
                                 stringResource(
                                     Res.string.settings_location_option,
-                                    storageName(option.id),
+                                    storageLabel(option.id),
                                     formatBytes(option.availableSpaceBytes),
                                 ),
                             style = MaterialTheme.typography.bodyLarge,
@@ -476,7 +460,7 @@ private fun CacheLocationDialog(
                         )
                     }
                 }
-                if (state.isExternalStorageSupported && state.storageOptions.size == 1) {
+                if (state.isSdCardMissing) {
                     Text(
                         text = stringResource(Res.string.settings_sd_unavailable),
                         style = MaterialTheme.typography.bodySmall,

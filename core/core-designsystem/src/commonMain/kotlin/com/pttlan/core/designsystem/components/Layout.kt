@@ -39,6 +39,9 @@ val ReadableWidth: Dp = 600.dp
 /** From this width on (open Fold, tablet, Desktop) there is room for two panes side by side. */
 val ExpandedWidth: Dp = 840.dp
 
+/** Width of the channel list beside the open channel, from [ExpandedWidth] on (27.2). */
+val ChannelPaneWidth: Dp = 360.dp
+
 /**
  * How far below the top of the window a half-open foldable lying flat bends (tabletop, like a Flip on a table);
  * null otherwise. Only Android knows where the hinge is; iOS and Desktop never provide it.

@@ -41,8 +41,6 @@ targets:
           - $(inherited)
           - "-framework"
           - "shared"
-          # Xcode 16+: Compose references UIViewLayoutRegion, missing from older SDKs
-          - "-Wl,-U,_OBJC_CLASS_$_UIViewLayoutRegion"
     preBuildScripts:
       - name: Compile Kotlin Framework
         script: |
@@ -53,6 +51,11 @@ targets:
           cd "$SRCROOT/.."
           ./gradlew :shared:embedAndSignAppleFrameworkForXcode
         alwaysOutOfDate: true
+    postBuildScripts:
+      # The IBM Plex fonts are for the Compose screens; SwiftUI uses the system font (32.3), so they only add ~1 MB
+      - name: Drop Compose Fonts
+        script: rm -rf "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH"/compose-resources/composeResources/*/font
+        alwaysOutOfDate: true
     dependencies:
       - framework: ${SRCROOT}/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)/shared.framework
         implicit: true
@@ -60,5 +63,18 @@ targets:
       - sdk: libsqlite3.tbd
     scheme:
       shared: true
+      testTargets:
+        - iosAppUITests
+  iosAppUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: iosAppUITests
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: iosApp
+    dependencies:
+      - target: iosApp
 
 
