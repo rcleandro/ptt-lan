@@ -131,7 +131,7 @@ struct ConnectionView: View {
             Button(texts["common_ok"], role: .cancel) {}
         }
         .alert(texts["certificate_changed_title"], isPresented: certificateShown) {
-            Button(texts["certificate_trust"]) { model.send(ConnectionIntentTrustNewCertificate.shared) }
+            Button(texts["certificate_trust"], role: .destructive) { model.send(ConnectionIntentTrustNewCertificate.shared) }
             Button(texts["common_cancel"], role: .cancel) { model.send(ConnectionIntentDismissCertificateChange.shared) }
         } message: {
             Text(certificateText)
