@@ -64,9 +64,6 @@ class IosAudioRecorder : AudioRecorder {
     private var audioEngine: AVAudioEngine? = null
     private var isRecording = false
 
-    /** Converted audio waiting to complete a frame; the hardware tap size never matches ours. */
-    private var pending = ByteArray(0)
-
     override fun startCapture(sampleRate: Int): Flow<ByteArray> =
         callbackFlow {
             try {
@@ -97,7 +94,9 @@ class IosAudioRecorder : AudioRecorder {
                     return@callbackFlow
                 }
 
-                pending = ByteArray(0)
+                // Owned by this capture and touched only on the audio thread: as a field, stopCapture() emptied it
+                // on the main thread between the size check and the copy, and the app aborted on release
+                val framer = PcmFramer(FRAME_BYTES)
                 inputNode.installTapOnBus(
                     bus = 0.toULong(),
                     bufferSize = TAP_BUFFER_FRAMES.toUInt(),
@@ -106,11 +105,7 @@ class IosAudioRecorder : AudioRecorder {
                     if (buffer == null) return@installTapOnBus
                     val converted = convertToPcm16(buffer, converter, targetFormat) ?: return@installTapOnBus
 
-                    pending += converted
-                    while (pending.size >= FRAME_BYTES) {
-                        trySend(pending.copyOfRange(0, FRAME_BYTES))
-                        pending = pending.copyOfRange(FRAME_BYTES, pending.size)
-                    }
+                    framer.push(converted).forEach { trySend(it) }
                 }
 
                 engine.prepare()
@@ -130,7 +125,6 @@ class IosAudioRecorder : AudioRecorder {
     override fun stopCapture() {
         if (!isRecording) return
         try {
-            pending = ByteArray(0)
             audioEngine?.inputNode?.removeTapOnBus(0.toULong())
             audioEngine?.stop()
             audioEngine = null
