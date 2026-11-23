@@ -539,7 +539,7 @@ primeiro como controle remoto do iPhone; cliente independente só depois de um s
 
 | Item | Status | Ação | Esforço |
 |---|---|---|---|
-| 33.1 Target watchOS | a fazer | App watchOS em SwiftUI no `project.yml` (XcodeGen), embutido no app do iPhone, com o ícone e o tema da 25.8 | P |
+| 33.1 Target watchOS | ✔ feito | App watchOS em SwiftUI no `project.yml` (XcodeGen), embutido no app do iPhone, com o ícone e o tema da 25.8 **Implementado:** target `watchApp` (watchOS 10+, app de target único com `WKApplication` e `WKCompanionAppBundleIdentifier`), embutido em `PTT-LAN.app/Watch` pelo XcodeGen, com o mesmo ícone do iPhone e a mesma versão (o relógio recusa versões diferentes). Só SwiftUI, sem Kotlin no relógio. O tema é o escuro do Wear (25.8) com a fonte do sistema, como decidido na 32.3: as cores que o relógio usa ficam em `WatchTheme.swift`, cada uma com o nome da constante do `Color.kt`, e o `WatchPaletteTest` (JVM) falha quando os valores divergem. A pasta do relógio virou entrada do `jvmTest`, senão mudar só o Swift deixava o teste em cache | P |
 | 33.2 Protocolo relógio ↔ iPhone | a fazer | `WCSession`: o iPhone manda estado (canal, quem fala, participantes, conectado ou não) e o relógio manda comandos (apertar, soltar, trocar de canal). O lado do iPhone traduz para `onIntent` do `PttComponent` e do `ChannelListComponent`. Testes do mapeamento estado ↔ mensagem | M |
 | 33.3 Telas do relógio | a fazer | Canais e PTT (botão de segurar, vibração ao apertar e soltar, quem fala), como nas telas da 25.3. Sem histórico nem configurações | M |
 | 33.4 Fora de alcance | a fazer | Sem o iPhone alcançável, o relógio mostra o estado e desabilita o botão, em vez de falhar calado | P |
