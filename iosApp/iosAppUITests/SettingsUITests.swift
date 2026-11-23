@@ -41,4 +41,15 @@ final class SettingsUITests: XCTestCase {
         app.buttons["settingsBack"].tap()
         XCTAssertTrue(app.textFields["nickname"].waitForExistence(timeout: 10), "back should return to the connection screen")
     }
+
+    /// The screens are pushed on a `NavigationStack` that follows the Kotlin stack (32.2): the edge swipe goes back
+    /// through the shared root, even with each screen's own back button in place of the system one.
+    func testSwipingFromTheEdgeGoesBackToTheConnectionScreen() {
+        XCTAssertTrue(app.buttons["settingsBack"].waitForExistence(timeout: 10))
+        let edge = app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0.5))
+        edge.press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)))
+
+        XCTAssertTrue(app.textFields["nickname"].waitForExistence(timeout: 10), "the swipe should return to the connection screen")
+        XCTAssertTrue(app.buttons["settingsBack"].waitForNonExistence(timeout: 5), "the settings should be gone, not just covered")
+    }
 }

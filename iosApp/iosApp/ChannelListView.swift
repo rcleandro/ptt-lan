@@ -65,7 +65,7 @@ struct ChannelListView: View {
     private var state: ChannelListState { model.state }
 
     var body: some View {
-        NavigationStack {
+        Group {
             ScrollView {
                 VStack(alignment: .leading, spacing: PttTheme.dimens.spaceLg) {
                     header

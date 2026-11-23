@@ -237,12 +237,32 @@ jobs:
         run: |
           cd iosApp
           xcodebuild -project iosApp.xcodeproj -scheme iosApp -configuration Debug -sdk iphonesimulator -arch arm64 -derivedDataPath build build
-      # SwiftUI screens over the Kotlin components (32.1); the test that needs a server on the network skips here
+      # The UI tests connect, talk and replay against a real server (32.5); it keeps running for the next steps
+      - name: Start PTT Server
+        run: |
+          ./gradlew :serverApp:run > server.log 2>&1 &
+          for i in $(seq 1 300); do nc -z localhost 9443 && exit 0; sleep 1; done
+          cat server.log
+          exit 1
+      # By address, not Bonjour: with PTT_SERVER_ADDRESS set, a server that never answers fails the tests instead of
+      # skipping them. The microphone is allowed up front, so no system prompt stops the PTT and history tests.
       - name: Run iOS UI Tests
         run: |
           cd iosApp
           SIMULATOR=$(xcrun simctl list devices available | grep -m1 -E '^ +iPhone' | grep -oE '[0-9A-F-]{36}')
-          xcodebuild -project iosApp.xcodeproj -scheme iosApp -configuration Debug -destination "id=$SIMULATOR" -derivedDataPath build test
+          xcrun simctl boot "$SIMULATOR" || true
+          xcrun simctl privacy "$SIMULATOR" grant microphone com.pttlan.iosApp
+          TEST_RUNNER_PTT_SERVER_ADDRESS=localhost:9443 xcodebuild -project iosApp.xcodeproj -scheme iosApp \
+            -configuration Debug -destination "id=$SIMULATOR" -derivedDataPath build \
+            -resultBundlePath build/ui-tests.xcresult test
+      - name: Upload UI Test Results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-ui-tests
+          path: |
+            iosApp/build/ui-tests.xcresult
+            server.log
       - name: Upload iOS Simulator Build
         if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v7

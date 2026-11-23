@@ -29,18 +29,14 @@ final class HistoryUITests: XCTestCase {
         XCTAssertTrue(app.textFields["nickname"].waitForExistence(timeout: 10))
     }
 
-    /// Only where a server answers on the network (not on CI), with the microphone allowed: the user's own speech
+    /// With a server (`PTT_SERVER_ADDRESS` on CI, else one found on the network), with the microphone allowed: the user's own speech
     /// is recorded and shows in the history, and playing it does not crash.
     func testWhatTheUserSaidShowsInTheHistoryAndPlays() throws {
         let nickname = app.textFields["nickname"]
         XCTAssertTrue(nickname.waitForExistence(timeout: 10))
         nickname.tap()
         nickname.typeText("Teste UI")
-        let server = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'PTT-LAN'")).firstMatch
-        guard server.waitForExistence(timeout: 8) else {
-            throw XCTSkip("no PTT-LAN server found on this network")
-        }
-        server.tap()
+        try connectToServer(app)
         let channel = app.buttons["channel-Geral"]
         XCTAssertTrue(channel.waitForExistence(timeout: 15))
         channel.tap()

@@ -25,15 +25,11 @@ final class ConnectionUITests: XCTestCase {
         XCTAssertTrue(app.textFields["manualAddress"].exists, "an invalid address must not leave the screen")
     }
 
-    /// Only where a server answers on the network (not on CI): connecting opens the channel list with the server's
+    /// With a server (`PTT_SERVER_ADDRESS` on CI, else one found on the network): connecting opens the channel list with the server's
     /// default channel, and leaving goes back to this screen, all through the shared navigation root.
     func testConnectingListsTheChannelsAndLeavingComesBack() throws {
         type("Teste UI", into: app.textFields["nickname"])
-        let server = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'PTT-LAN'")).firstMatch
-        guard server.waitForExistence(timeout: 8) else {
-            throw XCTSkip("no PTT-LAN server found on this network")
-        }
-        server.tap()
+        try connectToServer(app)
 
         XCTAssertTrue(app.buttons["channel-Geral"].waitForExistence(timeout: 15), "the channel list should show the default channel")
         let screenshot = XCTAttachment(screenshot: app.screenshot())
@@ -45,15 +41,26 @@ final class ConnectionUITests: XCTestCase {
         XCTAssertTrue(app.textFields["nickname"].waitForExistence(timeout: 10), "leaving should come back to the connection screen")
     }
 
-    /// Only where a server answers on the network (not on CI), with the microphone already allowed: the SwiftUI PTT
+    /// With a server: the edge swipe on the channel list goes through the list's own back (32.2), which disconnects
+    /// like "Desconectar" instead of just uncovering the connection screen.
+    func testSwipingBackFromTheChannelListDisconnects() throws {
+        type("Teste UI", into: app.textFields["nickname"])
+        try connectToServer(app)
+        XCTAssertTrue(app.buttons["channel-Geral"].waitForExistence(timeout: 15))
+
+        let edge = app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0.5))
+        edge.press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)))
+
+        XCTAssertTrue(app.textFields["nickname"].waitForExistence(timeout: 10), "the swipe should come back to the connection screen")
+        XCTAssertTrue(app.buttons["connect"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["channel-Geral"].exists, "the channel list should be gone, not just covered")
+    }
+
+    /// With a server (`PTT_SERVER_ADDRESS` on CI, else one found on the network), with the microphone already allowed: the SwiftUI PTT
     /// screen opens from the list, holding the lens talks, and back returns to the list.
     func testTheChannelOpensThePttScreenAndHoldingTheLensTalks() throws {
         type("Teste UI", into: app.textFields["nickname"])
-        let server = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'PTT-LAN'")).firstMatch
-        guard server.waitForExistence(timeout: 8) else {
-            throw XCTSkip("no PTT-LAN server found on this network")
-        }
-        server.tap()
+        try connectToServer(app)
         let channel = app.buttons["channel-Geral"]
         XCTAssertTrue(channel.waitForExistence(timeout: 15))
         channel.tap()
@@ -71,7 +78,7 @@ final class ConnectionUITests: XCTestCase {
         app.buttons["leave"].tap()
     }
 
-    /// Only on a wide screen (iPad) where a server answers: the channel list stays beside the open channel (27.2), and
+    /// Only on a wide screen (iPad), with a server: the channel list stays beside the open channel (27.2), and
     /// back leaves the list alone.
     func testOnAWideScreenTheChannelListStaysBesideTheChannel() throws {
         let wideScreen: CGFloat = 840 // ExpandedWidth in the design system
@@ -79,11 +86,7 @@ final class ConnectionUITests: XCTestCase {
             throw XCTSkip("the screen is too narrow for two panes")
         }
         type("Teste UI", into: app.textFields["nickname"])
-        let server = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'PTT-LAN'")).firstMatch
-        guard server.waitForExistence(timeout: 8) else {
-            throw XCTSkip("no PTT-LAN server found on this network")
-        }
-        server.tap()
+        try connectToServer(app)
         let channel = app.buttons["channel-Geral"]
         XCTAssertTrue(channel.waitForExistence(timeout: 15))
         channel.tap()

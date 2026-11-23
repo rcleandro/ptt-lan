@@ -62,7 +62,7 @@ struct HistoryView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        Group {
             content
                 .background {
                     ZStack {

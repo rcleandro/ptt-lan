@@ -1,6 +1,7 @@
 package com.pttlan.shared
 
 import com.arkivanov.decompose.DefaultComponentContext
+import com.arkivanov.essenty.backhandler.BackDispatcher
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.pttlan.core.designsystem.UiText
 import com.pttlan.core.designsystem.components.PttButtonState
@@ -55,8 +56,17 @@ suspend fun text(
     args: List<Any>,
 ): String = resolveString(resource, args)
 
-/** The app's navigation root, shared by the SwiftUI screens and the Compose ones not migrated yet. */
-fun createRootComponent(): RootComponent = RootComponent(componentContext = DefaultComponentContext(lifecycle = LifecycleRegistry()))
+private val backDispatcher = BackDispatcher()
+
+/** The app's navigation root, drawn by the SwiftUI screens. */
+fun createRootComponent(): RootComponent =
+    RootComponent(componentContext = DefaultComponentContext(lifecycle = LifecycleRegistry(), backHandler = backDispatcher))
+
+/**
+ * The system back of the `NavigationStack` (the edge swipe), the same path as Android's back button (32.2): the active
+ * screen's callback first (leaving the channel list disconnects), else the stack pops. False when nothing handled it.
+ */
+fun goBack(): Boolean = backDispatcher.back()
 
 /** What a screen reader says for the PTT button in [state], the same as on the Compose button. */
 fun pttButtonLabel(state: PttButtonState): StringResource = state.accessibilityLabel()

@@ -98,7 +98,7 @@ struct PttView: View {
     private var buttonState: Core_designsystemPttButtonState { state.buttonState() }
 
     var body: some View {
-        NavigationStack {
+        Group {
             GeometryReader { geometry in
                 VStack(spacing: 0) {
                     Spacer(minLength: 0)

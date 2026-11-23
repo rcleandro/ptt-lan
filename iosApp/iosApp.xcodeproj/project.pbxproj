@@ -20,6 +20,7 @@
 		9BB844B7551672B779292647 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DC6FD1B8D41DDE5AE2A442B /* Components.swift */; };
 		BC176A83C0F9CCC0CA18F75B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E713B16C0AA6DFFD30001358 /* SettingsView.swift */; };
 		CB0EF950945238B2E30F6269 /* SettingsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46046658C8BE76C5FE2E83D4 /* SettingsUITests.swift */; };
+		E73FDE82DD434561BA918902 /* UITestServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE9A7869CC14EE256C114EAB /* UITestServer.swift */; };
 		E93F3DA5A78951A9B6F7EF24 /* ChannelListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75410908D79FE6ED50CD7D87 /* ChannelListView.swift */; };
 		F7C33B50A94DA01F2E82C280 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 245434685F34A9A15B1AC406 /* libsqlite3.tbd */; };
 		FFF93642A27B8411D7A8E6BE /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2925723D1B4AC9FBF45C9F3F /* RootView.swift */; };
@@ -53,6 +54,7 @@
 		C117AD187833E2513BD2F553 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		D99AD3DB49A4844CC1A32D42 /* KotlinBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KotlinBridge.swift; sourceTree = "<group>"; };
 		E713B16C0AA6DFFD30001358 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		EE9A7869CC14EE256C114EAB /* UITestServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITestServer.swift; sourceTree = "<group>"; };
 		F3573C217B14BC618571EA50 /* ConnectionUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionUITests.swift; sourceTree = "<group>"; };
 		F543015C899423D4B01CEB2E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -123,6 +125,7 @@
 				F3573C217B14BC618571EA50 /* ConnectionUITests.swift */,
 				424A0D99668970810882BCC5 /* HistoryUITests.swift */,
 				46046658C8BE76C5FE2E83D4 /* SettingsUITests.swift */,
+				EE9A7869CC14EE256C114EAB /* UITestServer.swift */,
 			);
 			path = iosAppUITests;
 			sourceTree = "<group>";
@@ -138,6 +141,7 @@
 				297B59D9CE634556D6007C40 /* Sources */,
 				1623B02D10928C8101C1F806 /* Resources */,
 				EF8A6E9BFD470986D9D5C9B5 /* Frameworks */,
+				E79B8C2E172331823B6A9773 /* Drop Compose Fonts */,
 			);
 			buildRules = (
 			);
@@ -232,6 +236,24 @@
 			shellPath = /bin/sh;
 			shellScript = "if [ \"YES\" = \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  echo \"Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \\\"YES\\\"\"\n  exit 0\nfi\ncd \"$SRCROOT/..\"\n./gradlew :shared:embedAndSignAppleFrameworkForXcode\n";
 		};
+		E79B8C2E172331823B6A9773 /* Drop Compose Fonts */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Drop Compose Fonts";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "rm -rf \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"/compose-resources/composeResources/*/font";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -242,6 +264,7 @@
 				6F34C72B8056938C3B931C12 /* ConnectionUITests.swift in Sources */,
 				7096F363D172634C4B27C641 /* HistoryUITests.swift in Sources */,
 				CB0EF950945238B2E30F6269 /* SettingsUITests.swift in Sources */,
+				E73FDE82DD434561BA918902 /* UITestServer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -448,7 +471,6 @@
 					"$(inherited)",
 					"-framework",
 					shared,
-					"-Wl,-U,_OBJC_CLASS_$_UIViewLayoutRegion",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.pttlan.iosApp;
 				PRODUCT_NAME = "PTT-LAN";
@@ -480,7 +502,6 @@
 					"$(inherited)",
 					"-framework",
 					shared,
-					"-Wl,-U,_OBJC_CLASS_$_UIViewLayoutRegion",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.pttlan.iosApp;
 				PRODUCT_NAME = "PTT-LAN";

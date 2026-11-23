@@ -61,7 +61,7 @@ struct ConnectionView: View {
     @Environment(\.pttTheme) private var theme
 
     var body: some View {
-        NavigationStack {
+        Group {
             ScrollView {
                 VStack(alignment: .leading, spacing: PttTheme.dimens.spaceLg) {
                     Text(texts["connection_subtitle"])

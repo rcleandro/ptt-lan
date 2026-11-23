@@ -55,7 +55,7 @@ struct SettingsView: View {
     private var state: SettingsState { model.state }
 
     var body: some View {
-        NavigationStack {
+        Group {
             ScrollView {
                 VStack(alignment: .leading, spacing: PttTheme.dimens.spaceLg) {
                     Text(texts["settings_title"])
