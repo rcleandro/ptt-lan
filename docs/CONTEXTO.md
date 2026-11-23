@@ -83,7 +83,8 @@ accessors (`projects.core.coreNetwork`).
 
 ### 4.1 Conexão
 1. `ConnectionComponent` lista servidores via `DiscoverServersUseCase` (mDNS `_pttlan._tcp`) ou
-   aceita IP/host manual (porta fixa **9443**). Salva `nickname` e `manualIp` nas settings.
+   aceita IP/host manual, com porta opcional (`host:porta`; sem porta, **9443** na LAN e **443** na internet, onde
+   responde um proxy reverso ou túnel). Salva `nickname` e `manualIp` nas settings.
 2. `ConnectionRepositoryImpl.connect` → `PttWebSocketClient.login` (`POST https://host:9443/api/auth/login`
    com `nickname` + `deviceId = "device-${nickname.hashCode()}"` e, se preenchido, o `pin` da sala) → recebe `token` + `userId`. O `userId` é gerado
    pelo servidor, vai no `sub` do JWT e fica em `ConnectionRepository.sessionUserId`.

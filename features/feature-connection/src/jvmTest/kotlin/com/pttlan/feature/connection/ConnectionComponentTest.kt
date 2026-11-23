@@ -7,6 +7,7 @@ import com.arkivanov.essenty.lifecycle.resume
 import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.core.designsystem.generated.resources.Res
 import com.pttlan.core.designsystem.generated.resources.connection_error_host
+import com.pttlan.core.designsystem.generated.resources.connection_error_invalid_address
 import com.pttlan.core.designsystem.generated.resources.connection_error_timeout_manual
 import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.domain.ptt.repository.LocalServerHost
@@ -114,7 +115,7 @@ class ConnectionComponentTest {
         }
 
     @Test
-    fun `when ConnectToManualIp with internet domain, should call use case with isLocal false`() =
+    fun `when ConnectToManualIp with internet domain, should call use case with isLocal false on the https port`() =
         runTest {
             val component = createComponent()
 
@@ -122,7 +123,7 @@ class ConnectionComponentTest {
             component.onIntent(ConnectionIntent.UpdateNickname("User2"))
             component.onIntent(ConnectionIntent.UpdateManualIp("ptt.internet.com"))
 
-            val expectedEndpoint = ServerEndpoint("ptt.internet.com", 9443, isLocal = false)
+            val expectedEndpoint = ServerEndpoint("ptt.internet.com", 443, isLocal = false)
             coEvery { connectToServerUseCase(expectedEndpoint, "User2") } returns Result.success(Unit)
 
             // Act
@@ -131,6 +132,35 @@ class ConnectionComponentTest {
 
             // Assert
             coVerify(exactly = 1) { connectToServerUseCase(expectedEndpoint, "User2") }
+        }
+
+    @Test
+    fun `ConnectToManualIp with host and port connects on the typed port`() =
+        runTest {
+            val component = createComponent()
+            component.onIntent(ConnectionIntent.UpdateNickname("User2"))
+            val expectedEndpoint = ServerEndpoint("ptt.internet.com", 8443, isLocal = false)
+            coEvery { connectToServerUseCase(expectedEndpoint, "User2") } returns Result.success(Unit)
+
+            component.onIntent(ConnectionIntent.ConnectToManualIp("ptt.internet.com:8443"))
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { connectToServerUseCase(expectedEndpoint, "User2") }
+        }
+
+    @Test
+    fun `ConnectToManualIp with an invalid port shows an error and does not connect`() =
+        runTest {
+            val component = createComponent()
+            component.onIntent(ConnectionIntent.UpdateNickname("User2"))
+
+            component.onIntent(ConnectionIntent.ConnectToManualIp("ptt.internet.com:99999"))
+            advanceUntilIdle()
+
+            val effect = component.effects.first()
+            assertTrue(effect is ConnectionEffect.ShowError)
+            assertEquals(Res.string.connection_error_invalid_address, effect.message)
+            coVerify(exactly = 0) { connectToServerUseCase(any(), any()) }
         }
 
     @Test
