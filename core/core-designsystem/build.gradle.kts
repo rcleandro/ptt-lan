@@ -8,7 +8,7 @@ plugins {
 kotlin {
     android {
         namespace = "com.pttlan.core.designsystem"
-        compileSdk = 37
+        compileSdk { version = release(37) { minorApiLevel = 1 } }
         minSdk = 26
         withHostTest {
             isIncludeAndroidResources = true

@@ -31,7 +31,7 @@ val coverageFloors =
  * Bans `println`/`printStackTrace` outside tests (21.4). Detekt's `ForbiddenMethodCall` does the same, but only
  * with type resolution, which iosMain does not get (23.3).
  */
-val checkNoPrintln by tasks.registering {
+val checkNoPrintln = tasks.register("checkNoPrintln") {
     group = "verification"
     description = "Fails when production sources log through println or printStackTrace"
 
@@ -141,9 +141,10 @@ subprojects {
             "detektMainAndroid",
             "detektIosMainSourceSet",
         )
-    tasks.matching { it.name == "detekt" }.configureEach {
+    tasks.named { it == "detekt" }.configureEach {
         dependsOn(checkNoPrintln)
-        dependsOn(project.tasks.matching { it.name in typeResolvedDetekt })
+        // By name: filtering the task collection would create every task, Dokka V1 ones included
+        dependsOn(typeResolvedDetekt.filter { it in project.tasks.names })
     }
 
     tasks.withType<Test> {

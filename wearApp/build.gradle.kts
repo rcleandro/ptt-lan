@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.pttlan.wear"
-    compileSdk = 37
+    compileSdk { version = release(37) { minorApiLevel = 1 } }
     defaultConfig {
         // Same id as the phone app: Wear OS pairs the two as one product (ADR 0011)
         applicationId = "com.pttlan.android"

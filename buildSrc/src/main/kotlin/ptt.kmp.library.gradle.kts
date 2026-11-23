@@ -10,7 +10,7 @@ plugins {
 kotlin {
     android {
         namespace = "com.pttlan" + project.path.replace(":", ".").replace("-", "")
-        compileSdk = 37
+        compileSdk { version = release(37) { minorApiLevel = 1 } }
         minSdk = 26
     }
     iosArm64()
