@@ -42,6 +42,6 @@ val forbiddenFeatureDependencies =
         }
     }
 
-tasks.matching { it.name == "check" }.configureEach {
+tasks.named { it == "check" }.configureEach {
     dependsOn(forbiddenFeatureDependencies)
 }
