@@ -7,9 +7,11 @@ import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.core.designsystem.generated.resources.Res
 import com.pttlan.core.designsystem.generated.resources.default_nickname
 import com.pttlan.domain.ptt.model.ParticipantDomain
+import com.pttlan.domain.ptt.repository.ConnectionStatus
 import com.pttlan.domain.ptt.repository.VoiceRepository
 import com.pttlan.domain.ptt.usecase.JoinChannelUseCase
 import com.pttlan.domain.ptt.usecase.LeaveChannelUseCase
+import com.pttlan.domain.ptt.usecase.ObserveConnectionStatusUseCase
 import com.pttlan.domain.ptt.usecase.ObserveFloorDeniedUseCase
 import com.pttlan.domain.ptt.usecase.ObserveParticipantsUseCase
 import com.pttlan.domain.ptt.usecase.ObserveSpeakerUseCase
@@ -44,6 +46,8 @@ data class PttState(
     val floorBlocked: Boolean = false,
     val isFloorGranted: Boolean = false,
     val participants: List<ParticipantDomain> = emptyList(),
+    /** False while the connection to the server is down: nothing can be said or heard until it comes back. */
+    val isOnline: Boolean = true,
 )
 
 sealed interface PttIntent {
@@ -79,6 +83,7 @@ class PttComponent(
     private val observeFloorDeniedUseCase: ObserveFloorDeniedUseCase,
     private val startTransmittingUseCase: StartTransmittingUseCase,
     private val stopTransmittingUseCase: StopTransmittingUseCase,
+    private val observeConnectionStatusUseCase: ObserveConnectionStatusUseCase,
 ) : ComponentContext by componentContext,
     KoinComponent {
     private val settings: Settings by inject()
@@ -128,7 +133,13 @@ class PttComponent(
 
         scope.launch {
             observeParticipantsUseCase(channelId).collect { participants ->
-                _state.update { it.copy(participants = participants) }
+                _state.update { it.withParticipants(participants) }
+            }
+        }
+
+        scope.launch {
+            observeConnectionStatusUseCase().collect { status ->
+                _state.update { it.copy(isOnline = status == ConnectionStatus.Connected) }
             }
         }
 
@@ -155,6 +166,8 @@ class PttComponent(
     fun onIntent(intent: PttIntent) {
         when (intent) {
             is PttIntent.PressPtt -> {
+                // Nothing would reach the server: the status already says it is reconnecting
+                if (!_state.value.isOnline) return
                 if (_state.value.floorBlocked) {
                     scope.launch { _effects.emit(PttEffect.ShowFloorDenied(serverReason = null)) }
                     return
@@ -185,5 +198,23 @@ class PttComponent(
                 }
             }
         }
+    }
+}
+
+/**
+ * The participant list sent on joining already says who is speaking, while `SpeakerChanged` only comes when a turn
+ * starts or ends: someone joining mid-turn takes the speaker from the list instead of reading a free channel.
+ */
+internal fun PttState.withParticipants(participants: List<ParticipantDomain>): PttState {
+    val speaker = participants.firstOrNull { it.isSpeaking && it.userId != localUserId }
+    return if (currentSpeakerId == null && speaker != null) {
+        copy(
+            participants = participants,
+            currentSpeakerId = speaker.userId,
+            currentSpeakerName = speaker.nickname,
+            floorBlocked = true,
+        )
+    } else {
+        copy(participants = participants)
     }
 }

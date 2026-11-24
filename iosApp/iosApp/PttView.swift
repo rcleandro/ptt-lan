@@ -106,7 +106,7 @@ struct PttView: View {
             GeometryReader { geometry in
                 VStack(spacing: 0) {
                     Spacer(minLength: 0)
-                    StatusBlock(copy: buttonState.statusCopy(), speakerName: state.currentSpeakerName)
+                    StatusBlock(copy: state.statusCopy(), speakerName: state.currentSpeakerName)
                     PttLens(
                         state: buttonState,
                         size: geometry.size.height < compactBelowHeight ? compactLensSize : regularLensSize,
@@ -114,7 +114,7 @@ struct PttView: View {
                         onRelease: { model.send(PttIntentReleasePtt.shared) }
                     )
                     .padding(.vertical, PttTheme.dimens.spaceXl)
-                    ResourceText(resource: buttonState.hint())
+                    ResourceText(resource: state.hint())
                         .font(.subheadline)
                         .foregroundStyle(theme.textSecondary)
                         .multilineTextAlignment(.center)
@@ -250,6 +250,7 @@ private struct StatusBlock: View {
         switch copy.tone {
         case .own: theme.accentTx
         case .receiving: theme.primary
+        case .offline: theme.statusIdle
         default: theme.statusOnline
         }
     }

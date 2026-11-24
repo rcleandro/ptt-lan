@@ -148,7 +148,7 @@ fun PttScreenContent(
                 Column(modifier = Modifier.height(tabletopFold), horizontalAlignment = Alignment.CenterHorizontally) {
                     topBar()
                     Spacer(modifier = Modifier.weight(1f))
-                    StatusBlock(buttonState = buttonState, speakerName = state.currentSpeakerName)
+                    StatusBlock(state)
                     Spacer(modifier = Modifier.weight(1f))
                     Box(modifier = Modifier.readableWidth().padding(bottom = Dimens.SpaceXl)) { ParticipantsPanel(state, buttonState) }
                 }
@@ -190,7 +190,7 @@ private fun TalkArea(
         verticalArrangement = Arrangement.Center,
     ) {
         if (withStatus) {
-            StatusBlock(buttonState = buttonState, speakerName = state.currentSpeakerName)
+            StatusBlock(state)
             Spacer(modifier = Modifier.height(Dimens.SpaceXl))
         }
         PttButton(
@@ -200,7 +200,7 @@ private fun TalkArea(
             buttonSize = buttonSize,
         )
         Text(
-            text = stringResource(buttonState.hint()),
+            text = stringResource(state.hint()),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,

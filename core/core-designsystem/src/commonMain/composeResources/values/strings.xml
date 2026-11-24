@@ -91,6 +91,9 @@
     <string name="ptt_hint_requesting">solte para cancelar</string>
     <string name="ptt_hint_transmitting">solte para encerrar</string>
     <string name="ptt_hint_receiving">aguarde a sua vez para falar</string>
+    <string name="ptt_status_reconnecting">Sem conexão</string>
+    <string name="ptt_status_reconnecting_headline">Reconectando…</string>
+    <string name="ptt_hint_reconnecting">a fala volta assim que a conexão voltar</string>
     <string name="ptt_channel_busy">Canal ocupado</string>
     <string name="default_nickname">User-%1$s</string>
 
