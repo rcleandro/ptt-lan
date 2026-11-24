@@ -17,6 +17,8 @@
     <string name="ptt_button_requesting">Pedindo a palavra: solte para cancelar</string>
     <string name="ptt_button_transmitting">Transmitindo: solte para encerrar</string>
     <string name="ptt_button_receiving">Canal ocupado: aguarde para falar</string>
+    <string name="ptt_action_start">começar a falar</string>
+    <string name="ptt_action_stop">parar de falar</string>
     <string name="participant_self">Você</string>
 
     <!-- Shared -->
@@ -72,6 +74,7 @@
 
     <!-- Push-to-talk screen -->
     <string name="ptt_back_to_channels">Voltar para canais</string>
+    <string name="ptt_close_channel">Fechar canal</string>
     <string name="ptt_participants">%1$d no canal</string>
     <string name="ptt_leave">Sair do canal</string>
     <string name="ptt_in_channel">No canal</string>
@@ -88,6 +91,9 @@
     <string name="ptt_hint_requesting">solte para cancelar</string>
     <string name="ptt_hint_transmitting">solte para encerrar</string>
     <string name="ptt_hint_receiving">aguarde a sua vez para falar</string>
+    <string name="ptt_status_reconnecting">Sem conexão</string>
+    <string name="ptt_status_reconnecting_headline">Reconectando…</string>
+    <string name="ptt_hint_reconnecting">a fala volta assim que a conexão voltar</string>
     <string name="ptt_channel_busy">Canal ocupado</string>
     <string name="default_nickname">User-%1$s</string>
 

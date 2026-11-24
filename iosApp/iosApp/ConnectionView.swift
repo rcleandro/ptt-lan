@@ -59,6 +59,8 @@ struct ConnectionView: View {
     private var isConnecting: Bool { state.status == ConnectionStatus.connecting }
 
     @Environment(\.pttTheme) private var theme
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    private var fieldAndButton: AnyLayout { dockLayout(dynamicTypeSize) }
 
     var body: some View {
         Group {
@@ -115,6 +117,7 @@ struct ConnectionView: View {
                     }
                 }
                 .padding(.horizontal, PttTheme.dimens.spaceXl)
+                .readableWidth()
             }
             .scrollDismissesKeyboard(.interactively)
             .background(theme.background.ignoresSafeArea())
@@ -149,9 +152,11 @@ struct ConnectionView: View {
                 .font(.footnote)
                 .foregroundStyle(theme.textSecondary)
                 .padding(.leading, PttTheme.dimens.spaceSm)
-            HStack(spacing: PttTheme.dimens.spaceMd) {
+            // With the accessibility text sizes the field goes above the button, or the button breaks into "Co-nectar"
+            fieldAndButton {
                 TextField(texts["connection_manual_hint"], text: binding(state.manualIp) { ConnectionIntentUpdateManualIp(ip: $0) })
-                    .font(.body.monospaced())
+                    // Monospaced is wider: with the accessibility sizes the field would shrink its text to fit
+                    .font(dynamicTypeSize.isAccessibilitySize ? .body : .body.monospaced())
                     .keyboardType(.URL)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
@@ -173,6 +178,7 @@ struct ConnectionView: View {
         .glassControl(in: RoundedRectangle(cornerRadius: PttTheme.dimens.dockRadius, style: .continuous))
         .padding(.horizontal, PttTheme.dimens.spaceLg)
         .padding(.bottom, PttTheme.dimens.spaceSm)
+        .readableWidth()
     }
 
     /// A field that shows the component's value and sends every edit back as an intent.

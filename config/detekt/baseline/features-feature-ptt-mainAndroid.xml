@@ -3,6 +3,7 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>InjectDispatcher:PttComponent.kt:PttComponent.&lt;no name provided&gt;$IO</ID>
+    <ID>LongParameterList:PttScreen.kt:@Composable fun PttScreenContent</ID>
     <ID>LongParameterList:PttComponent.kt:PttComponent</ID>
     <ID>MagicNumber:PttComponent.kt:PttComponent$4</ID>
     <ID>TooGenericExceptionCaught:PttComponent.kt:PttComponent.&lt;no name provided&gt;$e: Exception</ID>

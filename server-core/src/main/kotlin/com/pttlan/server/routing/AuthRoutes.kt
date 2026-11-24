@@ -16,6 +16,9 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import java.util.UUID
 
+/** Keeps the ids derived from device ids apart from any other name-based UUID. */
+private const val USER_ID_NAMESPACE = "ptt-lan:user:"
+
 /** Room PIN from `ptt.roomPin`, set by the host mode (24.3). Null means an open room. */
 fun Application.roomPin(): String? =
     environment.config
@@ -53,7 +56,8 @@ fun Route.authRoutes(roomPin: String? = null) {
                     }
                 }
 
-                val userId = UUID.randomUUID().toString()
+                // The same for every login from one device: logging in again after a restart keeps the identity
+                val userId = UUID.nameUUIDFromBytes((USER_ID_NAMESPACE + request.deviceId).encodeToByteArray()).toString()
                 val token = JwtConfig.generateToken(userId, request.nickname, request.deviceId)
                 call.respond(HttpStatusCode.OK, LoginResponse(token, userId))
             }

@@ -1,6 +1,7 @@
 package com.pttlan.core.network
 
 import com.pttlan.core.network.protocol.ControlMessage
+import com.pttlan.core.network.protocol.INVALID_TOKEN_REASON
 import io.ktor.network.tls.certificates.generateCertificate
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
@@ -17,6 +18,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -113,6 +115,40 @@ class PttWebSocketClientReconnectTest {
                             return@webSocket
                         }
                     }
+                }
+            }
+        }
+    }.start(wait = false)
+
+    /** Boots a WSS endpoint that drops the first session, then refuses the old token like a restarted server. */
+    private fun startRestartedServer(
+        port: Int,
+        tokens: MutableList<String?>,
+    ) = embeddedServer(
+        factory = Netty,
+        configure = {
+            sslConnector(
+                keyStore = testKeyStore(),
+                keyAlias = "pttlan",
+                keyStorePassword = { KEYSTORE_PASSWORD.toCharArray() },
+                privateKeyPassword = { KEYSTORE_PASSWORD.toCharArray() },
+            ) {
+                this.port = port
+            }
+        },
+    ) {
+        install(WebSockets)
+        routing {
+            webSocket("/ws") {
+                val token = call.request.queryParameters["token"]
+                tokens.add(token)
+                when {
+                    tokens.size == 1 -> close()
+
+                    // the restart
+                    token == "old" -> close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, INVALID_TOKEN_REASON))
+
+                    else -> for (frame in incoming) Unit
                 }
             }
         }
@@ -237,6 +273,40 @@ class PttWebSocketClientReconnectTest {
                 assertEquals("Nome já em uso", error.message)
                 assertEquals("Nome já em uso", client.lastCloseReason)
             } finally {
+                httpClient.close()
+                server.stop(0, 0)
+            }
+        }
+
+    /**
+     * Achado 3 da rodada da 29.1: a server restarted without a fixed signing key accepts the old token once, then
+     * refuses it. The client logs in again through `renewToken` and goes on, instead of dropping the session.
+     */
+    @Test
+    fun logsInAgainWhenAReconnectionFindsTheTokenRefused() =
+        runBlocking {
+            val port = freePort()
+            val tokens = CopyOnWriteArrayList<String?>()
+            val server = startRestartedServer(port, tokens)
+            val httpClient = createHttpClient()
+            val client = PttWebSocketClient(httpClient, maxReconnectAttempts = 5)
+            val renewals = AtomicInteger()
+
+            try {
+                CoroutineScope(Dispatchers.Default).launch {
+                    client.connect(host = "127.0.0.1", port = port, isLocal = true, token = "old") {
+                        renewals.incrementAndGet()
+                        "new"
+                    }
+                }
+
+                withTimeout(30.seconds) { while (tokens.lastOrNull() != "new" || !client.isConnected.value) delay(100.milliseconds) }
+
+                assertEquals(1, renewals.get())
+                assertEquals(listOf("old", "old", "new"), tokens.toList())
+                assertEquals(null, client.lastCloseReason, "the refusal must not reach the UI")
+            } finally {
+                client.disconnect()
                 httpClient.close()
                 server.stop(0, 0)
             }

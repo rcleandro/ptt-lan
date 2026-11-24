@@ -5,6 +5,8 @@ import shared
 private let regularLensSize: CGFloat = 208
 private let compactLensSize: CGFloat = 160
 private let compactBelowHeight: CGFloat = 700
+/// How far the one-screen PTT texts shrink with large text sizes before they would be cut.
+private let minimumTextScale: CGFloat = 0.6
 private let iconScale: CGFloat = 0.3
 private let pressedScale: CGFloat = 0.97
 private let ringCount = 3
@@ -85,12 +87,16 @@ final class PttModel: ObservableObject {
 /// PTT screen in SwiftUI (32.4), over the same `PttComponent` as the Compose one. The lens is Liquid Glass.
 struct PttView: View {
     let root: RootComponent
+    /// Beside the channel list (iPad), whose back disconnects: this one shows as "close" so the two are not confused (29.3)
+    let besideChannels: Bool
     @StateObject private var model: PttModel
-    @StateObject private var texts = Texts(["ptt_back_to_channels", "common_history", "ptt_leave", "ptt_in_channel"])
+    @StateObject private var texts = Texts(["ptt_back_to_channels", "ptt_close_channel", "common_history", "ptt_leave", "ptt_in_channel"])
+    @State private var announcedCount: Int?
     @Environment(\.pttTheme) private var theme
 
-    init(component: PttComponent, root: RootComponent) {
+    init(component: PttComponent, root: RootComponent, besideChannels: Bool = false) {
         self.root = root
+        self.besideChannels = besideChannels
         _model = StateObject(wrappedValue: PttModel(component: component, root: root))
     }
 
@@ -102,7 +108,7 @@ struct PttView: View {
             GeometryReader { geometry in
                 VStack(spacing: 0) {
                     Spacer(minLength: 0)
-                    StatusBlock(copy: buttonState.statusCopy(), speakerName: state.currentSpeakerName)
+                    StatusBlock(copy: state.statusCopy(), speakerName: state.currentSpeakerName)
                     PttLens(
                         state: buttonState,
                         size: geometry.size.height < compactBelowHeight ? compactLensSize : regularLensSize,
@@ -110,10 +116,11 @@ struct PttView: View {
                         onRelease: { model.send(PttIntentReleasePtt.shared) }
                     )
                     .padding(.vertical, PttTheme.dimens.spaceXl)
-                    ResourceText(resource: buttonState.hint())
+                    ResourceText(resource: state.hint())
                         .font(.subheadline)
                         .foregroundStyle(theme.textSecondary)
                         .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true) // wraps with large text instead of being cut
                         .padding(.horizontal, PttTheme.dimens.space2xl)
                     Spacer(minLength: 0)
                     participants
@@ -127,12 +134,18 @@ struct PttView: View {
                     .accessibilityIdentifier("leaveChannel")
                 }
                 .frame(maxWidth: .infinity)
+                // One screen that cannot scroll (a hold inside a scroll view fights the scroll): past this size the
+                // headline shrinks and "Sair do canal" falls off the bottom. The other screens grow without a cap
+                .dynamicTypeSize(...DynamicTypeSize.accessibility1)
             }
             .background(theme.background.ignoresSafeArea())
             .overlay(alignment: .top) { toast }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button(texts["ptt_back_to_channels"], systemImage: "chevron.backward") { root.goBack() }
+                    Button(
+                        texts[besideChannels ? "ptt_close_channel" : "ptt_back_to_channels"],
+                        systemImage: besideChannels ? "xmark" : "chevron.backward"
+                    ) { root.goBack() }
                         .accessibilityIdentifier("backToChannels")
                 }
                 ToolbarItem(placement: .principal) {
@@ -163,6 +176,14 @@ struct PttView: View {
             .font(.caption.weight(.semibold))
             .foregroundStyle(theme.textTertiary)
             .padding(.horizontal, PttTheme.dimens.space2xl)
+            .accessibilityElement(children: .combine)
+            // Announced when someone joins or leaves, like the live region of the Compose count (29.4)
+            .task(id: state.participants.count) {
+                let count = state.participants.count
+                defer { announcedCount = count }
+                guard announcedCount != nil else { return } // the count on opening is read with the screen, not announced
+                UIAccessibility.post(notification: .announcement, argument: await Texts.format("ptt_participants", [count]))
+            }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: PttTheme.dimens.spaceXs) {
                     ForEach(state.participants, id: \.userId) { participant in
@@ -175,6 +196,7 @@ struct PttView: View {
         .padding(.vertical, PttTheme.dimens.spaceLg)
         .glassControl(in: RoundedRectangle(cornerRadius: PttTheme.dimens.panelRadius, style: .continuous))
         .padding(.horizontal, PttTheme.dimens.spaceXl)
+        .readableWidth()
     }
 
     @ViewBuilder
@@ -212,6 +234,7 @@ private struct StatusBlock: View {
                 .foregroundStyle(theme.textPrimary)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
+                .minimumScaleFactor(minimumTextScale)
         }
         .padding(.horizontal, PttTheme.dimens.space2xl)
         .accessibilityElement(children: .combine)
@@ -226,6 +249,8 @@ private struct StatusBlock: View {
                 }
             }
             headline = (try? await SwiftBridgeKt.text(resource: copy.headline, args: args)) ?? ""
+            // Announced when it changes, like the live region of the Compose status (29.4)
+            UIAccessibility.post(notification: .announcement, argument: "\(eyebrow), \(headline)")
         }
     }
 
@@ -233,6 +258,7 @@ private struct StatusBlock: View {
         switch copy.tone {
         case .own: theme.accentTx
         case .receiving: theme.primary
+        case .offline: theme.statusIdle
         default: theme.statusOnline
         }
     }
@@ -247,6 +273,7 @@ private struct PttLens: View {
     let onRelease: () -> Void
     @State private var isHeld = false
     @State private var label = ""
+    @State private var actionLabel = ""
     @Environment(\.pttTheme) private var theme
 
     private var isTinted: Bool { state == .transmitting || state == .receiving }
@@ -289,10 +316,23 @@ private struct PttLens: View {
         .animation(stateAnimation, value: state)
         .accessibilityElement()
         .accessibilityLabel(label)
+        .accessibilityHint(actionLabel)
         .accessibilityAddTraits(.isButton)
+        // VoiceOver's double tap cannot hold: it toggles the talk instead (29.4)
+        .accessibilityAction {
+            if SwiftBridgeKt.pttScreenReaderStartsTalking(state: state) {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                onPress()
+            } else {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                onRelease()
+            }
+        }
         .accessibilityIdentifier("ptt")
         .task(id: state) {
             label = (try? await SwiftBridgeKt.text(resource: SwiftBridgeKt.pttButtonLabel(state: state), args: [])) ?? ""
+            let starts = SwiftBridgeKt.pttScreenReaderStartsTalking(state: state)
+            actionLabel = await Texts.format(starts ? "ptt_action_start" : "ptt_action_stop", [])
         }
     }
 
@@ -376,6 +416,7 @@ private struct ParticipantAvatar: View {
                 .fontWeight(highlight != nil ? .semibold : .regular)
                 .foregroundStyle(highlight ?? theme.textSecondary)
                 .lineLimit(1)
+                .minimumScaleFactor(minimumTextScale)
         }
         .frame(width: avatarColumnWidth)
         .animation(stateAnimation, value: highlight)

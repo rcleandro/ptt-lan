@@ -60,6 +60,7 @@ import com.pttlan.core.designsystem.generated.resources.Res
 import com.pttlan.core.designsystem.generated.resources.ptt_channel_busy
 import com.pttlan.core.designsystem.generated.resources.ptt_hint_idle
 import com.pttlan.core.designsystem.generated.resources.ptt_hint_receiving
+import com.pttlan.core.designsystem.generated.resources.ptt_hint_reconnecting
 import com.pttlan.core.designsystem.generated.resources.ptt_hint_requesting
 import com.pttlan.core.designsystem.generated.resources.ptt_hint_transmitting
 import com.pttlan.core.designsystem.generated.resources.ptt_in_channel
@@ -69,6 +70,8 @@ import com.pttlan.core.designsystem.generated.resources.ptt_status_free
 import com.pttlan.core.designsystem.generated.resources.ptt_status_free_headline
 import com.pttlan.core.designsystem.generated.resources.ptt_status_receiving
 import com.pttlan.core.designsystem.generated.resources.ptt_status_receiving_headline
+import com.pttlan.core.designsystem.generated.resources.ptt_status_reconnecting
+import com.pttlan.core.designsystem.generated.resources.ptt_status_reconnecting_headline
 import com.pttlan.core.designsystem.generated.resources.ptt_status_requesting
 import com.pttlan.core.designsystem.generated.resources.ptt_status_requesting_headline
 import com.pttlan.core.designsystem.generated.resources.ptt_status_transmitting
@@ -82,11 +85,9 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-internal fun StatusBlock(
-    buttonState: PttButtonState,
-    speakerName: String?,
-) {
-    val (eyebrow, color: Color, headline) = statusCopy(buttonState, speakerName)
+internal fun StatusBlock(state: PttState) {
+    val buttonState = state.buttonState()
+    val (eyebrow, color: Color, headline) = statusCopy(state.statusCopy(), state.currentSpeakerName)
 
     Column(
         modifier = Modifier.padding(horizontal = Dimens.Space3xl).semantics { liveRegion = LiveRegionMode.Polite },
@@ -111,15 +112,15 @@ internal fun StatusBlock(
 /** Eyebrow, its color and the headline above the button, for each state. */
 @Composable
 private fun statusCopy(
-    buttonState: PttButtonState,
+    copy: StatusCopy,
     speakerName: String?,
 ): Triple<String, Color, String> {
-    val copy = buttonState.statusCopy()
     val color =
         when (copy.tone) {
             StatusTone.Free -> PttTheme.customColors.statusOnline
             StatusTone.Own -> PttTheme.customColors.accentTx
             StatusTone.Receiving -> MaterialTheme.colorScheme.primary
+            StatusTone.Offline -> PttTheme.customColors.statusIdle
         }
     val headline =
         if (copy.namesSpeaker) {
@@ -131,7 +132,7 @@ private fun statusCopy(
 }
 
 /** Color the status speaks in: green for a free channel, amber for the user's own turn, blue for someone else's. */
-enum class StatusTone { Free, Own, Receiving }
+enum class StatusTone { Free, Own, Receiving, Offline }
 
 /**
  * What the status above the button says in each state, shared by the Compose and SwiftUI screens (32.4).
@@ -162,6 +163,16 @@ fun PttButtonState.statusCopy(): StatusCopy =
             StatusCopy(Res.string.ptt_status_receiving, Res.string.ptt_status_receiving_headline, StatusTone.Receiving, namesSpeaker = true)
         }
     }
+
+/** While the connection is down nothing can be said or heard: the status says so instead of "free". */
+private val ReconnectingCopy =
+    StatusCopy(Res.string.ptt_status_reconnecting, Res.string.ptt_status_reconnecting_headline, StatusTone.Offline)
+
+/** The status above the button for the whole screen: the button's state, or reconnecting while offline. */
+fun PttState.statusCopy(): StatusCopy = if (isOnline) buttonState().statusCopy() else ReconnectingCopy
+
+/** The line under the button for the whole screen: the button's hint, or what happens while offline. */
+fun PttState.hint(): StringResource = if (isOnline) buttonState().hint() else Res.string.ptt_hint_reconnecting
 
 /** Line under the button: what holding or releasing it does now. */
 fun PttButtonState.hint(): StringResource =

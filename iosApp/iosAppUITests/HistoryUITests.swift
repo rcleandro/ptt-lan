@@ -44,7 +44,7 @@ final class HistoryUITests: XCTestCase {
         XCTAssertTrue(lens.waitForExistence(timeout: 10))
         lens.press(forDuration: 2)
 
-        app.buttons["Histórico"].tap()
+        app.buttons["Histórico"].firstMatch.tap() // beside the list on iPad, the list has one too
         let play = app.buttons["Ouvir"].firstMatch
         XCTAssertTrue(play.waitForExistence(timeout: 10), "the message just spoken should be in the history")
         let screenshot = XCTAttachment(screenshot: app.screenshot())

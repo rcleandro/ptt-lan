@@ -4,9 +4,14 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -43,6 +48,26 @@ class PttButtonReleaseTest {
         composeRule.waitForIdle()
         shown = false
         composeRule.waitForIdle()
+
+        assertEquals(1, starts)
+        assertEquals(1, ends)
+    }
+
+    /** TalkBack's double tap cannot hold the button: it starts the talk, and the next one ends it (29.4). */
+    @Test
+    fun `with a screen reader a double tap starts the talk and the next one ends it`() {
+        var state by mutableStateOf(PttButtonState.Idle)
+        var starts = 0
+        var ends = 0
+        composeRule.setContent {
+            CompositionLocalProvider(LocalInspectionMode provides true) { PreviewContextConfigurationEffect() }
+            PttButton(state = state, onPressStart = { starts++ }, onPressEnd = { ends++ }, modifier = Modifier.testTag("ptt"))
+        }
+
+        composeRule.onNodeWithTag("ptt").performSemanticsAction(SemanticsActions.OnClick)
+        state = PttButtonState.Transmitting
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("ptt").performSemanticsAction(SemanticsActions.OnClick)
 
         assertEquals(1, starts)
         assertEquals(1, ends)

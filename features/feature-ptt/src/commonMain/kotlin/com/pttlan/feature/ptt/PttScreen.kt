@@ -87,6 +87,7 @@ fun PttScreen(
     onBack: () -> Unit,
     showHistory: Boolean,
     connectionStatus: ConnectionStatus = ConnectionStatus.Online,
+    besideChannels: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val state by component.state.collectAsState()
@@ -110,6 +111,7 @@ fun PttScreen(
         onBack = onBack,
         showHistory = showHistory,
         connectionStatus = connectionStatus,
+        besideChannels = besideChannels,
         modifier = modifier,
     )
 }
@@ -130,6 +132,7 @@ fun PttScreenContent(
     onBack: () -> Unit = {},
     showHistory: Boolean = false,
     connectionStatus: ConnectionStatus = ConnectionStatus.Online,
+    besideChannels: Boolean = false,
 ) {
     val buttonState = state.buttonState()
 
@@ -137,7 +140,7 @@ fun PttScreenContent(
         val isWide = isSideBySide(maxWidth, maxHeight)
         val buttonSize = if (maxHeight < RegularHeight) CompactButtonSize else RegularButtonSize
         val tabletopFold = LocalTabletopFold.current
-        val topBar = @Composable { ChannelTopBar(state, onIntent, onBack, showHistory, connectionStatus) }
+        val topBar = @Composable { ChannelTopBar(state, onIntent, onBack, showHistory, connectionStatus, besideChannels) }
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             if (tabletopFold != null) {
@@ -145,7 +148,7 @@ fun PttScreenContent(
                 Column(modifier = Modifier.height(tabletopFold), horizontalAlignment = Alignment.CenterHorizontally) {
                     topBar()
                     Spacer(modifier = Modifier.weight(1f))
-                    StatusBlock(buttonState = buttonState, speakerName = state.currentSpeakerName)
+                    StatusBlock(state)
                     Spacer(modifier = Modifier.weight(1f))
                     Box(modifier = Modifier.readableWidth().padding(bottom = Dimens.SpaceXl)) { ParticipantsPanel(state, buttonState) }
                 }
@@ -187,7 +190,7 @@ private fun TalkArea(
         verticalArrangement = Arrangement.Center,
     ) {
         if (withStatus) {
-            StatusBlock(buttonState = buttonState, speakerName = state.currentSpeakerName)
+            StatusBlock(state)
             Spacer(modifier = Modifier.height(Dimens.SpaceXl))
         }
         PttButton(
@@ -197,7 +200,7 @@ private fun TalkArea(
             buttonSize = buttonSize,
         )
         Text(
-            text = stringResource(buttonState.hint()),
+            text = stringResource(state.hint()),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -240,7 +243,14 @@ private fun ParticipantsPanel(
                 .padding(vertical = ParticipantsPaddingVertical),
         verticalArrangement = Arrangement.spacedBy(ParticipantsSpacing),
     ) {
-        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.Space2xl)) {
+        // Read as one and announced when someone joins or leaves (29.4)
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Dimens.Space2xl)
+                    .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+        ) {
             SectionLabel(text = stringResource(Res.string.ptt_in_channel), modifier = Modifier.weight(1f))
             SectionLabel(text = state.participants.size.toString())
         }

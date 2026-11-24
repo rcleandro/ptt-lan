@@ -67,6 +67,7 @@ struct SettingsView: View {
                 }
                 .padding(.horizontal, PttTheme.dimens.space2xl)
                 .padding(.bottom, PttTheme.dimens.space2xl)
+                .readableWidth()
             }
             .background {
                 ZStack {

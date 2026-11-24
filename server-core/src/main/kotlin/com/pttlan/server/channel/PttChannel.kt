@@ -87,7 +87,16 @@ class PttChannel(
         broadcastParticipantList()
     }
 
-    suspend fun removeParticipant(userId: String) {
+    /**
+     * Removes [userId] when it is still the one [session] put in. One device keeps its user id across sessions, so a
+     * replaced session ending late must not take out the new one that already joined under the same id.
+     */
+    suspend fun removeParticipant(
+        userId: String,
+        session: DefaultWebSocketServerSession? = null,
+    ) {
+        val replaced = mutex.withLock { session != null && participants[userId]?.let { it.session != session } == true }
+        if (replaced) return
         releaseFloorIfHeldBy(userId)
         val p = mutex.withLock { participants.remove(userId) }
         p?.outbound?.close()

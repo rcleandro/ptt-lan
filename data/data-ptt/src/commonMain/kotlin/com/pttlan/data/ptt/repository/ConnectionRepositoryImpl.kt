@@ -126,7 +126,13 @@ class ConnectionRepositoryImpl(
                             sessionUserId = login.userId
 
                             // We launch the infinite reconnect loop in the background
-                            webSocketClient.connect(endpoint.host, endpoint.port, endpoint.isLocal, login.token)
+                            webSocketClient.connect(endpoint.host, endpoint.port, endpoint.isLocal, login.token) {
+                                // The server came back with a new signing key: same device, so the same user id
+                                webSocketClient
+                                    .login(endpoint.host, endpoint.port, endpoint.isLocal, nickname, deviceId(settings), pin)
+                                    .also { sessionUserId = it.userId }
+                                    .token
+                            }
                         } catch (e: Exception) {
                             deferred.completeExceptionally(e)
                             logger.w(e) { "Failed to connect to ${endpoint.host}:${endpoint.port}" }

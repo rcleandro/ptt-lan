@@ -56,6 +56,8 @@ struct ChannelListView: View {
     ])
     @State private var serverCodeText = ""
     @Environment(\.pttTheme) private var theme
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    private var fieldAndButton: AnyLayout { dockLayout(dynamicTypeSize) }
 
     init(component: ChannelListComponent, root: RootComponent) {
         self.root = root
@@ -80,6 +82,7 @@ struct ChannelListView: View {
                     }
                 }
                 .padding(.horizontal, PttTheme.dimens.space2xl)
+                .readableWidth()
             }
             .scrollDismissesKeyboard(.interactively)
             .background {
@@ -145,7 +148,7 @@ struct ChannelListView: View {
 
     /// New channel as a floating glass dock, like the Compose `NewChannelDock`.
     private var newChannelDock: some View {
-        HStack(spacing: PttTheme.dimens.spaceMd) {
+        fieldAndButton {
             TextField(texts["channels_new_hint"], text: Binding(
                 get: { state.newChannelName },
                 set: { model.send(ChannelListIntentUpdateNewChannelName(name: $0)) }
@@ -169,6 +172,7 @@ struct ChannelListView: View {
         .glassControl(in: RoundedRectangle(cornerRadius: PttTheme.dimens.dockRadius, style: .continuous))
         .padding(.horizontal, PttTheme.dimens.spaceLg)
         .padding(.bottom, PttTheme.dimens.spaceSm)
+        .readableWidth()
     }
 
     private var stopHostShown: Binding<Bool> {

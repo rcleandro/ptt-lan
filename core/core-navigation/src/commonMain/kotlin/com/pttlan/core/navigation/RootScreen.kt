@@ -94,8 +94,9 @@ private fun RootContent(component: RootComponent) {
 
                 is RootComponent.Child.PttChild -> {
                     val channels = childStack.backStack.lastOrNull()?.instance as? RootComponent.Child.ChannelListChild
+                    val besideChannels = channelsBeside && channels != null
                     Row {
-                        if (channelsBeside && channels != null) {
+                        if (besideChannels && channels != null) {
                             ChannelListScreen(
                                 component = channels.component,
                                 onOpenSettings = component::navigateToSettings,
@@ -109,6 +110,7 @@ private fun RootContent(component: RootComponent) {
                             onBack = component::goBack,
                             showHistory = isCacheEnabled,
                             connectionStatus = badgeStatus,
+                            besideChannels = besideChannels,
                             modifier = Modifier.weight(1f),
                         )
                     }

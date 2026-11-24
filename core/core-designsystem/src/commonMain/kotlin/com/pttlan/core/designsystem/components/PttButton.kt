@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
@@ -87,6 +88,7 @@ fun PttButton(
         },
     )
     val label = stringResource(state.accessibilityLabel())
+    val actionLabel = stringResource(state.screenReaderActionLabel())
     val lens =
         LensColors(
             idleHighlight = colors.glassHighlight,
@@ -107,6 +109,11 @@ fun PttButton(
                 .semantics {
                     contentDescription = label
                     role = Role.Button
+                    // TalkBack's double tap cannot hold: it toggles the talk instead (29.4)
+                    onClick(label = actionLabel) {
+                        if (state.screenReaderStartsTalking()) onPressStart() else onPressEnd()
+                        true
+                    }
                 }.pointerInput(Unit) {
                     detectTapGestures(
                         onPress = {

@@ -93,6 +93,7 @@ final class ConnectionUITests: XCTestCase {
 
         XCTAssertTrue(app.buttons["ptt"].waitForExistence(timeout: 10), "the channel should open the PTT screen")
         XCTAssertTrue(channel.isHittable, "the channel list should stay beside the channel")
+        XCTAssertEqual(app.buttons["backToChannels"].label, "Fechar canal", "beside the list, the channel closes instead of a second back arrow")
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "side-by-side"
         screenshot.lifetime = .keepAlways

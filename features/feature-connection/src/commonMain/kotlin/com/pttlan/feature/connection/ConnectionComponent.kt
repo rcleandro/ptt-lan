@@ -6,6 +6,7 @@ import com.pttlan.core.common.HOSTED_ROOM_PREFIX
 import com.pttlan.core.common.MIN_ROOM_PIN_LENGTH
 import com.pttlan.core.common.RoomPinRejectedException
 import com.pttlan.core.common.ServerCertificateChangedException
+import com.pttlan.core.common.ServerTimeoutException
 import com.pttlan.core.common.TooManyAttemptsException
 import com.pttlan.core.common.network.isLocalNetwork
 import com.pttlan.core.common.network.parseHostAndPort
@@ -291,7 +292,7 @@ class ConnectionComponent(
                 _state.update {
                     it.copy(certificateChange = CertificateChange(endpoint, exception.previousCode, exception.newCode, timeoutMessage))
                 }
-            } else if (exception is TimeoutCancellationException) {
+            } else if (exception is TimeoutCancellationException || exception is ServerTimeoutException) {
                 _effects.send(ConnectionEffect.ShowError(timeoutMessage))
             } else if (exception is RoomPinRejectedException) {
                 _effects.send(ConnectionEffect.ShowError(Res.string.connection_error_wrong_pin))

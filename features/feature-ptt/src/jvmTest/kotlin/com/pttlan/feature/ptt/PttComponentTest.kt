@@ -6,9 +6,13 @@ import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
+import com.pttlan.domain.ptt.model.ParticipantDomain
+import com.pttlan.domain.ptt.repository.ConnectionStatus
+import com.pttlan.domain.ptt.repository.SpeakerState
 import com.pttlan.domain.ptt.repository.VoiceRepository
 import com.pttlan.domain.ptt.usecase.JoinChannelUseCase
 import com.pttlan.domain.ptt.usecase.LeaveChannelUseCase
+import com.pttlan.domain.ptt.usecase.ObserveConnectionStatusUseCase
 import com.pttlan.domain.ptt.usecase.ObserveFloorDeniedUseCase
 import com.pttlan.domain.ptt.usecase.ObserveParticipantsUseCase
 import com.pttlan.domain.ptt.usecase.ObserveSpeakerUseCase
@@ -49,6 +53,7 @@ class PttComponentTest {
     private val observeFloorDeniedUseCase: ObserveFloorDeniedUseCase = mockk(relaxed = true)
     private val startTransmittingUseCase: StartTransmittingUseCase = mockk(relaxed = true)
     private val stopTransmittingUseCase: StopTransmittingUseCase = mockk(relaxed = true)
+    private val observeConnectionStatusUseCase: ObserveConnectionStatusUseCase = mockk(relaxed = true)
     private val settings: Settings = mockk(relaxed = true)
 
     private val testDispatcher = StandardTestDispatcher()
@@ -70,6 +75,7 @@ class PttComponentTest {
         coEvery { observeParticipantsUseCase(any()) } returns emptyFlow()
         coEvery { observeSpeakerUseCase(any()) } returns emptyFlow()
         coEvery { observeFloorDeniedUseCase(any()) } returns emptyFlow()
+        every { observeConnectionStatusUseCase() } returns emptyFlow()
     }
 
     @AfterTest
@@ -91,6 +97,7 @@ class PttComponentTest {
             observeFloorDeniedUseCase = observeFloorDeniedUseCase,
             startTransmittingUseCase = startTransmittingUseCase,
             stopTransmittingUseCase = stopTransmittingUseCase,
+            observeConnectionStatusUseCase = observeConnectionStatusUseCase,
         )
 
     @Test
@@ -189,5 +196,65 @@ class PttComponentTest {
                 assertEquals(PttEffect.ShowFloorDenied("Server Error"), awaitItem())
                 assertEquals(false, component.state.value.isTransmitting)
             }
+        }
+
+    /** Achado 1 da rodada da 29.1: entering mid-turn, the list already says who speaks before any SpeakerChanged. */
+    @Test
+    fun `joining while someone speaks reads the channel as busy from the participant list`() =
+        runTest(testDispatcher) {
+            val participants = MutableSharedFlow<List<ParticipantDomain>>()
+            coEvery { observeParticipantsUseCase("ch-1") } returns participants
+            val component = createComponent()
+            testScheduler.advanceUntilIdle()
+
+            participants.emit(listOf(ParticipantDomain("user-2", "load1", isSpeaking = true), ParticipantDomain("user-1", "Eu", false)))
+            testScheduler.advanceUntilIdle()
+
+            assertEquals("user-2", component.state.value.currentSpeakerId)
+            assertEquals("load1", component.state.value.currentSpeakerName)
+            assertTrue(component.state.value.floorBlocked)
+        }
+
+    @Test
+    fun `the participant list does not undo a speaker change nor make the user receive their own turn`() =
+        runTest(testDispatcher) {
+            val participants = MutableSharedFlow<List<ParticipantDomain>>()
+            val speaker = MutableSharedFlow<SpeakerState>()
+            coEvery { observeParticipantsUseCase("ch-1") } returns participants
+            coEvery { observeSpeakerUseCase("ch-1") } returns speaker
+            val component = createComponent()
+            testScheduler.advanceUntilIdle()
+
+            participants.emit(listOf(ParticipantDomain("user-1", "Eu", isSpeaking = true)))
+            testScheduler.advanceUntilIdle()
+            assertEquals(null, component.state.value.currentSpeakerId)
+
+            speaker.emit(SpeakerState("user-3", "Ana", true))
+            participants.emit(listOf(ParticipantDomain("user-2", "load1", isSpeaking = true)))
+            testScheduler.advanceUntilIdle()
+            assertEquals("user-3", component.state.value.currentSpeakerId)
+        }
+
+    /** Achado 2: while reconnecting the screen must not read as a free channel, and pressing sends nothing. */
+    @Test
+    fun `while reconnecting the press is ignored`() =
+        runTest(testDispatcher) {
+            val status = MutableSharedFlow<ConnectionStatus>()
+            every { observeConnectionStatusUseCase() } returns status
+            val component = createComponent()
+            testScheduler.advanceUntilIdle()
+
+            status.emit(ConnectionStatus.Reconnecting)
+            testScheduler.advanceUntilIdle()
+            component.onIntent(PttIntent.PressPtt)
+            testScheduler.advanceUntilIdle()
+
+            assertEquals(false, component.state.value.isOnline)
+            assertEquals(false, component.state.value.isTransmitting)
+            coVerify(exactly = 0) { startTransmittingUseCase(any(), any()) }
+
+            status.emit(ConnectionStatus.Connected)
+            testScheduler.advanceUntilIdle()
+            assertTrue(component.state.value.isOnline)
         }
 }

@@ -2,17 +2,23 @@ package com.pttlan.core.network
 
 import co.touchlab.kermit.Logger
 import com.pttlan.core.common.RoomPinRejectedException
+import com.pttlan.core.common.ServerTimeoutException
 import com.pttlan.core.common.TooManyAttemptsException
 import com.pttlan.core.network.protocol.AudioEnvelope
 import com.pttlan.core.network.protocol.ControlMessage
+import com.pttlan.core.network.protocol.INVALID_TOKEN_REASON
 import com.pttlan.core.network.protocol.LoginRequest
 import com.pttlan.core.network.protocol.LoginResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.network.sockets.ConnectTimeoutException
+import io.ktor.client.network.sockets.SocketTimeoutException
+import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
@@ -54,6 +60,12 @@ private fun loginFailure(status: HttpStatusCode): Exception? =
         HttpStatusCode.TooManyRequests -> TooManyAttemptsException()
         else -> null
     }
+
+/** A login that times out is tried once more before the user is told the server did not answer. */
+private const val LOGIN_ATTEMPTS = 2
+
+private fun Exception.isTimeout(): Boolean =
+    this is HttpRequestTimeoutException || this is ConnectTimeoutException || this is SocketTimeoutException
 
 /** Default from the technical plan: give up after 10 failed reconnection attempts. */
 const val DEFAULT_MAX_RECONNECT_ATTEMPTS = 10
@@ -104,26 +116,51 @@ class PttWebSocketClient(
     ): LoginResponse {
         val cleanHost = normalizeHost(host)
         val url = "https://$cleanHost:$port/api/auth/login"
-        val response =
-            try {
-                httpClient.post(url) {
-                    contentType(ContentType.Application.Json)
-                    setBody(LoginRequest(nickname, deviceId, pin))
-                }
-            } catch (e: Exception) {
-                // A handshake refused for a changed certificate surfaces as a generic TLS error: say what it was
-                throw pins?.changeFor(cleanHost, port) ?: e
-            }
+        val response = postLogin(url, LoginRequest(nickname, deviceId, pin), cleanHost, port)
         loginFailure(response.status)?.let { throw it }
         return response.body()
     }
 
+    /** The first request of a just-opened app or just-booted device can take longer than the timeout: once more. */
+    private suspend fun postLogin(
+        url: String,
+        request: LoginRequest,
+        host: String,
+        port: Int,
+    ): HttpResponse {
+        var attempt = 1
+        while (true) {
+            try {
+                return httpClient.post(url) {
+                    contentType(ContentType.Application.Json)
+                    setBody(request)
+                }
+            } catch (e: Exception) {
+                // A handshake refused for a changed certificate surfaces as a generic TLS error: say what it was
+                val failure =
+                    pins?.changeFor(host, port) ?: when {
+                        !e.isTimeout() -> e
+                        attempt++ == LOGIN_ATTEMPTS -> ServerTimeoutException()
+                        else -> null
+                    }
+                if (failure != null) throw failure
+                logger.w { "Login timed out, trying once more" }
+            }
+        }
+    }
+
+    /**
+     * Connects and keeps reconnecting. [renewToken] logs in again when a reconnection finds [token] refused, as after
+     * a server restart with a new signing key; without it that refusal ends the session like any other.
+     */
     suspend fun connect(
         host: String,
         port: Int,
         isLocal: Boolean,
         token: String,
+        renewToken: (suspend () -> String)? = null,
     ) {
+        var currentToken = token
         shouldReconnect = true
         var isFirstAttempt = true
         var hadConnected = false
@@ -142,7 +179,7 @@ class PttWebSocketClient(
                         withTimeout(timeout) {
                             httpClient.webSocketSession(
                                 "wss://$cleanHost:$port/ws" +
-                                    "?token=$token&version=$APP_VERSION&protocol=$PROTOCOL_VERSION",
+                                    "?token=$currentToken&version=$APP_VERSION&protocol=$PROTOCOL_VERSION",
                             )
                         }
                 }
@@ -197,9 +234,15 @@ class PttWebSocketClient(
                 val closeReason = withTimeoutOrNull(1.seconds) { ws.closeReason.await() }
                 if (closeReason?.knownReason == CloseReason.Codes.VIOLATED_POLICY) {
                     val reason = closeReason.message.takeIf { it.isNotBlank() } ?: "Conexão recusada pelo servidor"
-                    lastCloseReason = reason
-                    shouldReconnect = false
-                    throw ServerRefusedException(reason)
+                    // Renewed, it goes through the same backoff and attempt budget as any other reconnection
+                    if (reason == INVALID_TOKEN_REASON && hadConnected && renewToken != null) {
+                        logger.i { "Token refused after reconnecting, logging in again" }
+                        currentToken = renewToken()
+                    } else {
+                        lastCloseReason = reason
+                        shouldReconnect = false
+                        throw ServerRefusedException(reason)
+                    }
                 }
             } catch (e: Exception) {
                 logger.w(e) { "Connection lost" }

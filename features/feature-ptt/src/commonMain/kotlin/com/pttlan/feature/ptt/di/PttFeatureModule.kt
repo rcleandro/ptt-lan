@@ -19,6 +19,7 @@ val pttFeatureModule =
                 observeFloorDeniedUseCase = get(),
                 startTransmittingUseCase = get(),
                 stopTransmittingUseCase = get(),
+                observeConnectionStatusUseCase = get(),
             )
         }
     }
