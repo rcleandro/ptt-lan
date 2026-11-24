@@ -37,7 +37,7 @@ class ReconnectOverSessionTest {
             val client: PttWebSocketClient = mockk(relaxed = true)
             every { client.isConnected } returns isConnected
             coEvery { client.login(any(), any(), any(), any(), any(), any()) } returns LoginResponse("token", "user")
-            coEvery { client.connect(any(), any(), any(), any()) } coAnswers {
+            coEvery { client.connect(any(), any(), any(), any(), any()) } coAnswers {
                 isConnected.value = true
                 try {
                     awaitCancellation()
@@ -69,7 +69,7 @@ class ReconnectOverSessionTest {
             val client: PttWebSocketClient = mockk(relaxed = true)
             every { client.isConnected } returns isConnected
             coEvery { client.login(any(), any(), any(), any(), any(), any()) } returns LoginResponse("token", "user")
-            coEvery { client.connect(any(), any(), any(), any()) } coAnswers {
+            coEvery { client.connect(any(), any(), any(), any(), any()) } coAnswers {
                 runningLoops++
                 isConnected.value = true
                 try {

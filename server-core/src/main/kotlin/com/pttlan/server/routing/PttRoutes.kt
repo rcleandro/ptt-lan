@@ -4,6 +4,7 @@ package com.pttlan.server.routing
 import com.pttlan.core.network.PROTOCOL_VERSION
 import com.pttlan.core.network.PttJson
 import com.pttlan.core.network.protocol.ControlMessage
+import com.pttlan.core.network.protocol.INVALID_TOKEN_REASON
 import com.pttlan.server.auth.JwtConfig
 import com.pttlan.server.channel.ChannelRegistry
 import com.pttlan.server.channel.Participant
@@ -52,7 +53,7 @@ fun Routing.pttRoutes() {
                     JwtConfig.verifier.verify(token)
                 } catch (e: Exception) {
                     logger.info("JWT validation failed: {}", e.message)
-                    close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Token JWT inválido ou expirado"))
+                    close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, INVALID_TOKEN_REASON))
                     return@webSocket
                 }
 
@@ -107,7 +108,7 @@ fun Routing.pttRoutes() {
                                 is ControlMessage.LeaveChannel -> {
                                     val channel = channelRegistry.getChannel(message.channelId)
                                     logger.info("User {} ({}) left channel {}", nickname, userId, message.channelId)
-                                    channel?.removeParticipant(userId)
+                                    channel?.removeParticipant(userId, this)
                                     channelRegistry.scheduleCleanupIfEmpty(message.channelId)
                                     channelRegistry.broadcastActiveChannels()
                                 }
@@ -164,7 +165,7 @@ fun Routing.pttRoutes() {
             val nickname = currentUserId?.let { channel?.getParticipant(it)?.nickname } ?: "Desconhecido"
             logger.info("Client disconnected: {} ({})", nickname, currentUserId)
             if (currentUserId != null && currentChannelId != null) {
-                channel?.removeParticipant(currentUserId)
+                channel?.removeParticipant(currentUserId, this)
                 channelRegistry.scheduleCleanupIfEmpty(currentChannelId)
             }
             channelRegistry.removeGlobalConnection(this)
