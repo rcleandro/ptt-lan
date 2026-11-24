@@ -17,7 +17,7 @@ expect fun createPlatformHttpClient(pins: CertificatePins): HttpClient
 internal const val WEBSOCKET_PING_INTERVAL_MS = 5_000L
 
 /** Login and other plain requests: short, because the user is waiting for the screen to move on. */
-private const val REQUEST_TIMEOUT_MS = 5_000L
+internal const val REQUEST_TIMEOUT_MS = 5_000L
 
 /**
  * Six ping periods. It used to be 5s — the same as the ping interval — so a ping delayed by GC, a CPU spike

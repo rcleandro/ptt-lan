@@ -4,6 +4,7 @@ import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
+import com.pttlan.core.common.ServerTimeoutException
 import com.pttlan.core.datastore.SettingsKeys
 import com.pttlan.core.designsystem.generated.resources.Res
 import com.pttlan.core.designsystem.generated.resources.connection_error_host
@@ -186,6 +187,24 @@ class ConnectionComponentTest {
             advanceUntilIdle()
 
             // Assert
+            val effect = component.effects.first()
+            assertTrue(effect is ConnectionEffect.ShowError)
+            assertEquals(Res.string.connection_error_timeout_manual, effect.message)
+        }
+
+    /** Achado 6 da rodada da 29.1: a login that never answered showed Ktor's technical text. */
+    @Test
+    fun `a login the server never answers shows the timeout message`() =
+        runTest {
+            val component = createComponent()
+            component.onIntent(ConnectionIntent.UpdateNickname("User1"))
+            component.onIntent(ConnectionIntent.UpdateManualIp("10.0.0.1"))
+            coEvery { connectToServerUseCase(ServerEndpoint("10.0.0.1", 9443, isLocal = true), "User1") } returns
+                Result.failure(ServerTimeoutException())
+
+            component.onIntent(ConnectionIntent.ConnectToManualIp("10.0.0.1"))
+            advanceUntilIdle()
+
             val effect = component.effects.first()
             assertTrue(effect is ConnectionEffect.ShowError)
             assertEquals(Res.string.connection_error_timeout_manual, effect.message)
