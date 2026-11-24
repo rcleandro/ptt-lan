@@ -170,6 +170,7 @@ struct HistoryView: View {
                 }
                 .padding(.horizontal, PttTheme.dimens.space2xl)
                 .padding(.bottom, PttTheme.dimens.space2xl)
+                .readableWidth()
             }
         }
     }
@@ -346,6 +347,7 @@ private struct MiniPlayer: View {
         .glassControl(in: RoundedRectangle(cornerRadius: PttTheme.dimens.dockRadius, style: .continuous))
         .padding(.horizontal, PttTheme.dimens.spaceLg)
         .padding(.bottom, PttTheme.dimens.spaceSm)
+        .readableWidth()
         .task(id: "\(message.id)-\(model.isPaused)-\(queueIndex)-\(model.queue.count)") {
             let text = HistoryTextKt.playerSubtitle(message: message, isPaused: model.isPaused, queueIndex: Int32(queueIndex), queueSize: Int32(model.queue.count))
             subtitle = (try? await SwiftBridgeKt.text(uiText: text)) ?? ""

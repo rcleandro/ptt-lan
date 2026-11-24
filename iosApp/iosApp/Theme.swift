@@ -112,6 +112,11 @@ extension View {
     func glassControl<S: Shape>(in shape: S) -> some View {
         modifier(GlassControl(shape: shape))
     }
+
+    /// Up to the readable width and centered in the rest, like Compose's `readableWidth()`; no-op on phones (27.1).
+    func readableWidth() -> some View {
+        frame(maxWidth: PttTheme.dimens.readableWidth).frame(maxWidth: .infinity)
+    }
 }
 
 private struct ContentCard: ViewModifier {
@@ -164,4 +169,12 @@ struct GlassButtonStyle: ViewModifier {
             content.buttonStyle(.bordered).buttonBorderShape(.capsule)
         }
     }
+}
+
+/// A field and its button side by side, or one above the other with the accessibility text sizes, where they no
+/// longer fit in a row.
+func dockLayout(_ size: DynamicTypeSize) -> AnyLayout {
+    size.isAccessibilitySize
+        ? AnyLayout(VStackLayout(spacing: PttTheme.dimens.spaceMd))
+        : AnyLayout(HStackLayout(spacing: PttTheme.dimens.spaceMd))
 }

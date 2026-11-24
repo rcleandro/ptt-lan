@@ -5,6 +5,8 @@ import shared
 private let regularLensSize: CGFloat = 208
 private let compactLensSize: CGFloat = 160
 private let compactBelowHeight: CGFloat = 700
+/// How far the one-screen PTT texts shrink with large text sizes before they would be cut.
+private let minimumTextScale: CGFloat = 0.6
 private let iconScale: CGFloat = 0.3
 private let pressedScale: CGFloat = 0.97
 private let ringCount = 3
@@ -118,6 +120,7 @@ struct PttView: View {
                         .font(.subheadline)
                         .foregroundStyle(theme.textSecondary)
                         .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true) // wraps with large text instead of being cut
                         .padding(.horizontal, PttTheme.dimens.space2xl)
                     Spacer(minLength: 0)
                     participants
@@ -131,6 +134,9 @@ struct PttView: View {
                     .accessibilityIdentifier("leaveChannel")
                 }
                 .frame(maxWidth: .infinity)
+                // One screen that cannot scroll (a hold inside a scroll view fights the scroll): past this size the
+                // headline shrinks and "Sair do canal" falls off the bottom. The other screens grow without a cap
+                .dynamicTypeSize(...DynamicTypeSize.accessibility1)
             }
             .background(theme.background.ignoresSafeArea())
             .overlay(alignment: .top) { toast }
@@ -190,6 +196,7 @@ struct PttView: View {
         .padding(.vertical, PttTheme.dimens.spaceLg)
         .glassControl(in: RoundedRectangle(cornerRadius: PttTheme.dimens.panelRadius, style: .continuous))
         .padding(.horizontal, PttTheme.dimens.spaceXl)
+        .readableWidth()
     }
 
     @ViewBuilder
@@ -227,6 +234,7 @@ private struct StatusBlock: View {
                 .foregroundStyle(theme.textPrimary)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
+                .minimumScaleFactor(minimumTextScale)
         }
         .padding(.horizontal, PttTheme.dimens.space2xl)
         .accessibilityElement(children: .combine)
@@ -408,6 +416,7 @@ private struct ParticipantAvatar: View {
                 .fontWeight(highlight != nil ? .semibold : .regular)
                 .foregroundStyle(highlight ?? theme.textSecondary)
                 .lineLimit(1)
+                .minimumScaleFactor(minimumTextScale)
         }
         .frame(width: avatarColumnWidth)
         .animation(stateAnimation, value: highlight)
